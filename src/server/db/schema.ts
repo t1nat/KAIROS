@@ -10,7 +10,7 @@ import { type AdapterAccount } from "next-auth/adapters";
  */
 export const createTable = pgTableCreator((name) => `app_${name}`);
 
-export const notes = createTable(
+/**export const notes = createTable(
   "note",
   (d) => ({
     id: d.integer("id").primaryKey().generatedByDefaultAsIdentity(),
@@ -32,7 +32,7 @@ export const notes = createTable(
     
     createdAt: d
       .timestamp("createdAt", { withTimezone: true })
-      .$defaultFn(() => /* @__PURE__ */ new Date())
+      .$defaultFn(() =>   new Date())
       .notNull(),
     updatedAt: d.timestamp("updatedAt", { withTimezone: true }).$onUpdate(() => new Date()),
   }),
@@ -40,7 +40,7 @@ export const notes = createTable(
     index("note_created_by_idx").on(t.createdById),
   ],
 );
-
+*/
 
 export const posts = createTable(
   "post",

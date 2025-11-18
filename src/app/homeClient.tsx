@@ -4,7 +4,6 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { LatestPost } from "~/app/_components/post";
 import { UserDisplay } from "./_components/userDisplay";
 import { SignInModal } from "./_components/signInModal"; // Import the modal
 
