@@ -64,7 +64,7 @@ export function HomeClient({ hello, session, latestPost }: {
                     {session ? (
                         <Link
                             href="/api/auth/signout"
-                            className="rounded-full bg-white/20 px-12 py-4 text-xl text-[#140C00] font-semibold no-underline transition hover:bg-white/30"
+                            className="rounded-full bg-white/20 px-12 py-4 text-xl text-black font-semibold no-underline transition hover:bg-white/30"
                         >
                             Sign out
                         </Link>
