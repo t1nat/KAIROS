@@ -3,74 +3,79 @@
 import { useState } from "react";
 import { api } from "~/trpc/react";
 
+/**
+ * A compact form for creating a secure note.
+ * Styles are simplified and reduced for a smaller footprint.
+ */
 export function CreateNoteForm() {
-  const [content, setContent] = useState("");
-  const [password, setPassword] = useState("");
+  // Removed confirmPassword as it was not used in the original submit logic.
+  const [content, setContent] = useState("");
+  const [password, setPassword] = useState("");
+  
+  const createNote = api.note.create.useMutation({
+    onSuccess: () => {
+      // Clear the form on success
+      setContent("");
+      setPassword("");
+    },
+    onError: (error) => {
+      console.error("Failed to create note:", error);
+      alert(`Error creating note: ${error.message}`);
+    },
+  });
 
-  const createNote = api.note.create.useMutation({
-    onSuccess: (data) => {
-      // Clear the form
-      setContent("");
-      setPassword("");
-      
-    },
-    onError: (error) => {
-      console.error("Failed to create note:", error);
-      alert(`Error creating note: ${error.message}`);
-    },
-  });
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!content.trim()) {
+      alert("Note content cannot be empty.");
+      return;
+    }
+    
+    // Call the tRPC mutation
+    createNote.mutate({ content, password });
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!content.trim()) {
-      alert("Note content cannot be empty.");
-      return;
-    }
-    
-    // Call the tRPC mutation
-    createNote.mutate({ content, password });
-  };
+  return (
+    // Reduced overall padding, width utility, and shadow/border complexity
+    <form onSubmit={handleSubmit} className="p-4 bg-white rounded-lg shadow-md max-w-sm mx-auto text-sm">
+      <h2 className="text-base font-semibold mb-3">New Secure Note</h2>
 
-  return (
-    <form onSubmit={handleSubmit} className="w-full mt-4 p-6 bg-white/40 rounded-xl shadow-2xl border border-gray-200 text-lg text-gray-800">
-      <h2 className="text-2xl font-bold mb-4 text-[#140C00]">New Secure Note</h2>
+      {/* Note Content Input: Smaller rows, padding, and simplified styling */}
+      <textarea
+        placeholder="Note content..." 
+        rows={3} // Reduced from 6
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        className="w-full p-2 mb-3 border rounded-md focus:outline-none focus:ring-1 focus:ring-yellow-500 text-gray-900 resize-none text-sm"
+        disabled={createNote.isPending}
+      />
 
-      {/* Note Content Input */}
-      <textarea
-        placeholder="Type your sticky note content here..." 
-        rows={6}
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        className="w-full p-4 rounded-lg border-2 border-yellow-500 bg-yellow-100 placeholder-gray-600 focus:outline-none focus:ring-4 focus:ring-yellow-400 text-gray-900 resize-none font-serif shadow-inner"
-        style={{ minHeight: '150px' }}
-        disabled={createNote.isPending}
-      />
-
-      {/* Password Input */}
-      <div className="mt-4">
-        <label htmlFor="note-password" className="text-sm font-semibold text-[#140C00] block mb-1">Optional Password:</label>
-        <input 
-          id="note-password"
-          type="password" 
-          placeholder="Set a password to secure this note" 
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full p-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-          disabled={createNote.isPending}
-        />
-      </div>
-      
-      {/* Create Note Button */}
-      <button 
-        type="submit"
-        className="mt-6 w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition flex items-center justify-center text-xl font-bold shadow-lg"
-        disabled={createNote.isPending || content.trim().length === 0}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-        {createNote.isPending ? "Saving..." : "Create Note"}
-      </button>
-    </form>
-  );
+      {/* Password Input: Smaller margins and padding */}
+      <div className="mb-4">
+        <label htmlFor="note-password" className="text-xs font-medium text-gray-700 block mb-1">Password (Optional):</label>
+        <input 
+          id="note-password"
+          type="password" 
+          placeholder="Set a password" 
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full p-2 border rounded-md text-gray-900 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+          disabled={createNote.isPending}
+        />
+      </div>
+      
+      {/* Create Note Button: Reduced padding, font size, and simplified icon/text styling */}
+      <button 
+        type="submit"
+        className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition flex items-center justify-center text-sm font-medium disabled:opacity-50"
+        disabled={createNote.isPending || content.trim().length === 0}
+      >
+        {/* Simplified SVG size */}
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        {createNote.isPending ? "Saving..." : "Create Note"}
+      </button>
+    </form>
+  );
 }
