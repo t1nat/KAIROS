@@ -10,6 +10,38 @@ import { type AdapterAccount } from "next-auth/adapters";
  */
 export const createTable = pgTableCreator((name) => `app_${name}`);
 
+export const notes = createTable(
+  "note",
+  (d) => ({
+    id: d.integer("id").primaryKey().generatedByDefaultAsIdentity(),
+    
+    // User ID who created the note
+    createdById: d
+      .varchar("createdById", { length: 255 })
+      .notNull()
+      .references(() => users.id),
+      
+    // The actual content of the note
+    content: d.text("content").notNull().default(''),
+    
+    // Optional hashed password for locking the note. Null means unlocked.
+    lockPasswordHash: d.varchar("lockPasswordHash", { length: 255 }),
+    
+    // Flag to check if the user currently has the note unlocked in their session (not persisted)
+    isLocked: d.boolean("isLocked").notNull().default(false), // This will be used in TRPC to check status
+    
+    createdAt: d
+      .timestamp("createdAt", { withTimezone: true })
+      .$defaultFn(() => /* @__PURE__ */ new Date())
+      .notNull(),
+    updatedAt: d.timestamp("updatedAt", { withTimezone: true }).$onUpdate(() => new Date()),
+  }),
+  (t) => [
+    index("note_created_by_idx").on(t.createdById),
+  ],
+);
+
+
 export const posts = createTable(
   "post",
   (d) => ({
