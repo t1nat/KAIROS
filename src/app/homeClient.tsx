@@ -58,8 +58,15 @@ export function HomeClient({ hello, session, latestPost }: {
                         Start Creating
                     </Link>
                 )}
-                {/* 👆 NEW LINK ADDED */}
-                    
+
+                {session && (
+                    <Link
+                        href="/publish"
+                        className="text-xl text-blue-600 hover:text-blue-800 font-semibold underline transition-colors"
+                    >
+                        Publish your work
+                    </Link>
+                )}                    
                     {/* Sign In/Out Button (now a button for modal/link for signout) */}
                     {session ? (
                         <Link
