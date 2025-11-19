@@ -1,3 +1,5 @@
+// src/server/db/schema.ts - COMPLETE VERSION
+
 import { type InferInsertModel, type InferSelectModel, relations, sql } from "drizzle-orm"; 
 import {
   index,
@@ -9,6 +11,7 @@ import {
   varchar,
   pgEnum,
   integer,
+  json,
 } from "drizzle-orm/pg-core";
 import type { AdapterAccount } from "next-auth/adapters";
 import crypto from "node:crypto";
@@ -23,8 +26,10 @@ export const shareStatusEnum = pgEnum("share_status", ['private', 'shared_read',
 export const permissionEnum = pgEnum("permission", ['read', 'write']); 
 export const taskStatusEnum = pgEnum("task_status", ['pending', 'in_progress', 'completed', 'blocked']);
 export const taskPriorityEnum = pgEnum("task_priority", ['low', 'medium', 'high', 'urgent']);
+export const usageModeEnum = pgEnum("usage_mode", ["personal", "organization"]);
+export const orgRoleEnum = pgEnum("org_role", ["admin", "worker"]);
 
-// --- USER TABLE (Moved up for reference stability) ---
+// --- USER TABLE ---
 export const users = createTable("user", (d) => ({
     id: d
       .varchar({ length: 255 })
@@ -40,52 +45,57 @@ export const users = createTable("user", (d) => ({
       })
       .$defaultFn(() => new Date()),
     image: d.varchar({ length: 255 }),
+    usageMode: usageModeEnum("usage_mode"),
+    passwordResetToken: varchar("password_reset_token", { length: 255 }),
+    passwordResetExpires: timestamp("password_reset_expires", { mode: "date", withTimezone: true }),
 }));
 
-// --- STICKY NOTES TABLE ---
-export const stickyNotes = createTable(
-  "sticky_notes",
+// --- ORGANIZATIONS TABLE ---
+export const organizations = createTable(
+  "organizations",
   (d) => ({
     id: serial("id").primaryKey(),
-    content: text("content").notNull(),
-    createdById: d
-      .varchar({ length: 255 })
+    name: varchar("name", { length: 256 }).notNull(),
+    accessCode: varchar("access_code", { length: 14 }).notNull().unique(),
+    createdById: varchar("created_by_id", { length: 255 })
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at")
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
-    passwordHash: varchar("password_hash", { length: 256 }),
-    passwordSalt: varchar("password_salt", { length: 256 }),
-
-    // Collaboration Field
-    shareStatus: shareStatusEnum("share_status").notNull(),
+    updatedAt: timestamp("updated_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
   }),
   (t) => [
-    index("note_created_by_idx").on(t.createdById),
+    index("org_created_by_idx").on(t.createdById),
+    index("org_access_code_idx").on(t.accessCode),
   ]
 );
 
-// --- COLLABORATORS TABLE ---
-export const noteCollaborators = createTable(
-  "note_collaborators",
+// --- ORGANIZATION MEMBERS TABLE ---
+export const organizationMembers = createTable(
+  "organization_members",
   (d) => ({
-    noteId: integer("note_id")
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
       .notNull()
-      .references(() => stickyNotes.id, { onDelete: "cascade" }),
-    collaboratorId: d
-      .varchar({ length: 255 })
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    userId: varchar("user_id", { length: 255 })
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    permission: permissionEnum("permission").notNull(), 
+    role: orgRoleEnum("role").notNull(),
+    joinedAt: timestamp("joined_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
   }),
   (t) => [
-    primaryKey({ columns: [t.noteId, t.collaboratorId] }),
-    index("collaborator_user_id_idx").on(t.collaboratorId),
+    index("org_member_org_idx").on(t.organizationId),
+    index("org_member_user_idx").on(t.userId),
   ]
 );
 
-// --- NEW: PROJECTS TABLE ---
+// --- PROJECTS TABLE ---
 export const projects = createTable(
   "projects",
   (d) => ({
@@ -103,13 +113,15 @@ export const projects = createTable(
     updatedAt: timestamp("updated_at")
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
+    organizationId: integer("organization_id").references(() => organizations.id, { onDelete: "cascade" }),
   }),
   (t) => [
     index("project_created_by_idx").on(t.createdById),
+    index("project_org_idx").on(t.organizationId),
   ]
 );
 
-// --- NEW: TASKS TABLE ---
+// --- TASKS TABLE ---
 export const tasks = createTable(
   "tasks",
   (d) => ({
@@ -136,7 +148,6 @@ export const tasks = createTable(
     updatedAt: timestamp("updated_at")
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
-    // Timeline positioning
     orderIndex: integer("order_index").notNull().default(0),
   }),
   (t) => [
@@ -146,7 +157,121 @@ export const tasks = createTable(
   ]
 );
 
-// --- NEW: PROJECT COLLABORATORS TABLE ---
+// --- DOCUMENTS TABLE ---
+export const documents = createTable(
+  "documents",
+  (d) => ({
+    id: serial("id").primaryKey(),
+    title: varchar("title", { length: 256 }).notNull(),
+    content: text("content").notNull(),
+    passwordHash: varchar("password_hash", { length: 256 }),
+    organizationId: integer("organization_id").references(() => organizations.id, { onDelete: "cascade" }),
+    createdById: varchar("created_by_id", { length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: timestamp("updated_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    annotations: json("annotations"),
+    importedFrom: varchar("imported_from", { length: 256 }),
+    importedAt: timestamp("imported_at", { mode: "date", withTimezone: true }),
+  }),
+  (t) => [
+    index("doc_created_by_idx").on(t.createdById),
+    index("doc_org_idx").on(t.organizationId),
+  ]
+);
+
+// --- DOCUMENT COLLABORATORS TABLE ---
+export const documentCollaborators = createTable(
+  "document_collaborators",
+  (d) => ({
+    id: serial("id").primaryKey(),
+    documentId: integer("document_id")
+      .notNull()
+      .references(() => documents.id, { onDelete: "cascade" }),
+    userId: varchar("user_id", { length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    lastEdit: timestamp("last_edit")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    color: varchar("color", { length: 7 }).notNull().default("#3B82F6"),
+  }),
+  (t) => [
+    index("doc_collab_doc_idx").on(t.documentId),
+    index("doc_collab_user_idx").on(t.userId),
+  ]
+);
+
+// --- DOCUMENT VERSIONS TABLE ---
+export const documentVersions = createTable(
+  "document_versions",
+  (d) => ({
+    id: serial("id").primaryKey(),
+    documentId: integer("document_id")
+      .notNull()
+      .references(() => documents.id, { onDelete: "cascade" }),
+    content: text("content").notNull(),
+    annotations: json("annotations"),
+    createdById: varchar("created_by_id", { length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  }),
+  (t) => [
+    index("doc_version_doc_idx").on(t.documentId),
+    index("doc_version_created_idx").on(t.createdAt),
+  ]
+);
+
+// --- STICKY NOTES TABLE ---
+export const stickyNotes = createTable(
+  "sticky_notes",
+  (d) => ({
+    id: serial("id").primaryKey(),
+    content: text("content").notNull(),
+    createdById: d
+      .varchar({ length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    passwordHash: varchar("password_hash", { length: 256 }),
+    passwordSalt: varchar("password_salt", { length: 256 }),
+    shareStatus: shareStatusEnum("share_status").notNull(),
+  }),
+  (t) => [
+    index("note_created_by_idx").on(t.createdById),
+  ]
+);
+
+// --- NOTE COLLABORATORS TABLE ---
+export const noteCollaborators = createTable(
+  "note_collaborators",
+  (d) => ({
+    noteId: integer("note_id")
+      .notNull()
+      .references(() => stickyNotes.id, { onDelete: "cascade" }),
+    collaboratorId: d
+      .varchar({ length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    permission: permissionEnum("permission").notNull(), 
+  }),
+  (t) => [
+    primaryKey({ columns: [t.noteId, t.collaboratorId] }),
+    index("collaborator_user_id_idx").on(t.collaboratorId),
+  ]
+);
+
+// --- PROJECT COLLABORATORS TABLE ---
 export const projectCollaborators = createTable(
   "project_collaborators",
   (d) => ({
@@ -168,7 +293,7 @@ export const projectCollaborators = createTable(
   ]
 );
 
-// --- NEW: TASK COMMENTS TABLE ---
+// --- TASK COMMENTS TABLE ---
 export const taskComments = createTable(
   "task_comments",
   (d) => ({
@@ -191,7 +316,7 @@ export const taskComments = createTable(
   ]
 );
 
-// --- NEW: TASK ACTIVITY LOG TABLE (for real-time updates) ---
+// --- TASK ACTIVITY LOG TABLE ---
 export const taskActivityLog = createTable(
   "task_activity_log",
   (d) => ({
@@ -203,7 +328,7 @@ export const taskActivityLog = createTable(
       .varchar({ length: 255 })
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    action: varchar("action", { length: 100 }).notNull(), // e.g., "status_changed", "assigned", "completed"
+    action: varchar("action", { length: 100 }).notNull(),
     oldValue: text("old_value"),
     newValue: text("new_value"),
     createdAt: timestamp("created_at")
@@ -216,66 +341,7 @@ export const taskActivityLog = createTable(
   ]
 );
 
-// --- RELATIONS ---
-export const stickyNotesRelations = relations(stickyNotes, ({ one, many }) => ({
-  author: one(users, { fields: [stickyNotes.createdById], references: [users.id] }),
-  collaborators: many(noteCollaborators),
-}));
-
-export const noteCollaboratorsRelations = relations(noteCollaborators, ({ one }) => ({
-  note: one(stickyNotes, { fields: [noteCollaborators.noteId], references: [stickyNotes.id] }),
-  collaborator: one(users, { fields: [noteCollaborators.collaboratorId], references: [users.id] }),
-}));
-
-// NEW: Project Relations
-export const projectsRelations = relations(projects, ({ one, many }) => ({
-  creator: one(users, { fields: [projects.createdById], references: [users.id] }),
-  tasks: many(tasks),
-  collaborators: many(projectCollaborators),
-}));
-
-export const projectCollaboratorsRelations = relations(projectCollaborators, ({ one }) => ({
-  project: one(projects, { fields: [projectCollaborators.projectId], references: [projects.id] }),
-  user: one(users, { fields: [projectCollaborators.collaboratorId], references: [users.id] }),
-}));
-
-// NEW: Task Relations
-export const tasksRelations = relations(tasks, ({ one, many }) => ({
-  project: one(projects, { fields: [tasks.projectId], references: [projects.id] }),
-  assignedTo: one(users, { fields: [tasks.assignedToId], references: [users.id] }),
-  creator: one(users, { fields: [tasks.createdById], references: [users.id] }),
-  comments: many(taskComments),
-  activityLog: many(taskActivityLog),
-}));
-
-export const taskCommentsRelations = relations(taskComments, ({ one }) => ({
-  task: one(tasks, { fields: [taskComments.taskId], references: [tasks.id] }),
-  author: one(users, { fields: [taskComments.createdById], references: [users.id] }),
-}));
-
-export const taskActivityLogRelations = relations(taskActivityLog, ({ one }) => ({
-  task: one(tasks, { fields: [taskActivityLog.taskId], references: [tasks.id] }),
-  user: one(users, { fields: [taskActivityLog.userId], references: [users.id] }),
-}));
-
-export const usersRelations = relations(users, ({ many }) => ({
-    accounts: many(accounts),
-    notes: many(stickyNotes, { relationName: 'authored_notes' }),
-    collaborations: many(noteCollaborators),
-    authoredEvents: many(events),
-    eventComments: many(eventComments),
-    eventLikes: many(eventLikes),
-    // NEW relations
-    createdProjects: many(projects),
-    projectCollaborations: many(projectCollaborators),
-    assignedTasks: many(tasks, { relationName: 'assigned_tasks' }),
-    createdTasks: many(tasks, { relationName: 'created_tasks' }),
-    taskComments: many(taskComments),
-    taskActivities: many(taskActivityLog),
-}));
-
-// --- EXISTING TABLES (POSTS, ACCOUNTS, SESSIONS, VERIFICATION TOKENS) ---
-
+// --- POSTS TABLE ---
 export const posts = createTable(
   "post",
   (d) => ({
@@ -297,6 +363,7 @@ export const posts = createTable(
   ],
 );
 
+// --- ACCOUNTS TABLE ---
 export const accounts = createTable(
   "account",
   (d) => ({
@@ -321,6 +388,32 @@ export const accounts = createTable(
   ],
 );
 
+// --- SESSIONS TABLE ---
+export const sessions = createTable(
+  "session",
+  (d) => ({
+    sessionToken: d.varchar({ length: 255 }).notNull().primaryKey(),
+    userId: d
+      .varchar({ length: 255 })
+      .notNull()
+      .references(() => users.id),
+    expires: d.timestamp({ mode: "date", withTimezone: true }).notNull(),
+  }),
+  (t) => [index("t_user_id_idx").on(t.userId)],
+);
+
+// --- VERIFICATION TOKENS TABLE ---
+export const verificationTokens = createTable(
+  "verification_token",
+  (d) => ({
+    identifier: d.varchar({ length: 255 }).notNull(),
+    token: d.varchar({ length: 255 }).notNull(),
+    expires: d.timestamp({ mode: "date", withTimezone: true }).notNull(),
+  }),
+  (t) => [primaryKey({ columns: [t.identifier, t.token] })],
+);
+
+// --- EVENTS TABLE ---
 export const events = createTable(
   "event",
   (d) => ({
@@ -344,9 +437,7 @@ export const events = createTable(
   ],
 );
 
-export type Event = InferSelectModel<typeof events>;
-export type NewEvent = InferInsertModel<typeof events>;
-
+// --- EVENT COMMENTS TABLE ---
 export const eventComments = createTable(
   "event_comment",
   (d) => ({
@@ -372,6 +463,7 @@ export const eventComments = createTable(
   ],
 );
 
+// --- EVENT LIKES TABLE ---
 export const eventLikes = createTable(
   "event_like",
   (d) => ({
@@ -394,54 +486,149 @@ export const eventLikes = createTable(
   ],
 );
 
+// ===================
+// ===== RELATIONS =====
+// ===================
+
+// Organizations Relations
+export const organizationsRelations = relations(organizations, ({ one, many }) => ({
+  creator: one(users, { fields: [organizations.createdById], references: [users.id] }),
+  members: many(organizationMembers),
+  projects: many(projects),
+  documents: many(documents),
+}));
+
+// Organization Members Relations
+export const organizationMembersRelations = relations(organizationMembers, ({ one }) => ({
+  organization: one(organizations, { fields: [organizationMembers.organizationId], references: [organizations.id] }),
+  user: one(users, { fields: [organizationMembers.userId], references: [users.id] }),
+}));
+
+// Documents Relations
+export const documentsRelations = relations(documents, ({ one, many }) => ({
+  createdBy: one(users, { fields: [documents.createdById], references: [users.id] }),
+  organization: one(organizations, { fields: [documents.organizationId], references: [organizations.id] }),
+  collaborators: many(documentCollaborators),
+  versions: many(documentVersions),
+}));
+
+// Document Collaborators Relations
+export const documentCollaboratorsRelations = relations(documentCollaborators, ({ one }) => ({
+  document: one(documents, { fields: [documentCollaborators.documentId], references: [documents.id] }),
+  user: one(users, { fields: [documentCollaborators.userId], references: [users.id] }),
+}));
+
+// Document Versions Relations
+export const documentVersionsRelations = relations(documentVersions, ({ one }) => ({
+  document: one(documents, { fields: [documentVersions.documentId], references: [documents.id] }),
+  createdBy: one(users, { fields: [documentVersions.createdById], references: [users.id] }),
+}));
+
+// Sticky Notes Relations
+export const stickyNotesRelations = relations(stickyNotes, ({ one, many }) => ({
+  author: one(users, { fields: [stickyNotes.createdById], references: [users.id] }),
+  collaborators: many(noteCollaborators),
+}));
+
+// Note Collaborators Relations
+export const noteCollaboratorsRelations = relations(noteCollaborators, ({ one }) => ({
+  note: one(stickyNotes, { fields: [noteCollaborators.noteId], references: [stickyNotes.id] }),
+  collaborator: one(users, { fields: [noteCollaborators.collaboratorId], references: [users.id] }),
+}));
+
+// Projects Relations
+export const projectsRelations = relations(projects, ({ one, many }) => ({
+  creator: one(users, { fields: [projects.createdById], references: [users.id] }),
+  organization: one(organizations, { fields: [projects.organizationId], references: [organizations.id] }),
+  tasks: many(tasks),
+  collaborators: many(projectCollaborators),
+}));
+
+// Project Collaborators Relations
+export const projectCollaboratorsRelations = relations(projectCollaborators, ({ one }) => ({
+  project: one(projects, { fields: [projectCollaborators.projectId], references: [projects.id] }),
+  user: one(users, { fields: [projectCollaborators.collaboratorId], references: [users.id] }),
+}));
+
+// Tasks Relations
+export const tasksRelations = relations(tasks, ({ one, many }) => ({
+  project: one(projects, { fields: [tasks.projectId], references: [projects.id] }),
+  assignedTo: one(users, { fields: [tasks.assignedToId], references: [users.id] }),
+  creator: one(users, { fields: [tasks.createdById], references: [users.id] }),
+  comments: many(taskComments),
+  activityLog: many(taskActivityLog),
+}));
+
+// Task Comments Relations
+export const taskCommentsRelations = relations(taskComments, ({ one }) => ({
+  task: one(tasks, { fields: [taskComments.taskId], references: [tasks.id] }),
+  author: one(users, { fields: [taskComments.createdById], references: [users.id] }),
+}));
+
+// Task Activity Log Relations
+export const taskActivityLogRelations = relations(taskActivityLog, ({ one }) => ({
+  task: one(tasks, { fields: [taskActivityLog.taskId], references: [tasks.id] }),
+  user: one(users, { fields: [taskActivityLog.userId], references: [users.id] }),
+}));
+
+// Users Relations - MOST IMPORTANT ONE!
+export const usersRelations = relations(users, ({ many }) => ({
+  accounts: many(accounts),
+  sessions: many(sessions),
+  notes: many(stickyNotes),
+  collaborations: many(noteCollaborators),
+  authoredEvents: many(events),
+  eventComments: many(eventComments),
+  eventLikes: many(eventLikes),
+  createdProjects: many(projects),
+  projectCollaborations: many(projectCollaborators),
+  assignedTasks: many(tasks),
+  createdTasks: many(tasks),
+  taskComments: many(taskComments),
+  taskActivities: many(taskActivityLog),
+  // NEW ORGANIZATION RELATIONS
+  organizationsOwned: many(organizations),
+  organizationMemberships: many(organizationMembers),
+  documents: many(documents),
+  documentCollaborations: many(documentCollaborators),
+  documentVersions: many(documentVersions),
+}));
+
+// Accounts Relations
 export const accountsRelations = relations(accounts, ({ one }) => ({
   user: one(users, { fields: [accounts.userId], references: [users.id] }),
 }));
 
-export const sessions = createTable(
-  "session",
-  (d) => ({
-    sessionToken: d.varchar({ length: 255 }).notNull().primaryKey(),
-    userId: d
-      .varchar({ length: 255 })
-      .notNull()
-      .references(() => users.id),
-    expires: d.timestamp({ mode: "date", withTimezone: true }).notNull(),
-  }),
-  (t) => [index("t_user_id_idx").on(t.userId)],
-);
-
+// Sessions Relations
 export const sessionsRelations = relations(sessions, ({ one }) => ({
   user: one(users, { fields: [sessions.userId], references: [users.id] }),
 }));
 
-export const verificationTokens = createTable(
-  "verification_token",
-  (d) => ({
-    identifier: d.varchar({ length: 255 }).notNull(),
-    token: d.varchar({ length: 255 }).notNull(),
-    expires: d.timestamp({ mode: "date", withTimezone: true }).notNull(),
-  }),
-  (t) => [primaryKey({ columns: [t.identifier, t.token] })],
-);
-
+// Events Relations
 export const eventsRelations = relations(events, ({ one, many }) => ({
   author: one(users, { fields: [events.createdById], references: [users.id] }),
   comments: many(eventComments),
   likes: many(eventLikes),
 }));
 
+// Event Comments Relations
 export const eventCommentsRelations = relations(eventComments, ({ one }) => ({
   event: one(events, { fields: [eventComments.eventId], references: [events.id] }),
   author: one(users, { fields: [eventComments.createdById], references: [users.id] }),
 }));
 
+// Event Likes Relations
 export const eventLikesRelations = relations(eventLikes, ({ one }) => ({
   event: one(events, { fields: [eventLikes.eventId], references: [events.id] }),
   user: one(users, { fields: [eventLikes.createdById], references: [users.id] }),
 }));
 
-// --- TYPE EXPORTS for TypeScript ---
+// ===================
+// ===== TYPE EXPORTS =====
+// ===================
+
+export type Event = InferSelectModel<typeof events>;
+export type NewEvent = InferInsertModel<typeof events>;
 export type Project = InferSelectModel<typeof projects>;
 export type NewProject = InferInsertModel<typeof projects>;
 export type Task = InferSelectModel<typeof tasks>;
@@ -450,3 +637,13 @@ export type TaskComment = InferSelectModel<typeof taskComments>;
 export type NewTaskComment = InferInsertModel<typeof taskComments>;
 export type ProjectCollaborator = InferSelectModel<typeof projectCollaborators>;
 export type NewProjectCollaborator = InferInsertModel<typeof projectCollaborators>;
+export type Organization = InferSelectModel<typeof organizations>;
+export type NewOrganization = InferInsertModel<typeof organizations>;
+export type OrganizationMember = InferSelectModel<typeof organizationMembers>;
+export type NewOrganizationMember = InferInsertModel<typeof organizationMembers>;
+export type Document = InferSelectModel<typeof documents>;
+export type NewDocument = InferInsertModel<typeof documents>;
+export type DocumentCollaborator = InferSelectModel<typeof documentCollaborators>;
+export type NewDocumentCollaborator = InferInsertModel<typeof documentCollaborators>;
+export type DocumentVersion = InferSelectModel<typeof documentVersions>;
+export type NewDocumentVersion = InferInsertModel<typeof documentVersions>;
