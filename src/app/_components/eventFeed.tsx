@@ -7,20 +7,14 @@ import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import type { RouterOutputs } from '~/trpc/react';
 import { useUploadThing } from '~/lib/uploadthing';
-import { Heart, MessageCircle, UploadCloud, X, Send } from 'lucide-react';
+import { Heart, MessageCircle, UploadCloud, X, Send, Calendar, User, Loader2 } from 'lucide-react';
 
 type EventWithDetails = RouterOutputs['event']['getPublicEvents'][number];
 
-// Re-defining the futuristic styles for consistency
-const BG_ELEGANT_DARK = "bg-gray-950/95 backdrop-blur-sm";
-const TEXT_LIGHT = "text-gray-50";
-const ACCENT_TEXT = "text-lime-400";
-const BORDER_SUBTLE = "border-gray-800";
-const GLOW_SHADOW_SM = "shadow-lg shadow-lime-400/10";
-const CONTAINER_CARD_STYLE = `${BG_ELEGANT_DARK} rounded-xl shadow-2xl ${GLOW_SHADOW_SM} border ${BORDER_SUBTLE} p-6 transition duration-300 hover:border-lime-700/50`;
-const INPUT_STYLE = `flex-grow p-2 border ${BORDER_SUBTLE} rounded-lg text-sm focus:ring-2 focus:ring-lime-500 focus:border-lime-500 bg-gray-900 ${TEXT_LIGHT} placeholder-gray-500`;
-const BUTTON_PRIMARY_STYLE = `px-4 py-2 bg-lime-600 ${TEXT_LIGHT} text-sm font-medium rounded-lg hover:bg-lime-500 disabled:bg-gray-700 disabled:text-gray-500 transition duration-300 shadow-md shadow-lime-500/30`;
-
+// Professional Design System
+const CARD_BG = 'bg-white';
+const INPUT_BASE = 'flex-grow px-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-white text-slate-900 placeholder-slate-400';
+const BUTTON_PRIMARY = 'px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-all duration-300 disabled:bg-slate-300 disabled:cursor-not-allowed shadow-sm hover:shadow-md';
 
 const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
   const { data: session } = useSession();
@@ -29,6 +23,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
   const [commentImageFile, setCommentImageFile] = useState<File | null>(null);
   const [commentImagePreview, setCommentImagePreview] = useState<string | null>(null);
   const [isUploadingComment, setIsUploadingComment] = useState(false);
+  const [showAllComments, setShowAllComments] = useState(false);
   const isAuthenticated = !!session;
   
   const { startUpload } = useUploadThing("imageUploader");
@@ -103,157 +98,203 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
     }).format(date);
   };
 
+  const displayedComments = showAllComments ? event.comments : event.comments.slice(0, 3);
+
   return (
-    // Card Style Applied
-    <div className={`${CONTAINER_CARD_STYLE} mb-8`}>
+    <div className={`${CARD_BG} rounded-2xl shadow-lg border border-slate-200 overflow-hidden mb-6 hover:shadow-xl transition-all duration-300`}>
       
       {/* Event Header */}
-      <div className={`flex items-start mb-4 border-b ${BORDER_SUBTLE} pb-4`}>
-        <Image 
-          src={event.author.image ?? '/default-avatar.png'} 
-          alt={event.author.name ?? 'Author'} 
-          width={40} 
-          height={40} 
-          className="rounded-full mr-3 border border-lime-500/50" // Avatar Border
-        />
-        <div>
-          <h2 className={`text-xl font-bold ${TEXT_LIGHT} tracking-wide`}>{event.title}</h2>
-          <p className={`text-sm ${ACCENT_TEXT} font-mono`}>
-            Uploader: {event.author.name} {formatDate(event.eventDate)}
-          </p>
+      <div className="p-6 border-b border-slate-200">
+        <div className="flex items-start gap-4">
+          <Image 
+            src={event.author.image ?? '/default-avatar.png'} 
+            alt={event.author.name ?? 'Author'} 
+            width={48} 
+            height={48} 
+            className="rounded-full object-cover ring-2 ring-slate-200" 
+          />
+          <div className="flex-1 min-w-0">
+            <h2 className="text-2xl font-bold text-slate-900 mb-2 break-words">{event.title}</h2>
+            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
+              <div className="flex items-center gap-2">
+                <User size={16} />
+                <span className="font-medium">{event.author.name}</span>
+              </div>
+              <span className="text-slate-400">•</span>
+              <div className="flex items-center gap-2">
+                <Calendar size={16} />
+                <span>{formatDate(event.eventDate)}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Event Image */}
       {event.imageUrl && (
-        <div className="mb-4">
+        <div className="relative aspect-video bg-slate-100">
           <Image
             src={event.imageUrl}
             alt={event.title}
-            width={800}
-            height={400}
-            className={`w-full h-auto rounded-lg object-cover border border-lime-700/50 shadow-md shadow-lime-400/20`}
+            fill
+            className="object-cover"
           />
         </div>
       )}
 
       {/* Event Details */}
-      <p className="text-gray-400 mb-4 whitespace-pre-wrap">{event.description}</p>
+      <div className="p-6">
+        <p className="text-slate-700 whitespace-pre-wrap leading-relaxed">{event.description}</p>
+      </div>
       
       {/* Actions & Stats */}
-      <div className={`flex justify-between items-center text-sm text-gray-500 border-t ${BORDER_SUBTLE} pt-4 mt-4`}>
-        <div className="flex space-x-6">
+      <div className="px-6 py-4 border-t border-slate-200 bg-slate-50">
+        <div className="flex items-center gap-6">
           <button 
             onClick={handleToggleLike} 
             disabled={toggleLike.isPending || !isAuthenticated}
-            className={`flex items-center space-x-1 transition duration-200 ${event.hasLiked ? 'text-red-500 drop-shadow-md shadow-red-500/50' : `text-gray-500 hover:${ACCENT_TEXT}`}`}
+            className={`flex items-center gap-2 text-sm font-medium transition-all duration-200 ${
+              event.hasLiked 
+                ? 'text-red-500' 
+                : 'text-slate-600 hover:text-red-500'
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            <Heart className="w-5 h-5" fill={event.hasLiked ? 'currentColor' : 'none'}/> 
-            <span className="font-semibold">{event.likeCount} Reactions</span>
+            <Heart 
+              size={20} 
+              fill={event.hasLiked ? 'currentColor' : 'none'}
+              className={event.hasLiked ? 'animate-pulse' : ''}
+            /> 
+            <span>{event.likeCount} {event.likeCount === 1 ? 'Like' : 'Likes'}</span>
           </button>
-          <span className={`flex items-center space-x-1 ${ACCENT_TEXT}`}>
-            <MessageCircle className="w-5 h-5" />
-            <span className="font-semibold">{event.commentCount} Log Entries</span>
-          </span>
+          <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
+            <MessageCircle size={20} />
+            <span>{event.commentCount} {event.commentCount === 1 ? 'Comment' : 'Comments'}</span>
+          </div>
         </div>
       </div>
 
       {/* Comment Section */}
-      <div className="mt-6 border-t border-gray-700 pt-4">
-        <h3 className={`text-lg font-semibold ${TEXT_LIGHT} mb-3 border-b border-lime-700/30 pb-1`}>COMMENT LOGS</h3>
-        
-        {/* Comment List */}
-        <div className="space-y-4 max-h-96 overflow-y-auto pr-2 custom-scrollbar"> {/* Added custom-scrollbar class (requires custom CSS if not in Tailwind config) */}
+      <div className="border-t border-slate-200">
+        <div className="p-6">
+          <h3 className="text-lg font-bold text-slate-900 mb-4">Comments</h3>
+          
+          {/* Comment List */}
           {event.comments.length === 0 ? (
-            <p className="text-sm text-gray-500 italic">No comments yet. Be the first to deploy a response.</p>
+            <div className="text-center py-8">
+              <MessageCircle size={48} className="text-slate-300 mx-auto mb-3" />
+              <p className="text-sm text-slate-500">No comments yet. Be the first to comment!</p>
+            </div>
           ) : (
-            event.comments.map((comment) => (
-              <div key={comment.id} className={`text-sm bg-gray-900/50 p-3 rounded-lg border ${BORDER_SUBTLE} transition hover:border-lime-700/50`}>
-                <div className="flex items-start mb-2">
-                  <Image 
-                    src={comment.author.image ?? '/default-avatar.png'} 
-                    alt={comment.author.name ?? 'Commenter'} 
-                    width={28} 
-                    height={28} 
-                    className="rounded-full mr-3 border border-gray-600"
-                  />
-                  <div className="flex-1">
-                    <span className={`font-semibold ${ACCENT_TEXT} text-base`}>{comment.author.name}</span>
-                    {comment.text && (
-                      <p className="text-gray-300 mt-1">{comment.text}</p>
+            <>
+              <div className="space-y-4 mb-4">
+                {displayedComments.map((comment) => (
+                  <div key={comment.id} className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                    <div className="flex items-start gap-3 mb-3">
+                      <Image 
+                        src={comment.author.image ?? '/default-avatar.png'} 
+                        alt={comment.author.name ?? 'Commenter'} 
+                        width={36} 
+                        height={36} 
+                        className="rounded-full object-cover ring-2 ring-slate-200"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <span className="font-semibold text-slate-900">{comment.author.name}</span>
+                        {comment.text && (
+                          <p className="text-slate-700 mt-1 break-words">{comment.text}</p>
+                        )}
+                      </div>
+                    </div>
+                    {comment.imageUrl && (
+                      <div className="mt-3 rounded-lg overflow-hidden border border-slate-200">
+                        <Image
+                          src={comment.imageUrl}
+                          alt="Comment"
+                          width={400}
+                          height={300}
+                          className="w-full h-auto"
+                        />
+                      </div>
                     )}
                   </div>
-                </div>
-                {comment.imageUrl && (
-                  <Image
-                    src={comment.imageUrl}
-                    alt="Comment"
-                    width={300}
-                    height={200}
-                    className="w-full max-w-sm h-auto rounded-lg mt-2 border border-gray-700"
-                  />
-                )}
+                ))}
               </div>
-            ))
-          )}
-        </div>
-        
-        {/* New Comment Form */}
-        {isAuthenticated && (
-          <form onSubmit={handleCommentSubmit} className="mt-6 space-y-3 p-4 bg-gray-900/50 rounded-lg border border-lime-700/30">
-            {commentImagePreview && (
-              <div className="relative inline-block">
-                <Image
-                  src={commentImagePreview}
-                  alt="Preview"
-                  width={200}
-                  height={150}
-                  className="rounded-lg border border-gray-700"
-                />
+              
+              {event.comments.length > 3 && (
                 <button
-                  type="button"
-                  onClick={removeCommentImage}
-                  className="absolute -top-2 -right-2 bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition border border-gray-900"
+                  onClick={() => setShowAllComments(!showAllComments)}
+                  className="text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors mb-4"
                 >
-                  <X size={14} />
+                  {showAllComments 
+                    ? 'Show less' 
+                    : `View ${event.comments.length - 3} more ${event.comments.length - 3 === 1 ? 'comment' : 'comments'}`
+                  }
                 </button>
-              </div>
-            )}
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                placeholder="Submit encrypted log data..."
-                className={INPUT_STYLE}
-                disabled={addComment.isPending || isUploadingComment}
-              />
-              <label 
-                className={`flex items-center justify-center px-3 py-2 border ${BORDER_SUBTLE} rounded-lg cursor-pointer bg-gray-800 hover:bg-gray-700 ${ACCENT_TEXT} transition`}
-                title="Attach Image Data"
-              >
+              )}
+            </>
+          )}
+          
+          {/* New Comment Form */}
+          {isAuthenticated ? (
+            <form onSubmit={handleCommentSubmit} className="mt-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
+              {commentImagePreview && (
+                <div className="relative inline-block mb-3">
+                  <Image
+                    src={commentImagePreview}
+                    alt="Preview"
+                    width={200}
+                    height={150}
+                    className="rounded-lg border border-slate-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={removeCommentImage}
+                    className="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
+              <div className="flex gap-2">
                 <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleCommentImageChange}
-                  className="hidden"
+                  type="text"
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  placeholder="Write a comment..."
+                  className={INPUT_BASE}
                   disabled={addComment.isPending || isUploadingComment}
                 />
-                <UploadCloud className="w-5 h-5" />
-              </label>
-              <button
-                type="submit"
-                disabled={addComment.isPending || isUploadingComment || (!commentText.trim() && !commentImageFile)}
-                className={BUTTON_PRIMARY_STYLE}
-              >
-                {isUploadingComment ? 'UPLOADING...' : <Send className="w-5 h-5" />}
-              </button>
+                <label 
+                  className="flex items-center justify-center px-3 py-2 border border-slate-300 rounded-lg cursor-pointer bg-white hover:bg-slate-50 text-slate-600 hover:text-indigo-600 transition-all"
+                  title="Attach Image"
+                >
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleCommentImageChange}
+                    className="hidden"
+                    disabled={addComment.isPending || isUploadingComment}
+                  />
+                  <UploadCloud size={20} />
+                </label>
+                <button
+                  type="submit"
+                  disabled={addComment.isPending || isUploadingComment || (!commentText.trim() && !commentImageFile)}
+                  className={BUTTON_PRIMARY}
+                >
+                  {isUploadingComment || addComment.isPending ? (
+                    <Loader2 className="animate-spin" size={20} />
+                  ) : (
+                    <Send size={20} />
+                  )}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="mt-6 p-4 bg-slate-50 rounded-xl border border-slate-200 text-center">
+              <p className="text-sm text-slate-600">Sign in to comment on this event</p>
             </div>
-          </form>
-        )}
-        {!isAuthenticated && (
-            <p className="mt-4 text-center text-sm text-gray-500 font-mono">:: Access Denied. User authentication required for log submission. ::</p>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
@@ -263,21 +304,45 @@ export const EventFeed: React.FC = () => {
   const { data: events, isLoading, error } = api.event.getPublicEvents.useQuery();
 
   if (isLoading) {
-    return <div className={`text-center p-10 ${TEXT_LIGHT} font-mono`}>:: Awaiting Data Stream... ::</div>;
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
+        <p className="text-slate-600">Loading events...</p>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className={`text-center p-10 text-red-500 font-mono`}>:: ERROR: Failed to establish data link. {error.message} ::</div>;
+    return (
+      <div className="text-center py-20">
+        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <X size={32} className="text-red-600" />
+        </div>
+        <h3 className="text-xl font-semibold text-slate-900 mb-2">Error Loading Events</h3>
+        <p className="text-slate-600">{error.message}</p>
+      </div>
+    );
   }
 
   if (!events || events.length === 0) {
-    return <div className={`text-center p-10 ${TEXT_LIGHT} font-mono`}>:: NO ACTIVE EVENTS FOUND ::</div>;
+    return (
+      <div className="text-center py-20">
+        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Calendar size={32} className="text-slate-400" />
+        </div>
+        <h3 className="text-xl font-semibold text-slate-900 mb-2">No Events Yet</h3>
+        <p className="text-slate-600">Be the first to create an event!</p>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-8 bg-gray-900">
-      <h1 className={`text-4xl font-extrabold ${ACCENT_TEXT} mb-8 border-b border-lime-700/50 pb-4 tracking-widest`}>EVENT CONSOLE</h1>
-      <div className="w-full">
+    <div className="max-w-4xl mx-auto py-8">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-slate-900 mb-2">Events</h1>
+        <p className="text-slate-600">Discover and engage with upcoming events</p>
+      </div>
+      <div>
         {events.map((event) => (
           <EventCard key={event.id} event={event} />
         ))}
