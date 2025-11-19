@@ -1,8 +1,25 @@
+// Combined Project Management Components
 "use client";
 
 import { useState } from "react";
 import { Plus, Users, Trash2 } from "lucide-react";
 import Image from "next/image";
+
+// --- Monochromatic/Elegant Style Constants ---
+const CARD_BG = "bg-white";
+const TEXT_DARK = "text-gray-900";
+const TEXT_SUBTLE = "text-gray-600";
+const BORDER_LIGHT = "border-gray-300";
+const INPUT_FOCUS = "focus:ring-gray-500 focus:border-gray-500";
+const INPUT_STYLE = `w-full px-3 py-2 text-sm border ${BORDER_LIGHT} rounded-md focus:outline-none focus:ring-1 ${INPUT_FOCUS} ${TEXT_DARK}`;
+const BUTTON_PRIMARY =
+  "bg-gray-900 text-white hover:bg-gray-700 shadow-md shadow-gray-900/30";
+const BUTTON_SECONDARY =
+  "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300";
+const BUTTON_DANGER =
+  "bg-red-700 text-white hover:bg-red-800 shadow-sm shadow-red-700/30";
+const BUTTON_SUBMIT_BASE =
+  "w-full py-2 px-4 rounded-md transition flex items-center justify-center gap-2 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed";
 
 interface User {
   id: string;
@@ -23,7 +40,9 @@ interface ProjectFormProps {
 export function CreateProjectForm({ onSubmit, currentUser }: ProjectFormProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [shareStatus, setShareStatus] = useState<"private" | "shared_read" | "shared_write">("private");
+  const [shareStatus, setShareStatus] = useState<
+    "private" | "shared_read" | "shared_write"
+  >("private");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,11 +65,19 @@ export function CreateProjectForm({ onSubmit, currentUser }: ProjectFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6 space-y-4">
-      <h2 className="text-xl font-bold text-gray-800 mb-4">Create New Project</h2>
+    <form
+      onSubmit={handleSubmit}
+      className={`max-w-md ${CARD_BG} rounded-lg shadow-lg p-5 space-y-4 border ${BORDER_LIGHT}`}
+    >
+      <h2 className={`text-xl font-bold ${TEXT_DARK} mb-3 border-b ${BORDER_LIGHT} pb-2`}>
+        Create New Project
+      </h2>
 
       <div>
-        <label htmlFor="project-title" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="project-title"
+          className={`block text-xs font-medium ${TEXT_SUBTLE} mb-1`}
+        >
           Project Title *
         </label>
         <input
@@ -59,14 +86,17 @@ export function CreateProjectForm({ onSubmit, currentUser }: ProjectFormProps) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Enter project title..."
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+          className={INPUT_STYLE}
           disabled={isSubmitting}
           required
         />
       </div>
 
       <div>
-        <label htmlFor="project-description" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="project-description"
+          className={`block text-xs font-medium ${TEXT_SUBTLE} mb-1`}
+        >
           Description
         </label>
         <textarea
@@ -74,49 +104,49 @@ export function CreateProjectForm({ onSubmit, currentUser }: ProjectFormProps) {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Describe your project..."
-          rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 resize-none"
+          rows={2} // Reduced rows
+          className={`${INPUT_STYLE} resize-none`}
           disabled={isSubmitting}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className={`block text-sm font-medium ${TEXT_DARK} mb-2`}>
           Sharing Settings
         </label>
-        <div className="space-y-2">
-          <label className="flex items-center gap-2 cursor-pointer">
+        <div className="space-y-1">
+          <label className="flex items-center gap-2 cursor-pointer text-sm">
             <input
               type="radio"
               value="private"
               checked={shareStatus === "private"}
               onChange={(e) => setShareStatus(e.target.value as typeof shareStatus)}
-              className="text-blue-600 focus:ring-blue-500"
+              className="text-gray-900 focus:ring-gray-500" // Monochromatic radio
               disabled={isSubmitting}
             />
-            <span className="text-sm text-gray-700">Private - Only you can access</span>
+            <span className={TEXT_SUBTLE}>Private - Only you can access</span>
           </label>
-          <label className="flex items-center gap-2 cursor-pointer">
+          <label className="flex items-center gap-2 cursor-pointer text-sm">
             <input
               type="radio"
               value="shared_read"
               checked={shareStatus === "shared_read"}
               onChange={(e) => setShareStatus(e.target.value as typeof shareStatus)}
-              className="text-blue-600 focus:ring-blue-500"
+              className="text-gray-900 focus:ring-gray-500"
               disabled={isSubmitting}
             />
-            <span className="text-sm text-gray-700">Shared (Read) - Others can view</span>
+            <span className={TEXT_SUBTLE}>Shared (Read) - Others can view</span>
           </label>
-          <label className="flex items-center gap-2 cursor-pointer">
+          <label className="flex items-center gap-2 cursor-pointer text-sm">
             <input
               type="radio"
               value="shared_write"
               checked={shareStatus === "shared_write"}
               onChange={(e) => setShareStatus(e.target.value as typeof shareStatus)}
-              className="text-blue-600 focus:ring-blue-500"
+              className="text-gray-900 focus:ring-gray-500"
               disabled={isSubmitting}
             />
-            <span className="text-sm text-gray-700">Shared (Write) - Others can edit</span>
+            <span className={TEXT_SUBTLE}>Shared (Edit) - Others can edit</span>
           </label>
         </div>
       </div>
@@ -124,9 +154,9 @@ export function CreateProjectForm({ onSubmit, currentUser }: ProjectFormProps) {
       <button
         type="submit"
         disabled={isSubmitting || !title.trim()}
-        className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        className={`${BUTTON_SUBMIT_BASE} ${BUTTON_PRIMARY}`}
       >
-        <Plus size={18} />
+        <Plus size={16} />
         {isSubmitting ? "Creating..." : "Create Project"}
       </button>
     </form>
@@ -145,11 +175,17 @@ interface TaskFormProps {
   }) => Promise<void>;
 }
 
-export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskFormProps) {
+export function CreateTaskForm({
+  projectId,
+  availableUsers,
+  onSubmit,
+}: TaskFormProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [assignedToId, setAssignedToId] = useState<string>("");
-  const [priority, setPriority] = useState<"low" | "medium" | "high" | "urgent">("medium");
+  const [priority, setPriority] = useState<
+    "low" | "medium" | "high" | "urgent"
+  >("medium");
   const [dueDate, setDueDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -181,11 +217,19 @@ export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskForm
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6 space-y-4">
-      <h3 className="text-lg font-bold text-gray-800 mb-4">Add New Task</h3>
+    <form
+      onSubmit={handleSubmit}
+      className={`max-w-md ${CARD_BG} rounded-lg shadow-lg p-5 space-y-3 border ${BORDER_LIGHT}`}
+    >
+      <h3 className={`text-lg font-bold ${TEXT_DARK} mb-3 border-b ${BORDER_LIGHT} pb-2`}>
+        Add New Task
+      </h3>
 
       <div>
-        <label htmlFor="task-title" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="task-title"
+          className={`block text-xs font-medium ${TEXT_SUBTLE} mb-1`}
+        >
           Task Title *
         </label>
         <input
@@ -194,14 +238,17 @@ export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskForm
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Enter task title..."
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+          className={INPUT_STYLE}
           disabled={isSubmitting}
           required
         />
       </div>
 
       <div>
-        <label htmlFor="task-description" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="task-description"
+          className={`block text-xs font-medium ${TEXT_SUBTLE} mb-1`}
+        >
           Description
         </label>
         <textarea
@@ -209,22 +256,25 @@ export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskForm
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Describe the task..."
-          rows={2}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 resize-none"
+          rows={1} // Reduced rows
+          className={`${INPUT_STYLE} resize-none`}
           disabled={isSubmitting}
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="task-assignee" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="task-assignee"
+            className={`block text-xs font-medium ${TEXT_SUBTLE} mb-1`}
+          >
             Assign To
           </label>
           <select
             id="task-assignee"
             value={assignedToId}
             onChange={(e) => setAssignedToId(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+            className={INPUT_STYLE}
             disabled={isSubmitting}
           >
             <option value="">Unassigned</option>
@@ -237,14 +287,17 @@ export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskForm
         </div>
 
         <div>
-          <label htmlFor="task-priority" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="task-priority"
+            className={`block text-xs font-medium ${TEXT_SUBTLE} mb-1`}
+          >
             Priority
           </label>
           <select
             id="task-priority"
             value={priority}
             onChange={(e) => setPriority(e.target.value as typeof priority)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+            className={INPUT_STYLE}
             disabled={isSubmitting}
           >
             <option value="low">Low</option>
@@ -256,7 +309,10 @@ export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskForm
       </div>
 
       <div>
-        <label htmlFor="task-due-date" className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor="task-due-date"
+          className={`block text-xs font-medium ${TEXT_SUBTLE} mb-1`}
+        >
           Due Date
         </label>
         <input
@@ -264,7 +320,7 @@ export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskForm
           type="datetime-local"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+          className={INPUT_STYLE}
           disabled={isSubmitting}
         />
       </div>
@@ -272,9 +328,9 @@ export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskForm
       <button
         type="submit"
         disabled={isSubmitting || !title.trim()}
-        className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        className={`${BUTTON_SUBMIT_BASE} ${BUTTON_PRIMARY}`} // Using primary gray for tasks too
       >
-        <Plus size={18} />
+        <Plus size={16} />
         {isSubmitting ? "Adding..." : "Add Task"}
       </button>
     </form>
@@ -287,9 +343,15 @@ interface CollaboratorManagerProps {
     user: User;
     permission: "read" | "write";
   }>;
-  onAddCollaborator: (email: string, permission: "read" | "write") => Promise<void>;
+  onAddCollaborator: (
+    email: string,
+    permission: "read" | "write"
+  ) => Promise<void>;
   onRemoveCollaborator: (userId: string) => Promise<void>;
-  onUpdatePermission: (userId: string, permission: "read" | "write") => Promise<void>;
+  onUpdatePermission: (
+    userId: string,
+    permission: "read" | "write"
+  ) => Promise<void>;
   isOwner: boolean;
 }
 
@@ -323,17 +385,20 @@ export function CollaboratorManager({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="flex items-center gap-2 mb-4">
-        <Users size={20} className="text-gray-700" />
-        <h3 className="text-lg font-bold text-gray-800">Collaborators</h3>
+    <div className={`max-w-md ${CARD_BG} rounded-lg shadow-lg p-5 space-y-4 border ${BORDER_LIGHT}`}>
+      <div className="flex items-center gap-2 mb-3 border-b border-gray-200 pb-2">
+        <Users size={18} className={TEXT_SUBTLE} />
+        <h3 className={`text-lg font-bold ${TEXT_DARK}`}>Collaborators</h3>
       </div>
 
       {/* Add collaborator form */}
       {isOwner && (
         <form onSubmit={handleAdd} className="mb-4 space-y-3">
           <div>
-            <label htmlFor="collab-email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="collab-email"
+              className={`block text-xs font-medium ${TEXT_SUBTLE} mb-1`}
+            >
               Add by Email
             </label>
             <input
@@ -342,7 +407,7 @@ export function CollaboratorManager({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="colleague@example.com"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              className={INPUT_STYLE}
               disabled={isAdding}
             />
           </div>
@@ -351,7 +416,7 @@ export function CollaboratorManager({
             <select
               value={permission}
               onChange={(e) => setPermission(e.target.value as "read" | "write")}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              className={`${INPUT_STYLE} flex-1`}
               disabled={isAdding}
             >
               <option value="read">Can View</option>
@@ -361,7 +426,7 @@ export function CollaboratorManager({
             <button
               type="submit"
               disabled={isAdding || !email.trim()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition disabled:opacity-50"
+              className={`px-3 py-2 text-sm rounded-md transition disabled:opacity-50 ${BUTTON_PRIMARY}`}
             >
               {isAdding ? "Adding..." : "Add"}
             </button>
@@ -370,26 +435,28 @@ export function CollaboratorManager({
       )}
 
       {/* Collaborator list */}
-      <div className="space-y-2">
+      <div className="space-y-2 pt-2">
         {currentCollaborators.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-4">No collaborators yet</p>
+          <p className="text-sm text-gray-500 text-center py-4">
+            No collaborators yet
+          </p>
         ) : (
           currentCollaborators.map(({ user, permission: userPermission }) => (
             <div
               key={user.id}
-              className="flex items-center justify-between p-3 bg-gray-50 rounded-md"
+              className="flex items-center justify-between p-3 bg-gray-50 rounded-md border border-gray-200"
             >
               <div className="flex items-center gap-3">
                 {user.image ? (
                   <Image
                     src={user.image}
                     alt={user.name ?? "User"}
-                    width={32}
-                    height={32}
+                    width={28} // Smaller image
+                    height={28} // Smaller image
                     className="rounded-full"
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold">
+                  <div className="w-7 h-7 rounded-full bg-gray-300 flex items-center justify-center text-xs font-semibold text-gray-800">
                     {user.name?.[0] ?? user.email[0]?.toUpperCase() ?? "?"}
                   </div>
                 )}
@@ -409,19 +476,23 @@ export function CollaboratorManager({
                     <select
                       value={userPermission}
                       onChange={(e) =>
-                        onUpdatePermission(user.id, e.target.value as "read" | "write")
+                        onUpdatePermission(
+                          user.id,
+                          e.target.value as "read" | "write"
+                        )
                       }
-                      className="px-2 py-1 text-xs border border-gray-300 rounded text-gray-900"
+                      className={`px-2 py-1 text-xs border ${BORDER_LIGHT} rounded ${TEXT_DARK} bg-white`}
                     >
                       <option value="read">View</option>
                       <option value="write">Edit</option>
                     </select>
                     <button
                       onClick={() => onRemoveCollaborator(user.id)}
-                      className="p-1 text-red-600 hover:bg-red-50 rounded transition"
+                      className="p-1 text-red-600 hover:bg-red-50 rounded transition disabled:opacity-50"
                       title="Remove collaborator"
+                      disabled={!isOwner}
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={15} /> {/* Smaller icon */}
                     </button>
                   </>
                 ) : (

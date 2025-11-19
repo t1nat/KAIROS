@@ -1,81 +1,93 @@
+// src/app/_components/createNoteForm.tsx
 "use client";
 
 import { useState } from "react";
 import { api } from "~/trpc/react";
+import { Lock, FilePlus } from "lucide-react"; // Added Lucide icons
+
+// --- Monochromatic/Elegant Style Constants ---
+const CARD_BG = 'bg-white';
+const TEXT_DARK = 'text-gray-900';
+const TEXT_SUBTLE = 'text-gray-600';
+const BORDER_LIGHT = 'border-gray-300';
+const BORDER_FOCUS = 'border-gray-500 focus:ring-gray-700';
+const BUTTON_PRIMARY = 'bg-gray-900 hover:bg-gray-800';
+const INPUT_STYLE = `w-full p-3 border ${BORDER_LIGHT} rounded-lg focus:outline-none focus:ring-1 focus:${BORDER_FOCUS} ${CARD_BG} ${TEXT_DARK} resize-none text-base`;
+
 
 /**
  * A compact form for creating a secure note.
- * Styles are simplified and reduced for a smaller footprint.
  */
 export function CreateNoteForm() {
-  // Removed confirmPassword as it was not used in the original submit logic.
-  const [content, setContent] = useState("");
-  const [password, setPassword] = useState("");
-  
-  const createNote = api.note.create.useMutation({
-    onSuccess: () => {
-      // Clear the form on success
-      setContent("");
-      setPassword("");
-    },
-    onError: (error) => {
-      console.error("Failed to create note:", error);
-      alert(`Error creating note: ${error.message}`);
-    },
-  });
+  const [content, setContent] = useState("");
+  const [password, setPassword] = useState("");
+  
+  const createNote = api.note.create.useMutation({
+    onSuccess: () => {
+      setContent("");
+      setPassword("");
+    },
+    onError: (error) => {
+      console.error("Failed to create note:", error);
+      alert(`Error creating note: ${error.message}`);
+    },
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!content.trim()) {
-      alert("Note content cannot be empty.");
-      return;
-    }
-    
-    // Call the tRPC mutation
-    createNote.mutate({ content, password });
-  };
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!content.trim()) {
+      alert("Note content cannot be empty.");
+      return;
+    }
+    
+    createNote.mutate({ content, password });
+  };
 
-  return (
-    // Reduced overall padding, width utility, and shadow/border complexity
-    <form onSubmit={handleSubmit} className="p-4 bg-white rounded-lg shadow-md max-w-sm mx-auto text-sm">
-      <h2 className="text-base font-semibold mb-3">New Secure Note</h2>
+  return (
+    <form 
+      onSubmit={handleSubmit} 
+      // Clean, white background, shadow, and border
+      className={`p-6 ${CARD_BG} rounded-xl shadow-lg border ${BORDER_LIGHT} max-w-lg w-full mx-auto text-sm space-y-4`}
+    >
+      <h2 className={`text-xl font-semibold ${TEXT_DARK} tracking-tight border-b ${BORDER_LIGHT} pb-3`}>
+        New Secure Document <Lock className={`inline-block w-4 h-4 ml-2 ${TEXT_SUBTLE}`} />
+      </h2>
 
-      {/* Note Content Input: Smaller rows, padding, and simplified styling */}
-      <textarea
-        placeholder="Note content..." 
-        rows={3} // Reduced from 6
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        className="w-full p-2 mb-3 border rounded-md focus:outline-none focus:ring-1 focus:ring-yellow-500 text-gray-900 resize-none text-sm"
-        disabled={createNote.isPending}
-      />
+      {/* Note Content Input: Clean white background, dark text */}
+      <textarea
+        placeholder="Start typing your document content here..." 
+        rows={8}
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        className={`${INPUT_STYLE} focus:ring-gray-400`}
+        disabled={createNote.isPending}
+      />
 
-      {/* Password Input: Smaller margins and padding */}
-      <div className="mb-4">
-        <label htmlFor="note-password" className="text-xs font-medium text-gray-700 block mb-1">Password (Optional):</label>
-        <input 
-          id="note-password"
-          type="password" 
-          placeholder="Set a password" 
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full p-2 border rounded-md text-gray-900 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-          disabled={createNote.isPending}
-        />
-      </div>
-      
-      {/* Create Note Button: Reduced padding, font size, and simplified icon/text styling */}
-      <button 
-        type="submit"
-        className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition flex items-center justify-center text-sm font-medium disabled:opacity-50"
-        disabled={createNote.isPending || content.trim().length === 0}
-      >
-        {/* Simplified SVG size */}
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-        {createNote.isPending ? "Saving..." : "Create Note"}
-      </button>
-    </form>
-  );
+      {/* Password Input */}
+      <div>
+        <label htmlFor="note-password" className={`text-sm font-medium ${TEXT_SUBTLE} block mb-2`}>
+          Encryption Key (Optional):
+        </label>
+        <input 
+          id="note-password"
+          type="password" 
+          placeholder="Set a key to encrypt this document" 
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className={INPUT_STYLE}
+          disabled={createNote.isPending}
+        />
+      </div>
+      
+      {/* Create Note Button: Primary monochromatic button */}
+      <button 
+        type="submit"
+        className={`w-full ${BUTTON_PRIMARY} text-white py-3 rounded-lg transition flex items-center justify-center text-base font-semibold disabled:bg-gray-400 shadow-md hover:shadow-gray-400/50`}
+        disabled={createNote.isPending || content.trim().length === 0}
+      >
+        <FilePlus className="h-5 w-5 mr-2" />
+        {createNote.isPending ? "SAVING DOCUMENT..." : "SAVE DOCUMENT"}
+      </button>
+    </form>
+  );
 }
