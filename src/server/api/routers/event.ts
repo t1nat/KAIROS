@@ -4,20 +4,25 @@ import { z } from "zod";
 import { protectedProcedure, publicProcedure, createTRPCRouter } from "../trpc";
 import { events, eventComments, eventLikes } from "~/server/db/schema";
 import { eq, desc, and } from "drizzle-orm";
-import { type  NewEvent } from "~/server/db/schema"; // Assume you'll create a NewEvent type
+import { type  NewEvent } from "~/server/db/schema";
 
 // Define the input schema for creating an event
 const createEventSchema = z.object({
   title: z.string().min(1).max(256),
   description: z.string().min(1),
   eventDate: z.date(),
+  imageUrl: z.string().url().optional(),
 });
 
-// Define the input schema for adding a comment
+// Updated schema: text can be empty if there's an image
 const addCommentSchema = z.object({
   eventId: z.number(),
-  text: z.string().min(1).max(500),
-});
+  text: z.string().max(500), // Removed .min(1) to allow empty strings
+  imageUrl: z.string().url().optional(),
+}).refine(
+  (data) => data.text.trim().length > 0 || data.imageUrl !== undefined,
+  { message: "Comment must have either text or an image" }
+);
 
 // Define the input schema for liking an event
 const toggleLikeSchema = z.object({
@@ -29,13 +34,14 @@ export const eventRouter = createTRPCRouter({
   createEvent: protectedProcedure
     .input(createEventSchema)
     .mutation(async ({ ctx, input }) => {
-      const { title, description, eventDate } = input;
+      const { title, description, eventDate, imageUrl } = input;
       const createdById = ctx.session.user.id;
       
-      const newEvent: NewEvent = { // Assuming NewEvent is inferred from Drizzle
+      const newEvent: NewEvent = {
         title,
         description,
         eventDate,
+        imageUrl,
         createdById,
       };
 
@@ -51,7 +57,7 @@ export const eventRouter = createTRPCRouter({
         orderBy: desc(events.createdAt),
         with: {
           author: {
-            columns: { id: true, name: true, image: true }, // Select only necessary user data
+            columns: { id: true, name: true, image: true },
           },
           comments: {
             with: {
@@ -62,7 +68,7 @@ export const eventRouter = createTRPCRouter({
             orderBy: desc(eventComments.createdAt),
           },
           likes: {
-            columns: { createdById: true }, // We only need the ID of the liker
+            columns: { createdById: true },
           }
         },
       });
@@ -87,6 +93,7 @@ export const eventRouter = createTRPCRouter({
       await ctx.db.insert(eventComments).values({
         eventId: input.eventId,
         text: input.text,
+        imageUrl: input.imageUrl,
         createdById: ctx.session.user.id,
       });
       return { success: true };

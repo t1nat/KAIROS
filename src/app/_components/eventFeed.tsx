@@ -6,24 +6,27 @@ import { api } from '~/trpc/react';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import type { RouterOutputs } from '~/trpc/react';
+import { useUploadThing } from '~/lib/uploadthing';
 
-// --- Type definition for the enriched event data ---
 type EventWithDetails = RouterOutputs['event']['getPublicEvents'][number];
 
-/**
- * Renders a single Event card with details, comments, and like button.
- */
 const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
   const { data: session } = useSession();
   const utils = api.useUtils();
   const [commentText, setCommentText] = useState('');
+  const [commentImageFile, setCommentImageFile] = useState<File | null>(null);
+  const [commentImagePreview, setCommentImagePreview] = useState<string | null>(null);
+  const [isUploadingComment, setIsUploadingComment] = useState(false);
   const isAuthenticated = !!session;
   
-  // Mutations
+  const { startUpload } = useUploadThing("imageUploader");
+  
   const addComment = api.event.addComment.useMutation({
     onSuccess: () => {
       void utils.event.getPublicEvents.invalidate();
       setCommentText('');
+      setCommentImageFile(null);
+      setCommentImagePreview(null);
     },
   });
 
@@ -33,14 +36,47 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
     },
   });
 
-  const handleCommentSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isAuthenticated || !commentText.trim()) return;
+  const handleCommentImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setCommentImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCommentImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
-    addComment.mutate({
-      eventId: event.id,
-      text: commentText.trim(),
-    });
+  const removeCommentImage = () => {
+    setCommentImageFile(null);
+    setCommentImagePreview(null);
+  };
+
+  const handleCommentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isAuthenticated || (!commentText.trim() && !commentImageFile)) return;
+
+    try {
+      setIsUploadingComment(true);
+      let imageUrl: string | undefined;
+
+      if (commentImageFile) {
+        const uploadResult = await startUpload([commentImageFile]);
+        imageUrl = uploadResult?.[0]?.url;
+      }
+
+      addComment.mutate({
+        eventId: event.id,
+        text: commentText.trim() || '',
+        imageUrl,
+      });
+    } catch (error) {
+      alert('Failed to upload image');
+      console.error(error);
+    } finally {
+      setIsUploadingComment(false);
+    }
   };
 
   const handleToggleLike = () => {
@@ -74,6 +110,19 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
           </p>
         </div>
       </div>
+
+      {/* Event Image */}
+      {event.imageUrl && (
+        <div className="mb-4">
+          <Image
+            src={event.imageUrl}
+            alt={event.title}
+            width={800}
+            height={400}
+            className="w-full h-auto rounded-lg object-cover"
+          />
+        </div>
+      )}
 
       {/* Event Details */}
       <p className="text-gray-600 mb-4 whitespace-pre-wrap">{event.description}</p>
@@ -109,23 +158,36 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
         <h3 className="text-lg font-semibold text-gray-700 mb-3">Comments ({event.commentCount})</h3>
         
         {/* Comment List */}
-        <div className="space-y-3 max-h-48 overflow-y-auto pr-2">
+        <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
           {event.comments.length === 0 ? (
             <p className="text-sm text-gray-500">No comments yet. Be the first!</p>
           ) : (
             event.comments.map((comment) => (
-              <div key={comment.id} className="text-sm bg-gray-50 p-3 rounded-lg flex items-start">
-                <Image 
-                  src={comment.author.image ?? '/default-avatar.png'} 
-                  alt={comment.author.name ?? 'Commenter'} 
-                  width={24} 
-                  height={24} 
-                  className="rounded-full mr-2"
-                />
-                <p>
-                  <span className="font-semibold text-gray-800 mr-1">{comment.author.name}:</span>
-                  <span className="text-gray-600">{comment.text}</span>
-                </p>
+              <div key={comment.id} className="text-sm bg-gray-50 p-3 rounded-lg">
+                <div className="flex items-start mb-2">
+                  <Image 
+                    src={comment.author.image ?? '/default-avatar.png'} 
+                    alt={comment.author.name ?? 'Commenter'} 
+                    width={24} 
+                    height={24} 
+                    className="rounded-full mr-2"
+                  />
+                  <div className="flex-1">
+                    <span className="font-semibold text-gray-800">{comment.author.name}</span>
+                    {comment.text && (
+                      <p className="text-gray-600 mt-1">{comment.text}</p>
+                    )}
+                  </div>
+                </div>
+                {comment.imageUrl && (
+                  <Image
+                    src={comment.imageUrl}
+                    alt="Comment"
+                    width={300}
+                    height={200}
+                    className="w-full max-w-sm h-auto rounded-lg mt-2"
+                  />
+                )}
               </div>
             ))
           )}
@@ -133,22 +195,54 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
         
         {/* New Comment Form */}
         {isAuthenticated && (
-          <form onSubmit={handleCommentSubmit} className="mt-4 flex space-x-2">
-            <input
-              type="text"
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Write a comment..."
-              className="flex-grow p-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500"
-              disabled={addComment.isPending}
-            />
-            <button
-              type="submit"
-              disabled={addComment.isPending || !commentText.trim()}
-              className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:bg-indigo-400"
-            >
-              Post
-            </button>
+          <form onSubmit={handleCommentSubmit} className="mt-4 space-y-2">
+            {commentImagePreview && (
+              <div className="relative inline-block">
+                <Image
+                  src={commentImagePreview}
+                  alt="Preview"
+                  width={200}
+                  height={150}
+                  className="rounded-lg"
+                />
+                <button
+                  type="button"
+                  onClick={removeCommentImage}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+            <div className="flex space-x-2">
+              <input
+                type="text"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder="Write a comment..."
+                className="flex-grow p-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                disabled={addComment.isPending || isUploadingComment}
+              />
+              <label className="flex items-center justify-center px-3 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCommentImageChange}
+                  className="hidden"
+                  disabled={addComment.isPending || isUploadingComment}
+                />
+                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </label>
+              <button
+                type="submit"
+                disabled={addComment.isPending || isUploadingComment || (!commentText.trim() && !commentImageFile)}
+                className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:bg-indigo-400"
+              >
+                {isUploadingComment ? 'Uploading...' : 'Post'}
+              </button>
+            </div>
           </form>
         )}
         {!isAuthenticated && (
@@ -159,10 +253,6 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
   );
 };
 
-
-/**
- * Main component to fetch and display the event feed.
- */
 export const EventFeed: React.FC = () => {
   const { data: events, isLoading, error } = api.event.getPublicEvents.useQuery();
 

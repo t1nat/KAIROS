@@ -1,21 +1,21 @@
-/**
- * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially useful
- * for Docker builds.
- */
-import "./src/env.js";
-
-/** @type {import("next").NextConfig} */
-const config = {
-    images: {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  images: {
     remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'utfs.io',
+        port: '',
+        pathname: '/**',
+      },
       {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
         port: '',
-        pathname: '**', // Allow any path for Google profile pictures
+        pathname: '/**',
       },
     ],
   },
 };
 
-export default config;
+export default nextConfig;

@@ -156,6 +156,7 @@ export const events = createTable(
     id: d.serial("id").primaryKey(),
     title: d.varchar("title", { length: 256 }).notNull(),
     description: d.text("description").notNull(), // Detailed event info
+    imageUrl: d.text("image_url"), // imagesssssssss 
     eventDate: d.timestamp("event_date", { mode: "date", withTimezone: true }).notNull(), // When the event happens
     createdById: d
       .varchar({ length: 255 })
@@ -180,6 +181,7 @@ export const eventComments = createTable(
   (d) => ({
     id: d.serial("id").primaryKey(),
     text: d.text("text").notNull(),
+    imageUrl: d.text("image_url"),
     eventId: d
       .integer("event_id")
       .notNull()
