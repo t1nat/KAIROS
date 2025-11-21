@@ -1,4 +1,4 @@
-// src/server/db/schema.ts - COMPLETE VERSION
+// src/server/db/schema.ts - UPDATED WITH SETTINGS FIELDS
 
 import { type InferInsertModel, type InferSelectModel, relations, sql } from "drizzle-orm"; 
 import {
@@ -12,6 +12,7 @@ import {
   pgEnum,
   integer,
   json,
+  boolean,
 } from "drizzle-orm/pg-core";
 import type { AdapterAccount } from "next-auth/adapters";
 import crypto from "node:crypto";
@@ -28,8 +29,11 @@ export const taskStatusEnum = pgEnum("task_status", ['pending', 'in_progress', '
 export const taskPriorityEnum = pgEnum("task_priority", ['low', 'medium', 'high', 'urgent']);
 export const usageModeEnum = pgEnum("usage_mode", ["personal", "organization"]);
 export const orgRoleEnum = pgEnum("org_role", ["admin", "worker"]);
+export const themeEnum = pgEnum("theme", ["light", "dark", "system"]);
+export const languageEnum = pgEnum("language", ["en", "es", "fr", "de", "it", "pt", "ja", "ko", "zh", "ar"]);
+export const dateFormatEnum = pgEnum("date_format", ["MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"]);
 
-// --- USER TABLE ---
+// --- USER TABLE (UPDATED WITH SETTINGS) ---
 export const users = createTable("user", (d) => ({
     id: d
       .varchar({ length: 255 })
@@ -44,11 +48,79 @@ export const users = createTable("user", (d) => ({
         withTimezone: true,
       })
       .$defaultFn(() => new Date()),
-    image: d.varchar({ length: 255 }),
+    image: d.varchar({ length: 255 }), // This is automatically set by Google OAuth
     usageMode: usageModeEnum("usage_mode"),
     passwordResetToken: varchar("password_reset_token", { length: 255 }),
     passwordResetExpires: timestamp("password_reset_expires", { mode: "date", withTimezone: true }),
+    
+    // === PROFILE SETTINGS ===
+    bio: text("bio"),
+    
+    // === NOTIFICATION SETTINGS ===
+    emailNotifications: boolean("email_notifications").default(true).notNull(),
+    projectUpdatesNotifications: boolean("project_updates_notifications").default(true).notNull(),
+    eventRemindersNotifications: boolean("event_reminders_notifications").default(false).notNull(),
+    marketingEmailsNotifications: boolean("marketing_emails_notifications").default(false).notNull(),
+    
+    // === LANGUAGE & REGION SETTINGS ===
+    language: languageEnum("language").default("en").notNull(),
+    timezone: varchar("timezone", { length: 100 }).default("UTC").notNull(),
+    dateFormat: dateFormatEnum("date_format").default("MM/DD/YYYY").notNull(),
+    
+    // === APPEARANCE SETTINGS ===
+    theme: themeEnum("theme").default("light").notNull(),
+    accentColor: varchar("accent_color", { length: 20 }).default("indigo").notNull(),
+    
+    // === PRIVACY SETTINGS ===
+    profileVisibility: boolean("profile_visibility").default(true).notNull(),
+    showOnlineStatus: boolean("show_online_status").default(true).notNull(),
+    activityTracking: boolean("activity_tracking").default(false).notNull(),
+    dataCollection: boolean("data_collection").default(false).notNull(),
+    
+    // === SECURITY SETTINGS ===
+    twoFactorEnabled: boolean("two_factor_enabled").default(false).notNull(),
+    twoFactorSecret: varchar("two_factor_secret", { length: 255 }),
+    
+    // === TIMESTAMPS ===
+    createdAt: timestamp("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: timestamp("updated_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
 }));
+
+// --- USER SETTINGS TYPE EXPORT ---
+export type UserSettings = {
+  // Profile
+  name: string | null;
+  bio: string | null;
+  image: string | null;
+  
+  // Notifications
+  emailNotifications: boolean;
+  projectUpdatesNotifications: boolean;
+  eventRemindersNotifications: boolean;
+  marketingEmailsNotifications: boolean;
+  
+  // Language & Region
+  language: "en" | "es" | "fr" | "de" | "it" | "pt" | "ja" | "ko" | "zh" | "ar";
+  timezone: string;
+  dateFormat: "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD";
+  
+  // Appearance
+  theme: "light" | "dark" | "system";
+  accentColor: string;
+  
+  // Privacy
+  profileVisibility: boolean;
+  showOnlineStatus: boolean;
+  activityTracking: boolean;
+  dataCollection: boolean;
+  
+  // Security
+  twoFactorEnabled: boolean;
+};
 
 // --- ORGANIZATIONS TABLE ---
 export const organizations = createTable(
@@ -586,7 +658,6 @@ export const usersRelations = relations(users, ({ many }) => ({
   createdTasks: many(tasks),
   taskComments: many(taskComments),
   taskActivities: many(taskActivityLog),
-  // NEW ORGANIZATION RELATIONS
   organizationsOwned: many(organizations),
   organizationMemberships: many(organizationMembers),
   documents: many(documents),
@@ -627,6 +698,8 @@ export const eventLikesRelations = relations(eventLikes, ({ one }) => ({
 // ===== TYPE EXPORTS =====
 // ===================
 
+export type User = InferSelectModel<typeof users>;
+export type NewUser = InferInsertModel<typeof users>;
 export type Event = InferSelectModel<typeof events>;
 export type NewEvent = InferInsertModel<typeof events>;
 export type Project = InferSelectModel<typeof projects>;

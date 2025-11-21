@@ -1,4 +1,4 @@
-// src/app/_components/roleSelectionModal.tsx - FIXED (No TypeScript Errors)
+// src/app/_components/roleSelectionModal.tsx - WITH ENTER KEY SUPPORT
 
 "use client";
 
@@ -65,7 +65,6 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
       await navigator.clipboard.writeText(generatedCode);
       alert("Code copied to clipboard!");
     } catch (err) {
-      // Fallback for older browsers
       const textArea = document.createElement("textarea");
       textArea.value = generatedCode;
       document.body.appendChild(textArea);
@@ -73,6 +72,22 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
       document.execCommand("copy");
       document.body.removeChild(textArea);
       alert("Code copied to clipboard!");
+    }
+  };
+
+  // Handle Enter key for org name input
+  const handleOrgNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleCreateOrganization();
+    }
+  };
+
+  // Handle Enter key for access code input
+  const handleAccessCodeKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleJoinOrganization();
     }
   };
 
@@ -181,9 +196,12 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
                   type="text"
                   value={organizationName}
                   onChange={(e) => setOrganizationName(e.target.value)}
+                  onKeyDown={handleOrgNameKeyDown}
                   placeholder="e.g., Acme Corporation"
                   className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white placeholder:text-slate-500"
+                  autoFocus
                 />
+                <p className="text-xs text-slate-400 mt-2">Press Enter to create</p>
               </div>
 
               <button
@@ -259,10 +277,13 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
                   type="text"
                   value={accessCode}
                   onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
+                  onKeyDown={handleAccessCodeKeyDown}
                   placeholder="XXXX-XXXX-XXXX"
                   className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white font-mono text-center text-2xl tracking-wider placeholder:text-slate-600"
                   maxLength={14}
+                  autoFocus
                 />
+                <p className="text-xs text-slate-400 mt-2 text-center">Press Enter to join</p>
               </div>
 
               <button

@@ -1,4 +1,4 @@
-// src/server/api/routers/user.ts (UPDATED TO MATCH YOUR NEEDS)
+// src/server/api/routers/user.ts
 
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
@@ -6,6 +6,27 @@ import { users, organizationMembers } from "~/server/db/schema";
 import { eq } from "drizzle-orm";
 
 export const userRouter = createTRPCRouter({
+  // Get current user info (for userDisplay and other components)
+  getCurrentUser: protectedProcedure
+    .query(async ({ ctx }) => {
+      const user = await ctx.db.query.users.findFirst({
+        where: eq(users.id, ctx.session.user.id),
+        columns: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          bio: true,
+        },
+      });
+
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      return user;
+    }),
+
   // Set user to personal mode
   setPersonalMode: protectedProcedure
     .mutation(async ({ ctx }) => {
@@ -17,7 +38,6 @@ export const userRouter = createTRPCRouter({
     }),
 
   // Get user profile - returns null if user hasn't completed onboarding
-  // This is what homeClient.tsx checks to show the role selection modal
   getProfile: protectedProcedure
     .query(async ({ ctx }) => {
       const user = await ctx.db.query.users.findFirst({
@@ -53,7 +73,7 @@ export const userRouter = createTRPCRouter({
       };
     }),
 
-  // Check if user needs onboarding (alternative method if you prefer)
+  // Check if user needs onboarding
   checkOnboardingStatus: protectedProcedure
     .query(async ({ ctx }) => {
       const user = await ctx.db.query.users.findFirst({

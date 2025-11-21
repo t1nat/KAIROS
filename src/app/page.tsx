@@ -1,5 +1,4 @@
-// src/app/page.tsx - FIXED VERSION (no latestPost prop)
-
+// src/app/page.tsx
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 import { HomeClient } from "./homeClient";

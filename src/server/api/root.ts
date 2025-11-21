@@ -8,6 +8,7 @@ import { taskRouter } from "~/server/api/routers/task";
 import { organizationRouter } from "~/server/api/routers/organization"; // NEW
 import { userRouter } from "~/server/api/routers/user"; // NEW
 import { documentRouter } from "~/server/api/routers/document"; // NEW
+import { settingsRouter } from "~/server/api/routers/settings";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 /**
@@ -18,6 +19,7 @@ import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 export const appRouter = createTRPCRouter({
   post: postRouter,
   event: eventRouter,
+  settings: settingsRouter,
   note: noteRouter,
   project: projectRouter,
   task: taskRouter,
