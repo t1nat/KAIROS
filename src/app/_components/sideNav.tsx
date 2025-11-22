@@ -15,9 +15,9 @@ import { useState } from "react";
 import Link from "next/link";
 
 // --- Professional Design System ---
-const NAV_BG = "bg-slate-900";
-const NAV_ITEM_BASE = "relative flex items-center justify-center w-full h-14 text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-300 group";
-const NAV_ITEM_ACTIVE = "text-indigo-400 bg-slate-800";
+const NAV_BG = "bg-[#9448F2]";
+const NAV_ITEM_BASE = "relative flex items-center justify-center w-full h-14 text-white hover:text-white hover:bg-[#a55ff4] transition-all duration-300 group";
+const NAV_ITEM_ACTIVE = "text-white bg-[#a55ff4]";
 const SUBMENU_BG = "bg-white";
 const SUBMENU_ITEM = "flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 rounded-lg";
 
@@ -112,9 +112,9 @@ const FileMenu = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
 
 // --- Tooltip Component ---
 const NavTooltip = ({ text }: { text: string }) => (
-  <div className="absolute left-full ml-2 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+  <div className="absolute left-full ml-2 px-3 py-2 bg-[#9448F2] text-white text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
     {text}
-    <div className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 w-0 h-0 border-t-4 border-t-transparent border-b-4 border-b-transparent border-r-4 border-r-slate-800"></div>
+    <div className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 w-0 h-0 border-t-4 border-t-transparent border-b-4 border-b-transparent border-r-4 border-r-[#9448F2]"></div>
   </div>
 );
 
@@ -123,10 +123,10 @@ export function SideNav() {
   const [isFilingMenuOpen, setIsFilingMenuOpen] = useState(false);
 
   return (
-    <nav className={`fixed left-0 top-0 h-full w-16 ${NAV_BG} shadow-xl z-40 flex flex-col border-r border-slate-800`}>
+    <nav className={`fixed left-0 top-0 h-full w-16 ${NAV_BG} shadow-xl z-40 flex flex-col border-r border-[#7d3ac9]`}>
       
       {/* Logo Area */}
-      <Link href="/" className="h-16 flex items-center justify-center border-b border-slate-800 hover:bg-slate-800 transition-colors">
+      <Link href="/" className="h-16 flex items-center justify-center border-b border-[#7d3ac9] hover:[#a55ff4] transition-colors">
         <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
           <FileText size={24} className="text-white" />
         </div>
@@ -168,7 +168,7 @@ export function SideNav() {
       </div>
 
       {/* Bottom Items */}
-      <div className="border-t border-slate-800">
+      <div className="border-t border-[#7d3ac9]">
         <Link href="/settings" className={NAV_ITEM_BASE} title="Settings">
           <Settings size={22} />
           <NavTooltip text="Settings" />
