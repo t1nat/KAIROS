@@ -98,6 +98,7 @@ export function HomeClient({ hello, session }: {
                         </div>
                 </div>    
                     <div className="flex flex-col md:flex-row justify-between items-center w-full">
+                        </div>
                  <div className="w-full max-w-7xl mx-auto p-6">
   
                       <div className="flex flex-col md:flex-row justify-between items-center gap-8 md:gap-12"></div>
@@ -137,24 +138,23 @@ export function HomeClient({ hello, session }: {
                         </button>
                     )}
 
-                    {hello && (
-                        <div className="flex items-center justify-center gap-2 text-sm text-[rgb(var(--text-secondary))]">
-                          <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                          System Status: {hello.greeting}
-                          </div>
-                    )}
-
-                    <button 
-                        onClick={scrollToAbout}
-                        className="mt-8 inline-flex flex-col items-center text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--accent-primary))] transition-colors animate-bounce"
-                    >
-                        <span className="text-sm font-medium mb-2">Learn More</span>
-                         <ChevronDown size={24} />
-                    </button>
-                </div>
-
-
-            {/* About Us Section */}
+                    <div className="w-full flex flex-col items-center mt-12"> 
+  
+               {hello && (
+                   <div className="flex items-center justify-center gap-2 text-sm text-[rgb(var(--text-secondary))]">
+                   <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                   System Status: {hello.greeting}
+                   </div>
+            )}
+             <button 
+             onClick={scrollToAbout}
+             className="mt-8 inline-flex flex-col items-center text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--accent-primary))] transition-colors animate-bounce"
+            >
+              <span className="text-sm font-medium mb-2">Learn More</span>
+              <ChevronDown size={24} />
+            </button>
+              </div>
+         
             <section ref={aboutRef} className="py-20 px-6 bg-[rgb(var(--bg-secondary))]/30 backdrop-blur-xl border-y border-[rgb(var(--border-light))]">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-16">
