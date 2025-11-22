@@ -5,7 +5,7 @@ import { useState } from "react";
 import { api } from "~/trpc/react";
 import { CreateProjectForm, CreateTaskForm, CollaboratorManager } from "./projectManagement";
 import { InteractiveTimeline } from "./interactiveTimeline";
-import { ChevronDown, ChevronUp, RefreshCw, FolderKanban, Plus, CheckCircle2 } from "lucide-react";
+import { ChevronDown, ChevronUp, RefreshCw, CheckCircle2 } from "lucide-react";
 
 interface CreateProjectContainerProps {
   userId: string;
@@ -57,24 +57,22 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [showProjectForm, setShowProjectForm] = useState(true);
   const [showTaskForm, setShowTaskForm] = useState(false);
+  const [showCollaborators, setShowCollaborators] = useState(false);
 
-  // Use tRPC utils for cache manipulation
   const utils = api.useUtils();
 
-  // Queries with optimized settings
   const { data: projects } = api.project.getMyProjects.useQuery(undefined, {
-    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 
   const { data: projectDetails, refetch: refetchProjectDetails } = api.project.getById.useQuery(
     { id: selectedProjectId! },
     { 
       enabled: selectedProjectId !== null,
-      staleTime: 1000 * 60, // Consider data fresh for 1 minute
+      staleTime: 1000 * 60,
     }
   );
 
-  // Mutations - simplified without complex optimistic updates to avoid TypeScript errors
   const createProject = api.project.create.useMutation({
     onSuccess: (data) => {
       void utils.project.getMyProjects.invalidate();
@@ -82,7 +80,6 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
         setSelectedProjectId(data.id);
       }
       setShowProjectForm(false);
-      alert("Project created successfully!");
     },
     onError: (error) => {
       alert(`Error: ${error.message}`);
@@ -93,7 +90,6 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
     onSuccess: () => {
       void utils.project.getById.invalidate({ id: selectedProjectId! });
       setShowTaskForm(false);
-      alert("Task created successfully!");
     },
     onError: (error) => {
       alert(`Error: ${error.message}`);
@@ -103,14 +99,9 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
   const updateTaskStatus = api.task.updateStatus.useMutation({
     onMutate: async ({ taskId, status }) => {
       if (!selectedProjectId) return;
-
-      // Cancel outgoing refetches
       await utils.project.getById.cancel({ id: selectedProjectId });
-
-      // Snapshot
       const previousProject = utils.project.getById.getData({ id: selectedProjectId });
 
-      // Optimistically update
       utils.project.getById.setData({ id: selectedProjectId }, (old) => {
         if (!old) return old;
         return {
@@ -130,7 +121,6 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
       return { previousProject };
     },
     onSuccess: () => {
-      // Invalidate after a short delay to ensure server is updated
       setTimeout(() => {
         void utils.project.getById.invalidate({ id: selectedProjectId! });
       }, 100);
@@ -146,7 +136,6 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
   const addCollaborator = api.project.addCollaborator.useMutation({
     onSuccess: () => {
       void utils.project.getById.invalidate({ id: selectedProjectId! });
-      alert("Collaborator added successfully!");
     },
     onError: (error) => {
       alert(`Error: ${error.message}`);
@@ -156,7 +145,6 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
   const removeCollaborator = api.project.removeCollaborator.useMutation({
     onSuccess: () => {
       void utils.project.getById.invalidate({ id: selectedProjectId! });
-      alert("Collaborator removed!");
     },
     onError: (error) => {
       alert(`Error: ${error.message}`);
@@ -172,7 +160,6 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
     },
   });
 
-  // Handler functions
   const handleCreateProject = async (data: CreateProjectInput) => {
     createProject.mutate(data);
   };
@@ -220,7 +207,6 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
     (c) => c.collaboratorId === userId && c.permission === "write"
   ) ?? false);
 
-  // Get available users for task assignment (collaborators + owner)
   const availableUsers: User[] = projectDetails
     ? [
         { 
@@ -240,154 +226,116 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
 
   return (
     <div className="space-y-4">
-      {/* Project selector */}
-      {projects && projects.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-[#DDE3E9]/60 p-4">
-          <label htmlFor="project-select" className="block text-xs font-semibold text-[#59677C] mb-2 uppercase tracking-wide">
-            Select Project
-          </label>
-          <div className="flex gap-2">
-            <select
-              id="project-select"
-              value={selectedProjectId ?? ""}
-              onChange={(e) => {
-                const id = e.target.value ? parseInt(e.target.value) : null;
-                setSelectedProjectId(id);
-                setShowProjectForm(false);
-              }}
-              className="flex-1 px-3.5 py-2.5 border border-[#DDE3E9] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9448F2]/30 focus:border-[#9448F2] text-sm text-[#222B32] bg-[#FCFBF9]/30"
-            >
-              <option value="">-- Select a project --</option>
+      {/* Create Project Form or Project List */}
+      {!selectedProjectId ? (
+        <div className="space-y-4">
+          {/* Existing Projects List */}
+          {projects && projects.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-[#E4DEEA] mb-3">Your Projects</h3>
               {projects.map((project) => (
-                <option key={project.id} value={project.id}>
-                  {project.title}
-                </option>
+                <button
+                  key={project.id}
+                  onClick={() => setSelectedProjectId(project.id)}
+                  className="w-full p-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl hover:bg-white/10 hover:border-[#A343EC]/50 transition-all text-left group"
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-[#FBF9F5] mb-1 group-hover:text-[#A343EC] transition-colors">
+                        {project.title}
+                      </h4>
+                      {project.description && (
+                        <p className="text-sm text-[#E4DEEA] line-clamp-1">{project.description}</p>
+                      )}
+                    </div>
+                    <span className="text-xs text-[#59677C]">
+                      {new Date(project.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+                </button>
               ))}
-            </select>
-            <button
-              onClick={() => {
-                setSelectedProjectId(null);
-                setShowProjectForm(true);
-              }}
-              className="px-4 py-2.5 bg-gradient-to-r from-[#9448F2] to-[#80C49B] text-white text-sm font-semibold rounded-lg hover:shadow-lg transition-all duration-300 flex items-center gap-2"
-            >
-              <Plus size={16} />
-              New
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Create Project Form */}
-      {showProjectForm && (
-        <div className="bg-white rounded-xl shadow-sm border border-[#DDE3E9]/60 overflow-hidden">
-          <button
-            onClick={() => setShowProjectForm(!showProjectForm)}
-            className="w-full flex items-center justify-between px-5 py-3.5 bg-gradient-to-r from-[#FCFBF9] to-white hover:from-[#F8F5FF] hover:to-white transition-colors"
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 bg-gradient-to-br from-[#9448F2] to-[#80C49B] rounded-lg flex items-center justify-center shadow-sm">
-                <FolderKanban className="text-white" size={14} />
-              </div>
-              <span className="text-base font-bold text-[#222B32]">New Project</span>
-            </div>
-            {showProjectForm ? <ChevronUp size={18} className="text-[#59677C]" /> : <ChevronDown size={18} className="text-[#59677C]" />}
-          </button>
-          {showProjectForm && (
-            <div className="p-5 border-t border-[#DDE3E9]/50">
-              <CreateProjectForm
-                onSubmit={handleCreateProject}
-                currentUser={{ id: userId, name: null, email: "", image: null }}
-              />
             </div>
           )}
+
+          {/* Create New Project Form */}
+          <CreateProjectForm
+            onSubmit={handleCreateProject}
+            currentUser={{ id: userId, name: null, email: "", image: null }}
+            isExpanded={showProjectForm}
+            onToggle={() => setShowProjectForm(!showProjectForm)}
+          />
         </div>
-      )}
-
-      {/* Selected Project Details */}
-      {selectedProjectId && projectDetails && (
+      ) : projectDetails && (
         <div className="space-y-4">
-          {/* Project header */}
-          <div className="bg-white rounded-xl shadow-sm border border-[#DDE3E9]/60 overflow-hidden">
-            <div className="p-5">
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-[#222B32] mb-1">{projectDetails.title}</h2>
-                  {projectDetails.description && (
-                    <p className="text-sm text-[#59677C]">{projectDetails.description}</p>
-                  )}
+          {/* Project Header */}
+          <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6">
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <button
+                    onClick={() => setSelectedProjectId(null)}
+                    className="text-[#E4DEEA] hover:text-[#A343EC] transition-colors text-sm"
+                  >
+                    ← Back
+                  </button>
                 </div>
-                <button
-                  onClick={() => void refetchProjectDetails()}
-                  className="p-2 text-[#59677C] hover:text-[#9448F2] hover:bg-[#9448F2]/5 rounded-lg transition-all"
-                  title="Refresh"
-                >
-                  <RefreshCw size={18} />
-                </button>
-              </div>
-              
-              <div className="flex flex-wrap gap-2 items-center">
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  projectDetails.shareStatus === "private"
-                    ? "bg-slate-100 text-slate-700"
-                    : projectDetails.shareStatus === "shared_read"
-                    ? "bg-blue-100 text-blue-700"
-                    : "bg-emerald-100 text-emerald-700"
-                }`}>
-                  {projectDetails.shareStatus === "private" && "🔒 Private"}
-                  {projectDetails.shareStatus === "shared_read" && "👁️ View Only"}
-                  {projectDetails.shareStatus === "shared_write" && "✏️ Collaborative"}
-                </span>
-                <span className="text-xs text-[#59677C]">
-                  Created {new Date(projectDetails.createdAt).toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric',
-                    year: 'numeric'
-                  })}
-                </span>
-                {projectDetails.tasks && projectDetails.tasks.length > 0 && (
-                  <>
-                    <span className="text-[#DDE3E9]">•</span>
-                    <span className="text-xs text-[#59677C] flex items-center gap-1">
-                      <CheckCircle2 size={12} className="text-emerald-500" />
-                      {projectDetails.tasks.filter(t => t.status === 'completed').length} / {projectDetails.tasks.length} tasks
-                    </span>
-                  </>
+                <h2 className="text-2xl font-bold text-[#FBF9F5] mb-2">{projectDetails.title}</h2>
+                {projectDetails.description && (
+                  <p className="text-sm text-[#E4DEEA]">{projectDetails.description}</p>
                 )}
               </div>
+              <button
+                onClick={() => void refetchProjectDetails()}
+                className="p-2 text-[#E4DEEA] hover:text-[#A343EC] hover:bg-white/5 rounded-lg transition-all"
+                title="Refresh"
+              >
+                <RefreshCw size={18} />
+              </button>
             </div>
-          </div>
-
-          {/* Two-column layout for forms and collaborators */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Task form */}
-            {hasWriteAccess && (
-              <div className="bg-white rounded-xl shadow-sm border border-[#DDE3E9]/60 overflow-hidden">
-                <button
-                  onClick={() => setShowTaskForm(!showTaskForm)}
-                  className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#FCFBF9] to-white hover:from-[#F8F5FF] hover:to-white transition-colors"
-                >
-                  <span className="text-sm font-semibold text-[#222B32]">Add Task</span>
-                  {showTaskForm ? <ChevronUp size={16} className="text-[#59677C]" /> : <ChevronDown size={16} className="text-[#59677C]" />}
-                </button>
-                {showTaskForm && (
-                  <div className="p-4 border-t border-[#DDE3E9]/50">
-                    <CreateTaskForm
-                      projectId={selectedProjectId}
-                      availableUsers={availableUsers}
-                      onSubmit={handleCreateTask}
-                    />
-                  </div>
-                )}
+            
+            {projectDetails.tasks && projectDetails.tasks.length > 0 && (
+              <div className="flex items-center gap-2 text-sm text-[#E4DEEA]">
+                <CheckCircle2 size={16} className="text-[#80C49B]" />
+                <span>
+                  {projectDetails.tasks.filter(t => t.status === 'completed').length} / {projectDetails.tasks.length} tasks completed
+                </span>
               </div>
             )}
+          </div>
 
-            {/* Collaborator manager */}
-            <div className="bg-white rounded-xl shadow-sm border border-[#DDE3E9]/60 overflow-hidden">
-              <div className="px-4 py-3 bg-gradient-to-r from-[#FCFBF9] to-white border-b border-[#DDE3E9]/50">
-                <span className="text-sm font-semibold text-[#222B32]">Collaborators</span>
-              </div>
-              <div className="p-4">
+          {/* Task Form */}
+          {hasWriteAccess && (
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
+              <button
+                onClick={() => setShowTaskForm(!showTaskForm)}
+                className="w-full flex items-center justify-between px-6 py-4 hover:bg-white/5 transition-colors"
+              >
+                <span className="text-sm font-semibold text-[#FBF9F5]">Add Task</span>
+                {showTaskForm ? <ChevronUp size={16} className="text-[#E4DEEA]" /> : <ChevronDown size={16} className="text-[#E4DEEA]" />}
+              </button>
+              {showTaskForm && (
+                <div className="px-6 pb-6 border-t border-white/10">
+                  <CreateTaskForm
+                    projectId={selectedProjectId}
+                    availableUsers={availableUsers}
+                    onSubmit={handleCreateTask}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Collaborators */}
+          <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
+            <button
+              onClick={() => setShowCollaborators(!showCollaborators)}
+              className="w-full flex items-center justify-between px-6 py-4 hover:bg-white/5 transition-colors"
+            >
+              <span className="text-sm font-semibold text-[#FBF9F5]">Team Members</span>
+              {showCollaborators ? <ChevronUp size={16} className="text-[#E4DEEA]" /> : <ChevronDown size={16} className="text-[#E4DEEA]" />}
+            </button>
+            {showCollaborators && (
+              <div className="px-6 pb-6 border-t border-white/10">
                 <CollaboratorManager
                   projectId={selectedProjectId}
                   currentCollaborators={(projectDetails.collaborators?.map((c) => ({
@@ -405,7 +353,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                   isOwner={isOwner}
                 />
               </div>
-            </div>
+            )}
           </div>
 
           {/* Interactive Timeline */}
@@ -429,23 +377,6 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
               onTaskStatusChange={handleTaskStatusChange}
               isReadOnly={!hasWriteAccess}
             />
-          )}
-
-          {(!projectDetails.tasks || projectDetails.tasks.length === 0) && hasWriteAccess && (
-            <div className="bg-white rounded-xl shadow-sm border border-[#DDE3E9]/60 p-8 text-center">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-[#9448F2]/10 to-[#80C49B]/10 rounded-xl mb-4">
-                <Plus className="text-[#9448F2]" size={24} />
-              </div>
-              <h3 className="text-lg font-semibold text-[#222B32] mb-2">No tasks yet</h3>
-              <p className="text-sm text-[#59677C] mb-4">Create your first task to get started with this project</p>
-              <button
-                onClick={() => setShowTaskForm(true)}
-                className="px-5 py-2.5 bg-gradient-to-r from-[#9448F2] to-[#80C49B] text-white text-sm font-semibold rounded-lg hover:shadow-lg transition-all inline-flex items-center gap-2"
-              >
-                <Plus size={16} />
-                Create First Task
-              </button>
-            </div>
           )}
         </div>
       )}

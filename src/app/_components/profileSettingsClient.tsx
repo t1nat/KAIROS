@@ -2,9 +2,8 @@
 "use client";
 
 import { useState } from "react";
-import { User } from "lucide-react";
+import { User, Loader2 } from "lucide-react";
 import { api } from "~/trpc/react";
-import { signOut } from "next-auth/react";
 
 interface ProfileSettingsClientProps {
   user: {
@@ -22,17 +21,11 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
   const [isSaving, setIsSaving] = useState(false);
 
   const updateProfile = api.settings.updateProfile.useMutation({
-    // OPTIMISTIC UPDATE: Update UI immediately before mutation completes
     onMutate: async (newData) => {
       setIsSaving(true);
-      
-      // Cancel any outgoing refetches so they don't overwrite our optimistic update
       await utils.user.getCurrentUser.cancel();
-      
-      // Snapshot the previous value
       const previousUser = utils.user.getCurrentUser.getData();
       
-      // Optimistically update the cache with new values
       utils.user.getCurrentUser.setData(undefined, (old) => {
         if (!old) return old;
         return {
@@ -42,21 +35,16 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
         };
       });
       
-      // Return context with the previous value
       return { previousUser };
     },
     
-    // If mutation succeeds, just update the saving state
     onSuccess: () => {
       setIsSaving(false);
-      // No need to refetch - optimistic update already happened!
     },
     
-    // If mutation fails, roll back to previous value
     onError: (error, newData, context) => {
       setIsSaving(false);
       
-      // Restore previous data
       if (context?.previousUser) {
         utils.user.getCurrentUser.setData(undefined, context.previousUser);
       }
@@ -64,7 +52,6 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
       alert(`❌ Error: ${error.message}`);
     },
     
-    // Always refetch after error or success to ensure we're in sync
     onSettled: () => {
       void utils.user.getCurrentUser.invalidate();
     },
@@ -78,103 +65,99 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
     });
   };
 
-  // FIXED: Properly handle async signOut with void operator
-  const handleSignOut = () => {
-    void signOut({ callbackUrl: "/" });
-  };
-
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8">
+    <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-          <User className="text-indigo-600" size={20} />
+        <div className="w-10 h-10 bg-[#A343EC]/20 rounded-lg flex items-center justify-center">
+          <User className="text-[#A343EC]" size={20} />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Profile Settings</h2>
-          <p className="text-sm text-slate-600">Manage your public profile information</p>
+          <h2 className="text-2xl font-bold text-[#FBF9F5]">Profile Settings</h2>
+          <p className="text-sm text-[#E4DEEA]">Manage your public profile information</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-2">
+          <label className="block text-sm font-semibold text-[#E4DEEA] mb-2">
             Full Name
           </label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 focus:outline-none transition-colors"
+            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-[#FBF9F5] placeholder:text-[#59677C] focus:border-[#A343EC] focus:outline-none focus:ring-2 focus:ring-[#A343EC] transition-all"
             placeholder="Enter your full name"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-2">
+          <label className="block text-sm font-semibold text-[#E4DEEA] mb-2">
             Email Address
           </label>
           <input
             type="email"
             value={user.email ?? ""}
             disabled
-            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-slate-500 cursor-not-allowed"
+            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-[#59677C] cursor-not-allowed"
             placeholder="your.email@example.com"
           />
-          <p className="text-xs text-slate-500 mt-1">Email cannot be changed</p>
+          <p className="text-xs text-[#59677C] mt-1">Email cannot be changed</p>
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-2">
+          <label className="block text-sm font-semibold text-[#E4DEEA] mb-2">
             Bio
           </label>
           <textarea
             rows={4}
             value={bio}
             onChange={(e) => setBio(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 focus:outline-none transition-colors resize-none"
+            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-[#FBF9F5] placeholder:text-[#59677C] focus:border-[#A343EC] focus:outline-none focus:ring-2 focus:ring-[#A343EC] transition-all resize-none"
             placeholder="Tell us about yourself..."
           />
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-2">
+          <label className="block text-sm font-semibold text-[#E4DEEA] mb-2">
             Profile Picture
           </label>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
             {user.image ? (
               <img 
                 src={user.image} 
                 alt="Profile" 
-                className="w-20 h-20 rounded-full object-cover"
+                className="w-16 h-16 rounded-full object-cover ring-2 ring-white/10"
               />
             ) : (
-              <div className="w-20 h-20 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+              <div className="w-16 h-16 bg-gradient-to-br from-[#A343EC] to-[#9448F2] rounded-full flex items-center justify-center text-white text-2xl font-bold">
                 {name?.charAt(0).toUpperCase() ?? user.name?.charAt(0).toUpperCase() ?? "U"}
               </div>
             )}
-            <div>
-              <p className="text-sm text-slate-600 mb-2">Profile picture from Google account</p>
-              <p className="text-xs text-slate-500">Managed through your Google account settings</p>
+            <div className="flex-1">
+              <p className="text-sm text-[#FBF9F5] font-medium mb-1">Profile picture from Google account</p>
+              <p className="text-xs text-[#E4DEEA]">Managed through your Google account settings</p>
             </div>
           </div>
         </div>
 
-        <div className="pt-4 border-t border-slate-200">
+        <div className="pt-4 border-t border-white/10">
           <button
             type="submit"
             disabled={isSaving}
-            className="px-8 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-8 py-3 bg-gradient-to-r from-[#A343EC] to-[#9448F2] text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-[#A343EC]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            {isSaving && (
-              <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
+            {isSaving ? (
+              <>
+                <Loader2 className="animate-spin" size={16} />
+                Saving...
+              </>
+            ) : (
+              "Save Changes"
             )}
-            {isSaving ? "Saving..." : "Save Changes"}
           </button>
           {!isSaving && updateProfile.isSuccess && (
-            <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
+            <p className="text-sm text-[#80C49B] mt-2 flex items-center gap-1">
               ✓ Changes saved successfully
             </p>
           )}

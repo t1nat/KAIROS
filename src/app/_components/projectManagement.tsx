@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { Users, Trash2, Shield, Eye, Edit, Save } from "lucide-react";
+import { Users, Trash2, FolderPlus } from "lucide-react";
 import Image from "next/image";
 
 interface User {
@@ -19,12 +19,13 @@ interface ProjectFormProps {
     shareStatus: "private" | "shared_read" | "shared_write";
   }) => Promise<void>;
   currentUser: User;
+  isExpanded: boolean;
+  onToggle: () => void;
 }
 
-export function CreateProjectForm({ onSubmit, currentUser }: ProjectFormProps) {
+export function CreateProjectForm({ onSubmit, currentUser, isExpanded, onToggle }: ProjectFormProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [shareStatus, setShareStatus] = useState<"private" | "shared_read" | "shared_write">("private");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   void currentUser;
@@ -38,93 +39,71 @@ export function CreateProjectForm({ onSubmit, currentUser }: ProjectFormProps) {
 
     setIsSubmitting(true);
     try {
-      await onSubmit({ title, description, shareStatus });
+      await onSubmit({ title, description, shareStatus: "private" });
       setTitle("");
       setDescription("");
-      setShareStatus("private");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="bg-white rounded-xl shadow-sm border border-[#DDE3E9] p-6"
-    >
-      <h3 className="text-lg font-bold text-[#222B32] mb-4">New Project</h3>
-
-      <div className="space-y-4">
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Project title"
-          className="w-full p-3 border border-[#DDE3E9] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9448F2] text-[#222B32]"
-          disabled={isSubmitting}
-          required
-        />
-
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Description (optional)"
-          rows={2}
-          className="w-full p-3 border border-[#DDE3E9] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9448F2] text-[#222B32] resize-none"
-          disabled={isSubmitting}
-        />
-
-        <div className="flex gap-2">
-          <label className="flex-1 flex items-center gap-2 p-3 border-2 border-[#DDE3E9] rounded-lg cursor-pointer hover:border-[#9448F2] transition-all">
-            <input
-              type="radio"
-              value="private"
-              checked={shareStatus === "private"}
-              onChange={(e) => setShareStatus(e.target.value as typeof shareStatus)}
-              className="text-[#9448F2]"
-              disabled={isSubmitting}
-            />
-            <Shield size={14} className="text-[#59677C]" />
-            <span className="text-sm font-medium text-[#222B32]">Private</span>
-          </label>
-          
-          <label className="flex-1 flex items-center gap-2 p-3 border-2 border-[#DDE3E9] rounded-lg cursor-pointer hover:border-[#9448F2] transition-all">
-            <input
-              type="radio"
-              value="shared_read"
-              checked={shareStatus === "shared_read"}
-              onChange={(e) => setShareStatus(e.target.value as typeof shareStatus)}
-              className="text-[#9448F2]"
-              disabled={isSubmitting}
-            />
-            <Eye size={14} className="text-[#59677C]" />
-            <span className="text-sm font-medium text-[#222B32]">View</span>
-          </label>
-          
-          <label className="flex-1 flex items-center gap-2 p-3 border-2 border-[#DDE3E9] rounded-lg cursor-pointer hover:border-[#9448F2] transition-all">
-            <input
-              type="radio"
-              value="shared_write"
-              checked={shareStatus === "shared_write"}
-              onChange={(e) => setShareStatus(e.target.value as typeof shareStatus)}
-              className="text-[#9448F2]"
-              disabled={isSubmitting}
-            />
-            <Edit size={14} className="text-[#59677C]" />
-            <span className="text-sm font-medium text-[#222B32]">Edit</span>
-          </label>
+    <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between px-6 py-4 hover:bg-white/5 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-[#A343EC]/20 rounded-lg flex items-center justify-center">
+            <FolderPlus size={18} className="text-[#A343EC]" />
+          </div>
+          <span className="text-sm font-semibold text-[#FBF9F5]">New Project</span>
         </div>
+      </button>
 
-        <button
-          type="submit"
-          disabled={isSubmitting || !title.trim()}
-          className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#9448F2] to-[#80C49B] text-white font-semibold rounded-lg hover:shadow-xl transition-all disabled:opacity-50"
-        >
-          <Save size={18} />
-          {isSubmitting ? "Creating..." : "Create Project"}
-        </button>
-      </div>
-    </form>
+      {isExpanded && (
+        <form onSubmit={handleSubmit} className="px-6 pb-6 border-t border-white/10 pt-6">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-[#E4DEEA] mb-2 uppercase tracking-wide">
+                Project Name
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter project name"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent text-[#FBF9F5] placeholder:text-[#59677C] transition-all"
+                disabled={isSubmitting}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-[#E4DEEA] mb-2 uppercase tracking-wide">
+                Description <span className="text-[#59677C] font-normal">(optional)</span>
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Add a description for your project"
+                rows={3}
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent text-[#FBF9F5] placeholder:text-[#59677C] transition-all resize-none"
+                disabled={isSubmitting}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting || !title.trim()}
+              className="w-full px-6 py-3 border-2 border-[#A343EC] text-[#A343EC] font-semibold rounded-lg hover:bg-[#A343EC] hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? "Creating..." : "Create Project"}
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
   );
 }
 
@@ -177,81 +156,101 @@ export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskForm
   };
 
   const priorityColors = {
-    low: "border-[#80C49B] bg-[#80C49B]/10",
-    medium: "border-[#FFC53D] bg-[#FFC53D]/10",
-    high: "border-orange-500 bg-orange-50",
-    urgent: "border-red-500 bg-red-50",
+    low: "border-[#80C49B] text-[#80C49B] hover:bg-[#80C49B] hover:text-white",
+    medium: "border-[#F8D45E] text-[#F8D45E] hover:bg-[#F8D45E] hover:text-[#181F25]",
+    high: "border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white",
+    urgent: "border-red-500 text-red-500 hover:bg-red-500 hover:text-white",
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-[#DDE3E9] p-6">
-      <h3 className="text-lg font-bold text-[#222B32] mb-4">New Task</h3>
-
-      <div className="space-y-3">
+    <form onSubmit={handleSubmit} className="pt-6 space-y-4">
+      <div>
+        <label className="block text-xs font-semibold text-[#E4DEEA] mb-2 uppercase tracking-wide">
+          Task Name
+        </label>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Task title"
-          className="w-full p-3 border border-[#DDE3E9] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9448F2] text-[#222B32]"
+          placeholder="Enter task name"
+          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent text-[#FBF9F5] placeholder:text-[#59677C] transition-all"
           disabled={isSubmitting}
           required
         />
+      </div>
 
+      <div>
+        <label className="block text-xs font-semibold text-[#E4DEEA] mb-2 uppercase tracking-wide">
+          Description <span className="text-[#59677C] font-normal">(optional)</span>
+        </label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Description (optional)"
+          placeholder="Add details about this task"
           rows={2}
-          className="w-full p-3 border border-[#DDE3E9] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9448F2] text-[#222B32] resize-none"
+          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent text-[#FBF9F5] placeholder:text-[#59677C] transition-all resize-none"
           disabled={isSubmitting}
         />
+      </div>
 
-        <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-semibold text-[#E4DEEA] mb-2 uppercase tracking-wide">
+            Assign To
+          </label>
           <select
             value={assignedToId}
             onChange={(e) => setAssignedToId(e.target.value)}
-            className="p-3 border border-[#DDE3E9] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9448F2] text-[#222B32]"
+            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent text-[#FBF9F5] transition-all"
             disabled={isSubmitting}
           >
             <option value="">Unassigned</option>
             {availableUsers.map((user) => (
-              <option key={user.id} value={user.id}>
+              <option key={user.id} value={user.id} className="bg-[#181F25]">
                 {user.name ?? user.email}
               </option>
             ))}
           </select>
+        </div>
 
+        <div>
+          <label className="block text-xs font-semibold text-[#E4DEEA] mb-2 uppercase tracking-wide">
+            Priority
+          </label>
           <select
             value={priority}
             onChange={(e) => setPriority(e.target.value as typeof priority)}
-            className={`p-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9448F2] text-[#222B32] ${priorityColors[priority]}`}
+            className={`w-full px-4 py-3 bg-white/5 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] transition-all ${priorityColors[priority]}`}
             disabled={isSubmitting}
           >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-            <option value="urgent">Urgent</option>
+            <option value="low" className="bg-[#181F25]">Low</option>
+            <option value="medium" className="bg-[#181F25]">Medium</option>
+            <option value="high" className="bg-[#181F25]">High</option>
+            <option value="urgent" className="bg-[#181F25]">Urgent</option>
           </select>
         </div>
+      </div>
 
+      <div>
+        <label className="block text-xs font-semibold text-[#E4DEEA] mb-2 uppercase tracking-wide">
+          Due Date <span className="text-[#59677C] font-normal">(optional)</span>
+        </label>
         <input
           type="datetime-local"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
-          className="w-full p-3 border border-[#DDE3E9] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9448F2] text-[#222B32]"
+          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent text-[#FBF9F5] transition-all"
           disabled={isSubmitting}
         />
-
-        <button
-          type="submit"
-          disabled={isSubmitting || !title.trim()}
-          className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#9448F2] to-[#80C49B] text-white font-semibold rounded-lg hover:shadow-xl transition-all disabled:opacity-50"
-        >
-          <Save size={18} />
-          {isSubmitting ? "Adding..." : "Add Task"}
-        </button>
       </div>
+
+      <button
+        type="submit"
+        disabled={isSubmitting || !title.trim()}
+        className="w-full px-6 py-3 border-2 border-[#A343EC] text-[#A343EC] font-semibold rounded-lg hover:bg-[#A343EC] hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isSubmitting ? "Adding..." : "Add Task"}
+      </button>
     </form>
   );
 }
@@ -297,38 +296,38 @@ export function CollaboratorManager({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-[#DDE3E9] p-6">
-      <div className="flex items-center gap-2 mb-4">
-        <Users size={20} className="text-[#9448F2]" />
-        <h3 className="text-lg font-bold text-[#222B32]">Team</h3>
-      </div>
-
+    <div className="pt-6 space-y-4">
       {isOwner && (
-        <form onSubmit={handleAdd} className="mb-4 space-y-3">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="colleague@example.com"
-            className="w-full p-3 border border-[#DDE3E9] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9448F2] text-[#222B32]"
-            disabled={isAdding}
-          />
+        <form onSubmit={handleAdd} className="space-y-3">
+          <div>
+            <label className="block text-xs font-semibold text-[#E4DEEA] mb-2 uppercase tracking-wide">
+              Add Team Member
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="colleague@example.com"
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent text-[#FBF9F5] placeholder:text-[#59677C] transition-all"
+              disabled={isAdding}
+            />
+          </div>
 
           <div className="flex gap-2">
             <select
               value={permission}
               onChange={(e) => setPermission(e.target.value as "read" | "write")}
-              className="flex-1 p-3 border border-[#DDE3E9] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9448F2] text-[#222B32]"
+              className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent text-[#FBF9F5] transition-all"
               disabled={isAdding}
             >
-              <option value="read">Can View</option>
-              <option value="write">Can Edit</option>
+              <option value="read" className="bg-[#181F25]">Can View</option>
+              <option value="write" className="bg-[#181F25]">Can Edit</option>
             </select>
 
             <button
               type="submit"
               disabled={isAdding || !email.trim()}
-              className="px-6 py-3 bg-gradient-to-r from-[#9448F2] to-[#80C49B] text-white font-semibold rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
+              className="px-6 py-3 border-2 border-[#80C49B] text-[#80C49B] font-semibold rounded-lg hover:bg-[#80C49B] hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isAdding ? "..." : "Add"}
             </button>
@@ -338,33 +337,33 @@ export function CollaboratorManager({
 
       <div className="space-y-2">
         {currentCollaborators.length === 0 ? (
-          <p className="text-center py-4 text-sm text-[#59677C]">No collaborators yet</p>
+          <p className="text-center py-6 text-sm text-[#59677C]">No team members yet</p>
         ) : (
           currentCollaborators.map(({ user, permission: userPermission }) => (
             <div
               key={user.id}
-              className="flex items-center justify-between p-3 bg-[#FCFBF9] rounded-lg border border-[#DDE3E9]"
+              className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-all"
             >
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 {user.image ? (
                   <Image
                     src={user.image}
                     alt={user.name ?? "User"}
-                    width={32}
-                    height={32}
-                    className="rounded-full object-cover"
+                    width={36}
+                    height={36}
+                    className="rounded-full object-cover ring-2 ring-white/10"
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#9448F2] to-[#80C49B] flex items-center justify-center text-white font-semibold text-xs">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#A343EC] to-[#9448F2] flex items-center justify-center text-white font-semibold text-sm">
                     {user.name?.[0] ?? user.email[0]?.toUpperCase() ?? "?"}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-[#222B32] truncate">
+                  <p className="text-sm font-semibold text-[#FBF9F5] truncate">
                     {user.name ?? user.email}
                   </p>
                   {user.name && (
-                    <p className="text-xs text-[#59677C] truncate">{user.email}</p>
+                    <p className="text-xs text-[#E4DEEA] truncate">{user.email}</p>
                   )}
                 </div>
               </div>
@@ -375,21 +374,21 @@ export function CollaboratorManager({
                     <select
                       value={userPermission}
                       onChange={(e) => onUpdatePermission(user.id, e.target.value as "read" | "write")}
-                      className="px-3 py-1.5 text-sm border border-[#DDE3E9] rounded-lg text-[#222B32] bg-white"
+                      className="px-3 py-2 text-xs border border-white/10 bg-white/5 rounded-lg text-[#FBF9F5] hover:bg-white/10 transition-all"
                     >
-                      <option value="read">View</option>
-                      <option value="write">Edit</option>
+                      <option value="read" className="bg-[#181F25]">View</option>
+                      <option value="write" className="bg-[#181F25]">Edit</option>
                     </select>
                     <button
                       onClick={() => onRemoveCollaborator(user.id)}
-                      className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                       title="Remove"
                     >
                       <Trash2 size={16} />
                     </button>
                   </>
                 ) : (
-                  <span className="px-3 py-1.5 text-xs font-medium bg-[#DDE3E9] text-[#59677C] rounded-lg">
+                  <span className="px-3 py-2 text-xs font-medium bg-white/5 text-[#E4DEEA] rounded-lg border border-white/10">
                     {userPermission === "read" ? "View" : "Edit"}
                   </span>
                 )}

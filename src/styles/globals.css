@@ -1,429 +1,437 @@
-/* src/styles/globals.css */
-@import "tailwindcss";
-@theme {
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-}
-
-/* ========================================
-    THEME VARIABLES
-    ======================================== */
-
-/* Light Mode (Default) */
-:root {
-  /* Backgrounds */
-  /* Changed background to a slightly off-white for aesthetic appeal */
-  --bg-primary: 250 250 252;        /* #FAFAFC - Main backgrounds (Slightly off-white) */
-  --bg-secondary: 248 250 252;       /* #F8FAFC - Cards, panels */
-  --bg-tertiary: 241 245 249;       /* #F1F5F9 - Hover states */
-  
-  /* Text */
-  --text-primary: 15 23 42;         /* #0F172A - Main text */
-  --text-secondary: 71 85 105;      /* #475569 - Secondary text */
-  --text-tertiary: 148 163 184;     /* #94A3B8 - Muted text */
-  
-  /* Borders */
-  --border-light: 226 232 240;      /* #E2E8F0 - Light borders */
-  --border-medium: 203 213 225;     /* #CBD5E1 - Medium borders */
-  
-  /* Accents */
-  --accent-primary: 79 70 229;      /* #4F46E5 - Primary actions (Indigo) */
-  --accent-secondary: 124 58 237;  /* #7C3AED - Secondary actions (Purple) */
-  
-  /* Status Colors */
-  --success: 34 197 94;             /* #22C55E - Success states */
-  --warning: 251 146 60;             /* #FB923C - Warning states */
-  --error: 239 68 68;               /* #EF4444 - Error states */
-}
-
-/* Dark Mode */
-.dark {
-  /* Backgrounds */
-  --bg-primary: 15 23 42;           /* #0F172A - Main backgrounds */
-  --bg-secondary: 30 41 59;          /* #1E293B - Cards, panels */
-  --bg-tertiary: 51 65 85;          /* #334155 - Hover states */
-  
-  /* Text */
-  --text-primary: 248 250 252;       /* #F8FAFC - Main text */
-  --text-secondary: 203 213 225;     /* #CBD5E1 - Secondary text */
-  --text-tertiary: 148 163 184;      /* #94A3B8 - Muted text */
-  
-  /* Borders */
-  --border-light: 51 65 85;          /* #334155 - Light borders */
-  --border-medium: 71 85 105;        /* #475569 - Medium borders */
-  
-  /* Accents */
-  --accent-primary: 99 102 241;      /* #6366F1 - Primary actions (Lighter Indigo) */
-  --accent-secondary: 139 92 246;  /* #8B5CF6 - Secondary actions (Lighter Purple) */
-  
-  /* Status Colors */
-  --success: 74 222 128;             /* #4ADE80 - Success states */
-  --warning: 251 191 36;             /* #FBBF24 - Warning states */
-  --error: 248 113 113;              /* #F87171 - Error states */
-}
-
-/* ========================================
-    BASE STYLES
-    ======================================== */
-
-body {
-  background-color: rgb(var(--bg-primary));
-  color: rgb(var(--text-primary));
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* Smooth transitions for theme switching */
-* {
-  transition-property: background-color, border-color, color, fill, stroke;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 200ms;
-}
-
-/* ========================================
-    UTILITY CLASSES
-    ======================================== */
-
-/* Theme transition utility */
-.theme-transition {
-  transition: all 0.3s ease-in-out;
-}
-
-/* Card utilities */
-.card-base {
-  background-color: rgb(var(--bg-secondary));
-  border: 1px solid rgb(var(--border-light));
-  border-radius: 0.75rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-}
-
-/* Input base utility */
-.input-base {
-  padding: 0.75rem 1rem;
-  border: 1px solid rgb(var(--border-light));
-  border-radius: 0.5rem;
-  background-color: rgb(var(--bg-primary));
-  color: rgb(var(--text-primary));
-  outline: none;
-  transition: all 0.2s;
-}
-
-.input-base:focus {
-  ring: 2px solid rgb(var(--accent-primary));
-  border-color: transparent;
-}
-
-.input-base::placeholder {
-  color: rgb(var(--text-tertiary));
-}
-
-/* Button utilities */
-.btn-primary {
-  padding: 0.75rem 1.5rem;
-  background-color: rgb(var(--accent-primary));
-  color: white;
-  font-weight: 600;
-  border-radius: 0.5rem;
-  transition: all 0.3s;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-}
-
-.btn-primary:hover {
-  opacity: 0.9;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  padding: 0.75rem 1.5rem;
-  border: 2px solid rgb(var(--border-medium));
-  color: rgb(var(--text-primary));
-  font-weight: 600;
-  border-radius: 0.5rem;
-  transition: all 0.2s;
-  cursor: pointer;
-}
-
-.btn-secondary:hover {
-  background-color: rgb(var(--bg-secondary));
-}
-
-/* ========================================
-    SCROLLBAR STYLING
-    ======================================== */
-
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background-color: rgb(var(--bg-secondary));
-}
-
-::-webkit-scrollbar-thumb {
-  background-color: rgb(var(--border-medium));
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background-color: rgb(var(--text-tertiary));
-}
-
-/* ========================================
-    ANIMATION KEYFRAMES
-    ======================================== */
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
+  /* src/styles/globals.css */
+  @import "tailwindcss";
+  @theme {
+    --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
+      "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  /* ========================================
+      THEME VARIABLES
+      ======================================== */
+
+  /* Light Mode (Default) */
+  :root {
+    /* Backgrounds */
+    /* Changed background to a slightly off-white for aesthetic appeal */
+    --bg-primary: 250 250 252;        /* #FAFAFC - Main backgrounds (Slightly off-white) */
+    --bg-secondary: 248 250 252;       /* #F8FAFC - Cards, panels */
+    --bg-tertiary: 241 245 249;       /* #F1F5F9 - Hover states */
+    
+    /* Text */
+    --text-primary: 15 23 42;         /* #0F172A - Main text */
+    --text-secondary: 71 85 105;      /* #475569 - Secondary text */
+    --text-tertiary: 148 163 184;     /* #94A3B8 - Muted text */
+    
+    /* Borders */
+    --border-light: 226 232 240;      /* #E2E8F0 - Light borders */
+    --border-medium: 203 213 225;     /* #CBD5E1 - Medium borders */
+    
+    /* Accents */
+    --accent-primary: 79 70 229;      /* #4F46E5 - Primary actions (Indigo) */
+    --accent-secondary: 124 58 237;  /* #7C3AED - Secondary actions (Purple) */
+    
+    /* Status Colors */
+    --success: 34 197 94;             /* #22C55E - Success states */
+    --warning: 251 146 60;             /* #FB923C - Warning states */
+    --error: 239 68 68;               /* #EF4444 - Error states */
   }
-}
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
+  /* Dark Mode */
+  .dark {
+    /* Backgrounds */
+    --bg-primary: 15 23 42;           /* #0F172A - Main backgrounds */
+    --bg-secondary: 30 41 59;          /* #1E293B - Cards, panels */
+    --bg-tertiary: 51 65 85;          /* #334155 - Hover states */
+    
+    /* Text */
+    --text-primary: 248 250 252;       /* #F8FAFC - Main text */
+    --text-secondary: 203 213 225;     /* #CBD5E1 - Secondary text */
+    --text-tertiary: 148 163 184;      /* #94A3B8 - Muted text */
+    
+    /* Borders */
+    --border-light: 51 65 85;          /* #334155 - Light borders */
+    --border-medium: 71 85 105;        /* #475569 - Medium borders */
+    
+    /* Accents */
+    --accent-primary: 99 102 241;      /* #6366F1 - Primary actions (Lighter Indigo) */
+    --accent-secondary: 139 92 246;  /* #8B5CF6 - Secondary actions (Lighter Purple) */
+    
+    /* Status Colors */
+    --success: 74 222 128;             /* #4ADE80 - Success states */
+    --warning: 251 191 36;             /* #FBBF24 - Warning states */
+    --error: 248 113 113;              /* #F87171 - Error states */
   }
-  to {
-    opacity: 1;
-    transform: translateX(0);
+
+  /* ========================================
+      BASE STYLES
+      ======================================== */
+
+  body {
+    background-color: rgb(var(--bg-primary));
+    color: rgb(var(--text-primary));
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
-}
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* Animation for the writing "K" */
-@keyframes writing {
-    0% {
-        stroke-dashoffset: 100%;
-        fill: transparent;
-    }
-    50% {
-        stroke-dashoffset: 0%;
-        fill: transparent;
-    }
-    100% {
-        stroke-dashoffset: 0%;
-        fill: currentColor; /* Fill the letter after writing */
-    }
-}
-
-/* Animation for the pop-up text */
-@keyframes popUp {
-    0% {
-        opacity: 0;
-        transform: translateY(10px) scale(0.95);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-/* Magic Bento Hover Effect */
-.magic-bento-card {
-    position: relative;
-    overflow: hidden;
-    transition: all 0.3s ease-in-out;
-}
-
-.magic-bento-card:before {
-    content: '';
-    position: absolute;
-    top: -5px;
-    left: -5px;
-    right: -5px;
-    bottom: -5px;
-    border-radius: 1rem; /* Slightly larger than card border-radius */
-    background: transparent;
-    transition: opacity 0.3s ease-in-out;
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0;
-}
-
-.magic-bento-card:hover:before {
-    opacity: 1;
-    /* This creates a glowing border effect */
-    box-shadow: 
-        0 0 10px rgba(var(--hover-color), 0.5),
-        0 0 20px rgba(var(--hover-color), 0.3),
-        0 0 30px rgba(var(--hover-color), 0.1);
-}
-
-/* Define hover colors for each card */
-.card-org:hover:before { --hover-color: 148 72 242; /* Equivalent to #9448F2 */ }
-.card-team:hover:before { --hover-color: 128 196 155; /* Equivalent to #80C49B */ }
-.card-personal:hover:before { --hover-color: 255 197 61; /* Equivalent to #FFC53D */ }
-
-
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-out;
-}
-
-.animate-slideIn {
-  animation: slideIn 0.3s ease-out;
-}
-
-.animate-slideUp {
-  animation: slideUp 0.3s ease-out;
-}
-
-.animate-scaleIn {
-  animation: scaleIn 0.2s ease-out;
-}
-
-.animate-writing-k {
-    /* Total duration of animation is 2s (1s for drawing, 1s for filling) */
-    animation: writing 2s ease-in-out forwards;
-    stroke-dasharray: 100%;
-    stroke-dashoffset: 100%;
-    stroke-width: 2;
-}
-
-.animate-pop-up {
-    animation: popUp 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-    opacity: 0; /* Start invisible */
-}
-
-/* Custom delay utility classes */
-.pop-up-delay-1 { animation-delay: 0.1s; }
-.pop-up-delay-2 { animation-delay: 0.2s; }
-.pop-up-delay-3 { animation-delay: 0.3s; }
-.pop-up-delay-4 { animation-delay: 0.4s; }
-.pop-up-delay-5 { animation-delay: 0.5s; }
-.pop-up-delay-6 { animation-delay: 0.6s; }
-.pop-up-delay-7 { animation-delay: 0.7s; }
-.pop-up-delay-8 { animation-delay: 0.8s; }
-.pop-up-delay-9 { animation-delay: 0.9s; }
-.pop-up-delay-10 { animation-delay: 1.0s; }
-.pop-up-delay-11 { animation-delay: 1.1s; }
-.pop-up-delay-12 { animation-delay: 1.2s; }
-.pop-up-delay-13 { animation-delay: 1.3s; }
-.pop-up-delay-14 { animation-delay: 1.4s; }
-.pop-up-delay-15 { animation-delay: 1.5s; }
-.pop-up-delay-16 { animation-delay: 1.6s; }
-.pop-up-delay-17 { animation-delay: 1.7s; }
-.pop-up-delay-18 { animation-delay: 1.8s; }
-
-/* ========================================
-    SELECTION STYLING
-    ======================================== */
-
-::selection {
-  background-color: rgba(var(--accent-primary), 0.2);
-}
-
-::-moz-selection {
-  background-color: rgba(var(--accent-primary), 0.2);
-}
-
-/* ========================================
-    FOCUS VISIBLE (Accessibility)
-    ======================================== */
-
-*:focus-visible {
-  outline: 2px solid rgb(var(--accent-primary));
-  outline-offset: 2px;
-}
-
-/* ========================================
-    DARK MODE SPECIFIC ADJUSTMENTS
-    ======================================== */
-
-.dark .shadow-sm {
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-}
-
-.dark .shadow-md {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-}
-
-.dark .shadow-lg {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-}
-
-.dark .shadow-xl {
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
-}
-
-.dark .shadow-2xl {
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-}
-
-/* ========================================
-    PRINT STYLES
-    ======================================== */
-
-@media print {
+  /* Smooth transitions for theme switching */
   * {
-    background: white !important;
-    color: black !important;
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
   }
-}
 
-@keyframes float-slow {
-  0%, 100% {
-    transform: translate(0, 0) scale(1);
-  }
-  33% {
-    transform: translate(30px, -30px) scale(1.1);
-  }
-  66% {
-    transform: translate(-20px, 20px) scale(0.9);
-  }
-}
+  /* ========================================
+      UTILITY CLASSES
+      ======================================== */
 
-@keyframes float-medium {
-  0%, 100% {
-    transform: translate(0, 0) scale(1);
+  /* Theme transition utility */
+  .theme-transition {
+    transition: all 0.3s ease-in-out;
   }
-  33% {
-    transform: translate(-40px, 30px) scale(1.05);
-  }
-  66% {
-    transform: translate(25px, -25px) scale(0.95);
-  }
-}
 
-@keyframes float-fast {
-  0%, 100% {
-    transform: translate(0, 0) scale(1);
+  /* Card utilities */
+  .card-base {
+    background-color: rgb(var(--bg-secondary));
+    border: 1px solid rgb(var(--border-light));
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   }
-  33% {
-    transform: translate(20px, 40px) scale(1.08);
+
+  /* Input base utility */
+  .input-base {
+    padding: 0.75rem 1rem;
+    border: 1px solid rgb(var(--border-light));
+    border-radius: 0.5rem;
+    background-color: rgb(var(--bg-primary));
+    color: rgb(var(--text-primary));
+    outline: none;
+    transition: all 0.2s;
   }
-  66% {
-    transform: translate(-30px, -20px) scale(0.92);
+
+  .input-base:focus {
+    ring: 2px solid rgb(var(--accent-primary));
+    border-color: transparent;
   }
-}
+
+  .input-base::placeholder {
+    color: rgb(var(--text-tertiary));
+  }
+
+  /* Button utilities */
+  .btn-primary {
+    padding: 0.75rem 1.5rem;
+    background-color: rgb(var(--accent-primary));
+    color: white;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    transition: all 0.3s;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+  }
+
+  .btn-primary:hover {
+    opacity: 0.9;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-secondary {
+    padding: 0.75rem 1.5rem;
+    border: 2px solid rgb(var(--border-medium));
+    color: rgb(var(--text-primary));
+    font-weight: 600;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+
+  .btn-secondary:hover {
+    background-color: rgb(var(--bg-secondary));
+  }
+
+  /* ========================================
+      SCROLLBAR STYLING
+      ======================================== */
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background-color: rgb(var(--bg-secondary));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: rgb(var(--border-medium));
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(var(--text-tertiary));
+  }
+
+  /* ========================================
+      ANIMATION KEYFRAMES
+      ======================================== */
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Animation for the writing "K" */
+  @keyframes writing {
+      0% {
+          stroke-dashoffset: 100%;
+          fill: transparent;
+      }
+      50% {
+          stroke-dashoffset: 0%;
+          fill: transparent;
+      }
+      100% {
+          stroke-dashoffset: 0%;
+          fill: currentColor; /* Fill the letter after writing */
+      }
+  }
+
+  /*pop up text*/
+  @keyframes pop-up {
+      0% {
+          opacity: 0;
+          transform: translateY(20px) scale(0.8);
+      }
+      60% {
+          opacity: 1;
+          transform: translateY(-5px) scale(1.05);
+      }
+      100% {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+      }
+  }
+
+  .animate-pop-up {
+      animation: pop-up 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+  }
+
+  /* Magic Bento Hover Effect */
+  .magic-bento-card {
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease-in-out;
+  }
+
+  .magic-bento-card:before {
+      content: '';
+      position: absolute;
+      top: -5px;
+      left: -5px;
+      right: -5px;
+      bottom: -5px;
+      border-radius: 1rem; /* Slightly larger than card border-radius */
+      background: transparent;
+      transition: opacity 0.3s ease-in-out;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0;
+  }
+
+  .magic-bento-card:hover:before {
+      opacity: 1;
+      /* This creates a glowing border effect */
+      box-shadow: 
+          0 0 10px rgba(var(--hover-color), 0.5),
+          0 0 20px rgba(var(--hover-color), 0.3),
+          0 0 30px rgba(var(--hover-color), 0.1);
+  }
+
+  /* Define hover colors for each card */
+  .card-org:hover:before { --hover-color: 148 72 242; /* Equivalent to #9448F2 */ }
+  .card-team:hover:before { --hover-color: 128 196 155; /* Equivalent to #80C49B */ }
+  .card-personal:hover:before { --hover-color: 255 197 61; /* Equivalent to #FFC53D */ }
+
+
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .animate-slideIn {
+    animation: slideIn 0.3s ease-out;
+  }
+
+  .animate-slideUp {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .animate-scaleIn {
+    animation: scaleIn 0.2s ease-out;
+  }
+
+  .animate-writing-k {
+      /* Total duration of animation is 2s (1s for drawing, 1s for filling) */
+      animation: writing 2s ease-in-out forwards;
+      stroke-dasharray: 100%;
+      stroke-dashoffset: 100%;
+      stroke-width: 2;
+  }
+
+  .animate-pop-up {
+      animation: popUp 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+      opacity: 0; /* Start invisible */
+  }
+
+  /* Custom delay utility classes */
+  .pop-up-delay-1 { animation-delay: 0.1s; }
+  .pop-up-delay-2 { animation-delay: 0.2s; }
+  .pop-up-delay-3 { animation-delay: 0.3s; }
+  .pop-up-delay-4 { animation-delay: 0.4s; }
+  .pop-up-delay-5 { animation-delay: 0.5s; }
+  .pop-up-delay-6 { animation-delay: 0.6s; }
+  .pop-up-delay-7 { animation-delay: 0.7s; }
+  .pop-up-delay-8 { animation-delay: 0.8s; }
+  .pop-up-delay-9 { animation-delay: 0.9s; }
+  .pop-up-delay-10 { animation-delay: 1.0s; }
+  .pop-up-delay-11 { animation-delay: 1.1s; }
+  .pop-up-delay-12 { animation-delay: 1.2s; }
+  .pop-up-delay-13 { animation-delay: 1.3s; }
+  .pop-up-delay-14 { animation-delay: 1.4s; }
+  .pop-up-delay-15 { animation-delay: 1.5s; }
+  .pop-up-delay-16 { animation-delay: 1.6s; }
+  .pop-up-delay-17 { animation-delay: 1.7s; }
+  .pop-up-delay-18 { animation-delay: 1.8s; }
+
+  /* ========================================
+      SELECTION STYLING
+      ======================================== */
+
+  ::selection {
+    background-color: rgba(var(--accent-primary), 0.2);
+  }
+
+  ::-moz-selection {
+    background-color: rgba(var(--accent-primary), 0.2);
+  }
+
+  /* ========================================
+      FOCUS VISIBLE (Accessibility)
+      ======================================== */
+
+  *:focus-visible {
+    outline: 2px solid rgb(var(--accent-primary));
+    outline-offset: 2px;
+  }
+
+  /* ========================================
+      DARK MODE SPECIFIC ADJUSTMENTS
+      ======================================== */
+
+  .dark .shadow-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  }
+
+  .dark .shadow-md {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  }
+
+  .dark .shadow-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+  }
+
+  .dark .shadow-xl {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+  }
+
+  .dark .shadow-2xl {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+
+  /* ========================================
+      PRINT STYLES
+      ======================================== */
+
+  @media print {
+    * {
+      background: white !important;
+      color: black !important;
+    }
+  }
+
+  @keyframes float-slow {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+    }
+    33% {
+      transform: translate(30px, -30px) scale(1.1);
+    }
+    66% {
+      transform: translate(-20px, 20px) scale(0.9);
+    }
+  }
+
+  @keyframes float-medium {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+    }
+    33% {
+      transform: translate(-40px, 30px) scale(1.05);
+    }
+    66% {
+      transform: translate(25px, -25px) scale(0.95);
+    }
+  }
+
+  @keyframes float-fast {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+    }
+    33% {
+      transform: translate(20px, 40px) scale(1.08);
+    }
+    66% {
+      transform: translate(-30px, -20px) scale(0.92);
+    }
+  }

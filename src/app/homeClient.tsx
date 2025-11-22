@@ -122,7 +122,7 @@ export function HomeClient({ hello, session }: {
                         <div className="flex flex-col lg:flex-row justify-between items-center gap-12 mb-12">
                             {/* Left Side - Text */}
                             <div className="flex-1 text-center lg:text-left">
-                                <h2 className="text-6xl md:text-7xl lg:text-8xl font-bold text-[#FBF9F5] mb-6 leading-tight tracking-tight animate-smooth-fade-in">
+                                <h2 className="style={{ fontFamily: 'var(--font-bree-serif)' text-6xl md:text-7xl lg:text-8xl font-bold text-[#FBF9F5] mb-6 leading-tight tracking-tight animate-smooth-fade-in">
                                     <span className="inline-block">Kairos</span>
                                 </h2>
                                 <p className="text-xl text-[#E4DEEA] leading-relaxed max-w-2xl mx-auto lg:mx-0 animate-smooth-fade-in" style={{ animationDelay: '0.2s' }}>

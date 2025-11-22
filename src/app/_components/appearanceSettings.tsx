@@ -1,115 +1,135 @@
-// src/app/_components/settings/appearanceSettings.tsx
+// src/app/_components/appearanceSettings.tsx
 "use client";
 
-import { api } from "~/trpc/react";
+import { useState, useEffect } from "react";
+import { Palette, Sun, Moon, Monitor, Check } from "lucide-react";
 import { useTheme } from "next-themes";
-import { Palette, Check } from "lucide-react";
-import { useEffect, useState } from "react";
-
-type Theme = "light" | "dark" | "system";
 
 export function AppearanceSettings() {
-  const updateAppearance = api.settings.updateAppearance.useMutation();
-  
-  // FIX 1: Explicitly type the hook return to silence "Unsafe assignment" errors
-  const { setTheme, theme, resolvedTheme } = useTheme() as {
-    setTheme: (theme: string) => void;
-    theme: string | undefined;
-    resolvedTheme: string | undefined;
-  };
-
+  const { theme, setTheme, systemTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const handleThemeChange = (newTheme: Theme) => {
-    console.log("Switching to:", newTheme);
-    
-    // FIX 2: Removed manual DOM manipulation.
-    // next-themes handles the class switching automatically.
-    // Manually adding/removing classes here causes hydration errors and fights the library.
-    setTheme(newTheme);
-    
-    updateAppearance.mutate({ theme: newTheme });
-  };
-
-  const themes: Array<{ value: Theme; label: string }> = [
-    { value: "light", label: "Light" },
-    { value: "dark", label: "Dark" },
-    { value: "system", label: "System" },
-  ];
-
   if (!mounted) {
     return (
-      <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8">
+      <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 bg-[#A343EC]/20 rounded-lg flex items-center justify-center">
+            <Palette className="text-[#A343EC]" size={20} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-[#FBF9F5]">Appearance</h2>
+            <p className="text-sm text-[#E4DEEA]">Customize how Kairos looks</p>
+          </div>
+        </div>
         <div className="animate-pulse">
-          <div className="h-12 w-12 bg-slate-200 rounded-2xl mb-4"></div>
-          <div className="h-6 w-48 bg-slate-200 rounded mb-8"></div>
+          <div className="h-20 bg-white/5 rounded-xl mb-4"></div>
+          <div className="h-20 bg-white/5 rounded-xl mb-4"></div>
+          <div className="h-20 bg-white/5 rounded-xl"></div>
         </div>
       </div>
     );
   }
 
+  const currentTheme = theme === 'system' ? systemTheme : theme;
+
+  const themes = [
+    {
+      id: 'light',
+      name: 'Light',
+      description: 'Bright and clean interface',
+      icon: Sun,
+      preview: 'from-slate-50 to-slate-100'
+    },
+    {
+      id: 'dark',
+      name: 'Dark',
+      description: 'Easy on the eyes',
+      icon: Moon,
+      preview: 'from-[#181F25] to-[#0F172A]'
+    },
+    {
+      id: 'system',
+      name: 'System',
+      description: 'Match your device settings',
+      icon: Monitor,
+      preview: 'from-slate-300 to-slate-700'
+    }
+  ];
+
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 p-8">
-      <div className="flex items-start gap-4 mb-8">
-        <div className="w-12 h-12 bg-pink-100 dark:bg-pink-900/30 rounded-2xl flex items-center justify-center">
-          <Palette className="w-6 h-6 text-pink-600 dark:text-pink-400" />
+    <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 bg-[#A343EC]/20 rounded-lg flex items-center justify-center">
+          <Palette className="text-[#A343EC]" size={20} />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Appearance
-          </h2>
-          <p className="text-slate-600 dark:text-slate-400 mt-1">
-            Customize how your workspace looks
-          </p>
+          <h2 className="text-2xl font-bold text-[#FBF9F5]">Appearance</h2>
+          <p className="text-sm text-[#E4DEEA]">Customize how Kairos looks</p>
         </div>
       </div>
 
-      <div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-          Theme
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {themes.map((themeOption) => (
-            <button
-              key={themeOption.value}
-              onClick={() => handleThemeChange(themeOption.value)}
-              className={`
-                relative p-6 rounded-xl border-2 transition-all duration-200
-                ${
-                  theme === themeOption.value
-                    ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20"
-                    : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-indigo-300 dark:hover:border-indigo-600"
-                }
-              `}
-            >
-              {theme === themeOption.value && (
-                <div className="absolute top-3 right-3 w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center">
-                  <Check className="w-4 h-4 text-white" />
-                </div>
-              )}
-              <span
-                className={`
-                text-lg font-medium
-                ${
-                  theme === themeOption.value
-                    ? "text-indigo-600 dark:text-indigo-400"
-                    : "text-slate-700 dark:text-slate-300"
-                }
-              `}
-              >
-                {themeOption.label}
-              </span>
-            </button>
-          ))}
+      <div className="space-y-4">
+        <div>
+          <h3 className="text-sm font-semibold text-[#E4DEEA] mb-4">Theme</h3>
+          <div className="grid gap-4">
+            {themes.map((themeOption) => {
+              const Icon = themeOption.icon;
+              const isActive = theme === themeOption.id;
+              
+              return (
+                <button
+                  key={themeOption.id}
+                  onClick={() => setTheme(themeOption.id)}
+                  className={`relative flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${
+                    isActive
+                      ? 'border-[#A343EC] bg-[#A343EC]/10'
+                      : 'border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10'
+                  }`}
+                >
+                  <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${themeOption.preview} flex items-center justify-center shadow-lg`}>
+                    <Icon className={isActive ? "text-[#A343EC]" : "text-[#E4DEEA]"} size={24} />
+                  </div>
+                  
+                  <div className="flex-1 text-left">
+                    <div className="font-semibold text-[#FBF9F5] mb-1">
+                      {themeOption.name}
+                    </div>
+                    <div className="text-sm text-[#E4DEEA]">
+                      {themeOption.description}
+                    </div>
+                  </div>
+
+                  {isActive && (
+                    <div className="w-6 h-6 bg-[#A343EC] rounded-full flex items-center justify-center">
+                      <Check size={16} className="text-white" />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
-        
-        {/* Debug info */}
-        <div className="mt-4 text-xs text-slate-500 dark:text-slate-400 font-mono">
-          Current: {theme} | Resolved: {resolvedTheme}
+
+        <div className="pt-6 border-t border-white/10">
+          <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-[#A343EC]/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Palette size={16} className="text-[#A343EC]" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-[#FBF9F5] mb-1">Current Theme</h4>
+                <p className="text-sm text-[#E4DEEA]">
+                  {theme === 'system' 
+                    ? `System (${currentTheme === 'dark' ? 'Dark' : 'Light'})` 
+                    : theme === 'dark' ? 'Dark' : 'Light'}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

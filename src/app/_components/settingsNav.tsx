@@ -1,109 +1,103 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 // src/app/_components/settingsNav.tsx
 "use client";
 
 import Link from "next/link";
 import { 
   User, 
+  Mail, 
   Bell, 
   Shield, 
   Globe, 
-  Palette,
-  Lock,
-  Database,
-  Mail,
-  type LucideIcon
+  Palette
 } from "lucide-react";
-
-const NAV_ITEM_BASE = "flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 rounded-lg font-medium";
-const NAV_ITEM_ACTIVE = "bg-indigo-100 text-indigo-600";
 
 interface SettingsNavProps {
   activeSection: string;
 }
 
-interface NavItem {
-  id: string;
-  label: string;
-  icon: LucideIcon;
-  description: string;
-}
-
 export function SettingsNav({ activeSection }: SettingsNavProps) {
-  // FIXED: Explicitly type the array as NavItem[] to avoid "any" inference
-  const navItems: readonly NavItem[] = [
+  const sections = [
     {
-      id: "profile" as const,
-      label: "Profile" as const,
+      id: "profile",
+      name: "Profile",
+      description: "Personal information",
       icon: User,
-      description: "Personal information" as const
+      color: "text-[#A343EC]",
+      bgColor: "bg-[#A343EC]/20"
     },
     {
-      id: "account" as const,
-      label: "Account" as const,
+      id: "account",
+      name: "Account",
+      description: "Account details",
       icon: Mail,
-      description: "Account details" as const
+      color: "text-[#80C49B]",
+      bgColor: "bg-[#80C49B]/20"
     },
     {
-      id: "notifications" as const,
-      label: "Notifications" as const,
+      id: "notifications",
+      name: "Notifications",
+      description: "Email & push",
       icon: Bell,
-      description: "Email & push" as const
+      color: "text-[#F8D45E]",
+      bgColor: "bg-[#F8D45E]/20"
     },
     {
-      id: "security" as const,
-      label: "Security" as const,
+      id: "security",
+      name: "Security",
+      description: "Password & 2FA",
       icon: Shield,
-      description: "Password & 2FA" as const
+      color: "text-[#A343EC]",
+      bgColor: "bg-[#A343EC]/20"
     },
     {
-      id: "language" as const,
-      label: "Language" as const,
+      id: "language",
+      name: "Language",
+      description: "Language & region",
       icon: Globe,
-      description: "Language & region" as const
+      color: "text-[#80C49B]",
+      bgColor: "bg-[#80C49B]/20"
     },
     {
-      id: "appearance" as const,
-      label: "Appearance" as const,
+      id: "appearance",
+      name: "Appearance",
+      description: "Theme & colors",
       icon: Palette,
-      description: "Theme & colors" as const
-    },
-    {
-      id: "privacy" as const,
-      label: "Privacy" as const,
-      icon: Lock,
-      description: "Privacy controls" as const
-    },
-    {
-      id: "data" as const,
-      label: "Data" as const,
-      icon: Database,
-      description: "Export & delete" as const
+      color: "text-[#F8D45E]",
+      bgColor: "bg-[#F8D45E]/20"
     }
-  ] as const;
+  ];
 
   return (
-    <nav className="bg-white rounded-2xl shadow-lg border border-slate-200 p-4 sticky top-24">
+    <nav className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-3">
       <div className="space-y-1">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = activeSection === item.id;
-          
+        {sections.map((section) => {
+          const Icon = section.icon;
+          const isActive = activeSection === section.id;
+
           return (
             <Link
-              key={item.id}
-              href={`/settings?section=${item.id}`}
-              className={`${NAV_ITEM_BASE} ${isActive ? NAV_ITEM_ACTIVE : ''}`}
+              key={section.id}
+              href={`/settings?section=${section.id}`}
+              className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${
+                isActive
+                  ? 'bg-white/10 border border-white/10'
+                  : 'hover:bg-white/5 border border-transparent'
+              }`}
             >
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                isActive ? 'bg-indigo-200' : 'bg-slate-100'
-              }`}>
-                <Icon size={18} className={isActive ? 'text-indigo-600' : 'text-slate-600'} />
+              <div className={`w-8 h-8 ${section.bgColor} rounded-lg flex items-center justify-center`}>
+                <Icon className={section.color} size={18} />
               </div>
-              <div className="flex-1">
-                <div className="text-sm font-semibold">{item.label}</div>
-                <div className="text-xs text-slate-500">{item.description}</div>
+              <div className="flex-1 min-w-0">
+                <div className={`font-semibold text-sm ${isActive ? 'text-[#FBF9F5]' : 'text-[#E4DEEA]'}`}>
+                  {section.name}
+                </div>
+                <div className="text-xs text-[#59677C]">
+                  {section.description}
+                </div>
               </div>
+              {isActive && (
+                <div className="w-2 h-2 bg-[#A343EC] rounded-full"></div>
+              )}
             </Link>
           );
         })}

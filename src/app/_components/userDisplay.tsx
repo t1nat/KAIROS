@@ -33,11 +33,11 @@ export function UserDisplay() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-3 px-4 py-2 bg-white rounded-lg border border-[#DDE3E9] animate-pulse">
-        <div className="w-10 h-10 bg-[#FCFBF9] rounded-full" />
-        <div className="flex-1">
-          <div className="h-4 bg-[#FCFBF9] rounded w-24 mb-1" />
-          <div className="h-3 bg-[#FCFBF9] rounded w-32" />
+      <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-2xl border border-white/10 animate-pulse">
+        <div className="w-10 h-10 bg-white/10 rounded-full" />
+        <div className="flex-1 hidden sm:block">
+          <div className="h-4 bg-white/10 rounded w-24 mb-1" />
+          <div className="h-3 bg-white/10 rounded w-32" />
         </div>
       </div>
     );
@@ -51,62 +51,62 @@ export function UserDisplay() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 px-4 py-2 bg-white rounded-lg border border-[#DDE3E9] hover:border-[#9448F2] transition-colors"
+        className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-2xl border border-white/10 hover:border-[#A343EC]/50 hover:bg-white/10 transition-all duration-200"
       >
         {user.image ? (
           <img
             src={user.image}
             alt={user.name ?? "User"}
-            className="w-10 h-10 rounded-full object-cover"
+            className="w-10 h-10 rounded-full object-cover ring-2 ring-white/10"
           />
         ) : (
-          <div className="w-10 h-10 bg-[#9448F2] rounded-full flex items-center justify-center text-white font-bold">
+          <div className="w-10 h-10 bg-[#A343EC] rounded-full flex items-center justify-center text-white font-bold">
             {user.name?.charAt(0).toUpperCase() ?? "U"}
           </div>
         )}
         
-        <div className="flex-1 text-left">
-          <div className="text-sm font-semibold text-[#222B32]">
+        <div className="flex-1 text-left hidden sm:block">
+          <div className="text-sm font-semibold text-[#FBF9F5]">
             {user.name ?? "User"}
           </div>
-          <div className="text-xs text-[#59677C]">
+          <div className="text-xs text-[#E4DEEA]">
             {user.email}
           </div>
         </div>
         
         <ChevronDown 
           size={16} 
-          className={`text-[#59677C] transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={`text-[#E4DEEA] transition-transform ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg border border-[#DDE3E9] shadow-lg overflow-hidden z-50">
-          <div className="p-4 border-b border-[#DDE3E9] bg-[#FCFBF9]">
+        <div className="absolute right-0 mt-2 w-64 bg-[#181F25] rounded-2xl border border-white/10 shadow-2xl overflow-hidden z-50 backdrop-blur-xl">
+          <div className="p-4 border-b border-white/10 bg-white/5">
             <div className="flex items-center gap-3">
               {user.image ? (
                 <img
                   src={user.image}
                   alt={user.name ?? "User"}
-                  className="w-12 h-12 rounded-full object-cover"
+                  className="w-12 h-12 rounded-full object-cover ring-2 ring-white/10"
                 />
               ) : (
-                <div className="w-12 h-12 bg-[#9448F2] rounded-full flex items-center justify-center text-white text-lg font-bold">
+                <div className="w-12 h-12 bg-[#A343EC] rounded-full flex items-center justify-center text-white text-lg font-bold">
                   {user.name?.charAt(0).toUpperCase() ?? "U"}
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-[#222B32] truncate">
+                <div className="text-sm font-semibold text-[#FBF9F5] truncate">
                   {user.name ?? "User"}
                 </div>
-                <div className="text-xs text-[#59677C] truncate">
+                <div className="text-xs text-[#E4DEEA] truncate">
                   {user.email}
                 </div>
               </div>
             </div>
             {user.bio && (
-              <p className="text-xs text-[#59677C] mt-2 line-clamp-2">
+              <p className="text-xs text-[#E4DEEA] mt-2 line-clamp-2">
                 {user.bio}
               </p>
             )}
@@ -115,7 +115,7 @@ export function UserDisplay() {
           <div className="p-2">
             <a
               href="/settings"
-              className="flex items-center gap-3 px-3 py-2 text-sm text-[#222B32] hover:bg-[#FCFBF9] rounded-lg transition-colors"
+              className="flex items-center gap-3 px-3 py-2 text-sm text-[#FBF9F5] hover:bg-white/5 rounded-xl transition-colors"
               onClick={() => setIsOpen(false)}
             >
               <UserIcon size={16} />
@@ -124,7 +124,7 @@ export function UserDisplay() {
             
             <button
               onClick={handleSignOut}
-              className="w-full flex items-center gap-3 px-3 py-2 text-sm text-[#9448F2] hover:bg-[#9448F2]/10 rounded-lg transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2 text-sm text-[#A343EC] hover:bg-[#A343EC]/10 rounded-xl transition-colors"
             >
               <LogOut size={16} />
               Sign Out
