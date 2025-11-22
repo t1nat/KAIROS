@@ -99,36 +99,56 @@ export function HomeClient({ hello, session }: {
                 </div>    
                     <div className="flex flex-col md:flex-row justify-between items-center w-full">
                         </div>
-                 <div className="w-full max-w-7xl mx-auto p-6">
+                 <div className="w-full max-w-7xl mx-auto p-6"></div>
   
-                      <div className="flex flex-col md:flex-row justify-between items-center gap-8 md:gap-12"></div>
-                  <h2 className="text-7xl md:text-8xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-4 leading-tight">
-                 Kairos
-                 </h2>
-                  <p className="text-xl text-[rgb(var(--text-secondary))] leading-relaxed max-w-lg">
-                      A powerful platform to coordinate events, manage projects, and collaborate with your team—all in one place.
-                       </p>
+                      <div className="flex flex-col md:flex-row justify-between items-end gap-8 md:gap-12 mb-4">
+    
+    <div className="flex flex-col items-start text-left w-full md:w-1/2">
+      <h2 className="text-7xl md:text-8xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-4 leading-tight">
+        Kairos
+      </h2>
+      <p className="text-xl text-[rgb(var(--text-secondary))] leading-relaxed max-w-lg">
+        A powerful platform to coordinate events, manage projects, and collaborate with your team—all in one place.
+      </p>
+    </div>
 
-                   </div>
+    {session ? (
+      <div className="flex flex-col gap-4 w-full md:w-auto items-end"> 
+        <Link 
+          href="/create" 
+          className="inline-flex items-center justify-center gap-4 px-14 py-7 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold text-2xl rounded-xl hover:from-indigo-500 hover:to-purple-500 transition-all duration-300 shadow-lg shadow-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/70 hover:scale-105 w-full md:w-auto"
+        >
+            Enter Project Space
+            <ArrowRight size={28} />
+        </Link>
+        <Link 
+          href="/publish" 
+          className="inline-flex items-center justify-center gap-4 px-14 py-7 bg-[rgb(var(--bg-secondary))] text-[rgb(var(--text-primary))] font-semibold text-2xl rounded-xl hover:bg-[rgb(var(--bg-tertiary))] transition-all duration-300 border-2 border-[rgb(var(--border-light))] hover:border-[rgb(var(--border-medium))] w-full md:w-auto"
+        >
+            View Publications
+            <Calendar size={28} />
+        </Link>
+      </div>
+    ) : null} 
+    
+  </div> 
 
-                    {session ? (
-                        <div className="flex flex-col gap-4 w-full md:w-auto items-end">
-                            <Link 
-                                  href="/create" 
-                                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-500 hover:to-purple-500 transition-all duration-300 shadow-lg shadow-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/70 hover:scale-105 w-full md:w-auto"
-                                  >
-                                  Enter Project Space
-                                 <ArrowRight size={20} />
-                                  </Link>
-                            <Link 
-                            href="/publish" 
-                               className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-[rgb(var(--bg-secondary))] text-[rgb(var(--text-primary))] font-semibold rounded-xl hover:bg-[rgb(var(--bg-tertiary))] transition-all duration-300 border-2 border-[rgb(var(--border-light))] hover:border-[rgb(var(--border-medium))] w-full md:w-auto"
-                                 >
-                              View Publications
-                              <Calendar size={20} />
-                              </Link>
-                        </div>
-                    ) : (
+  <div className="w-full flex flex-col items-center mt-12"> 
+    {hello && (
+      <div className="flex items-center justify-center gap-2 text-sm text-[rgb(var(--text-secondary))]">
+        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+        System Status: {hello.greeting}
+      </div>
+    )}
+    <button 
+      onClick={scrollToAbout}
+      className="mt-8 inline-flex flex-col items-center text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--accent-primary))] transition-colors animate-bounce"
+    >
+      <span className="text-sm font-medium mb-2">Learn More</span>
+      <ChevronDown size={24} />
+    </button>
+  </div>
+                     : (
                         <button
                             onClick={() => setIsModalOpen(true)}
                             className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-500 hover:to-purple-500 transition-all duration-300 shadow-lg shadow-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/70 hover:scale-105"
@@ -136,7 +156,7 @@ export function HomeClient({ hello, session }: {
                             Log In / Sign Up
                             <ArrowRight size={20} />
                         </button>
-                    )}
+                    )
 
                     <div className="w-full flex flex-col items-center mt-12"> 
   
