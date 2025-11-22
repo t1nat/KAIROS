@@ -5,10 +5,52 @@ import { useState } from "react";
 import { api } from "~/trpc/react";
 import { CreateProjectForm, CreateTaskForm, CollaboratorManager } from "./projectManagement";
 import { InteractiveTimeline } from "./interactiveTimeline";
-import { ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
+import { ChevronDown, ChevronUp, RefreshCw, FolderKanban, Plus, CheckCircle2 } from "lucide-react";
 
 interface CreateProjectContainerProps {
   userId: string;
+}
+
+interface CreateProjectInput {
+  title: string;
+  description: string;
+  shareStatus: "private" | "shared_read" | "shared_write";
+}
+
+interface CreateTaskInput {
+  title: string;
+  description: string;
+  assignedToId?: string;
+  priority: "low" | "medium" | "high" | "urgent";
+  dueDate?: Date;
+}
+
+interface User {
+  id: string;
+  name: string | null;
+  email: string;
+  image: string | null;
+}
+
+interface Collaborator {
+  user: User;
+  permission: "read" | "write";
+}
+
+interface Task {
+  id: number;
+  title: string;
+  description: string;
+  status: "pending" | "in_progress" | "completed" | "blocked";
+  priority: "low" | "medium" | "high" | "urgent";
+  dueDate: Date | null;
+  assignedTo: {
+    id: string;
+    name: string | null;
+    image: string | null;
+  } | null;
+  completedAt: Date | null;
+  orderIndex: number;
 }
 
 export function CreateProjectContainer({ userId }: CreateProjectContainerProps) {
@@ -73,7 +115,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
         if (!old) return old;
         return {
           ...old,
-          tasks: old.tasks?.map(task =>
+          tasks: old.tasks?.map((task) =>
             task.id === taskId
               ? {
                   ...task,
@@ -131,21 +173,11 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
   });
 
   // Handler functions
-  const handleCreateProject = async (data: {
-    title: string;
-    description: string;
-    shareStatus: "private" | "shared_read" | "shared_write";
-  }) => {
+  const handleCreateProject = async (data: CreateProjectInput) => {
     createProject.mutate(data);
   };
 
-  const handleCreateTask = async (data: {
-    title: string;
-    description: string;
-    assignedToId?: string;
-    priority: "low" | "medium" | "high" | "urgent";
-    dueDate?: Date;
-  }) => {
+  const handleCreateTask = async (data: CreateTaskInput) => {
     if (!selectedProjectId) return;
     createTask.mutate({
       ...data,
@@ -185,11 +217,11 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
 
   const isOwner = projectDetails?.createdById === userId;
   const hasWriteAccess = isOwner ?? (projectDetails?.collaborators?.some(
-    c => c.collaboratorId === userId && c.permission === "write"
+    (c) => c.collaboratorId === userId && c.permission === "write"
   ) ?? false);
 
   // Get available users for task assignment (collaborators + owner)
-  const availableUsers = projectDetails
+  const availableUsers: User[] = projectDetails
     ? [
         { 
           id: projectDetails.createdById, 
@@ -197,7 +229,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
           email: "owner@project.com",
           image: null 
         },
-        ...(projectDetails.collaborators?.map(c => ({
+        ...(projectDetails.collaborators?.map((c) => ({
           id: c.collaboratorId,
           name: c.collaborator?.name ?? null,
           email: c.collaborator?.email ?? "",
@@ -207,14 +239,14 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
     : [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Project selector */}
       {projects && projects.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-          <label htmlFor="project-select" className="block text-sm font-semibold text-slate-700 mb-3">
+        <div className="bg-white rounded-xl shadow-sm border border-[#DDE3E9]/60 p-4">
+          <label htmlFor="project-select" className="block text-xs font-semibold text-[#59677C] mb-2 uppercase tracking-wide">
             Select Project
           </label>
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <select
               id="project-select"
               value={selectedProjectId ?? ""}
@@ -223,7 +255,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                 setSelectedProjectId(id);
                 setShowProjectForm(false);
               }}
-              className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-slate-900 bg-white"
+              className="flex-1 px-3.5 py-2.5 border border-[#DDE3E9] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9448F2]/30 focus:border-[#9448F2] text-sm text-[#222B32] bg-[#FCFBF9]/30"
             >
               <option value="">-- Select a project --</option>
               {projects.map((project) => (
@@ -237,9 +269,10 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                 setSelectedProjectId(null);
                 setShowProjectForm(true);
               }}
-              className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+              className="px-4 py-2.5 bg-gradient-to-r from-[#9448F2] to-[#80C49B] text-white text-sm font-semibold rounded-lg hover:shadow-lg transition-all duration-300 flex items-center gap-2"
             >
-              New Project
+              <Plus size={16} />
+              New
             </button>
           </div>
         </div>
@@ -247,106 +280,138 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
 
       {/* Create Project Form */}
       {showProjectForm && (
-        <div>
+        <div className="bg-white rounded-xl shadow-sm border border-[#DDE3E9]/60 overflow-hidden">
           <button
             onClick={() => setShowProjectForm(!showProjectForm)}
-            className="mb-4 flex items-center gap-2 text-slate-700 hover:text-slate-900 font-medium"
+            className="w-full flex items-center justify-between px-5 py-3.5 bg-gradient-to-r from-[#FCFBF9] to-white hover:from-[#F8F5FF] hover:to-white transition-colors"
           >
-            {showProjectForm ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-            <span>New Project</span>
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 bg-gradient-to-br from-[#9448F2] to-[#80C49B] rounded-lg flex items-center justify-center shadow-sm">
+                <FolderKanban className="text-white" size={14} />
+              </div>
+              <span className="text-base font-bold text-[#222B32]">New Project</span>
+            </div>
+            {showProjectForm ? <ChevronUp size={18} className="text-[#59677C]" /> : <ChevronDown size={18} className="text-[#59677C]" />}
           </button>
           {showProjectForm && (
-            <CreateProjectForm
-              onSubmit={handleCreateProject}
-              currentUser={{ id: userId, name: null, email: "", image: null }}
-            />
+            <div className="p-5 border-t border-[#DDE3E9]/50">
+              <CreateProjectForm
+                onSubmit={handleCreateProject}
+                currentUser={{ id: userId, name: null, email: "", image: null }}
+              />
+            </div>
           )}
         </div>
       )}
 
       {/* Selected Project Details */}
       {selectedProjectId && projectDetails && (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Project header */}
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h2 className="text-3xl font-bold text-slate-900">{projectDetails.title}</h2>
-                {projectDetails.description && (
-                  <p className="text-slate-600 mt-2">{projectDetails.description}</p>
+          <div className="bg-white rounded-xl shadow-sm border border-[#DDE3E9]/60 overflow-hidden">
+            <div className="p-5">
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold text-[#222B32] mb-1">{projectDetails.title}</h2>
+                  {projectDetails.description && (
+                    <p className="text-sm text-[#59677C]">{projectDetails.description}</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => void refetchProjectDetails()}
+                  className="p-2 text-[#59677C] hover:text-[#9448F2] hover:bg-[#9448F2]/5 rounded-lg transition-all"
+                  title="Refresh"
+                >
+                  <RefreshCw size={18} />
+                </button>
+              </div>
+              
+              <div className="flex flex-wrap gap-2 items-center">
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  projectDetails.shareStatus === "private"
+                    ? "bg-slate-100 text-slate-700"
+                    : projectDetails.shareStatus === "shared_read"
+                    ? "bg-blue-100 text-blue-700"
+                    : "bg-emerald-100 text-emerald-700"
+                }`}>
+                  {projectDetails.shareStatus === "private" && "🔒 Private"}
+                  {projectDetails.shareStatus === "shared_read" && "👁️ View Only"}
+                  {projectDetails.shareStatus === "shared_write" && "✏️ Collaborative"}
+                </span>
+                <span className="text-xs text-[#59677C]">
+                  Created {new Date(projectDetails.createdAt).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric',
+                    year: 'numeric'
+                  })}
+                </span>
+                {projectDetails.tasks && projectDetails.tasks.length > 0 && (
+                  <>
+                    <span className="text-[#DDE3E9]">•</span>
+                    <span className="text-xs text-[#59677C] flex items-center gap-1">
+                      <CheckCircle2 size={12} className="text-emerald-500" />
+                      {projectDetails.tasks.filter(t => t.status === 'completed').length} / {projectDetails.tasks.length} tasks
+                    </span>
+                  </>
                 )}
               </div>
-              <button
-                onClick={() => void refetchProjectDetails()}
-                className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition"
-                title="Refresh"
-              >
-                <RefreshCw size={20} />
-              </button>
-            </div>
-            
-            <div className="flex gap-2 items-center text-sm text-slate-600">
-              <span className={`px-3 py-1 rounded-full font-medium ${
-                projectDetails.shareStatus === "private"
-                  ? "bg-slate-200 text-slate-800"
-                  : projectDetails.shareStatus === "shared_read"
-                  ? "bg-blue-100 text-blue-800"
-                  : "bg-green-100 text-green-800"
-              }`}>
-                {projectDetails.shareStatus === "private" && "Private"}
-                {projectDetails.shareStatus === "shared_read" && "Shared (View)"}
-                {projectDetails.shareStatus === "shared_write" && "Shared (Edit)"}
-              </span>
-              <span>•</span>
-              <span>Created {new Date(projectDetails.createdAt).toLocaleDateString()}</span>
             </div>
           </div>
 
           {/* Two-column layout for forms and collaborators */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Task form */}
             {hasWriteAccess && (
-              <div>
+              <div className="bg-white rounded-xl shadow-sm border border-[#DDE3E9]/60 overflow-hidden">
                 <button
                   onClick={() => setShowTaskForm(!showTaskForm)}
-                  className="mb-4 flex items-center gap-2 text-slate-700 hover:text-slate-900 font-medium"
+                  className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#FCFBF9] to-white hover:from-[#F8F5FF] hover:to-white transition-colors"
                 >
-                  {showTaskForm ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                  <span>Add Task</span>
+                  <span className="text-sm font-semibold text-[#222B32]">Add Task</span>
+                  {showTaskForm ? <ChevronUp size={16} className="text-[#59677C]" /> : <ChevronDown size={16} className="text-[#59677C]" />}
                 </button>
                 {showTaskForm && (
-                  <CreateTaskForm
-                    projectId={selectedProjectId}
-                    availableUsers={availableUsers}
-                    onSubmit={handleCreateTask}
-                  />
+                  <div className="p-4 border-t border-[#DDE3E9]/50">
+                    <CreateTaskForm
+                      projectId={selectedProjectId}
+                      availableUsers={availableUsers}
+                      onSubmit={handleCreateTask}
+                    />
+                  </div>
                 )}
               </div>
             )}
 
             {/* Collaborator manager */}
-            <CollaboratorManager
-              projectId={selectedProjectId}
-              currentCollaborators={projectDetails.collaborators?.map(c => ({
-                user: {
-                  id: c.collaboratorId,
-                  name: c.collaborator?.name ?? null,
-                  email: c.collaborator?.email ?? "",
-                  image: c.collaborator?.image ?? null,
-                },
-                permission: c.permission,
-              })) ?? []}
-              onAddCollaborator={handleAddCollaborator}
-              onRemoveCollaborator={handleRemoveCollaborator}
-              onUpdatePermission={handleUpdatePermission}
-              isOwner={isOwner}
-            />
+            <div className="bg-white rounded-xl shadow-sm border border-[#DDE3E9]/60 overflow-hidden">
+              <div className="px-4 py-3 bg-gradient-to-r from-[#FCFBF9] to-white border-b border-[#DDE3E9]/50">
+                <span className="text-sm font-semibold text-[#222B32]">Collaborators</span>
+              </div>
+              <div className="p-4">
+                <CollaboratorManager
+                  projectId={selectedProjectId}
+                  currentCollaborators={(projectDetails.collaborators?.map((c) => ({
+                    user: {
+                      id: c.collaboratorId,
+                      name: c.collaborator?.name ?? null,
+                      email: c.collaborator?.email ?? "",
+                      image: c.collaborator?.image ?? null,
+                    },
+                    permission: c.permission,
+                  })) ?? []) as Collaborator[]}
+                  onAddCollaborator={handleAddCollaborator}
+                  onRemoveCollaborator={handleRemoveCollaborator}
+                  onUpdatePermission={handleUpdatePermission}
+                  isOwner={isOwner}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Interactive Timeline */}
           {projectDetails.tasks && projectDetails.tasks.length > 0 && (
             <InteractiveTimeline
-              tasks={projectDetails.tasks.map(t => ({
+              tasks={(projectDetails.tasks.map((t) => ({
                 id: t.id,
                 title: t.title,
                 description: t.description,
@@ -360,19 +425,24 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                 } : null,
                 completedAt: t.completedAt,
                 orderIndex: t.orderIndex,
-              }))}
+              })) as Task[])}
               onTaskStatusChange={handleTaskStatusChange}
               isReadOnly={!hasWriteAccess}
             />
           )}
 
           {(!projectDetails.tasks || projectDetails.tasks.length === 0) && hasWriteAccess && (
-            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 text-center">
-              <p className="text-slate-600 mb-4">No tasks yet. Create your first task to get started!</p>
+            <div className="bg-white rounded-xl shadow-sm border border-[#DDE3E9]/60 p-8 text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-[#9448F2]/10 to-[#80C49B]/10 rounded-xl mb-4">
+                <Plus className="text-[#9448F2]" size={24} />
+              </div>
+              <h3 className="text-lg font-semibold text-[#222B32] mb-2">No tasks yet</h3>
+              <p className="text-sm text-[#59677C] mb-4">Create your first task to get started with this project</p>
               <button
                 onClick={() => setShowTaskForm(true)}
-                className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-all duration-300"
+                className="px-5 py-2.5 bg-gradient-to-r from-[#9448F2] to-[#80C49B] text-white text-sm font-semibold rounded-lg hover:shadow-lg transition-all inline-flex items-center gap-2"
               >
+                <Plus size={16} />
                 Create First Task
               </button>
             </div>

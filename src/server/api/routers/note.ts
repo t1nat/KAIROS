@@ -5,6 +5,8 @@ import { protectedProcedure, createTRPCRouter } from "~/server/api/trpc";
 import { stickyNotes } from "~/server/db/schema";
 import bcrypt from 'bcryptjs'; 
 import { eq } from "drizzle-orm";
+import crypto from 'crypto';
+import { sendPasswordResetEmail } from "~/server/email";
 
 export const noteRouter = createTRPCRouter({
   create: protectedProcedure
@@ -148,7 +150,6 @@ export const noteRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // 🚨 ADD THIS: verifyPassword mutation
   verifyPassword: protectedProcedure
     .input(z.object({
       noteId: z.number(),
@@ -189,5 +190,142 @@ export const noteRouter = createTRPCRouter({
         valid: true, 
         content: note.content 
       };
+    }),
+
+  requestPasswordReset: protectedProcedure
+    .input(z.object({
+      noteId: z.number(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // 1. Fetch the note
+      const note = await ctx.db.query.stickyNotes.findFirst({
+        where: eq(stickyNotes.id, input.noteId),
+      });
+
+      if (!note) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Note not found." });
+      }
+
+      // 2. Authorization Check
+      if (note.createdById !== ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You don't own this note." });
+      }
+
+      // 3. Check if password protected
+      if (!note.passwordHash) {
+        throw new TRPCError({ 
+          code: "BAD_REQUEST", 
+          message: "Note is not password protected." 
+        });
+      }
+
+      // 4. Check if user has an email
+      if (!ctx.session.user.email) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No email associated with your account.",
+        });
+      }
+
+      // 5. Generate reset token
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const resetTokenHash = await bcrypt.hash(resetToken, 10);
+      const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
+
+      // 6. Update note with reset token
+      await ctx.db.update(stickyNotes)
+        .set({
+          resetToken: resetTokenHash,
+          resetTokenExpiry: resetTokenExpiry,
+        })
+        .where(eq(stickyNotes.id, input.noteId));
+
+      // 7. Send email
+      try {
+        await sendPasswordResetEmail({
+          email: ctx.session.user.email,
+          userName: ctx.session.user.name ?? 'User',
+          noteId: input.noteId,
+          resetToken: resetToken,
+        });
+
+        return { success: true, message: "Reset email sent successfully" };
+      } catch (emailError) {
+        console.error("❌ Email Error:", emailError);
+        
+        // Provide more specific error message
+        const errorMessage = emailError instanceof Error 
+          ? emailError.message 
+          : "Failed to send reset email. Please try again later.";
+        
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: errorMessage,
+        });
+      }
+    }),
+
+  resetPassword: protectedProcedure
+    .input(z.object({
+      noteId: z.number(),
+      resetToken: z.string(),
+      newPassword: z.string().min(1),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // 1. Fetch the note
+      const note = await ctx.db.query.stickyNotes.findFirst({
+        where: eq(stickyNotes.id, input.noteId),
+      });
+
+      if (!note) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Note not found." });
+      }
+
+      // 2. Authorization Check
+      if (note.createdById !== ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You don't own this note." });
+      }
+
+      // 3. Verify reset token exists and hasn't expired
+      if (!note.resetToken || !note.resetTokenExpiry) {
+        throw new TRPCError({ 
+          code: "BAD_REQUEST", 
+          message: "No password reset requested for this note." 
+        });
+      }
+
+      if (new Date() > note.resetTokenExpiry) {
+        throw new TRPCError({ 
+          code: "BAD_REQUEST", 
+          message: "Reset link has expired. Please request a new one." 
+        });
+      }
+
+      // 4. Verify the token
+      const isValidToken = await bcrypt.compare(input.resetToken, note.resetToken);
+
+      if (!isValidToken) {
+        throw new TRPCError({ 
+          code: "UNAUTHORIZED", 
+          message: "Invalid reset token." 
+        });
+      }
+
+      // 5. Hash new password
+      const saltRounds = 10;
+      const salt = await bcrypt.genSalt(saltRounds);
+      const newPasswordHash = await bcrypt.hash(input.newPassword, salt);
+
+      // 6. Update note with new password and clear reset token
+      await ctx.db.update(stickyNotes)
+        .set({
+          passwordHash: newPasswordHash,
+          passwordSalt: salt,
+          resetToken: null,
+          resetTokenExpiry: null,
+        })
+        .where(eq(stickyNotes.id, input.noteId));
+
+      return { success: true, message: "Password reset successfully" };
     }),
 });

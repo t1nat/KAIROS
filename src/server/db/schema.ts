@@ -317,6 +317,11 @@ export const stickyNotes = createTable(
       .notNull(),
     passwordHash: varchar("password_hash", { length: 256 }),
     passwordSalt: varchar("password_salt", { length: 256 }),
+
+    // Password reset fields (NEW)
+    resetToken: text("reset_token"),
+    resetTokenExpiry: timestamp("reset_token_expiry", { withTimezone: true }),
+
     shareStatus: shareStatusEnum("share_status").notNull(),
   }),
   (t) => [

@@ -1,4 +1,3 @@
-// src/app/homeClient.tsx
 "use client";
 
 import Link from "next/link";
@@ -17,7 +16,8 @@ import {
   Shield,
   ArrowRight,
   BookOpen,
-  Info
+  Info,
+  X
 } from "lucide-react";
 
 interface SessionData {
@@ -56,201 +56,206 @@ export function HomeClient({ hello, session }: {
     };
 
     return (
-        <main className="min-h-screen bg-[rgb(var(--bg-primary))]">
+        <main className="min-h-screen bg-[#181F25]">
             
             {/* Header */}
-            <header className="fixed top-0 left-0 right-0 z-50 bg-[rgb(var(--bg-primary))]/80 backdrop-blur-md border-b border-[rgb(var(--border-light))]">
-                <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                            <Zap className="text-white" size={24} />
+            <header className="fixed top-0 left-0 right-0 z-50 bg-[#222B32]/95 backdrop-blur-md border-b border-[#2A3742]">
+                <div className="max-w-7xl mx-auto px-6 py-4">
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-[#A343EC] rounded-lg flex items-center justify-center">
+                                <Zap className="text-white" size={22} />
+                            </div>
+                            <h1 className="text-2xl font-bold text-[#FBF9F5]">Kairos</h1>
                         </div>
-                        <h1 className="text-2xl font-bold text-[rgb(var(--text-primary))]">EventFlow</h1>
-                    </div>
-                    
-                    <div className="flex items-center gap-6">
-                        <button 
-                            onClick={scrollToAbout} 
-                            className="flex items-center gap-2 px-4 py-2 text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))] font-medium transition-all duration-200"
-                        >
-                            <Info size={18} />
-                            About Us
-                        </button>
-                        <button 
-                            onClick={() => setIsGuideOpen(true)} 
-                            className="flex items-center gap-2 px-4 py-2 text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))] font-medium transition-all duration-200"
-                        >
-                            <BookOpen size={18} />
-                            How To Guide
-                        </button>
-                        {session && <UserDisplay />}
+                        
+                        <div className="flex items-center gap-4">
+                            <button 
+                                onClick={scrollToAbout} 
+                                className="flex items-center gap-2 px-4 py-2 text-[#E4DEEA] hover:text-[#FBF9F5] hover:bg-[#2A3742] rounded-lg font-medium transition-all duration-200"
+                            >
+                                <Info size={18} />
+                                <span className="hidden sm:inline">About</span>
+                            </button>
+                            <button 
+                                onClick={() => setIsGuideOpen(true)} 
+                                className="flex items-center gap-2 px-4 py-2 text-[#E4DEEA] hover:text-[#FBF9F5] hover:bg-[#2A3742] rounded-lg font-medium transition-all duration-200"
+                            >
+                                <BookOpen size={18} />
+                                <span className="hidden sm:inline">Guide</span>
+                            </button>
+                            {session && <UserDisplay />}
+                        </div>
                     </div>
                 </div>
             </header>
 
             {/* Hero Section */}
-            <section className="pt-32 pb-20 px-6"> 
-                </section>
-                <div className="flex justify-center w-full"> 
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-[rgb(var(--accent-primary))]/10 border border-[rgb(var(--accent-primary))]/20 text-[rgb(var(--accent-primary))] rounded-full text-sm font-medium mb-8 backdrop-blur-sm">
-                        <Zap size={16} />
-                        Professional Event & Project Management
-                        </div>
-                </div>    
-                    <div className="flex flex-col md:flex-row justify-between items-center w-full">
-                        </div>
-                 <div className="w-full max-w-7xl mx-auto p-6"></div>
-  
-                      <div className="flex flex-col md:flex-row justify-between items-end gap-8 md:gap-12 mb-4">
-    
-    <div className="flex flex-col items-start text-left w-full md:w-1/2">
-      <h2 className="text-7xl md:text-8xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-4 leading-tight">
-        Kairos
-      </h2>
-      <p className="text-xl text-[rgb(var(--text-secondary))] leading-relaxed max-w-lg">
-        A powerful platform to coordinate events, manage projects, and collaborate with your team—all in one place.
-      </p>
-    </div>
-
-    {session ? (
-      <div className="flex flex-col gap-4 w-full md:w-auto items-end"> 
-        <Link 
-          href="/create" 
-          className="inline-flex items-center justify-center gap-4 px-14 py-7 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold text-2xl rounded-xl hover:from-indigo-500 hover:to-purple-500 transition-all duration-300 shadow-lg shadow-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/70 hover:scale-105 w-full md:w-auto"
-        >
-            Enter Project Space
-            <ArrowRight size={28} />
-        </Link>
-        <Link 
-          href="/publish" 
-          className="inline-flex items-center justify-center gap-4 px-14 py-7 bg-[rgb(var(--bg-secondary))] text-[rgb(var(--text-primary))] font-semibold text-2xl rounded-xl hover:bg-[rgb(var(--bg-tertiary))] transition-all duration-300 border-2 border-[rgb(var(--border-light))] hover:border-[rgb(var(--border-medium))] w-full md:w-auto"
-        >
-            View Publications
-            <Calendar size={28} />
-        </Link>
-      </div>
-    ) : null} 
-    
-  </div> 
-
-  <div className="w-full flex flex-col items-center mt-12"> 
-    {hello && (
-      <div className="flex items-center justify-center gap-2 text-sm text-[rgb(var(--text-secondary))]">
-        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-        System Status: {hello.greeting}
-      </div>
-    )}
-    <button 
-      onClick={scrollToAbout}
-      className="mt-8 inline-flex flex-col items-center text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--accent-primary))] transition-colors animate-bounce"
-    >
-      <span className="text-sm font-medium mb-2">Learn More</span>
-      <ChevronDown size={24} />
-    </button>
-  </div>
-                     : (
-                        <button
-                            onClick={() => setIsModalOpen(true)}
-                            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-500 hover:to-purple-500 transition-all duration-300 shadow-lg shadow-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/70 hover:scale-105"
-                        >
-                            Log In / Sign Up
-                            <ArrowRight size={20} />
-                        </button>
-                    )
-
-                    <div className="w-full flex flex-col items-center mt-12"> 
-  
-               {hello && (
-                   <div className="flex items-center justify-center gap-2 text-sm text-[rgb(var(--text-secondary))]">
-                   <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                   System Status: {hello.greeting}
-                   </div>
-            )}
-             <button 
-             onClick={scrollToAbout}
-             className="mt-8 inline-flex flex-col items-center text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--accent-primary))] transition-colors animate-bounce"
-            >
-              <span className="text-sm font-medium mb-2">Learn More</span>
-              <ChevronDown size={24} />
-            </button>
-              </div>
-         
-            <section ref={aboutRef} className="py-20 px-6 bg-[rgb(var(--bg-secondary))]/30 backdrop-blur-xl border-y border-[rgb(var(--border-light))]">
+            <section className="pt-32 pb-20 px-6">
                 <div className="max-w-7xl mx-auto">
+                    {/* Badge */}
+                    <div className="flex justify-center mb-8">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#2A3742] border border-[#A343EC]/30 text-[#A343EC] rounded-full text-sm font-medium">
+                            <Zap size={16} />
+                            Professional Event & Project Management
+                        </div>
+                    </div>
+
+                    {/* Main Hero Content */}
+                    <div className="flex flex-col lg:flex-row justify-between items-center gap-12 mb-12">
+                        {/* Left Side - Text */}
+                        <div className="flex-1 text-center lg:text-left">
+                            <h2 className="text-6xl md:text-7xl lg:text-8xl font-extrabold text-[#FBF9F5] mb-6 leading-tight">
+                                Kairos
+                            </h2>
+                            <p className="text-xl text-[#E4DEEA] leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                                A powerful platform to coordinate events, manage projects, and collaborate with your team—all in one place.
+                            </p>
+                        </div>
+
+                        {/* Right Side - Actions */}
+                        <div className="flex flex-col gap-4 w-full lg:w-auto lg:min-w-[300px]">
+                            {session ? (
+                                <>
+                                    <Link 
+                                        href="/create" 
+                                        className="flex items-center justify-center gap-2 px-8 py-4 bg-[#A343EC] text-white font-semibold rounded-lg hover:bg-[#8B35C7] transition-all duration-300"
+                                    >
+                                        Enter Project Space
+                                        <ArrowRight size={20} />
+                                    </Link>
+                                    <Link 
+                                        href="/publish" 
+                                        className="flex items-center justify-center gap-2 px-8 py-4 bg-[#2A3742] text-[#FBF9F5] font-semibold rounded-lg hover:bg-[#344252] transition-all duration-300 border border-[#2A3742]"
+                                    >
+                                        View Publications
+                                        <Calendar size={20} />
+                                    </Link>
+                                </>
+                            ) : (
+                                <button
+                                    onClick={() => setIsModalOpen(true)}
+                                    className="flex items-center justify-center gap-2 px-8 py-4 bg-[#A343EC] text-white font-semibold rounded-lg hover:bg-[#8B35C7] transition-all duration-300"
+                                >
+                                    Log In / Sign Up
+                                    <ArrowRight size={20} />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* System Status */}
+                    {hello && (
+                        <div className="flex items-center justify-center gap-2 text-sm text-[#A3D3B4] mb-8">
+                            <div className="w-2 h-2 bg-[#A3D3B4] rounded-full animate-pulse"></div>
+                            System Status: {hello.greeting}
+                        </div>
+                    )}
+
+                    {/* Scroll Down Button */}
+                    <div className="flex justify-center">
+                        <button 
+                            onClick={scrollToAbout}
+                            className="flex flex-col items-center text-[#E4DEEA] hover:text-[#A343EC] transition-colors"
+                        >
+                            <span className="text-sm font-medium mb-2">Learn More</span>
+                            <ChevronDown size={24} className="animate-bounce" />
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            {/* About Us Section */}
+            <section ref={aboutRef} className="py-20 px-6 bg-[#222B32] border-y border-[#2A3742]">
+                <div className="max-w-7xl mx-auto">
+                    {/* Section Header */}
                     <div className="text-center mb-16">
-                        <h3 className="text-4xl font-bold text-[rgb(var(--text-primary))] mb-4">
-                            About EventFlow
+                        <h3 className="text-4xl md:text-5xl font-bold text-[#FBF9F5] mb-4">
+                            About Kairos
                         </h3>
-                        <p className="text-xl text-[rgb(var(--text-secondary))] max-w-3xl mx-auto">
-                            EventFlow is designed to streamline collaboration, whether you are managing personal projects, 
+                        <p className="text-lg text-[#E4DEEA] max-w-3xl mx-auto">
+                            Kairos is designed to streamline collaboration, whether you are managing personal projects, 
                             coordinating with a team, or organizing large-scale events.
                         </p>
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-8 mb-16">
-                        <div className="bg-[rgb(var(--bg-primary))] rounded-2xl shadow-lg border border-[rgb(var(--border-light))] hover:border-[rgb(var(--accent-primary))]/50 transition-all duration-300 p-8">
-                            <div className="w-12 h-12 bg-[rgb(var(--accent-primary))]/10 rounded-lg flex items-center justify-center mb-4">
-                                <FolderKanban className="text-[rgb(var(--accent-primary))]" size={24} />
+                    {/* Feature Cards */}
+                    <div className="grid md:grid-cols-3 gap-6 mb-16">
+                        {/* Organizations Card */}
+                        <div className="bg-[#2A3742] rounded-xl border border-[#344252] hover:border-[#A343EC] transition-all duration-300 p-8">
+                            <div className="w-12 h-12 bg-[#A343EC] rounded-lg flex items-center justify-center mb-6">
+                                <FolderKanban className="text-white" size={24} />
                             </div>
-                            <h4 className="text-xl font-bold text-[rgb(var(--text-primary))] mb-3">For Organizations</h4>
-                            <p className="text-[rgb(var(--text-secondary))]">
+                            <h4 className="text-xl font-bold text-[#FBF9F5] mb-3">For Organizations</h4>
+                            <p className="text-[#E4DEEA] leading-relaxed">
                                 Admins can create organization spaces, assign roles, manage tasks, and oversee team progress. 
                                 Workers collaborate on shared documents with real-time tracking.
                             </p>
                         </div>
 
-                        <div className="bg-[rgb(var(--bg-primary))] rounded-2xl shadow-lg border border-[rgb(var(--border-light))] hover:border-purple-500/50 transition-all duration-300 p-8">
-                            <div className="w-12 h-12 bg-purple-600/10 rounded-lg flex items-center justify-center mb-4">
-                                <Users className="text-purple-600" size={24} />
+                        {/* Teams Card */}
+                        <div className="bg-[#2A3742] rounded-xl border border-[#344252] hover:border-[#A343EC] transition-all duration-300 p-8">
+                            <div className="w-12 h-12 bg-[#F8D45E] rounded-lg flex items-center justify-center mb-6">
+                                <Users className="text-[#181F25]" size={24} />
                             </div>
-                            <h4 className="text-xl font-bold text-[rgb(var(--text-primary))] mb-3">For Teams</h4>
-                            <p className="text-[rgb(var(--text-secondary))]">
+                            <h4 className="text-xl font-bold text-[#FBF9F5] mb-3">For Teams</h4>
+                            <p className="text-[#E4DEEA] leading-relaxed">
                                 Join organization spaces with access codes. Complete assignments, create documents, 
                                 and collaborate with password-protected files and real-time annotations.
                             </p>
                         </div>
 
-                        <div className="bg-[rgb(var(--bg-primary))] rounded-2xl shadow-lg border border-[rgb(var(--border-light))] hover:border-blue-500/50 transition-all duration-300 p-8">
-                            <div className="w-12 h-12 bg-blue-600/10 rounded-lg flex items-center justify-center mb-4">
-                                <Shield className="text-blue-600" size={24} />
+                        {/* Personal Use Card */}
+                        <div className="bg-[#2A3742] rounded-xl border border-[#344252] hover:border-[#A343EC] transition-all duration-300 p-8">
+                            <div className="w-12 h-12 bg-[#A3D3B4] rounded-lg flex items-center justify-center mb-6">
+                                <Shield className="text-[#181F25]" size={24} />
                             </div>
-                            <h4 className="text-xl font-bold text-[rgb(var(--text-primary))] mb-3">For Personal Use</h4>
-                            <p className="text-[rgb(var(--text-secondary))]">
+                            <h4 className="text-xl font-bold text-[#FBF9F5] mb-3">For Personal Use</h4>
+                            <p className="text-[#E4DEEA] leading-relaxed">
                                 Perfect for individual productivity. Create encrypted notes, manage personal tasks, 
                                 and organize your workflow without any organizational overhead.
                             </p>
                         </div>
                     </div>
 
-                    <div className="bg-[rgb(var(--bg-primary))] rounded-2xl shadow-lg border border-[rgb(var(--border-light))] p-8">
-                        <h4 className="text-2xl font-bold text-[rgb(var(--text-primary))] mb-6">Key Features</h4>
+                    {/* Key Features */}
+                    <div className="bg-[#2A3742] rounded-xl border border-[#344252] p-8">
+                        <h4 className="text-2xl font-bold text-[#FBF9F5] mb-8">Key Features</h4>
                         <div className="grid md:grid-cols-2 gap-6">
-                            <div className="flex items-start gap-3">
-                                <CheckCircle2 className="text-emerald-500 flex-shrink-0 mt-1" size={20} />
+                            <div className="flex items-start gap-4">
+                                <div className="flex-shrink-0 w-6 h-6 bg-[#A3D3B4] rounded-full flex items-center justify-center mt-1">
+                                    <CheckCircle2 className="text-[#181F25]" size={16} />
+                                </div>
                                 <div>
-                                    <h5 className="font-semibold text-[rgb(var(--text-primary))] mb-1">Interactive Timeline</h5>
-                                    <p className="text-sm text-[rgb(var(--text-secondary))]">Visual task management with real-time progress tracking</p>
+                                    <h5 className="font-semibold text-[#FBF9F5] mb-2">Interactive Timeline</h5>
+                                    <p className="text-sm text-[#E4DEEA]">Visual task management with real-time progress tracking</p>
                                 </div>
                             </div>
-                            <div className="flex items-start gap-3">
-                                <CheckCircle2 className="text-emerald-500 flex-shrink-0 mt-1" size={20} />
+                            <div className="flex items-start gap-4">
+                                <div className="flex-shrink-0 w-6 h-6 bg-[#A3D3B4] rounded-full flex items-center justify-center mt-1">
+                                    <CheckCircle2 className="text-[#181F25]" size={16} />
+                                </div>
                                 <div>
-                                    <h5 className="font-semibold text-[rgb(var(--text-primary))] mb-1">Document Collaboration</h5>
-                                    <p className="text-sm text-[rgb(var(--text-secondary))]">Create, edit, and draw on documents with team attribution</p>
+                                    <h5 className="font-semibold text-[#FBF9F5] mb-2">Document Collaboration</h5>
+                                    <p className="text-sm text-[#E4DEEA]">Create, edit, and draw on documents with team attribution</p>
                                 </div>
                             </div>
-                            <div className="flex items-start gap-3">
-                                <CheckCircle2 className="text-emerald-500 flex-shrink-0 mt-1" size={20} />
+                            <div className="flex items-start gap-4">
+                                <div className="flex-shrink-0 w-6 h-6 bg-[#A3D3B4] rounded-full flex items-center justify-center mt-1">
+                                    <CheckCircle2 className="text-[#181F25]" size={16} />
+                                </div>
                                 <div>
-                                    <h5 className="font-semibold text-[rgb(var(--text-primary))] mb-1">Password Protection</h5>
-                                    <p className="text-sm text-[rgb(var(--text-secondary))]">Secure sensitive files with encryption and email recovery</p>
+                                    <h5 className="font-semibold text-[#FBF9F5] mb-2">Password Protection</h5>
+                                    <p className="text-sm text-[#E4DEEA]">Secure sensitive files with encryption and email recovery</p>
                                 </div>
                             </div>
-                            <div className="flex items-start gap-3">
-                                <CheckCircle2 className="text-emerald-500 flex-shrink-0 mt-1" size={20} />
+                            <div className="flex items-start gap-4">
+                                <div className="flex-shrink-0 w-6 h-6 bg-[#A3D3B4] rounded-full flex items-center justify-center mt-1">
+                                    <CheckCircle2 className="text-[#181F25]" size={16} />
+                                </div>
                                 <div>
-                                    <h5 className="font-semibold text-[rgb(var(--text-primary))] mb-1">Event Publishing</h5>
-                                    <p className="text-sm text-[rgb(var(--text-secondary))]">Share events publicly or import from project workspaces</p>
+                                    <h5 className="font-semibold text-[#FBF9F5] mb-2">Event Publishing</h5>
+                                    <p className="text-sm text-[#E4DEEA]">Share events publicly or import from project workspaces</p>
                                 </div>
                             </div>
                         </div>
@@ -260,17 +265,17 @@ export function HomeClient({ hello, session }: {
 
             {/* CTA Section */}
             {!session && (
-                <section className="py-20 px-6 bg-gradient-to-br from-indigo-600 to-purple-600">
+                <section className="py-20 px-6 bg-[#A343EC]">
                     <div className="max-w-4xl mx-auto text-center">
-                        <h3 className="text-4xl font-bold text-white mb-4">
+                        <h3 className="text-4xl md:text-5xl font-bold text-white mb-4">
                             Ready to Get Started?
                         </h3>
-                        <p className="text-xl text-indigo-100 mb-8">
-                            Join teams already using EventFlow to stay organized
+                        <p className="text-xl text-[#E4DEEA] mb-8">
+                            Join teams already using Kairos to stay organized
                         </p>
                         <button
                             onClick={() => setIsModalOpen(true)}
-                            className="inline-flex items-center gap-2 px-8 py-4 bg-white text-indigo-600 font-semibold rounded-xl hover:bg-slate-50 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+                            className="inline-flex items-center gap-2 px-8 py-4 bg-white text-[#A343EC] font-semibold rounded-lg hover:bg-[#FBF9F5] transition-all duration-300"
                         >
                             Sign Up Free
                             <ArrowRight size={20} />
@@ -280,16 +285,16 @@ export function HomeClient({ hello, session }: {
             )}
 
             {/* Footer */}
-            <footer className="py-12 px-6 bg-[rgb(var(--bg-secondary))] border-t border-[rgb(var(--border-light))]">
+            <footer className="py-12 px-6 bg-[#222B32] border-t border-[#2A3742]">
                 <div className="max-w-7xl mx-auto text-center">
                     <div className="flex items-center justify-center gap-3 mb-4">
-                        <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
+                        <div className="w-8 h-8 bg-[#A343EC] rounded-lg flex items-center justify-center">
                             <Zap className="text-white" size={20} />
                         </div>
-                        <span className="text-xl font-bold text-[rgb(var(--text-primary))]">EventFlow</span>
+                        <span className="text-xl font-bold text-[#FBF9F5]">Kairos</span>
                     </div>
-                    <p className="text-[rgb(var(--text-secondary))]">
-                        © 2024 EventFlow. Professional event and project management platform.
+                    <p className="text-[#E4DEEA]">
+                        © 2024 Kairos. Professional event and project management platform.
                     </p>
                 </div>
             </footer>
@@ -304,25 +309,26 @@ export function HomeClient({ hello, session }: {
             {isGuideOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div 
-                        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+                        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
                         onClick={() => setIsGuideOpen(false)}
                     />
-                    <div className="relative bg-[rgb(var(--bg-primary))] rounded-2xl shadow-2xl w-full max-w-3xl max-h-[80vh] overflow-y-auto border border-[rgb(var(--border-light))]">
-                        <div className="sticky top-0 bg-[rgb(var(--bg-primary))] border-b border-[rgb(var(--border-light))] p-6 flex justify-between items-center">
-                            <h3 className="text-2xl font-bold text-[rgb(var(--text-primary))]">How To Use EventFlow</h3>
+                    <div className="relative bg-[#222B32] rounded-xl w-full max-w-3xl max-h-[80vh] overflow-hidden border border-[#2A3742]">
+                        {/* Modal Header */}
+                        <div className="sticky top-0 bg-[#2A3742] border-b border-[#344252] p-6 flex justify-between items-center">
+                            <h3 className="text-2xl font-bold text-[#FBF9F5]">How To Use Kairos</h3>
                             <button 
                                 onClick={() => setIsGuideOpen(false)}
-                                className="p-2 text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))] hover:bg-[rgb(var(--bg-secondary))] rounded-lg transition"
+                                className="p-2 text-[#E4DEEA] hover:text-[#FBF9F5] hover:bg-[#344252] rounded-lg transition"
                             >
-                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
+                                <X size={24} />
                             </button>
                         </div>
-                        <div className="p-8 space-y-8">
+                        
+                        {/* Modal Content */}
+                        <div className="overflow-y-auto max-h-[calc(80vh-88px)] p-8 space-y-8">
                             <div>
-                                <h4 className="text-xl font-bold text-[rgb(var(--accent-primary))] mb-3">Getting Started</h4>
-                                <ol className="list-decimal list-inside space-y-2 text-[rgb(var(--text-secondary))]">
+                                <h4 className="text-xl font-bold text-[#A343EC] mb-4">Getting Started</h4>
+                                <ol className="list-decimal list-inside space-y-3 text-[#E4DEEA]">
                                     <li>Sign up using Google or Discord authentication</li>
                                     <li>Choose your usage type: Personal, Organization Admin, or Worker</li>
                                     <li>If joining an organization, enter the access code provided by your admin</li>
@@ -330,8 +336,8 @@ export function HomeClient({ hello, session }: {
                             </div>
 
                             <div>
-                                <h4 className="text-xl font-bold text-[rgb(var(--accent-primary))] mb-3">For Admins</h4>
-                                <ul className="list-disc list-inside space-y-2 text-[rgb(var(--text-secondary))]">
+                                <h4 className="text-xl font-bold text-[#F8D45E] mb-4">For Admins</h4>
+                                <ul className="list-disc list-inside space-y-3 text-[#E4DEEA]">
                                     <li>Create your organization space - a unique code will be generated</li>
                                     <li>Share the code with your team members</li>
                                     <li>Assign tasks, set deadlines, and track progress</li>
@@ -341,8 +347,8 @@ export function HomeClient({ hello, session }: {
                             </div>
 
                             <div>
-                                <h4 className="text-xl font-bold text-[rgb(var(--accent-primary))] mb-3">For Workers</h4>
-                                <ul className="list-disc list-inside space-y-2 text-[rgb(var(--text-secondary))]">
+                                <h4 className="text-xl font-bold text-[#A3D3B4] mb-4">For Workers</h4>
+                                <ul className="list-disc list-inside space-y-3 text-[#E4DEEA]">
                                     <li>View assigned tasks in the interactive timeline</li>
                                     <li>Create documents, add drawings, and collaborate</li>
                                     <li>Protect sensitive files with passwords</li>
@@ -352,8 +358,8 @@ export function HomeClient({ hello, session }: {
                             </div>
 
                             <div>
-                                <h4 className="text-xl font-bold text-[rgb(var(--accent-primary))] mb-3">Event Management</h4>
-                                <ul className="list-disc list-inside space-y-2 text-[rgb(var(--text-secondary))]">
+                                <h4 className="text-xl font-bold text-[#E4DEEA] mb-4">Event Management</h4>
+                                <ul className="list-disc list-inside space-y-3 text-[#E4DEEA]">
                                     <li>Browse nearby events or create your own</li>
                                     <li>Import event information from project workspaces</li>
                                     <li>Share events publicly or with specific groups</li>

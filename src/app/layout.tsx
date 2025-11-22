@@ -7,10 +7,11 @@ import { Geist } from "next/font/google";
 import { TRPCReactProvider } from "~/trpc/react";
 import { auth } from "~/server/auth";
 import NextAuthSessionProvider from "./sessionProvider";
+import { ThemeProvider } from "./_components/themeProvider";
 
 export const metadata: Metadata = {
-  title: "EventFlow - Professional Event & Project Management",
-  description: "Organize events, manage projects, and collaborate with your team",
+  title: "Kairos - Professional Event & Project Management",
+  description: "Coordinate events, manage projects, and collaborate with your team",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
@@ -29,7 +30,9 @@ export default async function RootLayout({
       <body>
         <TRPCReactProvider>
           <NextAuthSessionProvider session={session}>
+             <ThemeProvider>
               {children}
+             </ThemeProvider>
           </NextAuthSessionProvider>
         </TRPCReactProvider>
       </body>
