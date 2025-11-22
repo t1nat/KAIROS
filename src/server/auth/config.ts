@@ -40,6 +40,7 @@ declare module "next-auth" {
  * @see https://next-auth.js.org/configuration/options
  */
 export const authConfig = {
+  secret:  env.AUTH_SECRET,
   providers: [
     DiscordProvider({
       clientId: env.AUTH_DISCORD_ID,
