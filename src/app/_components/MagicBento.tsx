@@ -389,7 +389,7 @@ const GlobalSpotlight: React.FC<{
       const mouseInside =
         rect && e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
 
-      isInsideSection.current = mouseInside || false;
+      isInsideSection.current = mouseInside ?? false;
       const cards = gridRef.current.querySelectorAll('.card');
 
       if (!mouseInside) {
@@ -609,7 +609,7 @@ const MagicBento: React.FC<BentoProps> = ({
             }`;
 
             const cardStyle = {
-              backgroundColor: card.color || 'var(--background-dark)',
+              backgroundColor: card.color ?? 'var(--background-dark)',
               borderColor: 'var(--border-color)',
               color: 'var(--white)',
               backdropFilter: 'blur(8px)',
