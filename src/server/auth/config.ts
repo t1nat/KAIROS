@@ -1,3 +1,4 @@
+// src/server/auth/config.ts
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
@@ -40,16 +41,15 @@ declare module "next-auth" {
  */
 export const authConfig = {
   providers: [
-    DiscordProvider({ // You need to initialize Discord too, to access env variables
+    DiscordProvider({
       clientId: env.AUTH_DISCORD_ID,
       clientSecret: env.AUTH_DISCORD_SECRET,
     }),
-// ADD THE GOOGLE PROVIDER HERE 👇
-Google({
-  clientId: env.AUTH_GOOGLE_ID as string,
-  clientSecret: env.AUTH_GOOGLE_SECRET as string,
-}),
-// ADD THE GOOGLE PROVIDER HERE 👆
+    // FIXED: Removed unnecessary type assertions - env variables are already typed as string
+    Google({
+      clientId: env.AUTH_GOOGLE_ID,
+      clientSecret: env.AUTH_GOOGLE_SECRET,
+    }),
   ],
   adapter: DrizzleAdapter(db, {
     usersTable: users,

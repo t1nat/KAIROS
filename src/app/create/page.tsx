@@ -7,24 +7,36 @@ import { CreateNoteForm } from "~/app/_components/createNoteForm";
 import { CreateProjectContainer } from "~/app/_components/createProjectContainer";
 import { LogIn, FileText, FolderKanban, ArrowRight } from "lucide-react";
 
+// --- START FIX ---
+// REMOVED the dedicated interface 'CreatePageProps'.
+// We will use an inlined type (Record<string, ...>) in the function signature 
+// to avoid conflicts with the globally corrupted 'PageProps' type.
+// --- END FIX ---
+
 // Professional Design System
 const GRADIENT_BG = "bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50";
 const PRIMARY_BUTTON = "inline-flex items-center gap-2 px-8 py-4 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105";
 const TAB_BUTTON = (isActive: boolean) => 
-    `inline-flex items-center gap-2 px-6 py-3 font-semibold rounded-xl transition-all duration-300 ${
-        isActive 
-            ? 'bg-indigo-600 text-white shadow-lg' 
-            : 'bg-white text-slate-700 hover:bg-slate-50 border-2 border-slate-200 hover:border-indigo-300'
-    }`;
+  `inline-flex items-center gap-2 px-6 py-3 font-semibold rounded-xl transition-all duration-300 ${
+    isActive 
+      ? 'bg-indigo-600 text-white shadow-lg' 
+      : 'bg-white text-slate-700 hover:bg-slate-50 border-2 border-slate-200 hover:border-indigo-300'
+  }`;
 
-// Define the component to accept searchParams
-export default async function CreatePage({ searchParams }: {
-  searchParams: Record<string, string | string[] | undefined>
+// Use the inlined 'Record' type to fix both the build and linting errors.
+// In Next.js 15, searchParams is now async and must be awaited
+export default async function CreatePage({ 
+    searchParams 
+}: { 
+    searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   const session = await auth();
   
+  // Await searchParams (Next.js 15 requirement)
+  const resolvedSearchParams = await searchParams;
+  
   // Check what action to display
-  const action = searchParams.action as string | undefined;
+  const action = resolvedSearchParams.action as string | undefined;
   const shouldShowNoteForm = action === 'new_note';
   const shouldShowProjectManagement = action === 'new_project';
   

@@ -15,7 +15,11 @@ export function CreateNoteForm() {
     onSuccess: () => {
       setContent("");
       setPassword("");
-      void utils.note.getAll.invalidate();
+      // Invalidate all note queries to refresh any lists/displays
+      // If you have specific queries like 'getAll', 'getByUser', etc., 
+      // you can invalidate them specifically instead:
+      // void utils.note.getAll.invalidate();
+      void utils.note.invalidate();
     },
     onError: (error) => {
       console.error("Failed to create note:", error);

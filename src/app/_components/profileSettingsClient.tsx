@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { User } from "lucide-react";
 import { api } from "~/trpc/react";
+import { signOut } from "next-auth/react";
 
 interface ProfileSettingsClientProps {
   user: {
@@ -65,7 +66,7 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
     
     // Always refetch after error or success to ensure we're in sync
     onSettled: () => {
-      utils.user.getCurrentUser.invalidate();
+      void utils.user.getCurrentUser.invalidate();
     },
   });
 
@@ -75,6 +76,11 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
       name: name || undefined, 
       bio: bio || undefined 
     });
+  };
+
+  // FIXED: Properly handle async signOut with void operator
+  const handleSignOut = () => {
+    void signOut({ callbackUrl: "/" });
   };
 
   return (
