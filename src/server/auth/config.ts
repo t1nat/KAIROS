@@ -1,9 +1,11 @@
 // src/server/auth/config.ts
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
-import DiscordProvider from "next-auth/providers/discord";
 import Google from "next-auth/providers/google";
+import Credentials from "next-auth/providers/credentials";
 import { env } from "~/env"
+import { eq } from "drizzle-orm";
+import * as argon2 from "argon2";
 
 import { db } from "~/server/db";
 import {
@@ -27,11 +29,6 @@ declare module "next-auth" {
       // role: UserRole;
     } & DefaultSession["user"];
   }
-
-  // interface User {
-  //   // ...other properties
-  //   // role: UserRole;
-  // }
 }
 
 /**
@@ -41,29 +38,83 @@ declare module "next-auth" {
  */
 export const authConfig = {
   secret: env.AUTH_SECRET,
+  
+  // Use JWT strategy when using Credentials provider
+  session: {
+    strategy: "jwt" as const,
+  },
+  
   providers: [
-    DiscordProvider({
-      clientId: env.AUTH_DISCORD_ID,
-      clientSecret: env.AUTH_DISCORD_SECRET,
-    }),
     Google({
       clientId: env.AUTH_GOOGLE_ID,
       clientSecret: env.AUTH_GOOGLE_SECRET,
     }),
+    Credentials({
+      name: "credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
+
+        // Find user in database
+        const user = await db.query.users.findFirst({
+          where: eq(users.email, credentials.email as string),
+        });
+
+        if (!user?.password) {
+          return null;
+        }
+
+        // Verify password with argon2
+        const isPasswordValid = await argon2.verify(
+          user.password,
+          credentials.password as string
+        );
+
+        if (!isPasswordValid) {
+          return null;
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+        };
+      },
+    }),
   ],
+  
   adapter: DrizzleAdapter(db, {
     usersTable: users,
     accountsTable: accounts,
     sessionsTable: sessions,
     verificationTokensTable: verificationTokens,
   }),
+  
   callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-      },
-    }),
+    // JWT callback - adds user id to token
+    async jwt({ token, user, account }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    
+    // Session callback - adds user id to session
+    async session({ session, token }) {
+      if (token && session.user) {
+        session.user.id = token.id as string;
+      }
+      return session;
+    },
+  },
+  
+  pages: {
+    signIn: "/",
   },
 } satisfies NextAuthConfig;

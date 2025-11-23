@@ -1,10 +1,8 @@
-// src/app/_components/roleSelectionModal.tsx - WITH ENTER KEY SUPPORT
-
 "use client";
 
 import { useState } from "react";
 import { api } from "~/trpc/react";
-import { Shield, User, ArrowRight, Building2, Key, Sparkles } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 interface RoleSelectionModalProps {
   isOpen: boolean;
@@ -75,7 +73,6 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
     }
   };
 
-  // Handle Enter key for org name input
   const handleOrgNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -83,7 +80,6 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
     }
   };
 
-  // Handle Enter key for access code input
   const handleAccessCodeKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -94,77 +90,41 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-      
-      <div className="relative bg-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl p-8 border border-slate-700">
+    <div className="w-full max-w-2xl mx-auto animate-slideUp">
+      <div className="bg-[#1a2128] backdrop-blur-sm rounded-2xl border border-white/20 p-8 shadow-xl">
         {step === "choose" && (
           <>
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/50">
-                <Sparkles className="text-white" size={32} />
-              </div>
-              <h2 className="text-3xl font-bold text-white mb-2">Welcome to EventFlow!</h2>
-              <p className="text-slate-300">How will you be using EventFlow?</p>
-            </div>
+            <h3 className="text-2xl font-semibold text-[#FBF9F5] mb-6 text-center">
+              What will you be using Kairos for?
+            </h3>
 
-            <div className="grid gap-4">
+            <div className="space-y-3">
               {/* Personal Use */}
               <button
                 onClick={() => setPersonalMode.mutate()}
                 disabled={setPersonalMode.isPending}
-                className="p-6 border-2 border-slate-700 bg-slate-700/30 rounded-xl hover:border-indigo-500 hover:bg-indigo-500/10 transition-all duration-300 text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-[#A343EC]/50 transition-all duration-200 text-left group disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
               >
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-blue-600/20 border border-blue-500/30 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-blue-600/30 transition">
-                    <User className="text-blue-400" size={24} />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-white mb-2">Personal Use</h3>
-                    <p className="text-slate-300">
-                      Manage your own projects, tasks, and notes. Perfect for individual productivity.
-                    </p>
-                  </div>
-                  <ArrowRight className="text-slate-500 group-hover:text-indigo-400 transition" size={24} />
-                </div>
+                <span className="text-[#FBF9F5] font-medium">Personal Use</span>
+                <ChevronRight className="text-[#E4DEAA] group-hover:text-[#A343EC] transition-colors" size={20} />
               </button>
 
               {/* Organization Admin */}
               <button
                 onClick={() => setStep("admin-setup")}
-                className="p-6 border-2 border-slate-700 bg-slate-700/30 rounded-xl hover:border-purple-500 hover:bg-purple-500/10 transition-all duration-300 text-left group"
+                className="w-full p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-[#A343EC]/50 transition-all duration-200 text-left group flex items-center justify-between"
               >
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-purple-600/20 border border-purple-500/30 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-purple-600/30 transition">
-                    <Shield className="text-purple-400" size={24} />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-white mb-2">Organization Admin</h3>
-                    <p className="text-slate-300">
-                      Create a new organization space, invite team members, and manage projects.
-                    </p>
-                  </div>
-                  <ArrowRight className="text-slate-500 group-hover:text-purple-400 transition" size={24} />
-                </div>
+                <span className="text-[#FBF9F5] font-medium">Organization Admin</span>
+                <ChevronRight className="text-[#E4DEAA] group-hover:text-[#A343EC] transition-colors" size={20} />
               </button>
 
-              {/* Organization Worker */}
+              {/* Join Organization */}
               <button
                 onClick={() => setStep("worker-join")}
-                className="p-6 border-2 border-slate-700 bg-slate-700/30 rounded-xl hover:border-emerald-500 hover:bg-emerald-500/10 transition-all duration-300 text-left group"
+                className="w-full p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-[#A343EC]/50 transition-all duration-200 text-left group flex items-center justify-between"
               >
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-emerald-600/20 border border-emerald-500/30 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-600/30 transition">
-                    <Building2 className="text-emerald-400" size={24} />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-white mb-2">Join Organization</h3>
-                    <p className="text-slate-300">
-                      Join an existing organization using an access code from your admin.
-                    </p>
-                  </div>
-                  <ArrowRight className="text-slate-500 group-hover:text-emerald-400 transition" size={24} />
-                </div>
+                <span className="text-[#FBF9F5] font-medium">Join Organization</span>
+                <ChevronRight className="text-[#E4DEAA] group-hover:text-[#A343EC] transition-colors" size={20} />
               </button>
             </div>
           </>
@@ -174,22 +134,16 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
           <>
             <button
               onClick={() => setStep("choose")}
-              className="text-slate-400 hover:text-white mb-6 flex items-center gap-2 transition"
+              className="text-[#E4DEAA] hover:text-[#FBF9F5] mb-6 flex items-center gap-2 transition text-sm"
             >
               ← Back
             </button>
             
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-purple-600/20 border border-purple-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Shield className="text-purple-400" size={32} />
-              </div>
-              <h2 className="text-3xl font-bold text-white mb-2">Create Organization</h2>
-              <p className="text-slate-300">Set up your team workspace</p>
-            </div>
+            <h3 className="text-xl font-semibold text-[#FBF9F5] mb-6">Create Organization</h3>
 
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-200 mb-2">
+                <label className="block text-sm text-[#E4DEAA] mb-2">
                   Organization Name
                 </label>
                 <input
@@ -198,16 +152,15 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
                   onChange={(e) => setOrganizationName(e.target.value)}
                   onKeyDown={handleOrgNameKeyDown}
                   placeholder="e.g., Acme Corporation"
-                  className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white placeholder:text-slate-500"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent text-[#FBF9F5] placeholder:text-[#E4DEAA]/50"
                   autoFocus
                 />
-                <p className="text-xs text-slate-400 mt-2">Press Enter to create</p>
               </div>
 
               <button
                 onClick={handleCreateOrganization}
                 disabled={createOrganization.isPending}
-                className="w-full px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-500 hover:to-purple-500 transition-all duration-300 shadow-lg shadow-indigo-500/50 disabled:from-slate-700 disabled:to-slate-700 disabled:shadow-none disabled:cursor-not-allowed"
+                className="w-full px-6 py-3 bg-[#A343EC] text-white font-medium rounded-lg hover:bg-[#8B35C7] transition-all duration-200 disabled:bg-white/10 disabled:cursor-not-allowed"
               >
                 {createOrganization.isPending ? "Creating..." : "Create Organization"}
               </button>
@@ -217,34 +170,25 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
 
         {step === "admin-setup" && generatedCode && (
           <>
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-emerald-600/20 border border-emerald-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Key className="text-emerald-400" size={32} />
-              </div>
-              <h2 className="text-3xl font-bold text-white mb-2">Organization Created!</h2>
-              <p className="text-slate-300">Share this code with your team members</p>
-            </div>
+            <h3 className="text-xl font-semibold text-[#FBF9F5] mb-2 text-center">Organization Created!</h3>
+            <p className="text-sm text-[#E4DEAA] mb-6 text-center">Share this code with your team</p>
 
-            <div className="bg-slate-900/50 border-2 border-indigo-500/30 rounded-xl p-8 text-center mb-6">
-              <p className="text-sm text-slate-400 mb-2">Access Code</p>
-              <p className="text-4xl font-bold text-indigo-400 tracking-wider font-mono">
+            <div className="bg-white/5 border border-[#A343EC]/30 rounded-xl p-6 text-center mb-6">
+              <p className="text-xs text-[#E4DEAA] mb-2">Access Code</p>
+              <p className="text-3xl font-bold text-[#A343EC] tracking-wider font-mono mb-4">
                 {generatedCode}
               </p>
               <button
                 onClick={handleCopyCode}
-                className="mt-4 px-4 py-2 bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 rounded-lg hover:bg-indigo-600/30 transition text-sm font-medium"
+                className="px-4 py-2 bg-[#A343EC]/20 border border-[#A343EC]/30 text-[#A343EC] rounded-lg hover:bg-[#A343EC]/30 transition text-sm font-medium"
               >
                 Copy Code
               </button>
             </div>
 
-            <p className="text-sm text-slate-400 text-center mb-6">
-              Keep this code safe. Team members will need it to join your organization.
-            </p>
-
             <button
               onClick={onComplete}
-              className="w-full px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-500 hover:to-purple-500 transition-all duration-300 shadow-lg shadow-indigo-500/50"
+              className="w-full px-6 py-3 bg-[#A343EC] text-white font-medium rounded-lg hover:bg-[#8B35C7] transition-all duration-200"
             >
               Continue to Dashboard
             </button>
@@ -255,22 +199,16 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
           <>
             <button
               onClick={() => setStep("choose")}
-              className="text-slate-400 hover:text-white mb-6 flex items-center gap-2 transition"
+              className="text-[#E4DEAA] hover:text-[#FBF9F5] mb-6 flex items-center gap-2 transition text-sm"
             >
               ← Back
             </button>
             
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-emerald-600/20 border border-emerald-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Building2 className="text-emerald-400" size={32} />
-              </div>
-              <h2 className="text-3xl font-bold text-white mb-2">Join Organization</h2>
-              <p className="text-slate-300">Enter the access code from your admin</p>
-            </div>
+            <h3 className="text-xl font-semibold text-[#FBF9F5] mb-6">Join Organization</h3>
 
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-200 mb-2">
+                <label className="block text-sm text-[#E4DEAA] mb-2">
                   Access Code
                 </label>
                 <input
@@ -279,17 +217,16 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
                   onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
                   onKeyDown={handleAccessCodeKeyDown}
                   placeholder="XXXX-XXXX-XXXX"
-                  className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white font-mono text-center text-2xl tracking-wider placeholder:text-slate-600"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent text-[#FBF9F5] font-mono text-center text-xl tracking-wider placeholder:text-[#E4DEAA]/50"
                   maxLength={14}
                   autoFocus
                 />
-                <p className="text-xs text-slate-400 mt-2 text-center">Press Enter to join</p>
               </div>
 
               <button
                 onClick={handleJoinOrganization}
                 disabled={joinOrganization.isPending}
-                className="w-full px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-500 hover:to-purple-500 transition-all duration-300 shadow-lg shadow-indigo-500/50 disabled:from-slate-700 disabled:to-slate-700 disabled:shadow-none disabled:cursor-not-allowed"
+                className="w-full px-6 py-3 bg-[#A343EC] text-white font-medium rounded-lg hover:bg-[#8B35C7] transition-all duration-200 disabled:bg-white/10 disabled:cursor-not-allowed"
               >
                 {joinOrganization.isPending ? "Joining..." : "Join Organization"}
               </button>
@@ -299,19 +236,19 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
       </div>
 
       <style jsx>{`
-        @keyframes fadeIn {
+        @keyframes slideUp {
           from {
             opacity: 0;
-            transform: scale(0.95);
+            transform: translateY(20px);
           }
           to {
             opacity: 1;
-            transform: scale(1);
+            transform: translateY(0);
           }
         }
 
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out;
+        .animate-slideUp {
+          animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
       `}</style>
     </div>

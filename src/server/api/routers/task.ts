@@ -1,7 +1,7 @@
-// src/server/api/routers/task.ts
+// src/server/api/routers/task.ts - UPDATED WITH ORG PERMISSIONS
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { tasks, projects, projectCollaborators, taskActivityLog } from "~/server/db/schema";
+import { tasks, projects, projectCollaborators, taskActivityLog, organizationMembers } from "~/server/db/schema";
 import { eq, and } from "drizzle-orm";
 
 export const taskRouter = createTRPCRouter({
@@ -30,7 +30,22 @@ export const taskRouter = createTRPCRouter({
 
       const isOwner = project.createdById === ctx.session.user.id;
       
-      if (!isOwner) {
+      // Check if user is in the same organization
+      let isOrgMember = false;
+      if (project.organizationId) {
+        const [membership] = await ctx.db
+          .select()
+          .from(organizationMembers)
+          .where(
+            and(
+              eq(organizationMembers.organizationId, project.organizationId),
+              eq(organizationMembers.userId, ctx.session.user.id)
+            )
+          );
+        isOrgMember = !!membership;
+      }
+
+      if (!isOwner && !isOrgMember) {
         // Check if user is a collaborator with write permission
         const [collaboration] = await ctx.db
           .select()
@@ -64,7 +79,7 @@ export const taskRouter = createTRPCRouter({
         .values({
           projectId: input.projectId,
           title: input.title,
-          description: input.description ?? "",  // FIXED: Use ?? instead of ||
+          description: input.description ?? "",
           assignedToId: input.assignedToId,
           priority: input.priority,
           dueDate: input.dueDate,
@@ -119,7 +134,22 @@ export const taskRouter = createTRPCRouter({
       const isOwner = project.createdById === ctx.session.user.id;
       const isAssignee = task.assignedToId === ctx.session.user.id;
       
-      if (!isOwner && !isAssignee) {
+      // Check if user is in the same organization (ORGANIZATION MEMBERS CAN UPDATE)
+      let isOrgMember = false;
+      if (project.organizationId) {
+        const [membership] = await ctx.db
+          .select()
+          .from(organizationMembers)
+          .where(
+            and(
+              eq(organizationMembers.organizationId, project.organizationId),
+              eq(organizationMembers.userId, ctx.session.user.id)
+            )
+          );
+        isOrgMember = !!membership;
+      }
+
+      if (!isOwner && !isAssignee && !isOrgMember) {
         // Check if user is a collaborator with write permission
         const [collaboration] = await ctx.db
           .select()
@@ -139,7 +169,6 @@ export const taskRouter = createTRPCRouter({
 
       const oldStatus = task.status;
       
-      // FIXED: Properly typed update data
       const updateData: {
         status: "pending" | "in_progress" | "completed" | "blocked";
         updatedAt: Date;
@@ -210,7 +239,22 @@ export const taskRouter = createTRPCRouter({
 
       const isOwner = project.createdById === ctx.session.user.id;
       
-      if (!isOwner) {
+      // Check if user is in the same organization
+      let isOrgMember = false;
+      if (project.organizationId) {
+        const [membership] = await ctx.db
+          .select()
+          .from(organizationMembers)
+          .where(
+            and(
+              eq(organizationMembers.organizationId, project.organizationId),
+              eq(organizationMembers.userId, ctx.session.user.id)
+            )
+          );
+        isOrgMember = !!membership;
+      }
+
+      if (!isOwner && !isOrgMember) {
         const [collaboration] = await ctx.db
           .select()
           .from(projectCollaborators)
@@ -227,7 +271,6 @@ export const taskRouter = createTRPCRouter({
         }
       }
 
-      // FIXED: Properly typed update object
       const updateData: {
         updatedAt: Date;
         title?: string;
@@ -287,7 +330,22 @@ export const taskRouter = createTRPCRouter({
 
       const isOwner = project.createdById === ctx.session.user.id;
       
-      if (!isOwner) {
+      // Check if user is in the same organization
+      let isOrgMember = false;
+      if (project.organizationId) {
+        const [membership] = await ctx.db
+          .select()
+          .from(organizationMembers)
+          .where(
+            and(
+              eq(organizationMembers.organizationId, project.organizationId),
+              eq(organizationMembers.userId, ctx.session.user.id)
+            )
+          );
+        isOrgMember = !!membership;
+      }
+
+      if (!isOwner && !isOrgMember) {
         const [collaboration] = await ctx.db
           .select()
           .from(projectCollaborators)

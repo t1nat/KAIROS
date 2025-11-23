@@ -1,4 +1,4 @@
-// src/app/_components/createProjectContainer.tsx
+// src/app/_components/createProjectContainer.tsx - UPDATED WITH ORG PERMISSIONS
 "use client";
 
 import { useState } from "react";
@@ -203,9 +203,8 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
   };
 
   const isOwner = projectDetails?.createdById === userId;
-  const hasWriteAccess = isOwner ?? (projectDetails?.collaborators?.some(
-    (c) => c.collaboratorId === userId && c.permission === "write"
-  ) ?? false);
+  // Use the new userHasWriteAccess field from the API
+  const hasWriteAccess = projectDetails?.userHasWriteAccess ?? false;
 
   const availableUsers: User[] = projectDetails
     ? [
@@ -245,7 +244,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                         {project.title}
                       </h4>
                       {project.description && (
-                        <p className="text-sm text-[#E4DEEA] line-clamp-1">{project.description}</p>
+                        <p className="text-sm text-[#E4DEAA] line-clamp-1">{project.description}</p>
                       )}
                     </div>
                     <span className="text-xs text-[#59677C]">
@@ -274,19 +273,24 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                 <div className="flex items-center gap-3 mb-2">
                   <button
                     onClick={() => setSelectedProjectId(null)}
-                    className="text-[#E4DEEA] hover:text-[#A343EC] transition-colors text-sm"
+                    className="text-[#E4DEAA] hover:text-[#A343EC] transition-colors text-sm"
                   >
                     ← Back
                   </button>
+                  {hasWriteAccess && !isOwner && (
+                    <span className="px-2 py-1 bg-[#80C49B]/20 text-[#80C49B] text-xs font-semibold rounded-md border border-[#80C49B]/30">
+                      Team Member
+                    </span>
+                  )}
                 </div>
                 <h2 className="text-2xl font-bold text-[#FBF9F5] mb-2">{projectDetails.title}</h2>
                 {projectDetails.description && (
-                  <p className="text-sm text-[#E4DEEA]">{projectDetails.description}</p>
+                  <p className="text-sm text-[#E4DEAA]">{projectDetails.description}</p>
                 )}
               </div>
               <button
                 onClick={() => void refetchProjectDetails()}
-                className="p-2 text-[#E4DEEA] hover:text-[#A343EC] hover:bg-white/5 rounded-lg transition-all"
+                className="p-2 text-[#E4DEAA] hover:text-[#A343EC] hover:bg-white/5 rounded-lg transition-all"
                 title="Refresh"
               >
                 <RefreshCw size={18} />
@@ -294,7 +298,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
             </div>
             
             {projectDetails.tasks && projectDetails.tasks.length > 0 && (
-              <div className="flex items-center gap-2 text-sm text-[#E4DEEA]">
+              <div className="flex items-center gap-2 text-sm text-[#E4DEAA]">
                 <CheckCircle2 size={16} className="text-[#80C49B]" />
                 <span>
                   {projectDetails.tasks.filter(t => t.status === 'completed').length} / {projectDetails.tasks.length} tasks completed
@@ -303,7 +307,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
             )}
           </div>
 
-          {/* Task Form */}
+          {/* Task Form - ALL ORG MEMBERS CAN ADD TASKS */}
           {hasWriteAccess && (
             <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
               <button
@@ -311,7 +315,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                 className="w-full flex items-center justify-between px-6 py-4 hover:bg-white/5 transition-colors"
               >
                 <span className="text-sm font-semibold text-[#FBF9F5]">Add Task</span>
-                {showTaskForm ? <ChevronUp size={16} className="text-[#E4DEEA]" /> : <ChevronDown size={16} className="text-[#E4DEEA]" />}
+                {showTaskForm ? <ChevronUp size={16} className="text-[#E4DEAA]" /> : <ChevronDown size={16} className="text-[#E4DEAA]" />}
               </button>
               {showTaskForm && (
                 <div className="px-6 pb-6 border-t border-white/10">
@@ -325,38 +329,40 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
             </div>
           )}
 
-          {/* Collaborators */}
-          <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
-            <button
-              onClick={() => setShowCollaborators(!showCollaborators)}
-              className="w-full flex items-center justify-between px-6 py-4 hover:bg-white/5 transition-colors"
-            >
-              <span className="text-sm font-semibold text-[#FBF9F5]">Team Members</span>
-              {showCollaborators ? <ChevronUp size={16} className="text-[#E4DEEA]" /> : <ChevronDown size={16} className="text-[#E4DEEA]" />}
-            </button>
-            {showCollaborators && (
-              <div className="px-6 pb-6 border-t border-white/10">
-                <CollaboratorManager
-                  projectId={selectedProjectId}
-                  currentCollaborators={(projectDetails.collaborators?.map((c) => ({
-                    user: {
-                      id: c.collaboratorId,
-                      name: c.collaborator?.name ?? null,
-                      email: c.collaborator?.email ?? "",
-                      image: c.collaborator?.image ?? null,
-                    },
-                    permission: c.permission,
-                  })) ?? []) as Collaborator[]}
-                  onAddCollaborator={handleAddCollaborator}
-                  onRemoveCollaborator={handleRemoveCollaborator}
-                  onUpdatePermission={handleUpdatePermission}
-                  isOwner={isOwner}
-                />
-              </div>
-            )}
-          </div>
+          {/* Collaborators - ONLY OWNER CAN MANAGE */}
+          {isOwner && (
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
+              <button
+                onClick={() => setShowCollaborators(!showCollaborators)}
+                className="w-full flex items-center justify-between px-6 py-4 hover:bg-white/5 transition-colors"
+              >
+                <span className="text-sm font-semibold text-[#FBF9F5]">Team Members</span>
+                {showCollaborators ? <ChevronUp size={16} className="text-[#E4DEAA]" /> : <ChevronDown size={16} className="text-[#E4DEAA]" />}
+              </button>
+              {showCollaborators && (
+                <div className="px-6 pb-6 border-t border-white/10">
+                  <CollaboratorManager
+                    projectId={selectedProjectId}
+                    currentCollaborators={(projectDetails.collaborators?.map((c) => ({
+                      user: {
+                        id: c.collaboratorId,
+                        name: c.collaborator?.name ?? null,
+                        email: c.collaborator?.email ?? "",
+                        image: c.collaborator?.image ?? null,
+                      },
+                      permission: c.permission,
+                    })) ?? []) as Collaborator[]}
+                    onAddCollaborator={handleAddCollaborator}
+                    onRemoveCollaborator={handleRemoveCollaborator}
+                    onUpdatePermission={handleUpdatePermission}
+                    isOwner={isOwner}
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
-          {/* Interactive Timeline */}
+          {/* Interactive Timeline - ALL ORG MEMBERS CAN UPDATE */}
           {projectDetails.tasks && projectDetails.tasks.length > 0 && (
             <InteractiveTimeline
               tasks={(projectDetails.tasks.map((t) => ({

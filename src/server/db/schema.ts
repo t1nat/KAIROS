@@ -50,6 +50,7 @@ export const users = createTable("user", (d) => ({
       .$defaultFn(() => new Date()),
     image: d.varchar({ length: 255 }), // This is automatically set by Google OAuth
     usageMode: usageModeEnum("usage_mode"),
+    password: varchar("password", { length: 255 }),
     passwordResetToken: varchar("password_reset_token", { length: 255 }),
     passwordResetExpires: timestamp("password_reset_expires", { mode: "date", withTimezone: true }),
     

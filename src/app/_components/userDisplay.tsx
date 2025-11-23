@@ -2,7 +2,7 @@
 "use client";
 
 import { api } from "~/trpc/react";
-import { ChevronDown, User as UserIcon, LogOut } from "lucide-react";
+import { ChevronDown, LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useState, useRef, useEffect } from "react";
 
@@ -33,12 +33,12 @@ export function UserDisplay() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-2xl border border-white/10 animate-pulse">
-        <div className="w-10 h-10 bg-white/10 rounded-full" />
-        <div className="flex-1 hidden sm:block">
-          <div className="h-4 bg-white/10 rounded w-24 mb-1" />
+      <div className="flex items-center gap-3 animate-pulse">
+        <div className="hidden sm:flex flex-col items-end gap-1">
+          <div className="h-4 bg-white/10 rounded w-24" />
           <div className="h-3 bg-white/10 rounded w-32" />
         </div>
+        <div className="w-8 h-8 bg-white/10 rounded-full" />
       </div>
     );
   }
@@ -51,38 +51,38 @@ export function UserDisplay() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-2xl border border-white/10 hover:border-[#A343EC]/50 hover:bg-white/10 transition-all duration-200"
+        className="flex items-center gap-3 group"
       >
-        {user.image ? (
-          <img
-            src={user.image}
-            alt={user.name ?? "User"}
-            className="w-10 h-10 rounded-full object-cover ring-2 ring-white/10"
-          />
-        ) : (
-          <div className="w-10 h-10 bg-[#A343EC] rounded-full flex items-center justify-center text-white font-bold">
-            {user.name?.charAt(0).toUpperCase() ?? "U"}
-          </div>
-        )}
-        
-        <div className="flex-1 text-left hidden sm:block">
-          <div className="text-sm font-semibold text-[#FBF9F5]">
+        <div className="hidden sm:flex flex-col items-end">
+          <div className="text-sm font-medium text-[#FBF9F5] group-hover:text-white transition-colors">
             {user.name ?? "User"}
           </div>
-          <div className="text-xs text-[#E4DEEA]">
+          <div className="text-xs text-[#E4DEEA] group-hover:text-[#FBF9F5] transition-colors">
             {user.email}
           </div>
         </div>
         
+        {user.image ? (
+          <img
+            src={user.image}
+            alt={user.name ?? "User"}
+            className="w-8 h-8 rounded-full object-cover ring-2 ring-white/10 group-hover:ring-[#A343EC]/50 transition-all"
+          />
+        ) : (
+          <div className="w-8 h-8 bg-[#A343EC] rounded-full flex items-center justify-center text-white text-sm font-bold group-hover:bg-[#8B35C7] transition-colors">
+            {user.name?.charAt(0).toUpperCase() ?? "U"}
+          </div>
+        )}
+        
         <ChevronDown 
           size={16} 
-          className={`text-[#E4DEEA] transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={`text-[#E4DEEA] group-hover:text-[#FBF9F5] transition-all ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-[#181F25] rounded-2xl border border-white/10 shadow-2xl overflow-hidden z-50 backdrop-blur-xl">
+        <div className="absolute right-0 mt-3 w-64 bg-[#181F25]/95 rounded-2xl border border-white/10 shadow-2xl overflow-hidden z-50 backdrop-blur-xl">
           <div className="p-4 border-b border-white/10 bg-white/5">
             <div className="flex items-center gap-3">
               {user.image ? (
@@ -115,16 +115,28 @@ export function UserDisplay() {
           <div className="p-2">
             <a
               href="/settings"
-              className="flex items-center gap-3 px-3 py-2 text-sm text-[#FBF9F5] hover:bg-white/5 rounded-xl transition-colors"
+              className="flex items-center gap-3 px-3 py-2.5 text-sm text-[#FBF9F5] hover:bg-white/5 rounded-xl transition-colors"
               onClick={() => setIsOpen(false)}
             >
-              <UserIcon size={16} />
+              <svg 
+                className="w-4 h-4" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" 
+                />
+              </svg>
               Profile Settings
             </a>
             
             <button
               onClick={handleSignOut}
-              className="w-full flex items-center gap-3 px-3 py-2 text-sm text-[#A343EC] hover:bg-[#A343EC]/10 rounded-xl transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-[#A343EC] hover:bg-[#A343EC]/10 rounded-xl transition-colors"
             >
               <LogOut size={16} />
               Sign Out
