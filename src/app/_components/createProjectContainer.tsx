@@ -224,7 +224,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
     : [];
 
   return (
-    <div className="space-y-4">
+    <div className="max-w-md space-y-4">
       {/* Create Project Form or Project List */}
       {!selectedProjectId ? (
         <div className="space-y-4">
