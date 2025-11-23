@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { Users, Trash2, FolderPlus } from "lucide-react";
+import { Trash2, FolderPlus } from "lucide-react";
 import Image from "next/image";
 
 interface User {

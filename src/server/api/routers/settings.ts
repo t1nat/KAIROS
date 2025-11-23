@@ -141,7 +141,7 @@ export const settingsRouter = createTRPCRouter({
 
   // Request data export
   requestDataExport: protectedProcedure
-    .mutation(async ({ ctx }) => {
+    .mutation(async ({ ctx:_ctx }) => {
       // TODO: Implement actual data export logic
       return { 
         success: true,

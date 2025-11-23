@@ -62,15 +62,16 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
     try {
       await navigator.clipboard.writeText(generatedCode);
       alert("Code copied to clipboard!");
-    } catch (err) {
-      const textArea = document.createElement("textarea");
-      textArea.value = generatedCode;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textArea);
-      alert("Code copied to clipboard!");
-    }
+   } catch {
+    // Fallback for older browsers
+    const textArea = document.createElement("textarea");
+    textArea.value = generatedCode;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textArea);
+    alert("Code copied to clipboard!");
+  }
   };
 
   const handleOrgNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

@@ -1,4 +1,4 @@
-// src/app/_components/MagicBento.tsx
+// src/app/_components/MagicBento.tsx - FIXED
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { gsap } from 'gsap';
 import { FolderKanban, Users, Shield } from 'lucide-react';
@@ -133,18 +133,22 @@ const ParticleCard: React.FC<{
   const clearAllParticles = useCallback(() => {
     timeoutsRef.current.forEach(clearTimeout);
     timeoutsRef.current = [];
-    magnetismAnimationRef.current?.kill();
+    if (magnetismAnimationRef.current) {
+      magnetismAnimationRef.current.kill();
+    }
 
     particlesRef.current.forEach(particle => {
-      gsap.to(particle, {
-        scale: 0,
-        opacity: 0,
-        duration: 0.3,
-        ease: 'back.in(1.7)',
-        onComplete: () => {
-          particle.parentNode?.removeChild(particle);
-        }
-      });
+      if (particle) {
+        gsap.to(particle, {
+          scale: 0,
+          opacity: 0,
+          duration: 0.3,
+          ease: 'back.in(1.7)',
+          onComplete: () => {
+            particle?.parentNode?.removeChild(particle);
+          }
+        });
+      }
     });
     particlesRef.current = [];
   }, []);
@@ -164,7 +168,10 @@ const ParticleCard: React.FC<{
         cardRef.current.appendChild(clone);
         particlesRef.current.push(clone);
 
-        gsap.fromTo(clone, { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: 'back.out(1.7)' });
+        gsap.fromTo(clone, 
+          { scale: 0, opacity: 0 }, 
+          { scale: 1, opacity: 1, duration: 0.3, ease: 'back.out(1.7)' }
+        );
 
         gsap.to(clone, {
           x: (Math.random() - 0.5) * 100,
@@ -198,7 +205,7 @@ const ParticleCard: React.FC<{
       isHoveredRef.current = true;
       animateParticles();
 
-      if (enableTilt) {
+      if (enableTilt && element) {
         gsap.to(element, {
           rotateX: 5,
           rotateY: 5,
@@ -213,7 +220,7 @@ const ParticleCard: React.FC<{
       isHoveredRef.current = false;
       clearAllParticles();
 
-      if (enableTilt) {
+      if (enableTilt && element) {
         gsap.to(element, {
           rotateX: 0,
           rotateY: 0,
@@ -222,7 +229,7 @@ const ParticleCard: React.FC<{
         });
       }
 
-      if (enableMagnetism) {
+      if (enableMagnetism && element) {
         gsap.to(element, {
           x: 0,
           y: 0,
@@ -233,7 +240,7 @@ const ParticleCard: React.FC<{
     };
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!enableTilt && !enableMagnetism) return;
+      if (!element || (!enableTilt && !enableMagnetism)) return;
 
       const rect = element.getBoundingClientRect();
       const x = e.clientX - rect.left;
@@ -268,7 +275,7 @@ const ParticleCard: React.FC<{
     };
 
     const handleClick = (e: MouseEvent) => {
-      if (!clickEffect) return;
+      if (!clickEffect || !element) return;
 
       const rect = element.getBoundingClientRect();
       const x = e.clientX - rect.left;
@@ -382,18 +389,21 @@ const GlobalSpotlight: React.FC<{
     spotlightRef.current = spotlight;
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!spotlightRef.current || !gridRef.current) return;
+      const spotlightElement = spotlightRef.current;
+      const gridElement = gridRef.current;
+      
+      if (!spotlightElement || !gridElement) return;
 
-      const section = gridRef.current.closest('.bento-section');
+      const section = gridElement.closest('.bento-section');
       const rect = section?.getBoundingClientRect();
       const mouseInside =
         rect && e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
 
       isInsideSection.current = mouseInside ?? false;
-      const cards = gridRef.current.querySelectorAll('.card');
+      const cards = gridElement.querySelectorAll('.card');
 
       if (!mouseInside) {
-        gsap.to(spotlightRef.current, {
+        gsap.to(spotlightElement, {
           opacity: 0,
           duration: 0.3,
           ease: 'power2.out'
@@ -428,7 +438,7 @@ const GlobalSpotlight: React.FC<{
         updateCardGlowProperties(cardElement, e.clientX, e.clientY, glowIntensity, spotlightRadius);
       });
 
-      gsap.to(spotlightRef.current, {
+      gsap.to(spotlightElement, {
         left: e.clientX,
         top: e.clientY,
         duration: 0.1,
@@ -442,7 +452,7 @@ const GlobalSpotlight: React.FC<{
             ? ((fadeDistance - minDistance) / (fadeDistance - proximity)) * 0.8
             : 0;
 
-      gsap.to(spotlightRef.current, {
+      gsap.to(spotlightElement, {
         opacity: targetOpacity,
         duration: targetOpacity > 0 ? 0.2 : 0.5,
         ease: 'power2.out'
@@ -454,8 +464,9 @@ const GlobalSpotlight: React.FC<{
       gridRef.current?.querySelectorAll('.card').forEach(card => {
         (card as HTMLElement).style.setProperty('--glow-intensity', '0');
       });
-      if (spotlightRef.current) {
-        gsap.to(spotlightRef.current, {
+      const spotlightElement = spotlightRef.current;
+      if (spotlightElement) {
+        gsap.to(spotlightElement, {
           opacity: 0,
           duration: 0.3,
           ease: 'power2.out'
@@ -469,7 +480,8 @@ const GlobalSpotlight: React.FC<{
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseleave', handleMouseLeave);
-      spotlightRef.current?.parentNode?.removeChild(spotlightRef.current);
+      const spotlightElement = spotlightRef.current;
+      spotlightElement?.parentNode?.removeChild(spotlightElement);
     };
   }, [gridRef, disableAnimations, enabled, spotlightRadius, glowColor]);
 
@@ -504,7 +516,7 @@ const useMobileDetection = () => {
 };
 
 const MagicBento: React.FC<BentoProps> = ({
-  textAutoHide = false,
+  textAutoHide: _textAutoHide = false,
   enableStars = true,
   enableSpotlight = true,
   enableBorderGlow = true,
@@ -649,7 +661,7 @@ const MagicBento: React.FC<BentoProps> = ({
                       <h4 className="text-xl font-bold text-[#FBF9F5] mb-3">
                         {card.title}
                       </h4>
-                      <p className="text-[#E4DEEA] leading-relaxed text-sm">
+                      <p className="text-[#E4DEAA] leading-relaxed text-sm">
                         {card.description}
                       </p>
                     </div>
@@ -677,7 +689,7 @@ const MagicBento: React.FC<BentoProps> = ({
                     <h4 className="text-xl font-bold text-[#FBF9F5] mb-3">
                       {card.title}
                     </h4>
-                    <p className="text-[#E4DEEA] leading-relaxed text-sm">
+                    <p className="text-[#E4DEAA] leading-relaxed text-sm">
                       {card.description}
                     </p>
                   </div>

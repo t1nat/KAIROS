@@ -3,7 +3,7 @@ import { EventFeed } from "../_components/eventFeed";
 import { CreateEventForm } from "../_components/createEventForm";
 import { SideNav } from "../_components/sideNav";
 import { UserDisplay } from "../_components/userDisplay";
-import { Calendar, Sparkles } from "lucide-react";
+import { Calendar } from "lucide-react";
 
 export default function PublishPage() {
     return (

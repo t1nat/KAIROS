@@ -1,8 +1,7 @@
-// src/server/api/routers/user.ts
+// src/server/api/routers/user.ts - FIXED
 
-import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { users, organizationMembers } from "~/server/db/schema";
+import { users } from "~/server/db/schema";
 import { eq } from "drizzle-orm";
 
 export const userRouter = createTRPCRouter({

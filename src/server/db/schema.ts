@@ -126,7 +126,7 @@ export type UserSettings = {
 // --- ORGANIZATIONS TABLE ---
 export const organizations = createTable(
   "organizations",
-  (d) => ({
+  (_d) => ({
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 256 }).notNull(),
     accessCode: varchar("access_code", { length: 14 }).notNull().unique(),
@@ -149,7 +149,7 @@ export const organizations = createTable(
 // --- ORGANIZATION MEMBERS TABLE ---
 export const organizationMembers = createTable(
   "organization_members",
-  (d) => ({
+  (_d) => ({
     id: serial("id").primaryKey(),
     organizationId: integer("organization_id")
       .notNull()
@@ -233,7 +233,7 @@ export const tasks = createTable(
 // --- DOCUMENTS TABLE ---
 export const documents = createTable(
   "documents",
-  (d) => ({
+  (_d) => ({
     id: serial("id").primaryKey(),
     title: varchar("title", { length: 256 }).notNull(),
     content: text("content").notNull(),
@@ -261,7 +261,7 @@ export const documents = createTable(
 // --- DOCUMENT COLLABORATORS TABLE ---
 export const documentCollaborators = createTable(
   "document_collaborators",
-  (d) => ({
+  (_d) => ({
     id: serial("id").primaryKey(),
     documentId: integer("document_id")
       .notNull()
@@ -283,7 +283,7 @@ export const documentCollaborators = createTable(
 // --- DOCUMENT VERSIONS TABLE ---
 export const documentVersions = createTable(
   "document_versions",
-  (d) => ({
+  (_d) => ({
     id: serial("id").primaryKey(),
     documentId: integer("document_id")
       .notNull()

@@ -5,6 +5,7 @@ import { api } from "~/trpc/react";
 import { ChevronDown, LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 
 export function UserDisplay() {
   const [isOpen, setIsOpen] = useState(false);
@@ -63,11 +64,7 @@ export function UserDisplay() {
         </div>
         
         {user.image ? (
-          <img
-            src={user.image}
-            alt={user.name ?? "User"}
-            className="w-8 h-8 rounded-full object-cover ring-2 ring-white/10 group-hover:ring-[#A343EC]/50 transition-all"
-          />
+          <Image src={user.image} alt={user.name ?? "User"} width={32} height={32} className="w-8 h-8 rounded-full object-cover ring-2 ring-white/10 group-hover:ring-[#A343EC]/50 transition-all" />
         ) : (
           <div className="w-8 h-8 bg-[#A343EC] rounded-full flex items-center justify-center text-white text-sm font-bold group-hover:bg-[#8B35C7] transition-colors">
             {user.name?.charAt(0).toUpperCase() ?? "U"}
@@ -86,9 +83,11 @@ export function UserDisplay() {
           <div className="p-4 border-b border-white/10 bg-white/5">
             <div className="flex items-center gap-3">
               {user.image ? (
-                <img
+                <Image
                   src={user.image}
                   alt={user.name ?? "User"}
+                  width={48}
+                  height={48}
                   className="w-12 h-12 rounded-full object-cover ring-2 ring-white/10"
                 />
               ) : (

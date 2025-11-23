@@ -7,8 +7,7 @@ import { SignInModal } from "./_components/signInModal";
 import { RoleSelectionModal } from "./_components/roleSelectionModal";
 import MagicBento from "./_components/MagicBento";
 import { api } from "~/trpc/react";
-import { 
-    ChevronDown,
+import {
     Calendar, 
     CheckCircle2,
     Zap,
@@ -22,8 +21,7 @@ interface SessionData {
     user?: { name?: string | null; id?: string } | null;
 }
 
-export function HomeClient({ hello, session }: {
-    hello: { greeting: string | null } | null;
+export function HomeClient({ session }: {
     session: SessionData | null;
 }) {
     const [isModalOpen, setIsModalOpen] = useState(false);

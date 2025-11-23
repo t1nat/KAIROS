@@ -1,8 +1,7 @@
 // src/app/_components/sideNav.tsx
 "use client";
 
-import { 
-  FileText, 
+import {  
   Plus, 
   LayoutDashboard, 
   Calendar,

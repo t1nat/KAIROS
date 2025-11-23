@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { User, Loader2 } from "lucide-react";
 import { api } from "~/trpc/react";
+import Image from "next/image";
 
 interface ProfileSettingsClientProps {
   user: {
@@ -124,9 +125,8 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
           </label>
           <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
             {user.image ? (
-              <img 
-                src={user.image} 
-                alt="Profile" 
+              <Image 
+                src={user.image} alt="Profile" width={64} height={64} 
                 className="w-16 h-16 rounded-full object-cover ring-2 ring-white/10"
               />
             ) : (

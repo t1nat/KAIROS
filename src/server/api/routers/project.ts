@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { projects, tasks, projectCollaborators, users, organizationMembers } from "~/server/db/schema";
-import { eq, and, or, desc, isNull } from "drizzle-orm";
+import { eq, and, desc, isNull } from "drizzle-orm";
 
 export const projectRouter = createTRPCRouter({
   // Create a new project

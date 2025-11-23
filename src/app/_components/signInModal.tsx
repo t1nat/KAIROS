@@ -1,3 +1,4 @@
+// src/app/_components/signInModal.tsx - FIXED TYPE ERRORS
 "use client";
 
 import { signIn } from "next-auth/react";
@@ -81,9 +82,14 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
           router.refresh();
         }, 500);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Sign up error:", error);
-      setError(error?.message || "An error occurred during sign up");
+      // Type-safe error handling
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("An error occurred during sign up");
+      }
     } finally {
       setIsLoading(false);
       setLoadingMessage("");
@@ -121,7 +127,7 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
         
         <button 
           onClick={onClose} 
-          className="absolute top-4 right-4 p-2 text-[#E4DEEA] hover:text-[#FBF9F5] hover:bg-white/10 rounded-xl transition-all duration-200 z-10"
+          className="absolute top-4 right-4 p-2 text-[#E4DEAA] hover:text-[#FBF9F5] hover:bg-white/10 rounded-xl transition-all duration-200 z-10"
         >
           <X size={20} />
         </button>
