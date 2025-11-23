@@ -5,8 +5,7 @@ import React, { useEffect, useRef, useMemo, type ReactNode, type RefObject } fro
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-// Fix: Suppress unsafe access/call errors for registerPlugin, which is standard GSAP setup
-// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+
 gsap.registerPlugin(ScrollTrigger);
 
 interface ScrollRevealProps {
@@ -55,58 +54,41 @@ const ScrollReveal: React.FC<ScrollRevealProps> = ({
         const el = containerRef.current;
         if (!el) return;
 
-        // Uses nullish coalescing `??` for safer type assertion
-        const scroller = scrollContainerRef?.current ?? window;
+        const scroller = scrollContainerRef?.current ?? undefined;
+        const triggers: ScrollTrigger[] = [];
 
-        // Fix: Suppress unsafe access/call errors for gsap.fromTo
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-        gsap.fromTo(
-            el,
-            { transformOrigin: '0% 50%', rotate: baseRotation },
-            {
-                ease: 'none',
-                rotate: 0,
-                scrollTrigger: {
-                    trigger: el,
-                    scroller, // scroller is correctly typed as HTMLElement | Window
-                    start: 'top bottom',
-                    end: rotationEnd,
-                    scrub: true
-                }
-            }
-        );
-
-        const wordElements = el.querySelectorAll<HTMLElement>('.word');
-        if (wordElements.length === 0) return;
-
-        // Fix: Suppress unsafe access/call errors for gsap.fromTo
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-        gsap.fromTo(
-            wordElements,
-            { opacity: baseOpacity, willChange: 'opacity' },
-            {
-                ease: 'none',
-                opacity: 1,
-                stagger: 0.05,
-                scrollTrigger: {
-                    trigger: el,
-                    scroller,
-                    start: 'top bottom-=20%',
-                    end: wordAnimationEnd,
-                    scrub: true
-                }
-            }
-        );
-
-        if (enableBlur) {
-            // Fix: Suppress unsafe access/call errors for gsap.fromTo
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-            gsap.fromTo(
-                wordElements,
-                { filter: `blur(${blurStrength}px)` },
+        // Wait for DOM to be ready
+        const setupAnimations = () => {
+            // Rotation animation
+            const rotationTween = gsap.fromTo(
+                el,
+                { transformOrigin: '0% 50%', rotate: baseRotation },
                 {
                     ease: 'none',
-                    filter: 'blur(0px)',
+                    rotate: 0,
+                    scrollTrigger: {
+                        trigger: el,
+                        scroller,
+                        start: 'top bottom',
+                        end: rotationEnd,
+                        scrub: true
+                    }
+                }
+            );
+            if (rotationTween.scrollTrigger) {
+                triggers.push(rotationTween.scrollTrigger as ScrollTrigger);
+            }
+
+            const wordElements = el.querySelectorAll<HTMLElement>('.word');
+            if (wordElements.length === 0) return;
+
+            // Opacity animation
+            const opacityTween = gsap.fromTo(
+                wordElements,
+                { opacity: baseOpacity, willChange: 'opacity' },
+                {
+                    ease: 'none',
+                    opacity: 1,
                     stagger: 0.05,
                     scrollTrigger: {
                         trigger: el,
@@ -117,17 +99,45 @@ const ScrollReveal: React.FC<ScrollRevealProps> = ({
                     }
                 }
             );
-        }
+            if (opacityTween.scrollTrigger) {
+                triggers.push(opacityTween.scrollTrigger as ScrollTrigger);
+            }
+
+            // Blur animation
+            if (enableBlur) {
+                const blurTween = gsap.fromTo(
+                    wordElements,
+                    { filter: `blur(${blurStrength}px)` },
+                    {
+                        ease: 'none',
+                        filter: 'blur(0px)',
+                        stagger: 0.05,
+                        scrollTrigger: {
+                            trigger: el,
+                            scroller,
+                            start: 'top bottom-=20%',
+                            end: wordAnimationEnd,
+                            scrub: true
+                        }
+                    }
+                );
+                if (blurTween.scrollTrigger) {
+                    triggers.push(blurTween.scrollTrigger as ScrollTrigger);
+                }
+            }
+
+            ScrollTrigger.refresh();
+        };
+
+        requestAnimationFrame(setupAnimations);
 
         return () => {
-            // Fix: Suppress unsafe errors and explicitly return `void` (no value) to satisfy no-unsafe-return.
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return
-            ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+            triggers.forEach(trigger => trigger.kill());
         };
     }, [scrollContainerRef, enableBlur, baseRotation, baseOpacity, rotationEnd, wordAnimationEnd, blurStrength]);
 
     return (
-        <h2 ref={containerRef} className={`my-5 ${containerClassName}`}>
+        <h2 ref={containerRef} className={`my-5 will-change-transform ${containerClassName}`}>
             <span className={`inline-block text-[clamp(1.6rem,4vw,3rem)] leading-[1.5] font-semibold ${textClassName}`}>
                 {splitText}
             </span>
@@ -135,4 +145,4 @@ const ScrollReveal: React.FC<ScrollRevealProps> = ({
     );
 };
 
-export default ScrollReveal;
+export default ScrollReveal; 
