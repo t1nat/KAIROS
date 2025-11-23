@@ -38,6 +38,7 @@ export function HomeClient({ session }: {
     const [showRoleSelection, setShowRoleSelection] = useState(false);
     const [hasAnimated, setHasAnimated] = useState(false);
     const aboutRef = useRef<HTMLElement>(null);
+    const cardsRef = useRef<HTMLDivElement>(null);
 
     const { data: userProfile } = api.user.getProfile.useQuery(undefined, {
         enabled: !!session?.user,
@@ -51,6 +52,39 @@ export function HomeClient({ session }: {
 
     useEffect(() => {
         setHasAnimated(true);
+    }, []);
+
+    // Animate the three cards on scroll
+    useEffect(() => {
+        const cards = cardsRef.current?.querySelectorAll('.feature-card');
+        if (!cards || cards.length === 0) return;
+
+        gsap.fromTo(
+            cards,
+            {
+                opacity: 0,
+                y: 50,
+                scale: 0.95
+            },
+            {
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                duration: 0.6,
+                stagger: 0.15,
+                ease: 'power2.out',
+                scrollTrigger: {
+                    trigger: cardsRef.current,
+                    start: 'top bottom-=100',
+                    end: 'top center',
+                    scrub: 1,
+                }
+            }
+        );
+
+        return () => {
+            ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+        };
     }, []);
 
     const scrollToAbout = () => {
@@ -177,31 +211,40 @@ export function HomeClient({ session }: {
                         <div className="text-left mb-16">
                             <ScrollReveal 
                                 containerClassName="text-left"
+                                textClassName="text-4xl md:text-5xl font-bold text-[#FBF9F5]"
                                 baseOpacity={0.1}
                                 baseRotation={1}
-                                blurStrength={2}
+                                blurStrength={3}
+                                enableBlur={true}
                             >
-                                <h3 className="text-4xl md:text-5xl font-bold text-[#FBF9F5] mb-4 inline">
-                                    The perfect window for a flawless strike.
-                                </h3>
+                                The perfect window for a flawless strike.
                             </ScrollReveal>
-                            <p className="text-lg text-[#E4DEAA] mt-4">
+                            <ScrollReveal 
+                                containerClassName="text-left mt-4"
+                                textClassName="text-lg text-[#E4DEAA]"
+                                baseOpacity={0.2}
+                                baseRotation={0.5}
+                                blurStrength={2}
+                                enableBlur={true}
+                            >
                                 Whether you&apos;re managing:
-                            </p>
+                            </ScrollReveal>
                         </div>
 
-                        <MagicBento 
-                            textAutoHide={false}
-                            enableStars={false}
-                            enableSpotlight={true}
-                            enableBorderGlow={true}
-                            enableTilt={false}
-                            enableMagnetism={false}
-                            clickEffect={false}
-                            spotlightRadius={300}
-                            particleCount={0}
-                            glowColor="163, 67, 236"
-                        />
+                        <div ref={cardsRef}>
+                            <MagicBento 
+                                textAutoHide={false}
+                                enableStars={false}
+                                enableSpotlight={true}
+                                enableBorderGlow={true}
+                                enableTilt={false}
+                                enableMagnetism={false}
+                                clickEffect={false}
+                                spotlightRadius={300}
+                                particleCount={0}
+                                glowColor="163, 67, 236"
+                            />
+                        </div>
 
                         <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8 mt-16">
                             <h4 className="text-2xl font-bold text-[#FBF9F5] mb-8">Key Features</h4>

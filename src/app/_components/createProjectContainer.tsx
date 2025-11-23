@@ -224,14 +224,14 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
     : [];
 
   return (
-    <div className="space-y-4">
+    <div className="max-w-3xl mx-auto space-y-4">
       {/* Create Project Form or Project List */}
       {!selectedProjectId ? (
         <div className="space-y-4">
           {/* Existing Projects List */}
           {projects && projects.length > 0 && (
             <div className="space-y-2">
-              <h3 className="text-sm font-semibold text-[#E4DEEA] mb-3">Your Projects</h3>
+              <h3 className="text-sm font-semibold text-[#E4DEAA] mb-3">Your Projects</h3>
               {projects.map((project) => (
                 <button
                   key={project.id}

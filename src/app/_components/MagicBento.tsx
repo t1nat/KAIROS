@@ -2,6 +2,9 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { gsap } from 'gsap';
 import { FolderKanban, Users, Shield } from 'lucide-react';
 
+// Import ScrollReveal to animate individual cards
+import ScrollReveal from "./ScrollReveal";
+
 export interface BentoCardProps {
   color?: string;
   title?: string;
@@ -658,71 +661,81 @@ const MagicBento: React.FC<BentoProps> = ({
               '--glow-radius': '200px'
             } as React.CSSProperties;
 
-            if (enableStars) {
-              return (
-                <ParticleCard
-                  key={index}
-                  className={baseClassName}
-                  style={cardStyle}
-                  disableAnimations={shouldDisableAnimations}
-                  particleCount={particleCount}
-                  glowColor={glowColor}
-                  enableTilt={enableTilt}
-                  clickEffect={clickEffect}
-                  enableMagnetism={enableMagnetism}
-                >
-                  <div className="flex flex-col gap-6 relative z-10">
-                    <div style={{ 
-                      width: '48px', 
-                      height: '48px', 
-                      backgroundColor: iconColors[index], 
-                      borderRadius: '12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: index === 1 ? '#181F25' : 'white'
-                    }}>
-                      {card.icon}
-                    </div>
-                    <div>
-                      <h4 className="text-xl font-bold text-[#FBF9F5] mb-3">
-                        {card.title}
-                      </h4>
-                      <p className="text-[#E4DEAA] leading-relaxed text-sm">
-                        {card.description}
-                      </p>
-                    </div>
-                  </div>
-                </ParticleCard>
-              );
-            }
-
+            // START OF FIX: Wrap each card with ScrollReveal and apply a stagger delay
             return (
-              <div key={index} className={baseClassName} style={cardStyle}>
-                <div className="flex flex-col gap-6 relative z-10">
-                  <div style={{ 
-                    width: '48px', 
-                    height: '48px', 
-                    backgroundColor: iconColors[index], 
-                    borderRadius: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: index === 1 ? '#181F25' : 'white'
-                  }}>
-                    {card.icon}
+              <ScrollReveal
+                key={index}
+                // Setting transform origin ensures rotation/scale animations start from center
+                containerClassName="h-full transform-gpu" 
+                baseOpacity={0.0}
+                baseRotation={0}
+                baseY={50} // Slide up from 50px below
+                staggerDelay={index * 0.15} // Stagger delay for individual cards
+                ease='power2.out'
+              >
+                {enableStars ? (
+                  <ParticleCard
+                    className={baseClassName}
+                    style={cardStyle}
+                    disableAnimations={shouldDisableAnimations}
+                    particleCount={particleCount}
+                    glowColor={glowColor}
+                    enableTilt={enableTilt}
+                    clickEffect={clickEffect}
+                    enableMagnetism={enableMagnetism}
+                  >
+                    <div className="flex flex-col gap-6 relative z-10">
+                      <div style={{ 
+                        width: '48px', 
+                        height: '48px', 
+                        backgroundColor: iconColors[index], 
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: index === 1 ? '#181F25' : 'white'
+                      }}>
+                        {card.icon}
+                      </div>
+                      <div>
+                        <h4 className="text-xl font-bold text-[#FBF9F5] mb-3">
+                          {card.title}
+                        </h4>
+                        <p className="text-[#E4DEAA] leading-relaxed text-sm">
+                          {card.description}
+                        </p>
+                      </div>
+                    </div>
+                  </ParticleCard>
+                ) : (
+                  <div className={baseClassName} style={cardStyle}>
+                    <div className="flex flex-col gap-6 relative z-10">
+                      <div style={{ 
+                        width: '48px', 
+                        height: '48px', 
+                        backgroundColor: iconColors[index], 
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: index === 1 ? '#181F25' : 'white'
+                      }}>
+                        {card.icon}
+                      </div>
+                      <div>
+                        <h4 className="text-xl font-bold text-[#FBF9F5] mb-3">
+                          {card.title}
+                        </h4>
+                        <p className="text-[#E4DEAA] leading-relaxed text-sm">
+                          {card.description}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-xl font-bold text-[#FBF9F5] mb-3">
-                      {card.title}
-                    </h4>
-                    <p className="text-[#E4DEAA] leading-relaxed text-sm">
-                      {card.description}
-                    </p>
-                  </div>
-                </div>
-              </div>
+                )}
+              </ScrollReveal>
             );
+            // END OF FIX
           })}
         </div>
       </BentoCardGrid>
