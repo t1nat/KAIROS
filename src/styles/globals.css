@@ -435,3 +435,10 @@
       transform: translate(-30px, -20px) scale(0.92);
     }
   }
+
+  @font-face {
+  font-family: 'Zalando Sans Expanded';
+  src: url('/fonts/ZalandoSansExpanded-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+}

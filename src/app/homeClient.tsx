@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, type ReactNode } from "react";
 import { UserDisplay } from "./_components/userDisplay";
 import { SignInModal } from "./_components/signInModal";
 import { RoleSelectionModal } from "./_components/roleSelectionModal";
 import MagicBento from "./_components/MagicBento";
 import { api } from "~/trpc/react";
 import {
-    Calendar, 
+    Calendar,
     CheckCircle2,
     Zap,
     ArrowRight,
@@ -16,6 +16,15 @@ import {
     Info,
     X
 } from "lucide-react";
+
+import ScrollReveal from "./_components/ScrollReveal";
+
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import type { Context } from "gsap";
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+gsap.registerPlugin(ScrollTrigger);
 
 interface SessionData {
     user?: { name?: string | null; id?: string } | null;
@@ -40,13 +49,12 @@ export function HomeClient({ session }: {
         }
     }, [session, userProfile]);
 
-    // Mark as animated on first load
     useEffect(() => {
         setHasAnimated(true);
     }, []);
 
     const scrollToAbout = () => {
-        aboutRef.current?.scrollIntoView({ 
+        aboutRef.current?.scrollIntoView({
             behavior: 'smooth',
             block: 'start'
         });
@@ -54,45 +62,37 @@ export function HomeClient({ session }: {
 
     const handleRoleSelectionComplete = () => {
         setShowRoleSelection(false);
-        // Don't reload the page, just refresh the data
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
         window.location.href = "/create";
     };
 
     return (
-        <main className="min-h-screen bg-[#181F25] relative overflow-hidden">
-            {/* Enhanced Animated Background with More Orbs */}
+        <main className="min-h-screen bg-[#181F25] relative overflow-hidden" style={{ fontFamily: 'Faustina, serif' }}>
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                {/* Floating orbs - more spread throughout */}
-                <div className="absolute top-20 left-20 w-96 h-96 bg-[#9661ff] opacity-8 rounded-full blur-3xl animate-float-slow"></div>
-                <div className="absolute top-40 right-32 w-80 h-80 bg-[#7dd3b4] opacity-8 rounded-full blur-3xl animate-float-medium" style={{ animationDelay: '2s' }}></div>
-                <div className="absolute bottom-32 left-1/3 w-72 h-72 bg-[#9661ff] opacity-10 rounded-full blur-3xl animate-float-fast" style={{ animationDelay: '4s' }}></div>
-                <div className="absolute bottom-20 right-20 w-64 h-64 bg-[#7dd3b4] opacity-7 rounded-full blur-3xl animate-float-slow" style={{ animationDelay: '1s' }}></div>
+                <div className="absolute top-20 left-20 w-96 h-96 bg-[#9661ff] opacity-20 rounded-full blur-3xl animate-float-fast"></div>
+                <div className="absolute top-40 right-32 w-80 h-80 bg-[#7dd3b4] opacity-18 rounded-full blur-3xl animate-float-faster" style={{ animationDelay: '2s' }}></div>
+                <div className="absolute bottom-32 left-1/3 w-72 h-72 bg-[#9661ff] opacity-22 rounded-full blur-3xl animate-float-fastest" style={{ animationDelay: '4s' }}></div>
+                <div className="absolute bottom-20 right-20 w-64 h-64 bg-[#7dd3b4] opacity-16 rounded-full blur-3xl animate-float-fast" style={{ animationDelay: '1s' }}></div>
                 
-                {/* Additional orbs for fuller coverage */}
-                <div className="absolute top-1/2 left-10 w-80 h-80 bg-[#9661ff] opacity-9 rounded-full blur-3xl animate-float-medium" style={{ animationDelay: '3s' }}></div>
-                <div className="absolute top-1/3 right-10 w-72 h-72 bg-[#7dd3b4] opacity-9 rounded-full blur-3xl animate-float-fast" style={{ animationDelay: '5s' }}></div>
-                <div className="absolute bottom-1/3 left-1/2 w-96 h-96 bg-[#9661ff] opacity-8 rounded-full blur-3xl animate-float-slow" style={{ animationDelay: '2.5s' }}></div>
-                <div className="absolute top-10 right-1/3 w-64 h-64 bg-[#7dd3b4] opacity-6 rounded-full blur-3xl animate-float-medium" style={{ animationDelay: '4.5s' }}></div>
+                <div className="absolute top-1/2 left-10 w-80 h-80 bg-[#9661ff] opacity-19 rounded-full blur-3xl animate-float-faster" style={{ animationDelay: '3s' }}></div>
+                <div className="absolute top-1/3 right-10 w-72 h-72 bg-[#7dd3b4] opacity-20 rounded-full blur-3xl animate-float-fastest" style={{ animationDelay: '5s' }}></div>
+                <div className="absolute bottom-1/3 left-1/2 w-96 h-96 bg-[#9661ff] opacity-18 rounded-full blur-3xl animate-float-fast" style={{ animationDelay: '2.5s' }}></div>
+                <div className="absolute top-10 right-1/3 w-64 h-64 bg-[#7dd3b4] opacity-15 rounded-full blur-3xl animate-float-faster" style={{ animationDelay: '4.5s' }}></div>
                 
-                {/* Grid pattern overlay */}
-                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30"></div>
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9yZWN0Pjwvc3ZnPg==')] opacity-30"></div>
             </div>
 
-            {/* Content */}
             <div className="relative z-10">
-                {/* Header */}
                 <header className="fixed top-0 left-0 right-0 z-50 bg-[#181F25] border-b border-white/5">
                     <div className="max-w-7xl mx-auto px-6 py-4">
                         <div className="flex justify-between items-center">
-                            {/* Logo */}
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-[#A343EC] rounded-xl flex items-center justify-center">
                                     <Zap className="text-white" size={22} />
                                 </div>
-                                <h1 className="text-2xl font-bold text-[#FBF9F5]">Kairos</h1>
+                                <h1 className="text-2xl font-bold text-[#FBF9F5]" style={{ fontFamily: 'Uncial Antiqua, serif' }}></h1>
                             </div>
                             
-                            {/* Centered Navigation */}
                             <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2">
                                 <button 
                                     onClick={scrollToAbout} 
@@ -110,7 +110,6 @@ export function HomeClient({ session }: {
                                 </button>
                             </div>
                             
-                            {/* User Display */}
                             <div className="flex items-center">
                                 {session && <UserDisplay />}
                             </div>
@@ -118,23 +117,19 @@ export function HomeClient({ session }: {
                     </div>
                 </header>
 
-                {/* Hero Section */}
                 <section className="pt-40 pb-32 px-6 min-h-screen flex items-center">
                     <div className="max-w-7xl mx-auto w-full">
-                        {/* Main Hero Content */}
                         <div className="flex flex-col lg:flex-row justify-between items-start gap-12 mb-8">
-                            {/* Left Side - Text */}
                             <div className="flex-1 text-center lg:text-left">
-                                <h2 className={`text-7xl md:text-8xl lg:text-9xl font-bold text-[#FBF9F5] mb-6 leading-tight tracking-tight ${!hasAnimated ? 'animate-title-entrance' : ''}`} style={{ fontFamily: 'var(--font-arsenica)' }}>
-                                    <span className="inline-block">Kairos</span>
+                                <h2 className={`text-7xl md:text-8xl lg:text-9xl font-bold text-[#FBF9F5] mb-6 leading-tight tracking-tight ${!hasAnimated ? 'animate-title-entrance' : ''}`} style={{ fontFamily: 'Uncial Antiqua, serif' }}>
+                                    <span className="inline-block">KAIROS</span>
                                 </h2>
-                                <p className={`text-xl text-[#E4DEAA] leading-relaxed max-w-2xl mx-auto lg:mx-0 ${!hasAnimated ? 'animate-smooth-fade-in' : ''}`} style={{ animationDelay: !hasAnimated ? '0.2s' : '0s' }}>
-                                    A powerful platform to coordinate events, manage projects, and collaborate with your team—all in one place.
+                                <p className={`text-3xl md:text-4xl text-[#E4DEAA] leading-relaxed max-w-2xl mx-auto lg:mx-0 ${!hasAnimated ? 'animate-smooth-fade-in' : ''}`} style={{ animationDelay: !hasAnimated ? '0.2s' : '0s' }}>
+                                    Discover the perfect moment with Kairos.
                                 </p>
                             </div>
 
-                            {/* Right Side - Actions & Role Selection */}
-                            <div className={`flex flex-col gap-4 w-full lg:w-auto lg:min-w-[400px] ${!hasAnimated ? 'animate-smooth-fade-in' : ''}`} style={{ animationDelay: !hasAnimated ? '0.4s' : '0s' }}>
+                            <div className={`flex flex-col gap-4 w-full lg:w-auto lg:min-w-[400px] justify-center lg:mt-24 ${!hasAnimated ? 'animate-smooth-fade-in' : ''}`} style={{ animationDelay: !hasAnimated ? '0.4s' : '0s' }}>
                                 {session && !showRoleSelection && (
                                     <>
                                         <Link 
@@ -157,14 +152,15 @@ export function HomeClient({ session }: {
                                 {!session && (
                                     <button
                                         onClick={() => setIsModalOpen(true)}
-                                        className="flex items-center justify-center gap-2 px-10 py-5 bg-[#A343EC]/80 text-white font-semibold rounded-2xl hover:bg-[#8B35C7] transition-all duration-300 shadow-lg shadow-[#A343EC]/20 hover:shadow-xl hover:shadow-[#A343EC]/30 hover:scale-105 text-lg"
+                                        className="animated-border-button relative flex items-center justify-center gap-2 px-10 py-5 bg-transparent text-[#FBF9F5] font-semibold rounded-2xl text-lg group"
+                                        style={{
+                                            boxSizing: 'border-box'
+                                        }}
                                     >
-                                        Log In / Sign Up
-                                        <ArrowRight size={22} />
+                                        <span className="relative z-10">Log In / Sign Up</span>
                                     </button>
                                 )}
 
-                                {/* Role Selection Inline */}
                                 {showRoleSelection && (
                                     <RoleSelectionModal 
                                         isOpen={showRoleSelection} 
@@ -176,38 +172,38 @@ export function HomeClient({ session }: {
                     </div>
                 </section>
 
-                {/* About Us Section */}
                 <section ref={aboutRef} className="py-20 px-6 pt-40">
-                    <div className="max-w-7xl mx-auto">
-                        {/* Section Header */}
-                        <div className="text-center mb-16">
-                            <h3 className="text-4xl md:text-5xl font-bold text-[#FBF9F5] mb-4">
-                                About Kairos
-                            </h3>
-                            <p className="text-lg text-[#E4DEAA] max-w-3xl mx-auto">
-                                Kairos is designed to streamline collaboration, whether you are managing personal projects, 
-                                coordinating with a team, or organizing large-scale events.
+                    <div className="max-w-7xl mx-auto px-6 md:px-12">
+                        <div className="text-left mb-16">
+                            <ScrollReveal 
+                                containerClassName="text-left"
+                                baseOpacity={0.1}
+                                baseRotation={1}
+                                blurStrength={2}
+                            >
+                                <h3 className="text-4xl md:text-5xl font-bold text-[#FBF9F5] mb-4 inline">
+                                    The perfect window for a flawless strike.
+                                </h3>
+                            </ScrollReveal>
+                            <p className="text-lg text-[#E4DEAA] mt-4">
+                                Whether you&apos;re managing:
                             </p>
                         </div>
 
-                        {/* Magic Bento Feature Cards */}
-                        <div className="flex justify-center mb-16">
-                            <MagicBento 
-                                textAutoHide={false}
-                                enableStars={false}
-                                enableSpotlight={true}
-                                enableBorderGlow={true}
-                                enableTilt={false}
-                                enableMagnetism={false}
-                                clickEffect={false}
-                                spotlightRadius={300}
-                                particleCount={0}
-                                glowColor="163, 67, 236"
-                            />
-                        </div>
+                        <MagicBento 
+                            textAutoHide={false}
+                            enableStars={false}
+                            enableSpotlight={true}
+                            enableBorderGlow={true}
+                            enableTilt={false}
+                            enableMagnetism={false}
+                            clickEffect={false}
+                            spotlightRadius={300}
+                            particleCount={0}
+                            glowColor="163, 67, 236"
+                        />
 
-                        {/* Key Features */}
-                        <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8">
+                        <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8 mt-16">
                             <h4 className="text-2xl font-bold text-[#FBF9F5] mb-8">Key Features</h4>
                             <div className="grid md:grid-cols-2 gap-6">
                                 <div className="flex items-start gap-4">
@@ -216,7 +212,7 @@ export function HomeClient({ session }: {
                                     </div>
                                     <div>
                                         <h5 className="font-semibold text-[#FBF9F5] mb-2">Interactive Timeline</h5>
-                                        <p className="text-sm text-[#E4DEAA]">Visual task management with real-time progress tracking</p>
+                                        <p className="text-sm text-[#E4DEAA]">Visualize the flow. Manage tasks and track real-time progress at a glance.</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-4">
@@ -225,7 +221,7 @@ export function HomeClient({ session }: {
                                     </div>
                                     <div>
                                         <h5 className="font-semibold text-[#FBF9F5] mb-2">Document Collaboration</h5>
-                                        <p className="text-sm text-[#E4DEAA]">Create, edit, and draw on documents with team attribution</p>
+                                        <p className="text-sm text-[#E4DEAA]">TOVA OSHTE GO NQMAME</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-4">
@@ -234,7 +230,7 @@ export function HomeClient({ session }: {
                                     </div>
                                     <div>
                                         <h5 className="font-semibold text-[#FBF9F5] mb-2">Password Protection</h5>
-                                        <p className="text-sm text-[#E4DEAA]">Secure sensitive files with encryption and email recovery</p>
+                                        <p className="text-sm text-[#E4DEAA]">Total control. Never worry again about privacy.</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-4">
@@ -243,7 +239,7 @@ export function HomeClient({ session }: {
                                     </div>
                                     <div>
                                         <h5 className="font-semibold text-[#FBF9F5] mb-2">Event Publishing</h5>
-                                        <p className="text-sm text-[#E4DEAA]">Share events publicly or import from project workspaces</p>
+                                        <p className="text-sm text-[#E4DEAA]">Go live. Turn internal project plans into public events in seconds.</p>
                                     </div>
                                 </div>
                             </div>
@@ -251,7 +247,6 @@ export function HomeClient({ session }: {
                     </div>
                 </section>
 
-                {/* CTA Section */}
                 {!session && (
                     <section className="py-20 px-6 bg-[#A343EC]/10">
                         <div className="max-w-4xl mx-auto text-center">
@@ -259,7 +254,7 @@ export function HomeClient({ session }: {
                                 Ready to Get Started?
                             </h3>
                             <p className="text-xl text-[#E4DEAA] mb-8">
-                                Join teams already using Kairos to stay organized
+                                Stop just managing time. Join Kairos to act with unified precision.
                             </p>
                             <button
                                 onClick={() => setIsModalOpen(true)}
@@ -272,14 +267,13 @@ export function HomeClient({ session }: {
                     </section>
                 )}
 
-                {/* Footer */}
                 <footer className="py-12 px-6">
                     <div className="max-w-7xl mx-auto text-center">
                         <div className="flex items-center justify-center gap-3 mb-4">
                             <div className="w-8 h-8 bg-[#A343EC] rounded-xl flex items-center justify-center">
                                 <Zap className="text-white" size={20} />
                             </div>
-                            <span className="text-xl font-bold text-[#FBF9F5]">Kairos</span>
+                            <span className="text-xl font-bold text-[#FBF9F5]" style={{ fontFamily: 'Uncial Antiqua, serif' }}>Kairos</span>
                         </div>
                         <p className="text-[#E4DEAA]">
                             © 2024 Kairos. Professional event and project management platform.
@@ -290,7 +284,6 @@ export function HomeClient({ session }: {
 
             <SignInModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
-            {/* How To Guide Modal - keeping the same */}
             {isGuideOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div 
@@ -314,75 +307,77 @@ export function HomeClient({ session }: {
                         </div>
                         
                         <div className="overflow-y-auto max-h-[calc(85vh-120px)] p-8 space-y-8">
-                            {/* Guide content remains the same from your original file */}
                         </div>
                     </div>
                 </div>
             )}
 
             <style jsx>{`
-                @keyframes float-slow {
-                    0%, 100% {
-                        transform: translate(0, 0) scale(1);
-                    }
-                    33% {
-                        transform: translate(30px, -30px) scale(1.1);
-                    }
-                    66% {
-                        transform: translate(-20px, 20px) scale(0.9);
-                    }
-                }
-
-                @keyframes float-medium {
-                    0%, 100% {
-                        transform: translate(0, 0) scale(1);
-                    }
-                    33% {
-                        transform: translate(-40px, 30px) scale(1.05);
-                    }
-                    66% {
-                        transform: translate(25px, -25px) scale(0.95);
-                    }
-                }
-
                 @keyframes float-fast {
-                    0%, 100% {
-                        transform: translate(0, 0) scale(1);
-                    }
-                    33% {
-                        transform: translate(20px, 40px) scale(1.08);
-                    }
-                    66% {
-                        transform: translate(-30px, -20px) scale(0.92);
-                    }
+                    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+                    33% { transform: translate(30px, -30px) rotate(5deg); }
+                    66% { transform: translate(-20px, 20px) rotate(-5deg); }
                 }
-                
-                @keyframes smooth-fade-in {
-                    0% {
-                        opacity: 0;
-                        transform: translateY(20px);
-                    }
-                    100% {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
+                @keyframes float-faster {
+                    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+                    33% { transform: translate(-25px, 25px) rotate(-4deg); }
+                    66% { transform: translate(25px, -25px) rotate(4deg); }
                 }
-
-                .animate-float-slow {
-                    animation: float-slow 20s ease-in-out infinite;
+                @keyframes float-fastest {
+                    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+                    50% { transform: translate(20px, -30px) rotate(3deg); }
                 }
-
-                .animate-float-medium {
-                    animation: float-medium 15s ease-in-out infinite;
-                }
-
                 .animate-float-fast {
-                    animation: float-fast 12s ease-in-out infinite;
+                    animation: float-fast 8s ease-in-out infinite;
                 }
-                
-                .animate-smooth-fade-in {
-                    animation: smooth-fade-in 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-                    opacity: 0;
+                .animate-float-faster {
+                    animation: float-faster 6s ease-in-out infinite;
+                }
+                .animate-float-fastest {
+                    animation: float-fastest 5s ease-in-out infinite;
+                }
+                @keyframes border-circulation {
+                    0%, 100% { 
+                        background-position: 0% 50%; 
+                    }
+                    50% { 
+                        background-position: 100% 50%; 
+                    }
+                }
+                .animated-border-button {
+                    position: relative;
+                    isolation: isolate;
+                }
+                .animated-border-button::before {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    border-radius: inherit;
+                    padding: 2px;
+                    background: linear-gradient(
+                        90deg,
+                        rgba(163, 67, 236, 0.8),
+                        rgba(125, 211, 180, 0.8),
+                        rgba(228, 222, 170, 0.8),
+                        rgba(163, 67, 236, 0.8)
+                    );
+                    background-size: 200% 200%;
+                    -webkit-mask: 
+                        linear-gradient(#fff 0 0) content-box, 
+                        linear-gradient(#fff 0 0);
+                    -webkit-mask-composite: xor;
+                    mask: 
+                        linear-gradient(#fff 0 0) content-box, 
+                        linear-gradient(#fff 0 0);
+                    mask-composite: exclude;
+                    animation: border-circulation 3s linear infinite;
+                    z-index: -1;
+                }
+                .animated-border-button:hover {
+                    background: rgba(163, 67, 236, 0.1);
+                }
+                .animated-border-button:hover::before {
+                    animation-duration: 1.5s;
                 }
             `}</style>
         </main>

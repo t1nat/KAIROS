@@ -1,4 +1,3 @@
-// src/app/_components/MagicBento.tsx - FIXED
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { gsap } from 'gsap';
 import { FolderKanban, Users, Shield } from 'lucide-react';
@@ -36,23 +35,21 @@ const MOBILE_BREAKPOINT = 768;
 const cardData: BentoCardProps[] = [
   {
     color: '#181F25',
-    title: 'For Organizations',
-    description: 'Admins can create organization spaces, assign roles, manage tasks, and oversee team progress. Workers collaborate on shared documents with real-time tracking.',
+    title: 'Organizations',
+    description: 'Create dedicated spaces to assign roles and oversee progress with absolute clarity. Control the workflow in real-time.',
     label: 'Organizations',
     icon: <FolderKanban size={24} />
   },
   {
     color: '#181F25',
-    title: 'For Teams',
-    description: 'Join organization spaces with access codes. Complete assignments, create documents, and collaborate with password-protected files and real-time annotations.',
-    label: 'Teams',
+    title: 'Teams',
+    description: 'Collaborate securely in real-time spaces. Unify your workflow to ensure the entire team moves in perfect sync.',
     icon: <Users size={24} />
   },
   {
     color: '#181F25',
-    title: 'For Personal Use',
-    description: 'Perfect for individual productivity. Create encrypted notes, manage personal tasks, and organize your workflow without any organizational overhead.',
-    label: 'Personal',
+    title: 'Personal Goals',
+    description: 'Master Your Focus. Never lose important notes. Eliminate the noise to find your perfect headspace.',
     icon: <Shield size={24} />
   }
 ];
@@ -394,6 +391,7 @@ const GlobalSpotlight: React.FC<{
       
       if (!spotlightElement || !gridElement) return;
 
+      // Note: This relies on a parent element having the class 'bento-section'
       const section = gridElement.closest('.bento-section');
       const rect = section?.getBoundingClientRect();
       const mouseInside =
@@ -515,6 +513,98 @@ const useMobileDetection = () => {
   return isMobile;
 };
 
+// --- FIX START ---
+
+// Use a global flag to ensure the style block is only injected once across all instances.
+let isStylesInjected = false;
+
+const GlobalBentoStyles: React.FC<{ glowColor: string }> = ({ glowColor }) => {
+  useEffect(() => {
+    if (isStylesInjected) return;
+
+    const styleTag = document.createElement('style');
+    styleTag.setAttribute('data-bento-styles', 'true');
+    styleTag.innerHTML = `
+      .bento-section {
+        --glow-x: 50%;
+        --glow-y: 50%;
+        --glow-intensity: 0;
+        --glow-radius: 200px;
+        --glow-color: ${glowColor};
+        --border-color: rgba(255, 255, 255, 0.1);
+        --background-dark: #181F25;
+        --white: #FBF9F5;
+      }
+      
+      .kairos-card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+      }
+      
+      @media (max-width: 768px) {
+        .kairos-card-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      
+      .card--border-glow::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        padding: 2px;
+        background: radial-gradient(var(--glow-radius) circle at var(--glow-x) var(--glow-y),
+            rgba(${glowColor}, calc(var(--glow-intensity) * 0.8)) 0%,
+            rgba(${glowColor}, calc(var(--glow-intensity) * 0.4)) 30%,
+            transparent 60%);
+        border-radius: inherit;
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask-composite: subtract;
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+        z-index: 1;
+      }
+      
+      .card--border-glow:hover::after {
+        opacity: 1;
+      }
+      
+      .card--border-glow:hover {
+        box-shadow: 0 4px 20px rgba(${glowColor}, 0.2);
+      }
+      
+      .particle::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: rgba(${glowColor}, 0.2);
+        border-radius: 50%;
+        z-index: -1;
+      }
+    `;
+
+    document.head.appendChild(styleTag);
+    isStylesInjected = true;
+
+    return () => {
+      // Cleanup is technically unnecessary for globally injected styles unless the component
+      // might be fully unmounted AND you want to remove the styles.
+      // Since `isStylesInjected` prevents re-injection, we'll leave it as is.
+      // If we *did* want cleanup, we'd need a more robust check for other instances.
+    };
+  }, [glowColor]); // Re-run if glowColor changes, but only inject once.
+
+  return null;
+};
+
+// --- FIX END ---
+
+
 const MagicBento: React.FC<BentoProps> = ({
   textAutoHide: _textAutoHide = false,
   enableStars = true,
@@ -537,71 +627,8 @@ const MagicBento: React.FC<BentoProps> = ({
 
   return (
     <>
-      <style>
-        {`
-          .bento-section {
-            --glow-x: 50%;
-            --glow-y: 50%;
-            --glow-intensity: 0;
-            --glow-radius: 200px;
-            --glow-color: ${glowColor};
-            --border-color: rgba(255, 255, 255, 0.1);
-            --background-dark: #181F25;
-            --white: #FBF9F5;
-          }
-          
-          .kairos-card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-          }
-          
-          @media (max-width: 768px) {
-            .kairos-card-grid {
-              grid-template-columns: 1fr;
-            }
-          }
-          
-          .card--border-glow::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            padding: 2px;
-            background: radial-gradient(var(--glow-radius) circle at var(--glow-x) var(--glow-y),
-                rgba(${glowColor}, calc(var(--glow-intensity) * 0.8)) 0%,
-                rgba(${glowColor}, calc(var(--glow-intensity) * 0.4)) 30%,
-                transparent 60%);
-            border-radius: inherit;
-            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            mask-composite: subtract;
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-            z-index: 1;
-          }
-          
-          .card--border-glow:hover::after {
-            opacity: 1;
-          }
-          
-          .card--border-glow:hover {
-            box-shadow: 0 4px 20px rgba(${glowColor}, 0.2);
-          }
-          
-          .particle::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: rgba(${glowColor}, 0.2);
-            border-radius: 50%;
-            z-index: -1;
-          }
-        `}
-      </style>
+      {/* ADDED: Inject styles only once */}
+      <GlobalBentoStyles glowColor={glowColor} />
 
       {enableSpotlight && (
         <GlobalSpotlight

@@ -143,8 +143,8 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
           </h2>
           <p className="text-[#E4DEAA]">
             {isSignUp 
-              ? "Sign up to start managing your events and projects" 
-              : "Sign in to start managing your events and projects"
+              ? "Sign up to launch your projects." 
+              : "Sign in to launch your projects."
             }
           </p>
         </div>
