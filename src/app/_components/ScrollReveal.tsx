@@ -1,25 +1,24 @@
-import React, { useEffect, useRef, useMemo, type ReactNode, type RefObject, useLayoutEffect } from 'react';
+import React, { useRef, useMemo, type ReactNode, type RefObject, useLayoutEffect } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-// Use useLayoutEffect or check for 'undefined' to safely register plugin on client side
-if (typeof window !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger);
-}
+gsap.registerPlugin(ScrollTrigger);
 
 // Define the expected props for the ScrollReveal component
-interface ScrollRevealProps {
-    // Allows any React child, but the text splitting logic will only run if children is a string.
+export interface ScrollRevealProps {
     children: ReactNode;
     scrollContainerRef?: RefObject<HTMLElement>;
     enableBlur?: boolean;
     baseOpacity?: number;
     baseRotation?: number;
+    baseY?: number;
     blurStrength?: number;
     containerClassName?: string;
     textClassName?: string;
     rotationEnd?: string;
     wordAnimationEnd?: string;
+    staggerDelay?: number;
+    ease?: string;
 }
 
 const ScrollReveal: React.FC<ScrollRevealProps> = ({
@@ -28,29 +27,34 @@ const ScrollReveal: React.FC<ScrollRevealProps> = ({
     enableBlur = true,
     baseOpacity = 0.1,
     baseRotation = 3,
+    baseY = 0,
     blurStrength = 4,
     containerClassName = '',
     textClassName = '',
     rotationEnd = 'bottom bottom',
-    wordAnimationEnd = 'bottom bottom'
+    wordAnimationEnd = 'bottom bottom',
+    staggerDelay = 0,
+    ease = 'none'
 }) => {
     // Use a generic HTMLElement ref for flexibility
     const containerRef = useRef<HTMLElement>(null);
     
     // Check if children is a string and split it for animation. 
-    // If not a string (e.g., a component), return children directly.
-    const splitContent = useMemo(() => {
+    // If not a string, return children directly.
+    const splitTextChildren = useMemo(() => {
         // Handle cases where children is a component or not a string
         if (typeof children !== 'string') {
             return children;
         }
 
         const text = children;
-        return text.split(/(\s+)/).map((word, index) => {
-            // If it's whitespace, render it directly
-            if (word.match(/^\s+$/)) {
-                return <span key={index} className="whitespace-pre">{word}</span>;
-            }
+        const whitespaceRegex = /^\s+$/;
+        return text.split(/(\s+)/).map((word, index) => {
+            // If it's whitespace, render it directly
+            // Using test() or direct comparison (word.trim() === '') is better here.
+            if (whitespaceRegex.test(word)) { 
+                return <span key={index} className="whitespace-pre">{word}</span>;
+            }
             // Otherwise wrap the word
             return (
                 <span className="inline-block word" key={index}>
@@ -65,52 +69,79 @@ const ScrollReveal: React.FC<ScrollRevealProps> = ({
         const el = containerRef.current;
         if (!el) return;
 
-        // Determine the scroller (either provided ref or the window)
+        // Uses nullish coalescing `??` for safer type assertion
         const scroller = scrollContainerRef?.current ?? window;
-        
-        // Check if we need to run word animation (only if children was a string)
-        const isStringContent = typeof children === 'string';
 
-        // Use gsap.context for easy cleanup
-        let ctx: gsap.Context;
-        
-        try {
-             // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-            ctx = gsap.context(() => {
-                const wordElements = el.querySelectorAll<HTMLElement>('.word');
-                const targetElement = isStringContent ? wordElements : el;
+        // Initial setup with delay
+        const initialProps: gsap.TweenVars = { 
+            transformOrigin: '0% 50%', 
+            rotate: baseRotation,
+            opacity: baseOpacity
+        };
 
-                // 1. Rotation Animation (Applies to the container)
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-                gsap.fromTo(
-                    el,
-                    { transformOrigin: '0% 50%', rotate: baseRotation },
-                    {
-                        ease: 'none',
-                        rotate: 0,
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-                        scrollTrigger: {
-                            trigger: el,
-                            scroller,
-                            start: 'top bottom',
-                            end: rotationEnd,
-                            scrub: true
-                        }
+        // Add baseY if it's not zero
+        if (baseY !== 0) {
+            initialProps.y = baseY;
+        }
+
+        // Set initial state
+        gsap.set(el, initialProps);
+
+        // Animate to final state with delay
+        const animationProps: gsap.TweenVars = {
+            ease: ease,
+            rotate: 0,
+            opacity: 1,
+            delay: staggerDelay
+        };
+
+        if (baseY !== 0) {
+            animationProps.y = 0;
+        }
+
+        // For scroll-triggered animations (if rotationEnd is provided)
+        if (rotationEnd && rotationEnd !== 'bottom bottom') {
+            animationProps.scrollTrigger = {
+                trigger: el,
+                scroller,
+                start: 'top bottom',
+                end: rotationEnd,
+                scrub: true
+            };
+        }
+
+        gsap.to(el, animationProps);
+
+        // Animation for individual words (only if text was split)
+        const wordElements = el.querySelectorAll<HTMLElement>('.word');
+        if (wordElements.length > 0) { 
+            // Opacity Animation
+            gsap.fromTo(
+                wordElements,
+                { opacity: baseOpacity, willChange: 'opacity' },
+                {
+                    ease: ease || 'none',
+                    opacity: 1,
+                    stagger: 0.05,
+                    scrollTrigger: {
+                        trigger: el,
+                        scroller,
+                        start: 'top bottom-=20%',
+                        end: wordAnimationEnd,
+                        scrub: true
                     }
-                );
-                
-                // 2. Opacity and Blur Animations (Apply to words or the container)
-                // Note: The word animations will only run if wordElements is populated
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+                }
+            );
+
+            // Blur Animation (if enabled)
+            if (enableBlur) {
                 gsap.fromTo(
-                    targetElement,
-                    { opacity: baseOpacity, willChange: 'opacity, filter' },
+                    wordElements,
+                    { filter: `blur(${blurStrength}px)` },
                     {
-                        ease: 'none',
-                        opacity: 1,
-                        // Stagger only works on a list of elements (words)
-                        stagger: isStringContent ? 0.05 : 0, 
-                         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+                        ease: ease || 'none',
+                        filter: 'blur(0px)',
+                        stagger: 0.05,
                         scrollTrigger: {
                             trigger: el,
                             scroller,
@@ -120,58 +151,28 @@ const ScrollReveal: React.FC<ScrollRevealProps> = ({
                         }
                     }
                 );
-
-                if (enableBlur) {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-                    gsap.fromTo(
-                        targetElement,
-                        { filter: `blur(${blurStrength}px)` },
-                        {
-                            ease: 'none',
-                            filter: 'blur(0px)',
-                            stagger: isStringContent ? 0.05 : 0,
-                             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-                            scrollTrigger: {
-                                trigger: el,
-                                scroller,
-                                start: 'top bottom-=20%',
-                                end: wordAnimationEnd,
-                                scrub: true
-                            }
-                        }
-                    );
-                }
-            }, el); // <- Scope the context to the element
-
-        } catch(error) {
-            console.error("GSAP ScrollReveal error:", error);
-            // Fallback for cleanup in case of error
-             // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-            ctx?.revert();
+            }
         }
 
         return () => {
-            // Cleanup: remove all GSAP logic tied to this component instance
-             // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-            ctx?.revert();
+            // Cleanup: Kill all ScrollTriggers associated with this element to prevent memory leaks
+            ScrollTrigger.getAll().forEach(trigger => {
+                if (trigger.trigger === el) {
+                    trigger.kill();
+                }
+            });
+            // Kill tweens of the main element to prevent conflicts on re-render
+            gsap.killTweensOf(el);
         };
-    }, [children, scrollContainerRef, enableBlur, baseRotation, baseOpacity, rotationEnd, wordAnimationEnd, blurStrength]);
+    }, [scrollContainerRef, enableBlur, baseRotation, baseOpacity, baseY, rotationEnd, wordAnimationEnd, blurStrength, staggerDelay, ease, children]);
 
-    // Render the children, wrapped in a div/p only if it was a string and split,
-    // otherwise render the children directly inside the container ref.
+    // Render the children
     return (
-        // Use a generic wrapper like 'div' instead of 'h2' to avoid semantic issues when wrapping non-heading content like MagicBento.
-        <div ref={containerRef} className={containerClassName}>
-            {typeof children === 'string' ? (
-                // Only wrap with <p> and apply text styling if it was a string that was split
-                <p className={`text-[clamp(1.6rem,4vw,3rem)] leading-[1.5] font-semibold ${textClassName}`}>
-                    {splitContent}
-                </p>
-            ) : (
-                // If the child is a complex component (like MagicBento), render it directly
-                splitContent
-            )}
-        </div>
+        <h2 ref={containerRef as RefObject<HTMLHeadingElement>} className={`my-5 ${containerClassName}`}>
+            <span className={`inline-block text-[clamp(1.6rem,4vw,3rem)] leading-[1.5] font-semibold ${textClassName}`}>
+                {splitTextChildren}
+            </span>
+        </h2>
     );
 };
 

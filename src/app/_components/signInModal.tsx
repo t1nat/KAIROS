@@ -273,7 +273,7 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
           </div>
 
           <p className="text-sm text-center text-[#E4DEAA]/70 leading-relaxed pt-2">
-            By continuing, you agree to Kairos's Terms of Service and Privacy Policy.
+            By continuing, you agree to Kairos&apos;s Terms of Service and Privacy Policy.
           </p>
         </div>
       </div>

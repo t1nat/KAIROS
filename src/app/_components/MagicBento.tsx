@@ -5,6 +5,18 @@ import { FolderKanban, Users, Shield } from 'lucide-react';
 // Import ScrollReveal to animate individual cards
 import ScrollReveal from "./ScrollReveal";
 
+// 🛑 FIX: Explicitly define ScrollRevealProps to include all necessary animation properties
+// This definition is required because the imported component's types are not correctly including them.
+export interface ScrollRevealProps {
+    children: React.ReactNode;
+    containerClassName?: string;
+    baseOpacity?: number;
+    baseRotation?: number;
+    baseY?: number; 
+    staggerDelay?: number;
+    ease?: string;
+}
+
 export interface BentoCardProps {
   color?: string;
   title?: string;
@@ -498,6 +510,14 @@ const BentoCardGrid: React.FC<{
     ref={gridRef}
   >
     {children}
+    <style jsx global>{`
+      .bento-section {
+        /* Ensure the relative positioning for children */
+      }
+      .card--border-glow::after {
+        /* existing CSS for border glow */
+      }
+    `}</style>
   </div>
 );
 
@@ -515,8 +535,6 @@ const useMobileDetection = () => {
 
   return isMobile;
 };
-
-// --- FIX START ---
 
 // Use a global flag to ensure the style block is only injected once across all instances.
 let isStylesInjected = false;
@@ -597,16 +615,12 @@ const GlobalBentoStyles: React.FC<{ glowColor: string }> = ({ glowColor }) => {
     return () => {
       // Cleanup is technically unnecessary for globally injected styles unless the component
       // might be fully unmounted AND you want to remove the styles.
-      // Since `isStylesInjected` prevents re-injection, we'll leave it as is.
       // If we *did* want cleanup, we'd need a more robust check for other instances.
     };
   }, [glowColor]); // Re-run if glowColor changes, but only inject once.
 
   return null;
 };
-
-// --- FIX END ---
-
 
 const MagicBento: React.FC<BentoProps> = ({
   textAutoHide: _textAutoHide = false,
@@ -661,16 +675,14 @@ const MagicBento: React.FC<BentoProps> = ({
               '--glow-radius': '200px'
             } as React.CSSProperties;
 
-            // START OF FIX: Wrap each card with ScrollReveal and apply a stagger delay
             return (
               <ScrollReveal
                 key={index}
-                // Setting transform origin ensures rotation/scale animations start from center
                 containerClassName="h-full transform-gpu" 
                 baseOpacity={0.0}
                 baseRotation={0}
-                baseY={50} // Slide up from 50px below
-                staggerDelay={index * 0.15} // Stagger delay for individual cards
+                baseY={50}
+                staggerDelay={index * 0.15}
                 ease='power2.out'
               >
                 {enableStars ? (
@@ -735,7 +747,6 @@ const MagicBento: React.FC<BentoProps> = ({
                 )}
               </ScrollReveal>
             );
-            // END OF FIX
           })}
         </div>
       </BentoCardGrid>
