@@ -3,7 +3,6 @@
 
 import {  
   Plus, 
-  LayoutDashboard, 
   Calendar,
   FileEdit,
   FolderKanban,
@@ -105,14 +104,6 @@ export function SideNav() {
       {/* Navigation */}
       <div className="flex-1 py-4">
         
-        <Link 
-          href="/" 
-          className="relative flex items-center justify-center w-full h-14 text-[#E4DEEA] hover:text-[#A343EC] hover:bg-white/5 transition-all group"
-        >
-          <LayoutDashboard size={26} />
-          <NavTooltip text="Dashboard" />
-        </Link>
-        
         <button 
           onClick={() => setIsFilingMenuOpen(!isFilingMenuOpen)}
           className={`relative flex items-center justify-center w-full h-14 transition-all group ${
@@ -127,14 +118,6 @@ export function SideNav() {
             <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-[#A343EC] rounded-l-full"></div>
           )}
         </button>
-        
-        <Link 
-          href="/create" 
-          className="relative flex items-center justify-center w-full h-14 text-[#E4DEEA] hover:text-[#80C49B] hover:bg-white/5 transition-all group"
-        >
-          <FolderKanban size={26} />
-          <NavTooltip text="Workspace" />
-        </Link>
 
         <Link 
           href="/publish" 

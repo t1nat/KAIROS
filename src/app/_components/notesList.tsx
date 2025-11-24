@@ -104,7 +104,8 @@ export function NotesList() {
   const lockedNotesArray = notes?.filter(n => n.passwordHash) ?? [];
 
   const selectedNote = notes?.find(n => n.id === selectedNoteId);
-  const isLocked = selectedNoteId && selectedNote?.passwordHash && !unlockedNotes[selectedNoteId]?.unlocked;  const showPassword = selectedNoteId ? showPasswords[selectedNoteId] ?? false : false;
+  const isLocked = selectedNoteId && selectedNote?.passwordHash && !unlockedNotes[selectedNoteId]?.unlocked;
+  const showPassword = selectedNoteId ? showPasswords[selectedNoteId] ?? false : false;
   const passwordInput = selectedNoteId ? passwordInputs[selectedNoteId] ?? '' : '';
   const passwordError = selectedNoteId ? passwordErrors[selectedNoteId] : undefined;
   const unlockedContent = selectedNoteId ? unlockedNotes[selectedNoteId]?.content : undefined;
@@ -121,11 +122,11 @@ export function NotesList() {
   }
 
   return (
-    // Relative container allows the encrypted folder to be positioned absolutely relative to this block
+    // Relative container
     <div className="relative h-[calc(100vh-140px)] w-full">
       
-      {/* --- ENCRYPTED FOLDER (Positioned Top Right, pulled up to align with New Note button) --- */}
-      <div className="absolute -top-[4.5rem] right-0 z-50">
+      {/* --- ENCRYPTED FOLDER (Positioned Top Right, aligned with New Note button) --- */}
+      <div className="absolute -top-14 right-0 z-50">
         {lockedNotesArray.length > 0 && (
           <div className="relative">
             <button
@@ -140,9 +141,9 @@ export function NotesList() {
               />
             </button>
 
-            {/* Locked Notes Dropdown List */}
+            {/* Locked Notes Dropdown List - aligned with Your Notes heading */}
             {showLockedNotes && (
-              <div className="absolute right-0 top-full mt-2 w-72 bg-[#1E2024] border border-white/10 rounded-xl shadow-2xl p-2 max-h-96 overflow-y-auto animate-in fade-in zoom-in-95 duration-200 ring-1 ring-black/20">
+              <div className="absolute right-0 top-[calc(100%+3.5rem)] w-72 bg-[#1E2024] border border-white/10 rounded-xl shadow-2xl p-2 max-h-96 overflow-y-auto animate-in fade-in zoom-in-95 duration-200 ring-1 ring-black/20">
                 <h4 className="px-3 py-2 text-[10px] font-bold text-[#80C49B] uppercase tracking-wider opacity-80">
                   Password Protected
                 </h4>
@@ -173,7 +174,6 @@ export function NotesList() {
       </div>
 
       {/* --- MAIN GRID LAYOUT --- */}
-      {/* Fixed sidebar width, Flexible content width. Both start at same vertical line. */}
       <div className="grid grid-cols-[320px_1fr] gap-10 h-full pt-2">
         
         {/* LEFT COL: Sidebar List */}
@@ -204,7 +204,6 @@ export function NotesList() {
                 </button>
               ))
             ) : (
-              /* Designed "All Locked" State */
               lockedNotesArray.length > 0 && (
                 <div className="bg-[#1E2024]/50 border border-white/5 rounded-xl p-8 flex flex-col items-center justify-center text-center">
                    <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-3">
@@ -220,8 +219,6 @@ export function NotesList() {
 
         {/* RIGHT COL: Detail View */}
         <div className="h-full min-h-0 flex flex-col items-end"> 
-          {/* items-end pushes the content to the right side if width < 100%, 
-              but flex-col + w-full in child makes it fill nicely. */}
           
           {selectedNoteId && selectedNote ? (
             <div className="animate-in fade-in slide-in-from-right-4 duration-300 w-full max-w-[480px] flex flex-col gap-4">
@@ -371,7 +368,7 @@ export function NotesList() {
         </div>
       </div>
 
-      {/* Password Reset Modal (Unchanged) */}
+      {/* Password Reset Modal */}
       {showResetModal !== null && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-[#0F1115] rounded-2xl shadow-2xl max-w-md w-full p-6 border border-white/10">
