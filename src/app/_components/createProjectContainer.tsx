@@ -189,7 +189,41 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
     : [];
 
   return (
+<<<<<<< HEAD
     <div className="flex gap-6 relative">
+=======
+    <div className="max-w-md space-y-4">
+      {/* Create Project Form or Project List */}
+      {!selectedProjectId ? (
+        <div className="space-y-4">
+          {/* Existing Projects List */}
+          {projects && projects.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-[#E4DEEA] mb-3">Your Projects</h3>
+              {projects.map((project) => (
+                <button
+                  key={project.id}
+                  onClick={() => setSelectedProjectId(project.id)}
+                  className="w-full p-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl hover:bg-white/10 hover:border-[#A343EC]/50 transition-all text-left group"
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-[#FBF9F5] mb-1 group-hover:text-[#A343EC] transition-colors">
+                        {project.title}
+                      </h4>
+                      {project.description && (
+                        <p className="text-sm text-[#E4DEAA] line-clamp-1">{project.description}</p>
+                      )}
+                    </div>
+                    <span className="text-xs text-[#59677C]">
+                      {new Date(project.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+>>>>>>> 465a109bcba5ccfcb81e558bbcfadfbc0aaf4345
 
       {/* LEFT SIDEBAR */}
       <div className="w-96 flex-shrink-0 space-y-4">

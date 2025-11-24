@@ -68,7 +68,6 @@
 
   body {
     background-color: rgb(var(--bg-primary));
-    font-family: var(--font-faustina), serif;
     color: rgb(var(--text-primary));
     transition: background-color 0.3s ease, color 0.3s ease;
   }

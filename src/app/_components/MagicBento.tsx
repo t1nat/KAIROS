@@ -2,21 +2,6 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { gsap } from 'gsap';
 import { FolderKanban, Users, Shield } from 'lucide-react';
 
-// Import ScrollReveal to animate individual cards
-import ScrollReveal from "./ScrollReveal";
-
-// 🛑 FIX: Explicitly define ScrollRevealProps to include all necessary animation properties
-// This definition is required because the imported component's types are not correctly including them.
-export interface ScrollRevealProps {
-    children: React.ReactNode;
-    containerClassName?: string;
-    baseOpacity?: number;
-    baseRotation?: number;
-    baseY?: number; 
-    staggerDelay?: number;
-    ease?: string;
-}
-
 export interface BentoCardProps {
   color?: string;
   title?: string;
@@ -510,14 +495,6 @@ const BentoCardGrid: React.FC<{
     ref={gridRef}
   >
     {children}
-    <style jsx global>{`
-      .bento-section {
-        /* Ensure the relative positioning for children */
-      }
-      .card--border-glow::after {
-        /* existing CSS for border glow */
-      }
-    `}</style>
   </div>
 );
 
@@ -535,6 +512,8 @@ const useMobileDetection = () => {
 
   return isMobile;
 };
+
+// --- FIX START ---
 
 // Use a global flag to ensure the style block is only injected once across all instances.
 let isStylesInjected = false;
@@ -615,12 +594,16 @@ const GlobalBentoStyles: React.FC<{ glowColor: string }> = ({ glowColor }) => {
     return () => {
       // Cleanup is technically unnecessary for globally injected styles unless the component
       // might be fully unmounted AND you want to remove the styles.
+      // Since `isStylesInjected` prevents re-injection, we'll leave it as is.
       // If we *did* want cleanup, we'd need a more robust check for other instances.
     };
   }, [glowColor]); // Re-run if glowColor changes, but only inject once.
 
   return null;
 };
+
+// --- FIX END ---
+
 
 const MagicBento: React.FC<BentoProps> = ({
   textAutoHide: _textAutoHide = false,
@@ -675,77 +658,70 @@ const MagicBento: React.FC<BentoProps> = ({
               '--glow-radius': '200px'
             } as React.CSSProperties;
 
-            return (
-              <ScrollReveal
-                key={index}
-                containerClassName="h-full transform-gpu" 
-                baseOpacity={0.0}
-                baseRotation={0}
-                baseY={50}
-                staggerDelay={index * 0.15}
-                ease='power2.out'
-              >
-                {enableStars ? (
-                  <ParticleCard
-                    className={baseClassName}
-                    style={cardStyle}
-                    disableAnimations={shouldDisableAnimations}
-                    particleCount={particleCount}
-                    glowColor={glowColor}
-                    enableTilt={enableTilt}
-                    clickEffect={clickEffect}
-                    enableMagnetism={enableMagnetism}
-                  >
-                    <div className="flex flex-col gap-6 relative z-10">
-                      <div style={{ 
-                        width: '48px', 
-                        height: '48px', 
-                        backgroundColor: iconColors[index], 
-                        borderRadius: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: index === 1 ? '#181F25' : 'white'
-                      }}>
-                        {card.icon}
-                      </div>
-                      <div>
-                        <h4 className="text-xl font-bold text-[#FBF9F5] mb-3">
-                          {card.title}
-                        </h4>
-                        <p className="text-[#E4DEAA] leading-relaxed text-sm">
-                          {card.description}
-                        </p>
-                      </div>
+            if (enableStars) {
+              return (
+                <ParticleCard
+                  key={index}
+                  className={baseClassName}
+                  style={cardStyle}
+                  disableAnimations={shouldDisableAnimations}
+                  particleCount={particleCount}
+                  glowColor={glowColor}
+                  enableTilt={enableTilt}
+                  clickEffect={clickEffect}
+                  enableMagnetism={enableMagnetism}
+                >
+                  <div className="flex flex-col gap-6 relative z-10">
+                    <div style={{ 
+                      width: '48px', 
+                      height: '48px', 
+                      backgroundColor: iconColors[index], 
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: index === 1 ? '#181F25' : 'white'
+                    }}>
+                      {card.icon}
                     </div>
-                  </ParticleCard>
-                ) : (
-                  <div className={baseClassName} style={cardStyle}>
-                    <div className="flex flex-col gap-6 relative z-10">
-                      <div style={{ 
-                        width: '48px', 
-                        height: '48px', 
-                        backgroundColor: iconColors[index], 
-                        borderRadius: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: index === 1 ? '#181F25' : 'white'
-                      }}>
-                        {card.icon}
-                      </div>
-                      <div>
-                        <h4 className="text-xl font-bold text-[#FBF9F5] mb-3">
-                          {card.title}
-                        </h4>
-                        <p className="text-[#E4DEAA] leading-relaxed text-sm">
-                          {card.description}
-                        </p>
-                      </div>
+                    <div>
+                      <h4 className="text-xl font-bold text-[#FBF9F5] mb-3">
+                        {card.title}
+                      </h4>
+                      <p className="text-[#E4DEAA] leading-relaxed text-sm">
+                        {card.description}
+                      </p>
                     </div>
                   </div>
-                )}
-              </ScrollReveal>
+                </ParticleCard>
+              );
+            }
+
+            return (
+              <div key={index} className={baseClassName} style={cardStyle}>
+                <div className="flex flex-col gap-6 relative z-10">
+                  <div style={{ 
+                    width: '48px', 
+                    height: '48px', 
+                    backgroundColor: iconColors[index], 
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: index === 1 ? '#181F25' : 'white'
+                  }}>
+                    {card.icon}
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-bold text-[#FBF9F5] mb-3">
+                      {card.title}
+                    </h4>
+                    <p className="text-[#E4DEAA] leading-relaxed text-sm">
+                      {card.description}
+                    </p>
+                  </div>
+                </div>
+              </div>
             );
           })}
         </div>

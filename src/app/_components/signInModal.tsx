@@ -1,3 +1,4 @@
+// src/app/_components/signInModal.tsx - FIXED TYPE ERRORS
 "use client";
 
 import { signIn } from "next-auth/react";
@@ -96,7 +97,7 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
   };
 
   const handleGoogleSignIn = async () => {
-    // Removed: setLoadingMessage("Redirecting to Google...");
+    setLoadingMessage("Redirecting to Google...");
     await signIn("google", { callbackUrl: "/" });
   };
 
@@ -120,7 +121,9 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
         onClick={onClose}
       />
       
-      <div className="relative bg-gradient-to-br from-[#1a2128] to-[#181F25] rounded-2xl shadow-xl w-full max-w-md border border-white/10 overflow-hidden">
+      <div className="relative bg-gradient-to-br from-[#1a2128] to-[#181F25] rounded-3xl shadow-2xl w-full max-w-md border border-[#A343EC]/20 overflow-hidden">
+        
+        <div className="absolute inset-0 bg-gradient-to-br from-[#A343EC]/5 to-transparent pointer-events-none" />
         
         <button 
           onClick={onClose} 
@@ -130,13 +133,18 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
         </button>
 
         <div className="relative p-8 pb-6 text-center border-b border-white/5">
-          <h2 className="text-2xl font-semibold text-[#FBF9F5] mb-2">
-            {isSignUp ? "Create Account" : "Welcome Back"}
+          <div className="w-16 h-16 bg-[#A343EC] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[#A343EC]/30">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-[#FBF9F5] mb-2">
+            {isSignUp ? "Create Account" : "Welcome to Kairos"}
           </h2>
-          <p className="text-[#E4DEAA]/80 text-sm">
+          <p className="text-[#E4DEAA]">
             {isSignUp 
-              ? "Sign up to get started with Kairos" 
-              : "Sign in to continue to your account"
+              ? "Sign up to launch your projects." 
+              : "Sign in to launch your projects."
             }
           </p>
         </div>
@@ -146,7 +154,7 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
           <button
             onClick={handleGoogleSignIn}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-3 px-6 py-3.5 bg-white/5 border border-white/10 rounded-xl font-medium text-[#FBF9F5] hover:bg-white/10 hover:border-white/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white/5 border border-white/10 rounded-2xl font-semibold text-[#FBF9F5] hover:bg-white/10 hover:border-white/20 transition-all duration-300 shadow-sm hover:shadow-md hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
             <div className="w-5 h-5 bg-white rounded flex items-center justify-center">
               <svg viewBox="0 0 24 24" className="w-4 h-4">
@@ -249,7 +257,7 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full px-6 py-3.5 bg-[#A343EC] rounded-xl font-medium text-white hover:bg-[#8B35C7] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full px-6 py-4 bg-[#A343EC] rounded-2xl font-semibold text-white hover:bg-[#8B35C7] transition-all duration-300 shadow-lg shadow-[#A343EC]/20 hover:shadow-xl hover:shadow-[#A343EC]/30 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <>
@@ -273,7 +281,7 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
           </div>
 
           <p className="text-sm text-center text-[#E4DEAA]/70 leading-relaxed pt-2">
-            By continuing, you agree to Kairos&apos;s Terms of Service and Privacy Policy.
+            By continuing, you agree to Kairos&#39;s Terms of Service and Privacy Policy.
           </p>
         </div>
       </div>

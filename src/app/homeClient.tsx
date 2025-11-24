@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, type ReactNode } from "react";
 import { UserDisplay } from "./_components/userDisplay";
 import { SignInModal } from "./_components/signInModal";
 import { RoleSelectionModal } from "./_components/roleSelectionModal";
@@ -10,7 +10,6 @@ import { api } from "~/trpc/react";
 import {
     Calendar,
     CheckCircle2,
-    Zap,
     ArrowRight,
     BookOpen,
     Info,
@@ -21,7 +20,9 @@ import ScrollReveal from "./_components/ScrollReveal";
 
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import type { Context } from "gsap";
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 gsap.registerPlugin(ScrollTrigger);
 
 interface SessionData {
@@ -36,7 +37,6 @@ export function HomeClient({ session }: {
     const [showRoleSelection, setShowRoleSelection] = useState(false);
     const [hasAnimated, setHasAnimated] = useState(false);
     const aboutRef = useRef<HTMLElement>(null);
-    const cardsRef = useRef<HTMLDivElement>(null);
 
     const { data: userProfile } = api.user.getProfile.useQuery(undefined, {
         enabled: !!session?.user,
@@ -52,39 +52,6 @@ export function HomeClient({ session }: {
         setHasAnimated(true);
     }, []);
 
-    // Animate the three cards on scroll
-    useEffect(() => {
-        const cards = cardsRef.current?.querySelectorAll('.feature-card');
-        if (!cards || cards.length === 0) return;
-
-        gsap.fromTo(
-            cards,
-            {
-                opacity: 0,
-                y: 50,
-                scale: 0.95
-            },
-            {
-                opacity: 1,
-                y: 0,
-                scale: 1,
-                duration: 0.6,
-                stagger: 0.15,
-                ease: 'power2.out',
-                scrollTrigger: {
-                    trigger: cardsRef.current,
-                    start: 'top bottom-=100',
-                    end: 'top center',
-                    scrub: 1,
-                }
-            }
-        );
-
-        return () => {
-            ScrollTrigger.getAll().forEach(trigger => trigger.kill());
-        };
-    }, []);
-
     const scrollToAbout = () => {
         aboutRef.current?.scrollIntoView({
             behavior: 'smooth',
@@ -94,6 +61,7 @@ export function HomeClient({ session }: {
 
     const handleRoleSelectionComplete = () => {
         setShowRoleSelection(false);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
         window.location.href = "/create";
     };
 
@@ -118,10 +86,7 @@ export function HomeClient({ session }: {
                     <div className="max-w-7xl mx-auto px-6 py-4">
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-[#A343EC] rounded-xl flex items-center justify-center">
-                                    <Zap className="text-white" size={22} />
-                                </div>
-                                <h1 className="text-2xl font-bold text-[#FBF9F5]" style={{ fontFamily: 'Uncial Antiqua, serif' }}></h1>
+                                <h1 className="text-2xl font-bold text-[#FBF9F5]" style={{ fontFamily: 'Uncial Antiqua, serif' }}>KAIROS</h1>
                             </div>
                             
                             <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2">
@@ -152,7 +117,7 @@ export function HomeClient({ session }: {
                     <div className="max-w-7xl mx-auto w-full">
                         <div className="flex flex-col lg:flex-row justify-between items-start gap-12 mb-8">
                             <div className="flex-1 text-center lg:text-left">
-                                <h2 className={`text-7xl md:text-8xl lg:text-9xl font-bold text-[#FBF9F5] mb-6 leading-tight tracking-tight ${!hasAnimated ? 'animate-title-entrance' : ''}`} style={{ fontFamily: 'Uncial Antiqua, serif' }}>
+                                <h2 className="text-7xl md:text-8xl lg:text-9xl font-bold text-[#FBF9F5] mb-6 leading-tight tracking-tight animate-hero-fade-in" style={{ fontFamily: 'Uncial Antiqua, serif' }}>
                                     <span className="inline-block">KAIROS</span>
                                 </h2>
                                 <p className={`text-3xl md:text-4xl text-[#E4DEAA] leading-relaxed max-w-2xl mx-auto lg:mx-0 ${!hasAnimated ? 'animate-smooth-fade-in' : ''}`} style={{ animationDelay: !hasAnimated ? '0.2s' : '0s' }}>
@@ -208,40 +173,31 @@ export function HomeClient({ session }: {
                         <div className="text-left mb-16">
                             <ScrollReveal 
                                 containerClassName="text-left"
-                                textClassName="text-4xl md:text-5xl font-bold text-[#FBF9F5]"
                                 baseOpacity={0.1}
                                 baseRotation={1}
-                                blurStrength={3}
-                                enableBlur={true}
-                            >
-                                The perfect window for a flawless strike.
-                            </ScrollReveal>
-                            <ScrollReveal 
-                                containerClassName="text-left mt-4"
-                                textClassName="text-lg text-[#E4DEAA]"
-                                baseOpacity={0.2}
-                                baseRotation={0.5}
                                 blurStrength={2}
-                                enableBlur={true}
                             >
-                                Whether you&apos;re managing:
+                                <h3 className="text-4xl md:text-5xl font-bold text-[#FBF9F5] mb-4 inline">
+                                    The perfect window for a flawless strike.
+                                </h3>
                             </ScrollReveal>
+                            <p className="text-lg text-[#E4DEAA] mt-4">
+                                Whether you&apos;re managing:
+                            </p>
                         </div>
 
-                        <div ref={cardsRef}>
-                            <MagicBento 
-                                textAutoHide={false}
-                                enableStars={false}
-                                enableSpotlight={true}
-                                enableBorderGlow={true}
-                                enableTilt={false}
-                                enableMagnetism={false}
-                                clickEffect={false}
-                                spotlightRadius={300}
-                                particleCount={0}
-                                glowColor="163, 67, 236"
-                            />
-                        </div>
+                        <MagicBento 
+                            textAutoHide={false}
+                            enableStars={false}
+                            enableSpotlight={true}
+                            enableBorderGlow={true}
+                            enableTilt={false}
+                            enableMagnetism={false}
+                            clickEffect={false}
+                            spotlightRadius={300}
+                            particleCount={0}
+                            glowColor="163, 67, 236"
+                        />
 
                         <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8 mt-16">
                             <h4 className="text-2xl font-bold text-[#FBF9F5] mb-8">Key Features</h4>
@@ -310,9 +266,6 @@ export function HomeClient({ session }: {
                 <footer className="py-12 px-6">
                     <div className="max-w-7xl mx-auto text-center">
                         <div className="flex items-center justify-center gap-3 mb-4">
-                            <div className="w-8 h-8 bg-[#A343EC] rounded-xl flex items-center justify-center">
-                                <Zap className="text-white" size={20} />
-                            </div>
                             <span className="text-xl font-bold text-[#FBF9F5]" style={{ fontFamily: 'Uncial Antiqua, serif' }}>Kairos</span>
                         </div>
                         <p className="text-[#E4DEAA]">
@@ -353,6 +306,46 @@ export function HomeClient({ session }: {
             )}
 
             <style jsx>{`
+                @keyframes hero-fade-in {
+                    0% { 
+                        opacity: 0;
+                        transform: translateY(20px);
+                        filter: blur(8px);
+                    }
+                    100% { 
+                        opacity: 1;
+                        transform: translateY(0);
+                        filter: blur(0px);
+                    }
+                }
+                @keyframes hero-float {
+                    0% { 
+                        transform: translateY(-8px);
+                    }
+                    50% { 
+                        transform: translateY(8px);
+                    }
+                    100% {
+                        transform: translateY(-8px);
+                    }
+                }
+                .animate-hero-fade-in {
+                    animation: hero-fade-in 1.5s ease-out forwards, hero-float 4s ease-in-out 1.5s infinite;
+                    opacity: 0;
+                }
+                @keyframes fade-in {
+                    0% { 
+                        opacity: 0;
+                        transform: translateY(-10px);
+                    }
+                    100% { 
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+                .animate-fade-in {
+                    animation: fade-in 1s ease-out forwards;
+                }
                 @keyframes float-fast {
                     0%, 100% { transform: translate(0, 0) rotate(0deg); }
                     33% { transform: translate(30px, -30px) rotate(5deg); }

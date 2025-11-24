@@ -3,6 +3,7 @@
 
 import {  
   Plus, 
+  LayoutDashboard, 
   Calendar,
   FileEdit,
   FolderKanban,
@@ -27,7 +28,7 @@ const FileMenu = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
       <div className="fixed left-20 top-4 bg-[#181F25] border border-white/10 shadow-2xl rounded-xl p-3 z-50 w-64 backdrop-blur-xl">
         <div className="flex justify-between items-center mb-3 pb-3 border-b border-white/10">
           <h4 className="text-sm font-bold text-[#FBF9F5]">Create New</h4>
-          <button onClick={onClose} className="text-[#E4DEAA] hover:text-[#FBF9F5] p-1 hover:bg-white/5 rounded transition-colors">
+          <button onClick={onClose} className="text-[#E4DEEA] hover:text-[#FBF9F5] p-1 hover:bg-white/5 rounded transition-colors">
             <X size={16} />
           </button>
         </div>
@@ -43,7 +44,7 @@ const FileMenu = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
             </div>
             <div className="flex-1">
               <div className="font-semibold text-sm">Project</div>
-              <div className="text-xs text-[#E4DEAA]">New workspace</div>
+              <div className="text-xs text-[#E4DEEA]">New workspace</div>
             </div>
           </Link>
 
@@ -57,7 +58,7 @@ const FileMenu = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
             </div>
             <div className="flex-1">
               <div className="font-semibold text-sm">Event</div>
-              <div className="text-xs text-[#E4DEAA]">Publish event</div>
+              <div className="text-xs text-[#E4DEEA]">Publish event</div>
             </div>
           </Link>
 
@@ -71,7 +72,7 @@ const FileMenu = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
             </div>
             <div className="flex-1">
               <div className="font-semibold text-sm">Note</div>
-              <div className="text-xs text-[#E4DEAA]">Secure note</div>
+              <div className="text-xs text-[#E4DEEA]">Secure note</div>
             </div>
           </Link>
         </div>
@@ -104,12 +105,20 @@ export function SideNav() {
       {/* Navigation */}
       <div className="flex-1 py-4">
         
+        <Link 
+          href="/" 
+          className="relative flex items-center justify-center w-full h-14 text-[#E4DEEA] hover:text-[#A343EC] hover:bg-white/5 transition-all group"
+        >
+          <LayoutDashboard size={26} />
+          <NavTooltip text="Dashboard" />
+        </Link>
+        
         <button 
           onClick={() => setIsFilingMenuOpen(!isFilingMenuOpen)}
           className={`relative flex items-center justify-center w-full h-14 transition-all group ${
             isFilingMenuOpen 
               ? 'text-[#A343EC] bg-white/5' 
-              : 'text-[#E4DEAA] hover:text-[#A343EC] hover:bg-white/5'
+              : 'text-[#E4DEEA] hover:text-[#A343EC] hover:bg-white/5'
           }`}
         >
           <Plus size={26} />
@@ -118,10 +127,18 @@ export function SideNav() {
             <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-[#A343EC] rounded-l-full"></div>
           )}
         </button>
+        
+        <Link 
+          href="/create" 
+          className="relative flex items-center justify-center w-full h-14 text-[#E4DEEA] hover:text-[#80C49B] hover:bg-white/5 transition-all group"
+        >
+          <FolderKanban size={26} />
+          <NavTooltip text="Workspace" />
+        </Link>
 
         <Link 
           href="/publish" 
-          className="relative flex items-center justify-center w-full h-14 text-[#E4DEAA] hover:text-[#F8D45E] hover:bg-white/5 transition-all group"
+          className="relative flex items-center justify-center w-full h-14 text-[#E4DEEA] hover:text-[#F8D45E] hover:bg-white/5 transition-all group"
         >
           <Calendar size={26} />
           <NavTooltip text="Events" />
@@ -132,7 +149,7 @@ export function SideNav() {
       <div className="border-t border-white/10">
         <Link 
           href="/settings" 
-          className="relative flex items-center justify-center w-full h-14 text-[#E4DEAA] hover:text-[#A343EC] hover:bg-white/5 transition-all group"
+          className="relative flex items-center justify-center w-full h-14 text-[#E4DEEA] hover:text-[#A343EC] hover:bg-white/5 transition-all group"
           title="Settings"
         >
           <Settings size={26} />

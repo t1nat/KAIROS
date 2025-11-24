@@ -6,7 +6,7 @@ import { SideNav } from "~/app/_components/sideNav";
 import { CreateNoteForm } from "~/app/_components/createNoteForm";
 import { CreateProjectContainer } from "~/app/_components/createProjectContainer";
 import { NotesList } from "~/app/_components/notesList";
-import { LogIn, ArrowRight, FolderKanban, FileEdit } from "lucide-react";
+import { LogIn, ArrowRight, Sparkles, FolderKanban, FileEdit } from "lucide-react";
 
 export default async function CreatePage({ 
     searchParams 
@@ -67,18 +67,30 @@ export default async function CreatePage({
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                 shouldShowProjectManagement 
                   ? 'bg-[#A343EC]'
-                  : 'bg-[#F8D45E]'
+                  : shouldShowNoteForm
+                  ? 'bg-[#F8D45E]'
+                  : 'bg-[#80C49B]'
               }`}>
                 {shouldShowProjectManagement ? (
                   <FolderKanban className="text-white" size={22} />
-                ) : (
+                ) : shouldShowNoteForm ? (
                   <FileEdit className="text-[#181F25]" size={22} />
+                ) : (
+                  <Sparkles className="text-white" size={22} />
                 )}
               </div>
               <div>
                 <h1 className="text-xl font-bold text-[#FBF9F5] tracking-tight">
+<<<<<<< HEAD
                   {shouldShowProjectManagement ? 'Projects' : shouldShowNoteForm ? 'Notes' : 'Workspace'}
                 </h1>
+=======
+                  {shouldShowProjectManagement ? "Projects" : shouldShowNoteForm ? "Secure Notes" : "Workspace"}
+                </h1>
+                <p className="text-xs text-[#E4DEEA]">
+                  {shouldShowProjectManagement ? "Manage your projects and tasks" : shouldShowNoteForm ? "Create encrypted notes" : "Your creative space"}
+                </p>
+>>>>>>> 465a109bcba5ccfcb81e558bbcfadfbc0aaf4345
               </div>
             </div>
             <UserDisplay />
@@ -107,6 +119,9 @@ export default async function CreatePage({
           ) : (
             <div className="flex items-center justify-center min-h-[60vh]">
               <div className="text-center max-w-md">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-[#A343EC]/20 rounded-2xl mb-6">
+                  <Sparkles className="text-[#A343EC]" size={28} />
+                </div>
                 <h2 className="text-2xl font-bold text-[#FBF9F5] mb-3">
                   Welcome to your workspace
                 </h2>
