@@ -62,7 +62,7 @@ export default async function CreatePage({
       <div className="ml-16">
         {/* Header */}
         <header className="sticky top-0 z-30 bg-[#181F25]/80 backdrop-blur-xl border-b border-white/5">
-          <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
+          <div className="max-w-7xl mx-auto px-8 py-4 flex justify-between items-center">
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                 shouldShowProjectManagement 
@@ -77,11 +77,8 @@ export default async function CreatePage({
               </div>
               <div>
                 <h1 className="text-xl font-bold text-[#FBF9F5] tracking-tight">
-                  {shouldShowProjectManagement ? "Projects" : "Secure Notes"}
+                  {shouldShowProjectManagement ? 'Projects' : shouldShowNoteForm ? 'Notes' : 'Workspace'}
                 </h1>
-                <p className="text-xs text-[#E4DEEA]">
-                  {shouldShowProjectManagement ? "Manage your projects and tasks" : "Create encrypted notes"}
-                </p>
               </div>
             </div>
             <UserDisplay />
@@ -89,10 +86,18 @@ export default async function CreatePage({
         </header>
 
         {/* Main Content */}
-        <main className="max-w-6xl mx-auto px-8 py-6">
+        <main className="max-w-7xl mx-auto px-8 py-6">
           {shouldShowProjectManagement ? (
-            <div className="space-y-4">
-              <CreateProjectContainer userId={session.user.id} />
+            <div className="flex gap-6">
+              {/* Left sidebar - narrower project creation */}
+              <div className="w-80 flex-shrink-0">
+                <CreateProjectContainer userId={session.user.id} />
+              </div>
+              
+              {/* Right content area - for future use */}
+              <div className="flex-1">
+                {/* This space can be used for project details, analytics, etc. */}
+              </div>
             </div>
           ) : shouldShowNoteForm ? (
             <div className="space-y-5">
@@ -105,10 +110,10 @@ export default async function CreatePage({
                 <h2 className="text-2xl font-bold text-[#FBF9F5] mb-3">
                   Welcome to your workspace
                 </h2>
-                <p className="text-[#E4DEEA] mb-6">
+                <p className="text-[#E4DEAA] mb-6">
                   Use the sidebar to get started with projects, notes, or events
                 </p>
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-lg border border-white/10 text-sm text-[#E4DEEA]">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-lg border border-white/10 text-sm text-[#E4DEAA]">
                   <span>Click the</span>
                   <span className="inline-flex items-center justify-center w-6 h-6 bg-gradient-to-br from-[#A343EC] to-[#9448F2] rounded-md text-white font-bold">+</span>
                   <span>icon to create</span>

@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { api } from "~/trpc/react";
-import { Lock, Unlock, Trash2, Eye, EyeOff, Mail, AlertCircle } from "lucide-react";
+import { Lock, Unlock, Trash2, Eye, EyeOff, Mail, AlertCircle, FileText, ChevronDown, ArrowLeft, RefreshCw, FolderLock } from "lucide-react";
 
 // Define the Note type based on your schema
 interface Note {
@@ -19,6 +19,8 @@ interface Note {
 }
 
 export function NotesList() {
+  const [selectedNoteId, setSelectedNoteId] = useState<number | null>(null);
+  const [showLockedNotes, setShowLockedNotes] = useState(false);
   const [showPasswords, setShowPasswords] = useState<Record<number, boolean>>({});
   const [passwordInputs, setPasswordInputs] = useState<Record<number, string>>({});
   const [unlockedNotes, setUnlockedNotes] = useState<Record<number, { unlocked: boolean; content: string }>>({});
@@ -29,6 +31,9 @@ export function NotesList() {
   
   const deleteNote = api.note.delete.useMutation({
     onSuccess: () => {
+      if (selectedNoteId) {
+        setSelectedNoteId(null);
+      }
       void refetch();
     },
   });
@@ -94,206 +99,299 @@ export function NotesList() {
     requestPasswordReset.mutate({ noteId });
   };
 
+  // Separate notes into locked and unlocked
+  const unlockedNotesArray = notes?.filter(n => !n.passwordHash) ?? [];
+  const lockedNotesArray = notes?.filter(n => n.passwordHash) ?? [];
+
+  const selectedNote = notes?.find(n => n.id === selectedNoteId);
+  const isLocked = selectedNote?.passwordHash && !unlockedNotes[selectedNoteId]?.unlocked;
+  const showPassword = selectedNoteId ? showPasswords[selectedNoteId] ?? false : false;
+  const passwordInput = selectedNoteId ? passwordInputs[selectedNoteId] ?? '' : '';
+  const passwordError = selectedNoteId ? passwordErrors[selectedNoteId] : undefined;
+  const unlockedContent = selectedNoteId ? unlockedNotes[selectedNoteId]?.content : undefined;
+
   if (!notes || notes.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="inline-flex items-center justify-center w-16 h-16 bg-[#9448F2]/10 rounded-full mb-4">
           <Lock className="text-[#9448F2]" size={24} />
         </div>
-        <p className="text-[#59677C]">No notes yet. Create your first note above!</p>
+        <p className="text-[#E4DEAA]">No notes yet. Create your first note!</p>
       </div>
     );
   }
 
   return (
-    <>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {notes.map((note: Note, index: number) => {
-          const isLocked = note.passwordHash && !unlockedNotes[note.id]?.unlocked;
-          const showPassword = showPasswords[note.id] ?? false;
-          const passwordInput = passwordInputs[note.id] ?? '';
-          const passwordError = passwordErrors[note.id];
-          const unlockedContent = unlockedNotes[note.id]?.content;
-
-          return (
-            <div
-              key={note.id}
-              className="group bg-white rounded-xl shadow-sm hover:shadow-md transition-all border border-[#DDE3E9] p-5"
-              style={{ 
-                animation: 'fadeInUp 0.3s ease-out forwards',
-                animationDelay: `${index * 50}ms`,
-                opacity: 0
-              }}
+    // Relative container allows the encrypted folder to be positioned absolutely relative to this block
+    <div className="relative h-[calc(100vh-140px)] w-full">
+      
+      {/* --- ENCRYPTED FOLDER (Positioned Top Right, pulled up to align with New Note button) --- */}
+      <div className="absolute -top-[4.5rem] right-0 z-50">
+        {lockedNotesArray.length > 0 && (
+          <div className="relative">
+            <button
+              onClick={() => setShowLockedNotes((s) => !s)}
+              className="flex items-center gap-2 bg-[#1E2024] hover:bg-[#2A2D35] border border-white/10 rounded-lg px-4 py-2.5 text-[#E4DEAA] hover:text-[#A343EC] transition-all text-sm font-medium shadow-sm"
             >
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="text-xs text-[#59677C]">
-                    {new Date(note.createdAt).toLocaleDateString()}
-                  </div>
-                  {note.passwordHash && (
-                    <div className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                      isLocked 
-                        ? 'bg-red-100 text-red-700' 
-                        : 'bg-[#80C49B]/20 text-[#80C49B]'
-                    }`}>
-                      {isLocked ? 'Locked' : 'Unlocked'}
-                    </div>
-                  )}
-                </div>
-                {note.passwordHash && (
-                  <div>
-                    {isLocked ? (
-                      <Lock className="text-red-500" size={16} />
-                    ) : (
-                      <Unlock className="text-[#80C49B]" size={16} />
-                    )}
-                  </div>
-                )}
-              </div>
+              <FolderLock size={16} />
+              <span>Encrypted ({lockedNotesArray.length})</span>
+              <ChevronDown 
+                size={14} 
+                className={`transition-transform duration-200 ${showLockedNotes ? 'rotate-180' : ''}`}
+              />
+            </button>
 
-              {isLocked ? (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-[#222B32] font-semibold text-sm">
-                    <Lock size={16} className="text-red-500" />
-                    <span>Password Protected</span>
-                  </div>
-                  <p className="text-xs text-[#59677C]">
-                    Enter your password to view this note
-                  </p>
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        value={passwordInput}
-                        onChange={(e) => {
-                          setPasswordInputs(prev => ({
-                            ...prev,
-                            [note.id]: e.target.value,
-                          }));
-                          if (passwordError) {
-                            setPasswordErrors(prev => ({
-                              ...prev,
-                              [note.id]: '',
-                            }));
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            handlePasswordSubmit(note.id, passwordInput);
-                          }
-                        }}
-                        placeholder="Enter password"
-                        className={`w-full px-3 py-2 pr-10 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9448F2] ${
-                          passwordError ? 'border-red-500' : 'border-[#DDE3E9]'
-                        }`}
-                        disabled={verifyPassword.isPending}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => togglePasswordVisibility(note.id)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#59677C] hover:text-[#222B32]"
-                      >
-                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                      </button>
-                    </div>
-                    {passwordError && (
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                        <div className="flex items-start gap-2">
-                          <AlertCircle size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
-                          <div className="flex-1">
-                            <p className="text-xs text-red-700 font-medium mb-1">{passwordError}</p>
-                            <button
-                              onClick={() => handleResetRequest(note.id)}
-                              className="text-xs text-red-600 hover:text-red-800 underline font-medium"
-                            >
-                              Forgot password? Reset via email
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    <button
-                      onClick={() => handlePasswordSubmit(note.id, passwordInput)}
-                      disabled={!passwordInput || verifyPassword.isPending}
-                      className="w-full px-4 py-2 text-sm bg-gradient-to-r from-[#9448F2] to-[#80C49B] text-white rounded-lg hover:shadow-lg disabled:opacity-50 transition-all"
-                    >
-                      {verifyPassword.isPending ? 'Unlocking...' : 'Unlock Note'}
-                    </button>
-                  </div>
+            {/* Locked Notes Dropdown List */}
+            {showLockedNotes && (
+              <div className="absolute right-0 top-full mt-2 w-72 bg-[#1E2024] border border-white/10 rounded-xl shadow-2xl p-2 max-h-96 overflow-y-auto animate-in fade-in zoom-in-95 duration-200 ring-1 ring-black/20">
+                <h4 className="px-3 py-2 text-[10px] font-bold text-[#80C49B] uppercase tracking-wider opacity-80">
+                  Password Protected
+                </h4>
+                {lockedNotesArray.map((note) => (
                   <button
+                    key={note.id}
+                    className="w-full text-left p-3 rounded-lg hover:bg-white/5 transition-colors border border-transparent hover:border-white/5 group"
                     onClick={() => {
-                      if (confirm('Delete this encrypted note? This cannot be undone.')) {
-                        deleteNote.mutate({ id: note.id });
-                      }
+                      setSelectedNoteId(note.id);
+                      setShowLockedNotes(false);
                     }}
-                    className="text-red-500 hover:text-red-700 text-xs font-medium flex items-center gap-1 mt-3"
                   >
-                    <Trash2 size={14} />
-                    Delete Note
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className="bg-[#FCFBF9] rounded-lg p-3 mb-4 max-h-40 overflow-y-auto">
-                    <p className="text-[#222B32] text-sm whitespace-pre-wrap break-words">
-                      {unlockedContent ?? note.content}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-3 border-t border-[#DDE3E9]">
-                    <div className="flex items-center gap-2">
-                      <div className="text-xs text-[#59677C]">
-                        {note.shareStatus === 'private' && '🔒 Private'}
-                        {note.shareStatus === 'shared_read' && '👁️ Shared'}
-                        {note.shareStatus === 'shared_write' && '✏️ Editable'}
-                      </div>
-                      {note.passwordHash && (
-                        <div className="text-xs text-[#80C49B] font-medium">
-                          Encrypted ✓
-                        </div>
-                      )}
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-[#E4DEAA]">
+                        {new Date(note.createdAt).toLocaleDateString()}
+                      </span>
+                      <Lock size={12} className="text-red-400 opacity-70 group-hover:opacity-100" />
                     </div>
-                    <button
-                      onClick={() => {
-                        if (confirm('Delete this note? This cannot be undone.')) {
-                          deleteNote.mutate({ id: note.id });
-                        }
-                      }}
-                      className="text-red-500 hover:text-red-700 transition-colors p-1.5 hover:bg-red-50 rounded"
-                      title="Delete note"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          );
-        })}
+                    <p className="text-sm text-[#FBF9F5] line-clamp-1 truncate font-medium">
+                      🔒 Encrypted Note
+                    </p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Password Reset Modal */}
+      {/* --- MAIN GRID LAYOUT --- */}
+      {/* Fixed sidebar width, Flexible content width. Both start at same vertical line. */}
+      <div className="grid grid-cols-[320px_1fr] gap-10 h-full pt-2">
+        
+        {/* LEFT COL: Sidebar List */}
+        <div className="flex flex-col h-full min-h-0">
+          <h3 className="text-[#E4DEAA] text-xs font-bold uppercase tracking-widest mb-4 pl-1">Your Notes</h3>
+          
+          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-3">
+            {unlockedNotesArray.length > 0 ? (
+               unlockedNotesArray.map((note) => (
+                <button
+                  key={note.id}
+                  onClick={() => setSelectedNoteId(note.id)}
+                  className={`w-full text-left p-4 rounded-xl border transition-all group ${
+                    selectedNoteId === note.id 
+                      ? 'bg-[#9448F2]/10 border-[#9448F2]/50 shadow-lg shadow-[#9448F2]/10' 
+                      : 'bg-[#1E2024] border-white/5 hover:bg-[#2A2D35] hover:border-white/10'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-xs font-medium ${selectedNoteId === note.id ? 'text-[#A343EC]' : 'text-[#E4DEAA]'}`}>
+                      {new Date(note.createdAt).toLocaleDateString()}
+                    </span>
+                    <FileText size={14} className={selectedNoteId === note.id ? 'text-[#A343EC]' : 'text-white/20 group-hover:text-white/40'} />
+                  </div>
+                  <p className={`text-sm line-clamp-3 font-medium ${selectedNoteId === note.id ? 'text-white' : 'text-[#FBF9F5]/80'}`}>
+                    {note.content.substring(0, 100)}...
+                  </p>
+                </button>
+              ))
+            ) : (
+              /* Designed "All Locked" State */
+              lockedNotesArray.length > 0 && (
+                <div className="bg-[#1E2024]/50 border border-white/5 rounded-xl p-8 flex flex-col items-center justify-center text-center">
+                   <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-3">
+                     <Lock size={20} className="text-[#E4DEAA]" />
+                   </div>
+                   <p className="text-[#FBF9F5] text-sm font-medium">All notes are locked</p>
+                   <p className="text-xs text-[#E4DEAA]/60 mt-1">Check the encrypted folder</p>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+
+        {/* RIGHT COL: Detail View */}
+        <div className="h-full min-h-0 flex flex-col items-end"> 
+          {/* items-end pushes the content to the right side if width < 100%, 
+              but flex-col + w-full in child makes it fill nicely. */}
+          
+          {selectedNoteId && selectedNote ? (
+            <div className="animate-in fade-in slide-in-from-right-4 duration-300 w-full max-w-[480px] flex flex-col gap-4">
+              
+              {/* === LOCKED STATE UI === */}
+              {isLocked ? (
+                <>
+                  {/* Card 1: Header Info */}
+                  <div className="bg-[#1E2024] border border-white/10 rounded-xl p-4 flex items-center justify-between shadow-lg">
+                     <div className="flex items-center gap-3">
+                        <button onClick={() => setSelectedNoteId(null)} className="text-[#E4DEAA] hover:text-white transition-colors p-1 hover:bg-white/5 rounded">
+                           <ArrowLeft size={18} />
+                        </button>
+                        <div className="flex flex-col">
+                           <div className="flex items-center gap-2">
+                              <h2 className="text-lg font-bold text-white">
+                                {new Date(selectedNote.createdAt).toLocaleDateString()}
+                              </h2>
+                              {selectedNote.passwordHash && (
+                                <div className="bg-[#9448F2]/20 text-[#A343EC] text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide">
+                                  Private
+                                </div>
+                              )}
+                           </div>
+                           <span className="inline-flex mt-1 bg-red-500/20 text-red-300 text-[10px] px-1.5 py-0.5 rounded font-bold w-fit uppercase tracking-wide">
+                             Locked
+                           </span>
+                        </div>
+                     </div>
+                     <button onClick={() => void refetch()} className="text-[#E4DEAA] hover:text-white transition-colors p-1">
+                       <RefreshCw size={16} />
+                     </button>
+                  </div>
+
+                  {/* Card 2: Password Input */}
+                  <div className="bg-[#1E2024] border border-white/10 rounded-xl p-6 shadow-xl">
+                    <div className="flex items-center gap-2 mb-1">
+                       <Lock className="text-red-400" size={20} />
+                       <h3 className="text-lg font-bold text-white">Password Protected</h3>
+                    </div>
+                    <p className="text-[#E4DEAA] text-sm mb-5">Enter your password to view this note</p>
+                    
+                    <div className="space-y-4">
+                      <div className="relative group">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          value={passwordInput}
+                          onChange={(e) => {
+                            setPasswordInputs(prev => ({ ...prev, [selectedNoteId]: e.target.value }));
+                            if (passwordError) setPasswordErrors(prev => ({ ...prev, [selectedNoteId]: '' }));
+                          }}
+                          onKeyDown={(e) => e.key === 'Enter' && handlePasswordSubmit(selectedNoteId, passwordInput)}
+                          placeholder="Enter password"
+                          className="w-full bg-[#2A2D35] border border-white/10 text-white text-sm placeholder-white/30 rounded-lg px-4 py-3 pr-10 outline-none focus:border-[#9448F2] focus:ring-1 focus:ring-[#9448F2] transition-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => togglePasswordVisibility(selectedNoteId)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                        >
+                          {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+
+                      {passwordError && (
+                        <div className="text-red-400 text-xs flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
+                           <AlertCircle size={12} />
+                           {passwordError}
+                           <button onClick={() => handleResetRequest(selectedNoteId)} className="underline ml-1 hover:text-red-300">Reset?</button>
+                        </div>
+                      )}
+
+                      <button
+                        onClick={() => handlePasswordSubmit(selectedNoteId, passwordInput)}
+                        disabled={!passwordInput || verifyPassword.isPending}
+                        className="w-full bg-[#7D52E0] hover:bg-[#6c42d3] text-white text-sm font-bold py-3 rounded-lg transition-all shadow-lg shadow-black/20"
+                      >
+                        {verifyPassword.isPending ? 'Unlocking...' : 'Unlock Note'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Card 3: Delete Button */}
+                  <button
+                    onClick={() => {
+                      if (confirm('Delete this note? This cannot be undone.')) {
+                        deleteNote.mutate({ id: selectedNoteId });
+                      }
+                    }}
+                    className="w-full bg-[#3B1E22] border border-red-500/30 text-red-300 text-sm font-medium py-3 rounded-xl hover:bg-red-950/50 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Trash2 size={16} />
+                    Delete Note
+                  </button>
+                </>
+              ) : (
+                /* === UNLOCKED CONTENT VIEW === */
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6 h-full flex flex-col shadow-2xl">
+                   <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
+                      <div className="flex items-center gap-3">
+                         <div className="w-10 h-10 bg-gradient-to-br from-[#9448F2] to-[#80C49B] rounded-lg flex items-center justify-center text-white shadow-lg">
+                           <FileText size={20} />
+                         </div>
+                         <div>
+                            <h2 className="text-white font-bold text-lg">{new Date(selectedNote.createdAt).toLocaleDateString()}</h2>
+                            <p className="text-xs text-[#E4DEAA]">Unlocked • Read Mode</p>
+                         </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setSelectedNoteId(null)}
+                          className="p-2 hover:bg-white/10 rounded-lg text-[#E4DEAA] hover:text-white transition-colors"
+                          title="Close"
+                        >
+                          <ArrowLeft size={18} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm('Delete this note?')) deleteNote.mutate({ id: selectedNoteId });
+                          }}
+                          className="p-2 hover:bg-red-500/20 rounded-lg text-red-400 hover:text-red-300 transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                   </div>
+                   
+                   <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#0F1115] rounded-lg p-6 shadow-inner border border-white/5">
+                      <p className="text-[#FBF9F5] whitespace-pre-wrap leading-relaxed">
+                        {unlockedContent ?? selectedNote.content}
+                      </p>
+                   </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* === EMPTY STATE (RIGHT SIDE) === */
+            <div className="h-full w-full max-w-[480px] flex flex-col items-center justify-center text-center opacity-30 pointer-events-none">
+               <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-4">
+                  <FileText size={32} className="text-white" />
+               </div>
+               <h3 className="text-lg text-white font-medium">Select a note</h3>
+               <p className="text-[#E4DEAA] text-sm">View details here</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Password Reset Modal (Unchanged) */}
       {showResetModal !== null && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-[#DDE3E9]">
+          <div className="bg-[#0F1115] rounded-2xl shadow-2xl max-w-md w-full p-6 border border-white/10">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-[#9448F2]/10 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-[#9448F2]/20 rounded-lg flex items-center justify-center">
                 <Mail className="text-[#9448F2]" size={20} />
               </div>
-              <h3 className="text-xl font-bold text-[#222B32]">Reset Password</h3>
+              <h3 className="text-xl font-bold text-[#FBF9F5]">Reset Password</h3>
             </div>
             
-            <p className="text-[#59677C] mb-6">
-              We will send you an email with a link to reset the password for this note. 
-              Make sure you have access to your email account.
+            <p className="text-[#E4DEAA] mb-6 text-sm">
+              We will send you an email with a link to reset the password for this note.
             </p>
 
             <div className="bg-[#FFC53D]/10 border border-[#FFC53D]/30 rounded-lg p-4 mb-6">
               <div className="flex items-start gap-2">
                 <AlertCircle size={16} className="text-[#FFC53D] mt-0.5" />
-                <p className="text-xs text-[#59677C]">
-                  The reset link will expire in 1 hour. You will be able to set a new password 
-                  after clicking the link in your email.
+                <p className="text-xs text-[#E4DEAA]">
+                  The reset link will expire in 1 hour.
                 </p>
               </div>
             </div>
@@ -301,7 +399,7 @@ export function NotesList() {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowResetModal(null)}
-                className="flex-1 px-4 py-3 border-2 border-[#DDE3E9] text-[#59677C] font-semibold rounded-lg hover:bg-[#FCFBF9] transition-all"
+                className="flex-1 px-4 py-3 border-2 border-white/10 text-[#E4DEAA] font-semibold rounded-lg hover:bg-white/5 transition-all"
               >
                 Cancel
               </button>
@@ -310,32 +408,12 @@ export function NotesList() {
                 disabled={requestPasswordReset.isPending}
                 className="flex-1 px-4 py-3 bg-gradient-to-r from-[#9448F2] to-[#80C49B] text-white font-semibold rounded-lg hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {requestPasswordReset.isPending ? (
-                  <>Sending...</>
-                ) : (
-                  <>
-                    <Mail size={18} />
-                    Send Reset Email
-                  </>
-                )}
+                {requestPasswordReset.isPending ? 'Sending...' : 'Send Email'}
               </button>
             </div>
           </div>
         </div>
       )}
-      
-      <style jsx>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
-    </>
+    </div>
   );
 }
