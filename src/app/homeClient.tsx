@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useRef, useEffect, type ReactNode } from "react";
+import { useState, useRef, useEffect } from "react";
 import { UserDisplay } from "./_components/userDisplay";
 import { SignInModal } from "./_components/signInModal";
 import { RoleSelectionModal } from "./_components/roleSelectionModal";
@@ -20,7 +20,6 @@ import ScrollReveal from "./_components/ScrollReveal";
 
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import type { Context } from "gsap";
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 gsap.registerPlugin(ScrollTrigger);
@@ -61,7 +60,6 @@ export function HomeClient({ session }: {
 
     const handleRoleSelectionComplete = () => {
         setShowRoleSelection(false);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
         window.location.href = "/create";
     };
 

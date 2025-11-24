@@ -81,16 +81,8 @@ export default async function CreatePage({
               </div>
               <div>
                 <h1 className="text-xl font-bold text-[#FBF9F5] tracking-tight">
-<<<<<<< HEAD
                   {shouldShowProjectManagement ? 'Projects' : shouldShowNoteForm ? 'Notes' : 'Workspace'}
                 </h1>
-=======
-                  {shouldShowProjectManagement ? "Projects" : shouldShowNoteForm ? "Secure Notes" : "Workspace"}
-                </h1>
-                <p className="text-xs text-[#E4DEEA]">
-                  {shouldShowProjectManagement ? "Manage your projects and tasks" : shouldShowNoteForm ? "Create encrypted notes" : "Your creative space"}
-                </p>
->>>>>>> 465a109bcba5ccfcb81e558bbcfadfbc0aaf4345
               </div>
             </div>
             <UserDisplay />

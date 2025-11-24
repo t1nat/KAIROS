@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { api } from "~/trpc/react";
-import { Lock, Unlock, Trash2, Eye, EyeOff, Mail, AlertCircle, FileText, ChevronDown, ArrowLeft, RefreshCw, FolderLock } from "lucide-react";
+import { Lock, Trash2, Eye, EyeOff, Mail, AlertCircle, FileText, ChevronDown, ArrowLeft, RefreshCw, FolderLock } from "lucide-react";
 
 // Define the Note type based on your schema
 interface Note {
@@ -104,8 +104,7 @@ export function NotesList() {
   const lockedNotesArray = notes?.filter(n => n.passwordHash) ?? [];
 
   const selectedNote = notes?.find(n => n.id === selectedNoteId);
-  const isLocked = selectedNote?.passwordHash && !unlockedNotes[selectedNoteId]?.unlocked;
-  const showPassword = selectedNoteId ? showPasswords[selectedNoteId] ?? false : false;
+  const isLocked = selectedNoteId && selectedNote?.passwordHash && !unlockedNotes[selectedNoteId]?.unlocked;  const showPassword = selectedNoteId ? showPasswords[selectedNoteId] ?? false : false;
   const passwordInput = selectedNoteId ? passwordInputs[selectedNoteId] ?? '' : '';
   const passwordError = selectedNoteId ? passwordErrors[selectedNoteId] : undefined;
   const unlockedContent = selectedNoteId ? unlockedNotes[selectedNoteId]?.content : undefined;
