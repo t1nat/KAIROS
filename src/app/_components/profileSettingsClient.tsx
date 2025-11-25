@@ -1,8 +1,7 @@
-// src/app/_components/profileSettingsClient.tsx
 "use client";
 
-import { useState } from "react";
-import { User, Loader2 } from "lucide-react";
+import { useState, useRef } from "react";
+import { User, Loader2, Upload, Camera } from "lucide-react";
 import { api } from "~/trpc/react";
 import Image from "next/image";
 
@@ -12,6 +11,7 @@ interface ProfileSettingsClientProps {
     email?: string | null;
     image?: string | null;
     bio?: string | null;
+    id?: string;
   };
 }
 
@@ -19,7 +19,12 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
   const utils = api.useUtils();
   const [name, setName] = useState(user.name ?? "");
   const [bio, setBio] = useState(user.bio ?? "");
+  const [imagePreview, setImagePreview] = useState(user.image ?? "");
+  const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: userProfile } = api.user.getProfile.useQuery();
 
   const updateProfile = api.settings.updateProfile.useMutation({
     onMutate: async (newData) => {
@@ -43,7 +48,7 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
       setIsSaving(false);
     },
     
-    onError: (error, newData, context) => {
+    onError: (error, _newData, context) => {
       setIsSaving(false);
       
       if (context?.previousUser) {
@@ -58,6 +63,63 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
     },
   });
 
+  // Safe wrapper for the upload mutation
+  // If this errors, check your api/root.ts or api/routers/user.ts to ensure uploadProfileImage exists
+  const uploadImageMutation = api.user.uploadProfileImage?.useMutation({
+    onSuccess: (data: { imageUrl: string }) => {
+      setImagePreview(data.imageUrl);
+      setIsUploading(false);
+      alert("✅ Profile picture updated successfully!");
+    },
+    onError: (error) => {
+      setIsUploading(false);
+      alert("❌ Failed to upload image: " + error.message);
+    },
+  });
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("❌ File size must be less than 5MB");
+      return;
+    }
+
+    // Check file type
+    if (!file.type.startsWith("image/")) {
+      alert("❌ Please upload an image file");
+      return;
+    }
+
+    if (!uploadImageMutation) {
+      alert("❌ Upload feature not available");
+      return;
+    }
+
+    setIsUploading(true);
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // Convert to base64 and upload
+    const base64 = await new Promise<string>((resolve) => {
+      const r = new FileReader();
+      r.onloadend = () => resolve(r.result as string);
+      r.readAsDataURL(file);
+    });
+
+    uploadImageMutation.mutate({ 
+      image: base64,
+      filename: file.name 
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updateProfile.mutate({ 
@@ -65,6 +127,22 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
       bio: bio || undefined 
     });
   };
+
+  // Helper to safely get the date since TypeScript thinks it might not exist
+  const getJoinedDate = () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+    const createdAt = (userProfile as any)?.createdAt as string | Date | undefined;
+    
+    if (!createdAt) return null;
+    
+    return new Date(createdAt).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const joinedDate = getJoinedDate();
 
   return (
     <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8">
@@ -79,6 +157,60 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Profile Picture Upload */}
+        <div>
+          <label className="block text-sm font-semibold text-[#E4DEEA] mb-4">
+            Profile Picture
+          </label>
+          <div className="flex items-center gap-6">
+            <div className="relative group">
+              {imagePreview ? (
+                <Image
+                  src={imagePreview}
+                  alt="Profile"
+                  width={96}
+                  height={96}
+                  className="w-24 h-24 rounded-full object-cover border-2 border-[#A343EC]/30"
+                />
+              ) : (
+                <div className="w-24 h-24 rounded-full bg-[#A343EC]/20 flex items-center justify-center border-2 border-[#A343EC]/30">
+                  <User className="text-[#A343EC]" size={40} />
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <Camera className="text-white" size={24} />
+              </button>
+            </div>
+            <div className="flex-1">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="flex items-center gap-2 px-6 py-2 bg-[#A343EC] text-white font-semibold rounded-lg hover:bg-[#8B35C7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Upload size={18} />
+                {isUploading ? "Uploading..." : "Upload New Picture"}
+              </button>
+              <p className="text-xs text-[#E4DEEA] mt-2">
+                JPG, PNG or GIF. Max size 5MB.
+              </p>
+            </div>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="hidden"
+          />
+        </div>
+
+        {/* Full Name */}
         <div>
           <label className="block text-sm font-semibold text-[#E4DEEA] mb-2">
             Full Name
@@ -92,6 +224,7 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
           />
         </div>
 
+        {/* Email Address */}
         <div>
           <label className="block text-sm font-semibold text-[#E4DEEA] mb-2">
             Email Address
@@ -106,6 +239,7 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
           <p className="text-xs text-[#59677C] mt-1">Email cannot be changed</p>
         </div>
 
+        {/* Bio */}
         <div>
           <label className="block text-sm font-semibold text-[#E4DEEA] mb-2">
             Bio
@@ -114,33 +248,26 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
             rows={4}
             value={bio}
             onChange={(e) => setBio(e.target.value)}
+            maxLength={1000}
             className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-[#FBF9F5] placeholder:text-[#59677C] focus:border-[#A343EC] focus:outline-none focus:ring-2 focus:ring-[#A343EC] transition-all resize-none"
             placeholder="Tell us about yourself..."
           />
+          <p className="text-xs text-[#E4DEEA]/70 mt-1">
+            {bio.length}/1000 characters
+          </p>
         </div>
 
-        <div>
-          <label className="block text-sm font-semibold text-[#E4DEEA] mb-2">
-            Profile Picture
-          </label>
-          <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
-            {user.image ? (
-              <Image 
-                src={user.image} alt="Profile" width={64} height={64} 
-                className="w-16 h-16 rounded-full object-cover ring-2 ring-white/10"
-              />
-            ) : (
-              <div className="w-16 h-16 bg-gradient-to-br from-[#A343EC] to-[#9448F2] rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                {name?.charAt(0).toUpperCase() ?? user.name?.charAt(0).toUpperCase() ?? "U"}
-              </div>
-            )}
-            <div className="flex-1">
-              <p className="text-sm text-[#FBF9F5] font-medium mb-1">Profile picture from Google account</p>
-              <p className="text-xs text-[#E4DEEA]">Managed through your Google account settings</p>
-            </div>
+        {/* Member Since */}
+        {joinedDate && (
+          <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+            <h3 className="font-semibold text-[#FBF9F5] mb-2">Member Since</h3>
+            <p className="text-sm text-[#E4DEEA]">
+              {joinedDate}
+            </p>
           </div>
-        </div>
+        )}
 
+        {/* Save Button */}
         <div className="pt-4 border-t border-white/10">
           <button
             type="submit"

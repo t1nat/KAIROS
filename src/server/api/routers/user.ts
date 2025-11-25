@@ -1,5 +1,4 @@
-// src/server/api/routers/user.ts - FIXED
-
+import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { users } from "~/server/db/schema";
 import { eq } from "drizzle-orm";
@@ -16,6 +15,7 @@ export const userRouter = createTRPCRouter({
           email: true,
           image: true,
           bio: true,
+          createdAt: true, // Added for consistency
         },
       });
 
@@ -46,6 +46,9 @@ export const userRouter = createTRPCRouter({
           usageMode: true,
           name: true,
           email: true,
+          bio: true,       // Added for settings page
+          image: true,     // Added for settings page
+          createdAt: true, // Added for "Member Since"
         },
         with: {
           organizationMemberships: {
@@ -66,6 +69,9 @@ export const userRouter = createTRPCRouter({
         id: user.id,
         name: user.name,
         email: user.email,
+        bio: user.bio,           // Included in return
+        image: user.image,       // Included in return
+        createdAt: user.createdAt, // Included in return
         usageMode: user.usageMode,
         organization: user.organizationMemberships[0]?.organization ?? null,
         role: user.organizationMemberships[0]?.role ?? null,
@@ -91,6 +97,31 @@ export const userRouter = createTRPCRouter({
         needsOnboarding: !user?.usageMode,
         usageMode: user?.usageMode,
         hasOrganization: (user?.organizationMemberships?.length ?? 0) > 0,
+      };
+    }),
+
+  // Upload Profile Image
+  uploadProfileImage: protectedProcedure
+    .input(
+      z.object({
+        image: z.string().min(1), // Base64 string or URL
+        filename: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // TODO: In a production app, upload the buffer to S3/UploadThing here
+      // For now, we are saving the base64 string directly to the DB
+      
+      // Simulating a network delay
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      await ctx.db.update(users)
+        .set({ image: input.image })
+        .where(eq(users.id, ctx.session.user.id));
+
+      return {
+        success: true,
+        imageUrl: input.image,
       };
     }),
 });

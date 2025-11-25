@@ -17,9 +17,13 @@
     "lint:fix": "next lint --fix",
     "preview": "next build && next start",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "postinstall": "npm run db:generate"
   },
   "dependencies": {
+    "next-intl": "^3.22.0",
+    "@vercel/blob": "^0.23.0",
+    "date-fns": "^3.0.0",
     "@auth/drizzle-adapter": "^1.7.2",
     "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "^5.2.2",

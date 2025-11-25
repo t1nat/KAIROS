@@ -114,15 +114,14 @@ export function HomeClient({ session }: {
                 <section className="pt-40 pb-32 px-6 min-h-screen flex items-center">
                     <div className="max-w-7xl mx-auto w-full">
                         <div className="flex flex-col lg:flex-row justify-between items-start gap-12 mb-8">
-                            <div className="flex-1 text-center lg:text-left">
-                                <h2 className="text-7xl md:text-8xl lg:text-9xl font-bold text-[#FBF9F5] mb-6 leading-tight tracking-tight animate-hero-fade-in" style={{ fontFamily: 'Uncial Antiqua, serif' }}>
+                           <div className="flex-1 text-center lg:text-left">
+                                <h2 className="text-7xl md:text-8xl lg:text-9xl font-bold text-[#FBF9F5] mb-2 leading-tight tracking-tight animate-hero-fade-in" style={{ fontFamily: 'Uncial Antiqua, serif' }}>
                                     <span className="inline-block">KAIROS</span>
                                 </h2>
-                                <p className={`text-3xl md:text-4xl text-[#E4DEAA] leading-relaxed max-w-2xl mx-auto lg:mx-0 ${!hasAnimated ? 'animate-smooth-fade-in' : ''}`} style={{ animationDelay: !hasAnimated ? '0.2s' : '0s' }}>
+                                <p className={`text-3xl md:text-4xl text-[#E4DEAA] leading-relaxed max-w-2xl mx-auto lg:mx-0 animate-hero-fade-in-delayed`}>
                                     Discover the perfect moment with Kairos.
                                 </p>
                             </div>
-
                             <div className={`flex flex-col gap-4 w-full lg:w-auto lg:min-w-[400px] justify-center lg:mt-24 ${!hasAnimated ? 'animate-smooth-fade-in' : ''}`} style={{ animationDelay: !hasAnimated ? '0.4s' : '0s' }}>
                                 {session && !showRoleSelection && (
                                     <>
@@ -316,6 +315,8 @@ export function HomeClient({ session }: {
                         filter: blur(0px);
                     }
                 }
+                /* The 'hero-float' keyframes are kept in case they are used elsewhere, 
+                but they are removed from .animate-hero-fade-in */
                 @keyframes hero-float {
                     0% { 
                         transform: translateY(-8px);
@@ -328,7 +329,13 @@ export function HomeClient({ session }: {
                     }
                 }
                 .animate-hero-fade-in {
-                    animation: hero-fade-in 1.5s ease-out forwards, hero-float 4s ease-in-out 1.5s infinite;
+                    /* Only run hero-fade-in once and stop at the end state (forwards) */
+                    animation: hero-fade-in 1.5s ease-out forwards;
+                    opacity: 0;
+                }
+                /* New class for the descriptive text: delayed and using the same keyframes */
+                .animate-hero-fade-in-delayed {
+                    animation: hero-fade-in 1.5s ease-out 0.3s forwards; /* 0.3s delay */
                     opacity: 0;
                 }
                 @keyframes fade-in {

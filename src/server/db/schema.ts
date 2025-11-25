@@ -32,6 +32,10 @@ export const orgRoleEnum = pgEnum("org_role", ["admin", "worker"]);
 export const themeEnum = pgEnum("theme", ["light", "dark", "system"]);
 export const languageEnum = pgEnum("language", ["en", "es", "fr", "de", "it", "pt", "ja", "ko", "zh", "ar"]);
 export const dateFormatEnum = pgEnum("date_format", ["MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"]);
+export const notificationTypeEnum = pgEnum("notification_type", ["event", "task", "project", "system"]);
+export const rsvpStatusEnum = pgEnum("rsvp_status", ["going", "maybe", "not_going"]);
+
+
 
 // --- USER TABLE (UPDATED WITH SETTINGS) ---
 export const users = createTable("user", (d) => ({
@@ -504,6 +508,11 @@ export const events = createTable(
       .varchar({ length: 255 })
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+
+    enableRsvp: d.boolean("enable_rsvp").notNull().default(false),
+    sendReminders: d.boolean("send_reminders").notNull().default(false),
+    reminderSent: d.boolean("reminder_sent").notNull().default(false),
+
     createdAt: d
       .timestamp({ withTimezone: true })
       .$defaultFn(() => new Date())
@@ -514,6 +523,38 @@ export const events = createTable(
     index("event_date_idx").on(t.eventDate),
   ],
 );
+
+// event rsvp 
+export const eventRsvps = createTable(
+  "event_rsvp",
+  (d) => ({
+    id: d.serial("id").primaryKey(),
+    eventId: d
+      .integer("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    userId: d
+      .varchar("user_id", { length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    status: rsvpStatusEnum("status").notNull(),
+    createdAt: d
+      .timestamp({ withTimezone: true })
+      .$defaultFn(() => new Date())
+      .notNull(),
+    updatedAt: d
+      .timestamp({ withTimezone: true })
+      .$defaultFn(() => new Date())
+      .notNull(),
+  }),
+  (t) => [
+    index("rsvp_event_idx").on(t.eventId),
+    index("rsvp_user_idx").on(t.userId),
+    // Unique constraint: one RSVP per user per event
+    index("rsvp_unique").on(t.eventId, t.userId),
+  ]
+);
+
 
 // --- EVENT COMMENTS TABLE ---
 export const eventComments = createTable(
@@ -562,6 +603,32 @@ export const eventLikes = createTable(
     primaryKey({ columns: [t.eventId, t.createdById] }),
     index("like_event_id_idx").on(t.eventId),
   ],
+);
+
+// NOTIFICATIONS TABLE
+export const notifications = createTable(
+  "notifications",
+  (d) => ({
+    id: d.serial("id").primaryKey(),
+    userId: d
+      .varchar("user_id", { length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: notificationTypeEnum("type").notNull(),
+    title: d.varchar("title", { length: 256 }).notNull(),
+    message: d.text("message").notNull(),
+    link: d.varchar("link", { length: 512 }),
+    read: d.boolean("read").notNull().default(false),
+    createdAt: d
+      .timestamp("created_at", { withTimezone: true })
+      .$defaultFn(() => new Date())
+      .notNull(),
+  }),
+  (t) => [
+    index("notification_user_idx").on(t.userId),
+    index("notification_read_idx").on(t.read),
+    index("notification_created_idx").on(t.createdAt),
+  ]
 );
 
 // ===================
@@ -649,6 +716,11 @@ export const taskActivityLogRelations = relations(taskActivityLog, ({ one }) => 
   user: one(users, { fields: [taskActivityLog.userId], references: [users.id] }),
 }));
 
+// Notifications Relations
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, { fields: [notifications.userId], references: [users.id] }),
+}));
+
 // Users Relations - MOST IMPORTANT ONE!
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
@@ -669,6 +741,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   documents: many(documents),
   documentCollaborations: many(documentCollaborators),
   documentVersions: many(documentVersions),
+  notifications: many(notifications),
 }));
 
 // Accounts Relations
@@ -686,6 +759,14 @@ export const eventsRelations = relations(events, ({ one, many }) => ({
   author: one(users, { fields: [events.createdById], references: [users.id] }),
   comments: many(eventComments),
   likes: many(eventLikes),
+  rsvps: many(eventRsvps), // ADD THIS
+
+}));
+
+// event rsvp Relations
+export const eventRsvpsRelations = relations(eventRsvps, ({ one }) => ({
+  event: one(events, { fields: [eventRsvps.eventId], references: [events.id] }),
+  user: one(users, { fields: [eventRsvps.userId], references: [users.id] }),
 }));
 
 // Event Comments Relations
@@ -726,3 +807,7 @@ export type DocumentCollaborator = InferSelectModel<typeof documentCollaborators
 export type NewDocumentCollaborator = InferInsertModel<typeof documentCollaborators>;
 export type DocumentVersion = InferSelectModel<typeof documentVersions>;
 export type NewDocumentVersion = InferInsertModel<typeof documentVersions>;
+export type Notification = InferSelectModel<typeof notifications>;
+export type NewNotification = InferInsertModel<typeof notifications>;
+export type EventRsvp = InferSelectModel<typeof eventRsvps>;
+export type NewEventRsvp = InferInsertModel<typeof eventRsvps>;

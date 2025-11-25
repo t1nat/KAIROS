@@ -4,6 +4,7 @@ import { CreateEventForm } from "../_components/createEventForm";
 import { SideNav } from "../_components/sideNav";
 import { UserDisplay } from "../_components/userDisplay";
 import { Calendar } from "lucide-react";
+import { EventReminderService } from "../_components/eventReminderService";
 
 export default function PublishPage() {
     return (
@@ -33,6 +34,7 @@ export default function PublishPage() {
                 <main className="max-w-4xl mx-auto p-8">
                     {/* Form to create new events */}
                     <CreateEventForm />
+                     <EventReminderService />
                     
                     {/* Feed to view all published events */}
                     <EventFeed />

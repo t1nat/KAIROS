@@ -8,6 +8,20 @@
       "when": 1763875629626,
       "tag": "0000_public_nightcrawler",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1764098296425,
+      "tag": "0001_swift_sharon_ventura",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1764101907716,
+      "tag": "0002_spotty_hairball",
+      "breakpoints": true
     }
   ]
 }

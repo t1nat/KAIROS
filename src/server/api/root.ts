@@ -8,6 +8,7 @@ import { taskRouter } from "~/server/api/routers/task";
 import { organizationRouter } from "~/server/api/routers/organization"; // NEW
 import { userRouter } from "~/server/api/routers/user"; // NEW
 import { documentRouter } from "~/server/api/routers/document"; // NEW
+import { notificationRouter } from "~/server/api/routers/notification"; // NEW
 import { settingsRouter } from "~/server/api/routers/settings";
 import { authRouter } from "~/server/api/routers/auth";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
@@ -28,6 +29,7 @@ export const appRouter = createTRPCRouter({
   user: userRouter, // ADD THIS
   document: documentRouter, 
   auth: authRouter,
+  notification: notificationRouter,
 });
 
 // export type definition of API

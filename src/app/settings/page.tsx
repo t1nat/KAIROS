@@ -11,7 +11,6 @@ import {
   Shield, 
   Globe, 
   Key,
-  Mail,
   Settings as SettingsIcon
 } from "lucide-react";
 
@@ -35,16 +34,13 @@ export default async function SettingsPage({
   const activeSection = typeof sectionParam === 'string' ? sectionParam : "profile";
 
   return (
-    <div className="min-h-screen bg-[#181F25]">
+    <div className="min-h-screen bg-[#181F25]" style={{ fontFamily: 'var(--font-faustina)' }}>
       <SideNav />
 
-      <div className="ml-16">
+      <div className="ml-16 min-h-screen flex flex-col">
         <header className="sticky top-0 z-30 bg-[#181F25]/80 backdrop-blur-xl border-b border-white/5">
           <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#A343EC] rounded-xl flex items-center justify-center">
-                <SettingsIcon className="text-white" size={22} />
-              </div>
               <div>
                 <h1 className="text-3xl font-bold text-[#FBF9F5]">Settings</h1>
                 <p className="text-sm text-[#E4DEEA]">
@@ -56,15 +52,16 @@ export default async function SettingsPage({
           </div>
         </header>
 
-        <main className="max-w-7xl mx-auto px-6 py-8">
-          <div className="flex gap-6">
+        <main className="flex-1 max-w-7xl mx-auto px-6 py-8 w-full">
+          <div className="flex gap-6 h-full">
             <aside className="w-64 flex-shrink-0">
-              <SettingsNav activeSection={activeSection} />
+              <div className="sticky top-24">
+                <SettingsNav activeSection={activeSection} />
+              </div>
             </aside>
 
             <div className="flex-1">
               {activeSection === "profile" && <ProfileSettingsClient user={session.user} />}
-              {activeSection === "account" && <AccountSettings user={session.user} />}
               {activeSection === "notifications" && <NotificationSettings />}
               {activeSection === "security" && <SecuritySettings />}
               {activeSection === "language" && <LanguageSettings />}
@@ -77,77 +74,12 @@ export default async function SettingsPage({
   );
 }
 
-interface User {
-  name?: string | null;
-  email?: string | null;
-  image?: string | null;
-  id?: string;
-  createdAt?: Date | string | null;
-}
-
-interface UserProps {
-  user: User;
-}
-
-function AccountSettings({ user }: UserProps) {
-  return (
-    <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-[#80C49B]/20 rounded-lg flex items-center justify-center">
-          <Mail className="text-[#80C49B]" size={20} />
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold text-[#FBF9F5]">Account Settings</h2>
-          <p className="text-sm text-[#E4DEEA]">Manage your account details</p>
-        </div>
-      </div>
-
-      <div className="space-y-6">
-        <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-          <h3 className="font-semibold text-[#FBF9F5] mb-2">Account Status</h3>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-[#80C49B] rounded-full animate-pulse"></div>
-            <span className="text-sm text-[#E4DEEA]">Active</span>
-          </div>
-        </div>
-
-        <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-          <h3 className="font-semibold text-[#FBF9F5] mb-2">Member Since</h3>
-          <p className="text-sm text-[#E4DEEA]">
-            {user.createdAt 
-              ? new Date(user.createdAt).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })
-              : 'N/A'
-            }
-          </p>
-        </div>
-
-        <div className="p-4 bg-red-500/10 rounded-xl border-2 border-red-500/30">
-          <h3 className="font-semibold text-red-400 mb-2">Danger Zone</h3>
-          <p className="text-sm text-[#E4DEEA] mb-4">
-            Once you delete your account, there is no going back. Please be certain.
-          </p>
-          <button
-            type="button"
-            className="px-6 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
-          >
-            Delete Account
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function NotificationSettings() {
   return (
     <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-[#F8D45E]/20 rounded-lg flex items-center justify-center">
-          <Bell className="text-[#F8D45E]" size={20} />
+        <div className="w-10 h-10 bg-[#A343EC]/20 rounded-lg flex items-center justify-center">
+          <Bell className="text-[#A343EC]" size={20} />
         </div>
         <div>
           <h2 className="text-2xl font-bold text-[#FBF9F5]">Notification Settings</h2>
@@ -168,14 +100,28 @@ function NotificationSettings() {
         />
         <NotificationToggle
           title="Event Reminders"
-          description="Receive reminders about upcoming events"
-          defaultChecked={false}
+          description="Receive in-app reminders about upcoming events"
+          defaultChecked={true}
+        />
+        <NotificationToggle
+          title="Task Due Reminders"
+          description="Get notified when tasks are due"
+          defaultChecked={true}
         />
         <NotificationToggle
           title="Marketing Emails"
           description="Receive news and promotional content"
           defaultChecked={false}
         />
+      </div>
+
+      <div className="mt-6 pt-6 border-t border-white/10">
+        <button
+          type="button"
+          className="px-8 py-3 bg-[#A343EC] text-white font-semibold rounded-xl hover:bg-[#8B35C7] transition-all"
+        >
+          Save Notification Settings
+        </button>
       </div>
     </div>
   );
@@ -197,7 +143,7 @@ function SecuritySettings() {
       <div className="space-y-6">
         <div>
           <h3 className="font-semibold text-[#FBF9F5] mb-4 flex items-center gap-2">
-            <Key size={18} className="text-[#E4DEEA]" />
+            <Key size={18} className="text-[#A343EC]" />
             Password
           </h3>
           <button
@@ -215,7 +161,7 @@ function SecuritySettings() {
           </p>
           <button
             type="button"
-            className="px-6 py-2 bg-gradient-to-r from-[#A343EC] to-[#9448F2] text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-[#A343EC]/20 transition-all"
+            className="px-6 py-2 bg-[#A343EC] text-white font-semibold rounded-lg hover:bg-[#8B35C7] transition-all"
           >
             Enable 2FA
           </button>
@@ -233,6 +179,21 @@ function SecuritySettings() {
             View Sessions
           </button>
         </div>
+
+        <div className="pt-4 border-t border-white/10">
+          <div className="p-4 bg-red-500/10 rounded-xl border-2 border-red-500/30">
+            <h3 className="font-semibold text-red-400 mb-2">Danger Zone</h3>
+            <p className="text-sm text-[#E4DEEA] mb-4">
+              Once you delete your account, there is no going back. Please be certain.
+            </p>
+            <button
+              type="button"
+              className="px-6 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Delete Account
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -242,8 +203,8 @@ function LanguageSettings() {
   return (
     <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-[#80C49B]/20 rounded-lg flex items-center justify-center">
-          <Globe className="text-[#80C49B]" size={20} />
+        <div className="w-10 h-10 bg-[#A343EC]/20 rounded-lg flex items-center justify-center">
+          <Globe className="text-[#A343EC]" size={20} />
         </div>
         <div>
           <h2 className="text-2xl font-bold text-[#FBF9F5]">Language & Region</h2>
@@ -258,16 +219,41 @@ function LanguageSettings() {
           </label>
           <select className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-[#FBF9F5] focus:border-[#A343EC] focus:outline-none focus:ring-2 focus:ring-[#A343EC] transition-all">
             <option value="en">English</option>
+            <option value="bg">Български (Bulgarian)</option>
             <option value="es">Español</option>
             <option value="fr">Français</option>
             <option value="de">Deutsch</option>
           </select>
         </div>
 
+        <div>
+          <label className="block text-sm font-semibold text-[#E4DEEA] mb-2">
+            Timezone
+          </label>
+          <select className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-[#FBF9F5] focus:border-[#A343EC] focus:outline-none focus:ring-2 focus:ring-[#A343EC] transition-all">
+            <option value="UTC">UTC</option>
+            <option value="Europe/Sofia">Europe/Sofia</option>
+            <option value="America/New_York">America/New York</option>
+            <option value="Europe/London">Europe/London</option>
+            <option value="Asia/Tokyo">Asia/Tokyo</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-[#E4DEEA] mb-2">
+            Date Format
+          </label>
+          <select className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-[#FBF9F5] focus:border-[#A343EC] focus:outline-none focus:ring-2 focus:ring-[#A343EC] transition-all">
+            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+            <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+          </select>
+        </div>
+
         <div className="pt-4 border-t border-white/10">
           <button
             type="submit"
-            className="px-8 py-3 bg-gradient-to-r from-[#A343EC] to-[#9448F2] text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-[#A343EC]/20 transition-all"
+            className="px-8 py-3 bg-[#A343EC] text-white font-semibold rounded-xl hover:bg-[#8B35C7] transition-all"
           >
             Save Preferences
           </button>
