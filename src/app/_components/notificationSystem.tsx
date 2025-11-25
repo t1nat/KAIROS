@@ -35,15 +35,24 @@ export function NotificationSystem() {
   // Update local state when stored notifications change
   useEffect(() => {
     if (storedNotifications) {
-      const formattedNotifications: Notification[] = storedNotifications.map((notif) => ({
-        id: notif.id.toString(),
-        type: notif.type as "event" | "task" | "project" | "system",
-        title: notif.title,
-        message: notif.message,
-        createdAt: new Date(notif.createdAt),
-        read: notif.read,
-        link: notif.link ?? undefined,
-      }));
+      const formattedNotifications: Notification[] = storedNotifications.map((notif) => {
+        const notifType = notif.type;
+        // Validate the type at runtime
+        const validType: "event" | "task" | "project" | "system" = 
+          (notifType === "event" || notifType === "task" || notifType === "project" || notifType === "system") 
+            ? notifType 
+            : "system";
+        
+        return {
+          id: notif.id.toString(),
+          type: validType,
+          title: notif.title,
+          message: notif.message,
+          createdAt: new Date(notif.createdAt),
+          read: notif.read,
+          link: notif.link ?? undefined,
+        };
+      });
       setNotifications(formattedNotifications);
     }
   }, [storedNotifications]);

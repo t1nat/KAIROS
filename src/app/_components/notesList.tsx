@@ -5,19 +5,6 @@ import { useState } from "react";
 import { api } from "~/trpc/react";
 import { Lock, Trash2, Eye, EyeOff, Mail, AlertCircle, FileText, ChevronDown, ArrowLeft, RefreshCw, FolderLock } from "lucide-react";
 
-// Define the Note type based on your schema
-interface Note {
-  id: number;
-  content: string;
-  createdAt: Date;
-  passwordHash: string | null;
-  passwordSalt: string | null;
-  resetToken: string | null;
-  resetTokenExpiry: Date | null;
-  shareStatus: "private" | "shared_read" | "shared_write";
-  createdById: string;
-}
-
 export function NotesList() {
   const [selectedNoteId, setSelectedNoteId] = useState<number | null>(null);
   const [showLockedNotes, setShowLockedNotes] = useState(false);

@@ -20,7 +20,6 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 
 interface Author {
-  id: string;
   name: string | null;
   image: string | null;
 }
@@ -191,7 +190,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
             {event.author.image ? (
               <Image
                 src={event.author.image}
-                alt={event.author.name || "User"}
+                alt={event.author.name ?? "User"}
                 width={48}
                 height={48}
                 className="w-full h-full object-cover"
@@ -292,7 +291,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                 }`}
               >
                 <XCircle size={16} />
-                <span className="text-sm font-medium">Can't Go ({event.rsvpCounts.notGoing})</span>
+                <span className="text-sm font-medium">Can&apos;t Go ({event.rsvpCounts.notGoing})</span>
               </button>
             </div>
           </div>
@@ -333,7 +332,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                   {comment.author.image ? (
                     <Image
                       src={comment.author.image}
-                      alt={comment.author.name || "User"}
+                      alt={comment.author.name ?? "User"}
                       width={32}
                       height={32}
                       className="w-full h-full object-cover"
@@ -379,7 +378,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                 {session.user.image ? (
                   <Image
                     src={session.user.image}
-                    alt={session.user.name || "You"}
+                    alt={session.user.name ?? "You"}
                     width={32}
                     height={32}
                     className="w-full h-full object-cover"

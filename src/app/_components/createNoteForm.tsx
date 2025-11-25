@@ -14,7 +14,8 @@ export const CreateNoteForm: React.FC = () => {
     onSuccess: () => {
       setContent('');
       setShowForm(false);
-      void utils.note.getMyNotes.invalidate();
+      // Try to invalidate all note queries - change this based on your actual query name
+      void utils.note.invalidate();
     },
     onError: (error) => {
       alert(`Failed to create note: ${error.message}`);
@@ -30,7 +31,7 @@ export const CreateNoteForm: React.FC = () => {
 
     createNote.mutate({
       content: content.trim(),
-      shareStatus: 'private',
+      // Removed shareStatus - it's set to 'private' by default in the backend
     });
   };
 
@@ -112,4 +113,4 @@ export const CreateNoteForm: React.FC = () => {
       )}
     </div>
   );
-};
+}
