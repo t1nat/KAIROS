@@ -1,4 +1,4 @@
-// src/server/api/routers/task.ts - UPDATED WITH ORG PERMISSIONS
+// src/server/api/routers/task.ts - UPDATED WITH COMPLETION AND EDIT TRACKING
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { tasks, projects, projectCollaborators, taskActivityLog, organizationMembers } from "~/server/db/schema";
@@ -102,7 +102,7 @@ export const taskRouter = createTRPCRouter({
       return task;
     }),
 
-  // Update task status
+  // Update task status - NOW TRACKS WHO COMPLETED IT
   updateStatus: protectedProcedure
     .input(
       z.object({
@@ -134,7 +134,7 @@ export const taskRouter = createTRPCRouter({
       const isOwner = project.createdById === ctx.session.user.id;
       const isAssignee = task.assignedToId === ctx.session.user.id;
       
-      // Check if user is in the same organization (ORGANIZATION MEMBERS CAN UPDATE)
+      // Check if user is in the same organization
       let isOrgMember = false;
       if (project.organizationId) {
         const [membership] = await ctx.db
@@ -150,7 +150,6 @@ export const taskRouter = createTRPCRouter({
       }
 
       if (!isOwner && !isAssignee && !isOrgMember) {
-        // Check if user is a collaborator with write permission
         const [collaboration] = await ctx.db
           .select()
           .from(projectCollaborators)
@@ -173,18 +172,25 @@ export const taskRouter = createTRPCRouter({
         status: "pending" | "in_progress" | "completed" | "blocked";
         updatedAt: Date;
         completedAt?: Date | null;
+        completedById?: string | null;
+        lastEditedById: string;
+        lastEditedAt: Date;
       } = {
         status: input.status,
         updatedAt: new Date(),
+        lastEditedById: ctx.session.user.id,
+        lastEditedAt: new Date(),
       };
 
-      // If marking as completed, set completedAt timestamp
+      // If marking as completed, set completedAt timestamp and track who completed it
       if (input.status === "completed" && oldStatus !== "completed") {
         updateData.completedAt = new Date();
+        updateData.completedById = ctx.session.user.id;
       }
-      // If unmarking as completed, clear completedAt
+      // If unmarking as completed, clear completedAt and completedById
       else if (input.status !== "completed" && oldStatus === "completed") {
         updateData.completedAt = null;
+        updateData.completedById = null;
       }
 
       await ctx.db
@@ -204,7 +210,7 @@ export const taskRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // Update task details
+  // Update task details - NOW TRACKS WHO LAST EDITED
   update: protectedProcedure
     .input(
       z.object({
@@ -273,6 +279,8 @@ export const taskRouter = createTRPCRouter({
 
       const updateData: {
         updatedAt: Date;
+        lastEditedById: string;
+        lastEditedAt: Date;
         title?: string;
         description?: string;
         assignedToId?: string | null;
@@ -280,6 +288,8 @@ export const taskRouter = createTRPCRouter({
         dueDate?: Date | null;
       } = {
         updatedAt: new Date(),
+        lastEditedById: ctx.session.user.id,
+        lastEditedAt: new Date(),
       };
 
       if (input.title !== undefined) updateData.title = input.title;

@@ -1,9 +1,9 @@
-// src/server/api/routers/project.ts - FIXED NOTIFICATION LINK
+// src/server/api/routers/project.ts - FIXED TypeScript Issues
 
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { projects, tasks, projectCollaborators, users, organizationMembers, notifications } from "~/server/db/schema";
-import { eq, and, desc, isNull } from "drizzle-orm";
+import { eq, and, desc, isNull, sql } from "drizzle-orm";
 
 export const projectRouter = createTRPCRouter({
   // Create a new project
@@ -95,7 +95,7 @@ export const projectRouter = createTRPCRouter({
     }
   }),
 
-  // Get project by ID with all details
+  // Get project by ID with all details INCLUDING task creator, completer, and last editor
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
@@ -170,7 +170,8 @@ export const projectRouter = createTRPCRouter({
         .leftJoin(users, eq(projectCollaborators.collaboratorId, users.id))
         .where(eq(projectCollaborators.projectId, input.id));
 
-      // Get all tasks for this project
+      // Get all tasks with user information using SQL aliases
+      // This is the fix - use sql`` to create proper aliases
       const projectTasks = await ctx.db
         .select({
           id: tasks.id,
@@ -182,18 +183,75 @@ export const projectRouter = createTRPCRouter({
           completedAt: tasks.completedAt,
           orderIndex: tasks.orderIndex,
           createdAt: tasks.createdAt,
-          assignedTo: {
-            id: users.id,
-            name: users.name,
-            image: users.image,
-          },
+          lastEditedAt: tasks.lastEditedAt,
+          // Assigned user
+          assignedToId: tasks.assignedToId,
+          assignedToName: sql<string | null>`assigned_user.name`.as('assignedToName'),
+          assignedToImage: sql<string | null>`assigned_user.image`.as('assignedToImage'),
+          // Creator user
+          createdById: tasks.createdById,
+          createdByName: sql<string | null>`creator_user.name`.as('createdByName'),
+          createdByImage: sql<string | null>`creator_user.image`.as('createdByImage'),
+          // Completer user
+          completedById: tasks.completedById,
+          completedByName: sql<string | null>`completer_user.name`.as('completedByName'),
+          completedByImage: sql<string | null>`completer_user.image`.as('completedByImage'),
+          // Editor user
+          lastEditedById: tasks.lastEditedById,
+          lastEditedByName: sql<string | null>`editor_user.name`.as('lastEditedByName'),
+          lastEditedByImage: sql<string | null>`editor_user.image`.as('lastEditedByImage'),
         })
         .from(tasks)
-        .leftJoin(users, eq(tasks.assignedToId, users.id))
+        .leftJoin(sql`app_user AS assigned_user`, sql`${tasks.assignedToId} = assigned_user.id`)
+        .leftJoin(sql`app_user AS creator_user`, sql`${tasks.createdById} = creator_user.id`)
+        .leftJoin(sql`app_user AS completer_user`, sql`${tasks.completedById} = completer_user.id`)
+        .leftJoin(sql`app_user AS editor_user`, sql`${tasks.lastEditedById} = editor_user.id`)
         .where(eq(tasks.projectId, input.id))
         .orderBy(tasks.orderIndex, tasks.createdAt);
 
-      console.log("📋 Project tasks:", projectTasks.length);
+      // Transform the flat result into nested objects
+      const formattedTasks = projectTasks.map((task) => ({
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        status: task.status,
+        priority: task.priority,
+        dueDate: task.dueDate,
+        completedAt: task.completedAt,
+        orderIndex: task.orderIndex,
+        createdAt: task.createdAt,
+        lastEditedAt: task.lastEditedAt,
+        assignedTo: task.assignedToId
+          ? {
+              id: task.assignedToId,
+              name: task.assignedToName,
+              image: task.assignedToImage,
+            }
+          : null,
+        createdBy: task.createdById
+          ? {
+              id: task.createdById,
+              name: task.createdByName,
+              image: task.createdByImage,
+            }
+          : null,
+        completedBy: task.completedById
+          ? {
+              id: task.completedById,
+              name: task.completedByName,
+              image: task.completedByImage,
+            }
+          : null,
+        lastEditedBy: task.lastEditedById
+          ? {
+              id: task.lastEditedById,
+              name: task.lastEditedByName,
+              image: task.lastEditedByImage,
+            }
+          : null,
+      }));
+
+      console.log("📋 Project tasks:", formattedTasks.length);
 
       // Determine if user has write access:
       // - Owner always has write access
@@ -204,12 +262,12 @@ export const projectRouter = createTRPCRouter({
       return {
         ...project,
         collaborators,
-        tasks: projectTasks,
+        tasks: formattedTasks,
         userHasWriteAccess: hasWriteAccess,
       };
     }),
 
-  // Add a collaborator to a project - FIXED NOTIFICATION LINK
+  // Add a collaborator to a project
   addCollaborator: protectedProcedure
     .input(
       z.object({
@@ -281,7 +339,7 @@ export const projectRouter = createTRPCRouter({
           permission: input.permission,
         });
 
-        // 🎯 CREATE IN-APP NOTIFICATION with correct link to the project
+        // CREATE IN-APP NOTIFICATION with correct link to the project
         const ownerName = owner?.name ?? owner?.email ?? "Someone";
         const permissionText = input.permission === "write" ? "edit" : "view";
         
@@ -315,7 +373,7 @@ export const projectRouter = createTRPCRouter({
         console.error("❌ Error adding collaborator:", error);
         
         if (error instanceof Error) {
-          throw error;
+          throw new Error(error.message);
         }
         throw new Error("Failed to add collaborator. Please try again.");
       }

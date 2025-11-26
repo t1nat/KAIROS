@@ -1,4 +1,4 @@
-// src/app/create/page.tsx
+// src/app/create/page.tsx - UPDATED FOR FULL-HEIGHT TIMELINE
 import Link from "next/link";
 import { auth } from "~/server/auth";
 import { UserDisplay } from "~/app/_components/userDisplay";
@@ -60,7 +60,7 @@ export default async function CreatePage({
       <SideNav />
 
       {/* Main content area */}
-      <div className="ml-16">
+      <div className="ml-16 h-screen flex flex-col">
         {/* Header */}
         <header className="sticky top-0 z-30 bg-[#181F25]/80 backdrop-blur-xl border-b border-white/5">
           <div className="max-w-7xl mx-auto px-8 py-4 flex justify-between items-center">
@@ -95,10 +95,10 @@ export default async function CreatePage({
           </div>
         </header>
 
-        {/* Main Content */}
-        <main className="max-w-7xl mx-auto px-8 py-6">
+        {/* Main Content - Full Height with Scrolling */}
+        <main className="flex-1 max-w-7xl w-full mx-auto px-8 py-6 overflow-auto">
           {shouldShowProjectManagement ? (
-            <div className="relative w-full">
+            <div className="relative w-full h-full">
               <CreateProjectContainer userId={session.user.id} />
             </div>
           ) : shouldShowNoteForm ?(

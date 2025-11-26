@@ -51,6 +51,11 @@ interface Task {
   } | null;
   completedAt: Date | null;
   orderIndex: number;
+  createdBy?: {
+    id: string;
+    name: string | null;
+    image: string | null;
+  } | null;
 }
 
 export function CreateProjectContainer({ userId }: CreateProjectContainerProps) {
@@ -78,7 +83,6 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
     }
   );
 
-  // Update selectedProjectId when URL changes
   useEffect(() => {
     if (projectIdFromUrl) {
       const id = parseInt(projectIdFromUrl);
@@ -201,79 +205,110 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
     : [];
 
   return (
-    <div className="flex gap-6 relative w-full">
-
-      {/* LEFT SIDEBAR */}
+    <div className="flex gap-6 relative w-full h-full">
+      {/* LEFT SIDEBAR - Controls */}
       <div className="w-96 flex-shrink-0 space-y-4">
-
         {!selectedProjectId && (
           <div className="animate-in slide-in-from-top-2 duration-200">
             <CreateProjectForm
-                onSubmit={handleCreateProject}
-                currentUser={{ id: userId, name: null, email: "", image: null }}
-                isExpanded={true}
-                onToggle={() => console.warn("CreateProjectForm onToggle not implemented")}
-              />
+              onSubmit={handleCreateProject}
+              currentUser={{ id: userId, name: null, email: "", image: null }}
+              isExpanded={true}
+              onToggle={() => console.warn("CreateProjectForm onToggle not implemented")}
+            />
           </div>
         )}
 
         {selectedProjectId && projectDetails && (
           <div className="space-y-3 animate-in fade-in slide-in-from-left-2 duration-300">
-            <div className="bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 p-4">
-              <div className="flex items-start justify-between mb-3">
+            {/* Project Header Card */}
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-5">
+              <div className="flex items-start justify-between mb-4">
                 <button
                   onClick={() => setSelectedProjectId(null)}
-                  className="p-1.5 hover:bg-white/5 rounded-lg transition-colors group"
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors group"
                 >
-                  <ArrowLeft size={18} className="text-[#E4DEAA] group-hover:text-[#A343EC]" />
+                  <ArrowLeft size={20} className="text-[#E4DEAA] group-hover:text-[#A343EC]" />
                 </button>
 
                 <button
                   onClick={() => void refetchProjectDetails()}
-                  className="p-1.5 text-[#E4DEAA] hover:text-[#A343EC] hover:bg-white/5 rounded-lg transition-all"
+                  className="p-2 text-[#E4DEAA] hover:text-[#A343EC] hover:bg-white/10 rounded-lg transition-all"
                 >
-                  <RefreshCw size={16} />
+                  <RefreshCw size={18} />
                 </button>
               </div>
 
-              <h2 className="text-lg font-bold text-[#FBF9F5] mb-1">{projectDetails.title}</h2>
-              {projectDetails.description && (
-                <p className="text-xs text-[#E4DEAA]">{projectDetails.description}</p>
-              )}
+              <div className="flex items-start gap-3 mb-3">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#A343EC] to-[#9448F2] flex items-center justify-center flex-shrink-0 shadow-lg shadow-[#A343EC]/30">
+                  <Folder className="text-white" size={24} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-xl font-bold text-[#FBF9F5] mb-1 leading-tight">{projectDetails.title}</h2>
+                  {projectDetails.description && (
+                    <p className="text-sm text-[#E4DEAA]/80 leading-relaxed">{projectDetails.description}</p>
+                  )}
+                </div>
+              </div>
 
               {!isOwner && (
-                <span className={`inline-block mt-2 text-xs px-2 py-1 rounded ${
-                  hasWriteAccess 
-                    ? "text-[#80C49B] bg-[#80C49B]/10" 
-                    : "text-[#E4DEAA] bg-white/5"
-                }`}>
-                  {hasWriteAccess ? "Can Edit" : "Can View"}
-                </span>
+                <div className="flex items-center gap-2 pt-3 border-t border-white/10">
+                  <span className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium ${
+                    hasWriteAccess 
+                      ? "text-[#80C49B] bg-[#80C49B]/10 border border-[#80C49B]/30" 
+                      : "text-[#E4DEAA] bg-white/5 border border-white/10"
+                  }`}>
+                    {hasWriteAccess ? (
+                      <>
+                        <CheckCircle2 size={12} />
+                        Can Edit
+                      </>
+                    ) : (
+                      "View Only"
+                    )}
+                  </span>
+                </div>
               )}
             </div>
 
-            {projectDetails.tasks?.length > 0 && (
-              <div className="flex items-center gap-2 text-xs text-[#E4DEAA] bg-white/5 px-3 py-2 rounded-lg border border-white/10">
-                <CheckCircle2 size={14} className="text-[#80C49B]" />
-                <span>
-                  {projectDetails.tasks.filter((t) => t.status === "completed").length} /{" "}
-                  {projectDetails.tasks.length} completed
-                </span>
+            {/* Stats Card */}
+            {projectDetails.tasks && projectDetails.tasks.length > 0 && (
+              <div className="bg-gradient-to-br from-[#A343EC]/10 to-[#9448F2]/5 rounded-xl border border-[#A343EC]/20 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-[#A343EC]/20 flex items-center justify-center">
+                      <CheckCircle2 size={20} className="text-[#A343EC]" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-[#A343EC]">
+                        {projectDetails.tasks.filter((t) => t.status === "completed").length}
+                      </p>
+                      <p className="text-xs text-[#E4DEAA]">Completed</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-[#FBF9F5]">
+                      {projectDetails.tasks.length}
+                    </p>
+                    <p className="text-xs text-[#E4DEAA]">Total Tasks</p>
+                  </div>
+                </div>
               </div>
             )}
 
+            {/* Add Task Accordion */}
             {hasWriteAccess && (
-              <div className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
+              <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
                 <button
                   onClick={() => setShowTaskForm(!showTaskForm)}
-                  className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-white/5 transition-colors"
+                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/10 transition-colors"
                 >
-                  <span className="text-xs font-semibold text-[#FBF9F5]">Add Task</span>
-                  {showTaskForm ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  <span className="text-sm font-semibold text-[#FBF9F5]">Add Task</span>
+                  {showTaskForm ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
 
                 {showTaskForm && (
-                  <div className="px-3 pb-3 border-t border-white/10">
+                  <div className="px-4 pb-4 border-t border-white/10">
                     <CreateTaskForm
                       projectId={selectedProjectId}
                       availableUsers={availableUsers}
@@ -284,18 +319,19 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
               </div>
             )}
 
+            {/* Team Members Accordion */}
             {isOwner && (
-              <div className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
+              <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
                 <button
                   onClick={() => setShowCollaborators(!showCollaborators)}
-                  className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-white/5 transition-colors"
+                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/10 transition-colors"
                 >
-                  <span className="text-xs font-semibold text-[#FBF9F5]">Team Members</span>
-                  {showCollaborators ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  <span className="text-sm font-semibold text-[#FBF9F5]">Team Members</span>
+                  {showCollaborators ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
 
                 {showCollaborators && (
-                  <div className="px-3 pb-3 border-t border-white/10">
+                  <div className="px-4 pb-4 border-t border-white/10">
                     <CollaboratorManager
                       projectId={selectedProjectId}
                       currentCollaborators={(projectDetails.collaborators?.map((c) => ({
@@ -316,46 +352,35 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                 )}
               </div>
             )}
-
-            {projectDetails.tasks?.length > 0 && (
-              <div className="bg-white/5 rounded-lg border border-white/10 p-3">
-                <InteractiveTimeline
-                  tasks={projectDetails.tasks as Task[]}
-                  onTaskStatusChange={handleTaskStatusChange}
-                  isReadOnly={!hasWriteAccess}
-                />
-              </div>
-            )}
           </div>
         )}
-      </div>
 
-      {/* RIGHT SIDE — FLOATING FOLDER BUTTON */}
-      <div className="flex-1 flex justify-end items-start pt-0">
+        {/* Other Projects Dropdown */}
         {projects && projects.filter((p) => p.id !== selectedProjectId).length > 0 && (
           <div className="relative">
             <button
               onClick={() => setShowOtherProjects((s) => !s)}
-              className="w-16 h-16 bg-gradient-to-br from-[#A343EC] to-[#9448F2] rounded-xl 
-                         flex items-center justify-center shadow-lg hover:scale-105 transition"
+              className="w-full flex items-center justify-between px-4 py-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-colors"
             >
-              <Folder size={28} className="text-white" />
+              <span className="text-sm font-semibold text-[#FBF9F5]">Other Projects</span>
+              {showOtherProjects ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
 
             {showOtherProjects && (
-              <div className="mt-2 right-0 absolute bg-[#0F1115] border border-white/10 rounded-xl shadow-xl p-2 w-56 z-20">
+              <div className="mt-2 bg-[#0F1115] border border-white/10 rounded-xl shadow-xl p-2 max-h-64 overflow-y-auto">
                 {projects
                   .filter((p) => p.id !== selectedProjectId)
                   .map((project) => (
                     <button
                       key={project.id}
-                      className="w-full text-left text-sm p-2 rounded-lg hover:bg-white/5 text-[#FBF9F5] transition-colors"
+                      className="w-full text-left text-sm p-3 rounded-lg hover:bg-white/10 text-[#FBF9F5] transition-colors flex items-center gap-3"
                       onClick={() => {
                         setSelectedProjectId(project.id);
                         setShowOtherProjects(false);
                       }}
                     >
-                      {project.title}
+                      <Folder size={16} className="text-[#A343EC] flex-shrink-0" />
+                      <span className="truncate">{project.title}</span>
                     </button>
                   ))}
               </div>
@@ -364,6 +389,31 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
         )}
       </div>
 
+      {/* RIGHT SIDE - Timeline Display (No Container) */}
+      <div className="flex-1 min-w-0">
+        {selectedProjectId && projectDetails && (
+          <InteractiveTimeline
+            tasks={projectDetails.tasks as Task[]}
+            onTaskStatusChange={handleTaskStatusChange}
+            isReadOnly={!hasWriteAccess}
+            projectTitle={projectDetails.title}
+          />
+        )}
+
+        {!selectedProjectId && (
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center max-w-md px-8">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#A343EC] to-[#9448F2] flex items-center justify-center mx-auto mb-6 shadow-lg shadow-[#A343EC]/30">
+                <Folder className="text-white" size={36} />
+              </div>
+              <h3 className="text-2xl font-bold text-[#FBF9F5] mb-3">Select a Project</h3>
+              <p className="text-[#E4DEAA] leading-relaxed">
+                Create a new project or select an existing one to view your interactive timeline
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

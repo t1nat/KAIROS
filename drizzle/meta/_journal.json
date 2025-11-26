@@ -22,6 +22,13 @@
       "when": 1764101907716,
       "tag": "0002_spotty_hairball",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1764169245129,
+      "tag": "0003_unknown_quentin_quire",
+      "breakpoints": true
     }
   ]
 }

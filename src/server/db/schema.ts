@@ -1,4 +1,4 @@
-// src/server/db/schema.ts - UPDATED WITH SETTINGS FIELDS
+// src/server/db/schema.ts - COMPLETE SCHEMA WITH TASK TRACKING FIELDS
 
 import { type InferInsertModel, type InferSelectModel, relations, sql } from "drizzle-orm"; 
 import {
@@ -198,7 +198,7 @@ export const projects = createTable(
   ]
 );
 
-// --- TASKS TABLE ---
+// --- TASKS TABLE (UPDATED WITH TRACKING FIELDS) ---
 export const tasks = createTable(
   "tasks",
   (d) => ({
@@ -215,10 +215,17 @@ export const tasks = createTable(
     priority: taskPriorityEnum("priority").notNull().default("medium"),
     dueDate: timestamp("due_date", { mode: "date", withTimezone: true }),
     completedAt: timestamp("completed_at", { mode: "date", withTimezone: true }),
+    completedById: d
+      .varchar("completed_by_id", { length: 255 })
+      .references(() => users.id, { onDelete: "set null" }),
     createdById: d
       .varchar({ length: 255 })
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    lastEditedById: d
+      .varchar("last_edited_by_id", { length: 255 })
+      .references(() => users.id, { onDelete: "set null" }),
+    lastEditedAt: timestamp("last_edited_at", { mode: "date", withTimezone: true }),
     createdAt: timestamp("created_at")
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -231,6 +238,8 @@ export const tasks = createTable(
     index("task_project_idx").on(t.projectId),
     index("task_assigned_to_idx").on(t.assignedToId),
     index("task_created_by_idx").on(t.createdById),
+    index("task_completed_by_idx").on(t.completedById),
+    index("task_last_edited_by_idx").on(t.lastEditedById),
   ]
 );
 
@@ -323,7 +332,7 @@ export const stickyNotes = createTable(
     passwordHash: varchar("password_hash", { length: 256 }),
     passwordSalt: varchar("password_salt", { length: 256 }),
 
-    // Password reset fields (NEW)
+    // Password reset fields
     resetToken: text("reset_token"),
     resetTokenExpiry: timestamp("reset_token_expiry", { withTimezone: true }),
 
@@ -524,7 +533,7 @@ export const events = createTable(
   ],
 );
 
-// event rsvp 
+// --- EVENT RSVP TABLE ---
 export const eventRsvps = createTable(
   "event_rsvp",
   (d) => ({
@@ -550,11 +559,9 @@ export const eventRsvps = createTable(
   (t) => [
     index("rsvp_event_idx").on(t.eventId),
     index("rsvp_user_idx").on(t.userId),
-    // Unique constraint: one RSVP per user per event
     index("rsvp_unique").on(t.eventId, t.userId),
   ]
 );
-
 
 // --- EVENT COMMENTS TABLE ---
 export const eventComments = createTable(
@@ -605,7 +612,7 @@ export const eventLikes = createTable(
   ],
 );
 
-// NOTIFICATIONS TABLE
+// --- NOTIFICATIONS TABLE ---
 export const notifications = createTable(
   "notifications",
   (d) => ({
@@ -721,7 +728,7 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   user: one(users, { fields: [notifications.userId], references: [users.id] }),
 }));
 
-// Users Relations - MOST IMPORTANT ONE!
+// Users Relations
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
   sessions: many(sessions),
@@ -759,11 +766,10 @@ export const eventsRelations = relations(events, ({ one, many }) => ({
   author: one(users, { fields: [events.createdById], references: [users.id] }),
   comments: many(eventComments),
   likes: many(eventLikes),
-  rsvps: many(eventRsvps), // ADD THIS
-
+  rsvps: many(eventRsvps),
 }));
 
-// event rsvp Relations
+// Event RSVPs Relations
 export const eventRsvpsRelations = relations(eventRsvps, ({ one }) => ({
   event: one(events, { fields: [eventRsvps.eventId], references: [events.id] }),
   user: one(users, { fields: [eventRsvps.userId], references: [users.id] }),
