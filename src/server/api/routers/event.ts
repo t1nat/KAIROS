@@ -5,14 +5,28 @@ import { protectedProcedure, publicProcedure, createTRPCRouter } from "../trpc";
 import { events, eventComments, eventLikes, eventRsvps } from "~/server/db/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { type NewEvent } from "~/server/db/schema";
+import { TRPCError } from "@trpc/server";
 
-// Define the input schema for creating an event
+// Define the input schema for creating an event - FIXED: Added region field
 const createEventSchema = z.object({
-  title: z.string().min(1).max(256),
-  description: z.string().min(1),
+  title: z.string().min(1, "Title is required").max(256),
+  description: z.string().min(1, "Description is required"),
   eventDate: z.date(),
+  region: z.enum([
+    "sofia",
+    "plovdiv",
+    "varna",
+    "burgas",
+    "ruse",
+    "stara_zagora",
+    "pleven",
+    "sliven",
+    "dobrich",
+    "shumen"
+  ]), // REQUIRED FIELD - Must match schema enum
   imageUrl: z.string().url().optional(),
-  enableRsvp: z.boolean().default(false), // NEW FIELD
+  enableRsvp: z.boolean().default(false),
+  sendReminders: z.boolean().default(false),
 });
 
 // Updated schema: text can be empty if there's an image
@@ -29,7 +43,7 @@ const toggleLikeSchema = z.object({
   eventId: z.number(),
 });
 
-// NEW: RSVP Schema
+// RSVP Schema
 const updateRsvpSchema = z.object({
   eventId: z.number(),
   status: z.enum(["going", "maybe", "not_going"]),
@@ -38,20 +52,30 @@ const updateRsvpSchema = z.object({
 const sendRemindersSchema = z.void();
 
 export const eventRouter = createTRPCRouter({
-  // 1. Create Event
+  // 1. Create Event - FIXED: Added region field
   createEvent: protectedProcedure
     .input(createEventSchema)
     .mutation(async ({ ctx, input }) => {
-      const { title, description, eventDate, imageUrl, enableRsvp } = input;
+      const { title, description, eventDate, region, imageUrl, enableRsvp, sendReminders } = input;
       const createdById = ctx.session.user.id;
+
+      // Validate that region is not null/undefined
+      if (!region) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Region is required",
+        });
+      }
 
       const newEvent: NewEvent = {
         title,
         description,
         eventDate,
-        imageUrl,
+        region, // REQUIRED FIELD
+        imageUrl: imageUrl ?? null,
         createdById,
-        enableRsvp, // NEW FIELD
+        enableRsvp,
+        sendReminders,
       };
 
       await ctx.db.insert(events).values(newEvent);
@@ -78,7 +102,7 @@ export const eventRouter = createTRPCRouter({
           likes: {
             columns: { createdById: true },
           },
-          rsvps: { // NEW: Include RSVPs
+          rsvps: {
             columns: { userId: true, status: true },
           },
         },
@@ -157,7 +181,7 @@ export const eventRouter = createTRPCRouter({
       }
     }),
 
-  // NEW: 5. Update RSVP
+  // 5. Update RSVP
   updateRsvp: protectedProcedure
     .input(updateRsvpSchema)
     .mutation(async ({ ctx, input }) => {

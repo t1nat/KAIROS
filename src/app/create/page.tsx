@@ -25,7 +25,7 @@ export default async function CreatePage({
   // If the user is not logged in
   if (!session?.user) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-[#181F25]">
+      <main className="flex min-h-screen flex-col items-center justify-center bg-[#181F25]"style={{ fontFamily: 'Faustina, serif' }}>
         <div className="absolute top-8 right-8 z-10">
           <UserDisplay />
         </div>
@@ -97,7 +97,7 @@ export default async function CreatePage({
         </header>
 
         {/* Main Content - Full Height with Scrolling */}
-        <main className="flex-1 max-w-7xl w-full mx-auto px-8 py-6 overflow-auto">
+        <main className="flex-1 max-w-7xl w-full mx-auto px-8 py-6 overflow-auto"style={{ fontFamily: 'Faustina, serif' }}>
           {shouldShowProjectManagement ? (
             <div className="relative w-full h-full">
               <CreateProjectContainer userId={session.user.id} />

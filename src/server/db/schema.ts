@@ -34,7 +34,18 @@ export const languageEnum = pgEnum("language", ["en", "es", "fr", "de", "it", "p
 export const dateFormatEnum = pgEnum("date_format", ["MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"]);
 export const notificationTypeEnum = pgEnum("notification_type", ["event", "task", "project", "system"]);
 export const rsvpStatusEnum = pgEnum("rsvp_status", ["going", "maybe", "not_going"]);
-
+export const regionEnum = pgEnum("region", [
+  "sofia", 
+  "plovdiv", 
+  "varna", 
+  "burgas", 
+  "ruse", 
+  "stara_zagora", 
+  "pleven", 
+  "sliven", 
+  "dobrich", 
+  "shumen"
+]);
 
 
 // --- USER TABLE (UPDATED WITH SETTINGS) ---
@@ -513,6 +524,7 @@ export const events = createTable(
     description: d.text("description").notNull(),
     imageUrl: d.text("image_url"),
     eventDate: d.timestamp("event_date", { mode: "date", withTimezone: true }).notNull(),
+    region: regionEnum("region").notNull(),
     createdById: d
       .varchar({ length: 255 })
       .notNull()
@@ -530,6 +542,7 @@ export const events = createTable(
   (t) => [
     index("event_created_by_idx").on(t.createdById),
     index("event_date_idx").on(t.eventDate),
+    index("event_region_idx").on(t.region),
   ],
 );
 

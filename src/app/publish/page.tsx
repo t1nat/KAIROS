@@ -31,7 +31,7 @@ export default function PublishPage() {
                 </header>
 
                 {/* Main Content */}
-                <main className="max-w-4xl mx-auto p-8">
+                <main className="max-w-4xl mx-auto p-8"style={{ fontFamily: 'Faustina, serif' }}>
                     {/* Form to create new events */}
                     <CreateEventForm />
                      <EventReminderService />

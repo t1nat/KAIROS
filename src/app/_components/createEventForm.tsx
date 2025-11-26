@@ -6,7 +6,20 @@ import { api } from '~/trpc/react';
 import { useSession } from 'next-auth/react';
 import { useUploadThing } from '~/lib/uploadthing';
 import Image from 'next/image';
-import { Plus, X, CalendarCheck, ImagePlus, Loader2 } from 'lucide-react';
+import { Plus, X, CalendarCheck, ImagePlus, Loader2, MapPin } from 'lucide-react';
+
+const REGIONS = [
+  { value: 'sofia', label: 'Sofia' },
+  { value: 'plovdiv', label: 'Plovdiv' },
+  { value: 'varna', label: 'Varna' },
+  { value: 'burgas', label: 'Burgas' },
+  { value: 'ruse', label: 'Ruse' },
+  { value: 'stara_zagora', label: 'Stara Zagora' },
+  { value: 'pleven', label: 'Pleven' },
+  { value: 'sliven', label: 'Sliven' },
+  { value: 'dobrich', label: 'Dobrich' },
+  { value: 'shumen', label: 'Shumen' },
+] as const;
 
 export const CreateEventForm: React.FC = () => {
   const { data: session } = useSession();
@@ -15,6 +28,9 @@ export const CreateEventForm: React.FC = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [eventDate, setEventDate] = useState('');
+  const [region, setRegion] = useState<string>('sofia'); // Default to Sofia
+  const [enableRsvp, setEnableRsvp] = useState(false);
+  const [sendReminders, setSendReminders] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -27,6 +43,9 @@ export const CreateEventForm: React.FC = () => {
       setTitle('');
       setDescription('');
       setEventDate('');
+      setRegion('sofia');
+      setEnableRsvp(false);
+      setSendReminders(false);
       setImageFile(null);
       setImagePreview(null);
       setShowForm(false);
@@ -62,7 +81,7 @@ export const CreateEventForm: React.FC = () => {
       return;
     }
 
-    if (!title.trim() || !description.trim() || !eventDate) {
+    if (!title.trim() || !description.trim() || !eventDate || !region) {
       alert('Please fill in all required fields');
       return;
     }
@@ -80,7 +99,10 @@ export const CreateEventForm: React.FC = () => {
         title: title.trim(),
         description: description.trim(),
         eventDate: new Date(eventDate),
+        region: region as "sofia" | "plovdiv" | "varna" | "burgas" | "ruse" | "stara_zagora" | "pleven" | "sliven" | "dobrich" | "shumen",
         imageUrl,
+        enableRsvp,
+        sendReminders,
       });
     } catch (error) {
       alert('Failed to upload image');
@@ -150,6 +172,7 @@ export const CreateEventForm: React.FC = () => {
                 maxLength={256}
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent transition-all text-[#FBF9F5] placeholder:text-[#59677C]"
                 disabled={createEvent.isPending || isUploading}
+                required
               />
             </div>
 
@@ -166,6 +189,7 @@ export const CreateEventForm: React.FC = () => {
                 rows={4}
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent transition-all text-[#FBF9F5] placeholder:text-[#59677C] resize-none"
                 disabled={createEvent.isPending || isUploading}
+                required
               />
             </div>
 
@@ -181,7 +205,30 @@ export const CreateEventForm: React.FC = () => {
                 onChange={(e) => setEventDate(e.target.value)}
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent transition-all text-[#FBF9F5]"
                 disabled={createEvent.isPending || isUploading}
+                required
               />
+            </div>
+
+            {/* Region Select */}
+            <div>
+              <label htmlFor="region" className="block text-sm font-semibold text-[#E4DEEA] mb-2">
+                <MapPin className="inline mr-1" size={16} />
+                Region <span className="text-[#A343EC]">*</span>
+              </label>
+              <select
+                id="region"
+                value={region}
+                onChange={(e) => setRegion(e.target.value)}
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent transition-all text-[#FBF9F5] appearance-none cursor-pointer"
+                disabled={createEvent.isPending || isUploading}
+                required
+              >
+                {REGIONS.map((r) => (
+                  <option key={r.value} value={r.value} className="bg-[#181F25] text-[#FBF9F5]">
+                    {r.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Image Upload */}
@@ -230,11 +277,42 @@ export const CreateEventForm: React.FC = () => {
               )}
             </div>
 
+            {/* RSVP Options */}
+            <div className="space-y-3 p-4 bg-white/5 rounded-xl border border-white/10">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="enableRsvp"
+                  checked={enableRsvp}
+                  onChange={(e) => setEnableRsvp(e.target.checked)}
+                  className="w-5 h-5 rounded border-white/10 bg-white/5 text-[#A343EC] focus:ring-2 focus:ring-[#A343EC] cursor-pointer"
+                />
+                <label htmlFor="enableRsvp" className="text-sm font-medium text-[#E4DEEA] cursor-pointer">
+                  Enable RSVP for this event
+                </label>
+              </div>
+
+              {enableRsvp && (
+                <div className="flex items-center gap-3 ml-8">
+                  <input
+                    type="checkbox"
+                    id="sendReminders"
+                    checked={sendReminders}
+                    onChange={(e) => setSendReminders(e.target.checked)}
+                    className="w-5 h-5 rounded border-white/10 bg-white/5 text-[#A343EC] focus:ring-2 focus:ring-[#A343EC] cursor-pointer"
+                  />
+                  <label htmlFor="sendReminders" className="text-sm font-medium text-[#E4DEEA] cursor-pointer">
+                    Send reminders to attendees
+                  </label>
+                </div>
+              )}
+            </div>
+
             {/* Action Buttons */}
             <div className="flex gap-3 pt-6 border-t border-white/10">
               <button
                 type="submit"
-                disabled={createEvent.isPending || isUploading || !title.trim() || !description.trim() || !eventDate}
+                disabled={createEvent.isPending || isUploading || !title.trim() || !description.trim() || !eventDate || !region}
                 className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#A343EC] to-[#9448F2] text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-[#A343EC]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isUploading || createEvent.isPending ? (
