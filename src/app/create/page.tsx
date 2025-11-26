@@ -7,6 +7,7 @@ import { CreateNoteForm } from "~/app/_components/createNoteForm";
 import { CreateProjectContainer } from "~/app/_components/createProjectContainer";
 import { NotesList } from "~/app/_components/notesList";
 import { NotificationSystem } from "~/app/_components/notificationSystem";
+import { ProjectsListWorkspace } from "~/app/_components/projectsListWorkspace";
 import { LogIn, ArrowRight, FolderKanban, FileEdit } from "lucide-react";
 
 export default async function CreatePage({ 
@@ -81,7 +82,7 @@ export default async function CreatePage({
                 )}
               </div>
               <div>
-                <h1 className="text-xl font-bold text-[#FBF9F5] tracking-tight">
+                <h1 className="text-xl font-bold text-[#FBF9F5] tracking-tight font-faustina">
                   {shouldShowProjectManagement ? 'Projects' : shouldShowNoteForm ? 'Notes' : 'Workspace'}
                 </h1>
               </div>
@@ -107,22 +108,27 @@ export default async function CreatePage({
               <NotesList />
             </div>
           ) : (
-            <div className="flex items-center justify-center min-h-[60vh]">
-              <div className="text-center max-w-md">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-[#A343EC]/20 rounded-2xl mb-6">
-                  <FolderKanban className="text-[#A343EC]" size={28} />
+            <div className="flex flex-col items-center justify-start pt-16 pb-20">
+              <div className="text-center max-w-lg mb-16">
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-[#A343EC]/20 to-[#9448F2]/10 rounded-3xl mb-8 shadow-lg shadow-[#A343EC]/20">
+                  <FolderKanban className="text-[#A343EC]" size={36} />
                 </div>
-                <h2 className="text-2xl font-bold text-[#FBF9F5] mb-3">
+                <h2 className="text-3xl font-bold text-[#FBF9F5] mb-4 font-faustina">
                   Welcome to your workspace
                 </h2>
-                <p className="text-[#E4DEAA] mb-6">
-                  Use the sidebar to get started with projects, notes, or events
+                <p className="text-[#E4DEAA] text-lg mb-8 leading-relaxed font-faustina">
+                  Manage projects, track progress, and collaborate with your team
                 </p>
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-lg border border-white/10 text-sm text-[#E4DEAA]">
+                <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 rounded-xl border border-white/10 text-sm text-[#E4DEAA] font-faustina">
                   <span>Click the</span>
-                  <span className="inline-flex items-center justify-center w-6 h-6 bg-gradient-to-br from-[#A343EC] to-[#9448F2] rounded-md text-white font-bold">+</span>
+                  <span className="inline-flex items-center justify-center w-7 h-7 bg-gradient-to-br from-[#A343EC] to-[#9448F2] rounded-lg text-white font-bold shadow-lg shadow-[#A343EC]/30">+</span>
                   <span>icon to create</span>
                 </div>
+              </div>
+              
+              {/* Projects Statistics Dashboard */}
+              <div className="w-full">
+                <ProjectsListWorkspace />
               </div>
             </div>
           )}

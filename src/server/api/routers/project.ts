@@ -1,4 +1,4 @@
-// src/server/api/routers/project.ts - FIXED TypeScript Issues
+// src/server/api/routers/project.ts - FIXED: Now includes tasks in getMyProjects
 
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
@@ -46,7 +46,7 @@ export const projectRouter = createTRPCRouter({
       return project;
     }),
 
-  // Get all projects the user has access to
+  // Get all projects the user has access to - WITH TASKS FOR STATS
   getMyProjects: protectedProcedure.query(async ({ ctx }) => {
     console.log("🔍 Fetching projects for user:", ctx.session.user.id);
 
@@ -59,26 +59,20 @@ export const projectRouter = createTRPCRouter({
 
     console.log("🔍 User organization membership:", membership);
 
+    let projectsList;
+
     if (membership) {
       // User is in an organization - show ALL organization projects
-      const orgProjects = await ctx.db
+      projectsList = await ctx.db
         .select()
         .from(projects)
         .where(eq(projects.organizationId, membership.organizationId))
         .orderBy(desc(projects.createdAt));
 
-      console.log("📦 Found organization projects:", orgProjects.length);
-      console.log("📦 Projects:", orgProjects.map(p => ({
-        id: p.id,
-        title: p.title,
-        organizationId: p.organizationId,
-        createdById: p.createdById,
-      })));
-
-      return orgProjects;
+      console.log("📦 Found organization projects:", projectsList.length);
     } else {
       // User is in personal mode - show only their own projects
-      const myProjects = await ctx.db
+      projectsList = await ctx.db
         .select()
         .from(projects)
         .where(
@@ -89,10 +83,35 @@ export const projectRouter = createTRPCRouter({
         )
         .orderBy(desc(projects.createdAt));
 
-      console.log("📦 Found personal projects:", myProjects.length);
-
-      return myProjects;
+      console.log("📦 Found personal projects:", projectsList.length);
     }
+
+    // For each project, get its tasks (only id and status for statistics)
+    const projectsWithTasks = await Promise.all(
+      projectsList.map(async (project) => {
+        const projectTasks = await ctx.db
+          .select({
+            id: tasks.id,
+            status: tasks.status,
+          })
+          .from(tasks)
+          .where(eq(tasks.projectId, project.id));
+
+        return {
+          ...project,
+          tasks: projectTasks,
+        };
+      })
+    );
+
+    console.log("📦 Projects with tasks:", projectsWithTasks.map(p => ({
+      id: p.id,
+      title: p.title,
+      tasksCount: p.tasks.length,
+      completedCount: p.tasks.filter(t => t.status === 'completed').length,
+    })));
+
+    return projectsWithTasks;
   }),
 
   // Get project by ID with all details INCLUDING task creator, completer, and last editor
@@ -171,7 +190,6 @@ export const projectRouter = createTRPCRouter({
         .where(eq(projectCollaborators.projectId, input.id));
 
       // Get all tasks with user information using SQL aliases
-      // This is the fix - use sql`` to create proper aliases
       const projectTasks = await ctx.db
         .select({
           id: tasks.id,

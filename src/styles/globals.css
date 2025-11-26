@@ -442,3 +442,75 @@
   font-weight: 400;
   font-style: normal;
 }
+
+.radial-progress {
+  position: relative;
+  display: inline-grid;
+  place-content: center;
+  width: var(--size, 5rem);
+  height: var(--size, 5rem);
+  border-radius: 9999px;
+  background-color: transparent;
+}
+
+.radial-progress::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: radial-gradient(
+    farthest-side,
+    currentColor 98%,
+    transparent
+  );
+  -webkit-mask-image: radial-gradient(
+    farthest-side,
+    transparent calc(100% - var(--thickness, 0.2em)),
+    #000 calc(100% - var(--thickness, 0.2em) + 1px)
+  );
+  mask-image: radial-gradient(
+    farthest-side,
+    transparent calc(100% - var(--thickness, 0.2em)),
+    #000 calc(100% - var(--thickness, 0.2em) + 1px)
+  );
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  background-image: conic-gradient(
+    currentColor calc(var(--value) * 1%),
+    transparent 0
+  );
+}
+
+/* Optional: Add a background track */
+.radial-progress::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: radial-gradient(
+    farthest-side,
+    rgba(255, 255, 255, 0.05) 98%,
+    transparent
+  );
+  -webkit-mask-image: radial-gradient(
+    farthest-side,
+    transparent calc(100% - var(--thickness, 0.2em)),
+    #000 calc(100% - var(--thickness, 0.2em) + 1px)
+  );
+  mask-image: radial-gradient(
+    farthest-side,
+    transparent calc(100% - var(--thickness, 0.2em)),
+    #000 calc(100% - var(--thickness, 0.2em) + 1px)
+  );
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  z-index: -1;
+}

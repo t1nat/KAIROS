@@ -356,7 +356,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
         )}
 
         {/* Other Projects Dropdown */}
-        {projects && projects.filter((p) => p.id !== selectedProjectId).length > 0 && (
+        {projects && projects.filter((p) => p.id !== selectedProjectId).length > 0 && selectedProjectId && (
           <div className="relative">
             <button
               onClick={() => setShowOtherProjects((s) => !s)}
