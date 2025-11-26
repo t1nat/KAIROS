@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { protectedProcedure, publicProcedure, createTRPCRouter } from "../trpc";
 import { events, eventComments, eventLikes, eventRsvps } from "~/server/db/schema";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { type NewEvent } from "~/server/db/schema";
 
 // Define the input schema for creating an event
@@ -200,7 +200,7 @@ export const eventRouter = createTRPCRouter({
   // 6. Send Event Reminders
   sendEventReminders: protectedProcedure
     .input(sendRemindersSchema)
-    .mutation(async ({ ctx }) => {
+    .mutation(async ({ ctx: _ctx }) => {
       console.log(`[Reminder Service] Running reminder check at ${new Date().toISOString()}`);
       return { success: true, message: "Reminder check initiated." };
     }),

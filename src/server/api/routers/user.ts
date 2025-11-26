@@ -124,4 +124,21 @@ export const userRouter = createTRPCRouter({
         imageUrl: input.image,
       };
     }),
+
+    searchByEmail: protectedProcedure
+    .input(z.object({ email: z.string().email() }))
+    .query(async ({ ctx, input }) => {
+      const [user] = await ctx.db
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          image: users.image,
+        })
+        .from(users)
+        .where(eq(users.email, input.email))
+        .limit(1);
+
+      return user ?? null;
+    }),
 });

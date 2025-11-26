@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { api } from "~/trpc/react";
 import { CreateProjectForm, CreateTaskForm, CollaboratorManager } from "./projectManagement";
 import { InteractiveTimeline } from "./interactiveTimeline";
 import { ChevronDown, ChevronUp, RefreshCw, CheckCircle2, ArrowLeft, Folder } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 interface CreateProjectContainerProps {
   userId: string;
@@ -53,12 +54,14 @@ interface Task {
 }
 
 export function CreateProjectContainer({ userId }: CreateProjectContainerProps) {
-  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
-  const [showProjectForm, setShowProjectForm] = useState(false);
+  const searchParams = useSearchParams();
+  const projectIdFromUrl = searchParams.get("projectId");
+  
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
+    projectIdFromUrl ? parseInt(projectIdFromUrl) : null
+  );
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [showCollaborators, setShowCollaborators] = useState(false);
-
-  // new dropdown open/close
   const [showOtherProjects, setShowOtherProjects] = useState(false);
 
   const utils = api.useUtils();
@@ -75,11 +78,20 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
     }
   );
 
+  // Update selectedProjectId when URL changes
+  useEffect(() => {
+    if (projectIdFromUrl) {
+      const id = parseInt(projectIdFromUrl);
+      if (!isNaN(id)) {
+        setSelectedProjectId(id);
+      }
+    }
+  }, [projectIdFromUrl]);
+
   const createProject = api.project.create.useMutation({
     onSuccess: (data) => {
       void utils.project.getMyProjects.invalidate();
       if (data) setSelectedProjectId(data.id);
-      setShowProjectForm(false);
     },
     onError: (error) => alert(`Error: ${error.message}`),
   });
@@ -189,28 +201,19 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
     : [];
 
   return (
-    <div className="flex gap-6 relative">
+    <div className="flex gap-6 relative w-full">
 
       {/* LEFT SIDEBAR */}
       <div className="w-96 flex-shrink-0 space-y-4">
 
         {!selectedProjectId && (
-          <button
-            onClick={() => setShowProjectForm(!showProjectForm)}
-            className="w-full px-4 py-3 bg-gradient-to-r from-[#A343EC] to-[#9448F2] text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-[#A343EC]/30 transition-all text-sm"
-          >
-            + New Project
-          </button>
-        )}
-
-        {showProjectForm && !selectedProjectId && (
           <div className="animate-in slide-in-from-top-2 duration-200">
             <CreateProjectForm
-              onSubmit={handleCreateProject}
-              currentUser={{ id: userId, name: null, email: "", image: null }}
-              isExpanded={true}
-              onToggle={() => setShowProjectForm(false)}
-            />
+                onSubmit={handleCreateProject}
+                currentUser={{ id: userId, name: null, email: "", image: null }}
+                isExpanded={true}
+                onToggle={() => console.warn("CreateProjectForm onToggle not implemented")}
+              />
           </div>
         )}
 
@@ -238,9 +241,13 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                 <p className="text-xs text-[#E4DEAA]">{projectDetails.description}</p>
               )}
 
-              {hasWriteAccess && !isOwner && (
-                <span className="inline-block mt-2 text-xs text-[#80C49B] bg-[#80C49B]/10 px-2 py-1 rounded">
-                  Team Member
+              {!isOwner && (
+                <span className={`inline-block mt-2 text-xs px-2 py-1 rounded ${
+                  hasWriteAccess 
+                    ? "text-[#80C49B] bg-[#80C49B]/10" 
+                    : "text-[#E4DEAA] bg-white/5"
+                }`}>
+                  {hasWriteAccess ? "Can Edit" : "Can View"}
                 </span>
               )}
             </div>
@@ -324,7 +331,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
       </div>
 
       {/* RIGHT SIDE — FLOATING FOLDER BUTTON */}
-      <div className="flex-1 flex justify-end pt-4 pr-8">
+      <div className="flex-1 flex justify-end items-start pt-0">
         {projects && projects.filter((p) => p.id !== selectedProjectId).length > 0 && (
           <div className="relative">
             <button

@@ -3,8 +3,9 @@
 
 import { useState, useEffect } from "react";
 import { api } from "~/trpc/react";
-import { Bell, X, Calendar, CheckCircle2, AlertCircle } from "lucide-react";
+import { Bell, X, Calendar, CheckCircle2, AlertCircle, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useRouter } from "next/navigation";
 
 interface Notification {
   id: string;
@@ -17,18 +18,38 @@ interface Notification {
 }
 
 export function NotificationSystem() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  // Fetch stored notifications from database
-  const { data: storedNotifications } = api.notification.getAll.useQuery(undefined, {
-    refetchInterval: 60000, // Check every minute
+  const utils = api.useUtils();
+
+  // Fetch stored notifications from database with MORE FREQUENT polling
+  const { data: storedNotifications, refetch } = api.notification.getAll.useQuery(undefined, {
+    refetchInterval: 5000, // Poll every 5 seconds instead of 60
+    refetchOnWindowFocus: true, // Refetch when window gains focus
+    refetchOnMount: true,
   });
 
-  const markAsReadMutation = api.notification.markAsRead.useMutation();
+  const markAsReadMutation = api.notification.markAsRead.useMutation({
+    onSuccess: () => {
+      void utils.notification.getAll.invalidate();
+      void utils.notification.getUnreadCount.invalidate();
+    },
+  });
+
+  const deleteMutation = api.notification.delete.useMutation({
+    onSuccess: () => {
+      void utils.notification.getAll.invalidate();
+      void utils.notification.getUnreadCount.invalidate();
+    },
+  });
+
   const deleteAllMutation = api.notification.deleteAll.useMutation({
     onSuccess: () => {
       setNotifications([]);
+      void utils.notification.getAll.invalidate();
+      void utils.notification.getUnreadCount.invalidate();
     },
   });
 
@@ -37,7 +58,6 @@ export function NotificationSystem() {
     if (storedNotifications) {
       const formattedNotifications: Notification[] = storedNotifications.map((notif) => {
         const notifType = notif.type;
-        // Validate the type at runtime
         const validType: "event" | "task" | "project" | "system" = 
           (notifType === "event" || notifType === "task" || notifType === "project" || notifType === "system") 
             ? notifType 
@@ -57,17 +77,39 @@ export function NotificationSystem() {
     }
   }, [storedNotifications]);
 
+  // Force refetch when panel opens
+  useEffect(() => {
+    if (isOpen) {
+      void refetch();
+    }
+  }, [isOpen, refetch]);
+
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const handleMarkAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
     markAsReadMutation.mutate({ notificationId: id });
+  };
+
+  const handleDelete = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    deleteMutation.mutate({ notificationId: id });
   };
 
   const handleClearAll = () => {
     deleteAllMutation.mutate();
+  };
+
+  const handleNotificationClick = (notification: Notification) => {
+    // Mark as read
+    if (!notification.read) {
+      handleMarkAsRead(notification.id);
+    }
+
+    // Navigate if there's a link
+    if (notification.link) {
+      setIsOpen(false);
+      router.push(notification.link);
+    }
   };
 
   const getIcon = (type: string) => {
@@ -75,11 +117,11 @@ export function NotificationSystem() {
       case "event":
         return <Calendar className="text-[#A343EC]" size={20} />;
       case "task":
-        return <CheckCircle2 className="text-[#A343EC]" size={20} />;
+        return <CheckCircle2 className="text-[#80C49B]" size={20} />;
       case "project":
-        return <AlertCircle className="text-[#A343EC]" size={20} />;
+        return <AlertCircle className="text-[#F8D45E]" size={20} />;
       default:
-        return <AlertCircle className="text-[#A343EC]" size={20} />;
+        return <AlertCircle className="text-[#E4DEAA]" size={20} />;
     }
   };
 
@@ -92,7 +134,7 @@ export function NotificationSystem() {
       >
         <Bell size={22} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#A343EC] text-white text-xs font-bold rounded-full flex items-center justify-center">
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#A343EC] text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -105,17 +147,23 @@ export function NotificationSystem() {
             onClick={() => setIsOpen(false)}
             aria-hidden="true"
           />
-          <div className="absolute right-0 mt-2 w-96 bg-[#1a2128] rounded-2xl border border-white/10 shadow-2xl z-50 max-h-[600px] overflow-hidden">
-            <div className="p-4 border-b border-white/10 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-[#FBF9F5]">
-                Notifications
-              </h3>
+          <div className="absolute right-0 mt-2 w-96 bg-[#1a2128] rounded-2xl border border-white/10 shadow-2xl z-50 max-h-[600px] overflow-hidden animate-in slide-in-from-top-2 duration-200">
+            <div className="p-4 border-b border-white/10 flex items-center justify-between sticky top-0 bg-[#1a2128] z-10">
+              <div>
+                <h3 className="text-lg font-bold text-[#FBF9F5]">
+                  Notifications
+                </h3>
+                {unreadCount > 0 && (
+                  <p className="text-xs text-[#E4DEAA]">{unreadCount} unread</p>
+                )}
+              </div>
               {notifications.length > 0 && (
                 <button
                   onClick={handleClearAll}
                   disabled={deleteAllMutation.isPending}
-                  className="text-xs text-[#E4DEAA] hover:text-[#FBF9F5] transition-colors disabled:opacity-50"
+                  className="text-xs text-red-400 hover:text-red-300 transition-colors disabled:opacity-50 flex items-center gap-1"
                 >
+                  <Trash2 size={14} />
                   {deleteAllMutation.isPending ? "Clearing..." : "Clear All"}
                 </button>
               )}
@@ -126,14 +174,18 @@ export function NotificationSystem() {
                 <div className="p-8 text-center">
                   <Bell className="mx-auto text-[#E4DEAA]/30 mb-3" size={48} />
                   <p className="text-[#E4DEAA]">No notifications</p>
+                  <p className="text-xs text-[#E4DEAA]/60 mt-2">
+                    You are all caught up!
+                  </p>
                 </div>
               ) : (
                 <div className="divide-y divide-white/5">
                   {notifications.map((notification) => (
                     <div
                       key={notification.id}
-                      className={`p-4 hover:bg-white/5 transition-colors ${
-                        !notification.read ? "bg-[#A343EC]/5" : ""
+                      onClick={() => handleNotificationClick(notification)}
+                      className={`p-4 hover:bg-white/5 transition-all cursor-pointer group ${
+                        !notification.read ? "bg-[#A343EC]/5 border-l-2 border-[#A343EC]" : ""
                       }`}
                     >
                       <div className="flex items-start gap-3">
@@ -142,27 +194,37 @@ export function NotificationSystem() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
-                            <h4 className="font-semibold text-[#FBF9F5] text-sm">
+                            <h4 className={`font-semibold text-sm ${
+                              !notification.read ? "text-[#FBF9F5]" : "text-[#E4DEAA]"
+                            }`}>
                               {notification.title}
+                              {!notification.read && (
+                                <span className="ml-2 inline-block w-2 h-2 bg-[#A343EC] rounded-full"></span>
+                              )}
                             </h4>
-                            {!notification.read && (
-                              <button
-                                onClick={() => handleMarkAsRead(notification.id)}
-                                className="flex-shrink-0 p-1 hover:bg-white/10 rounded transition-colors"
-                                aria-label="Mark as read"
-                              >
-                                <X size={16} className="text-[#E4DEAA]" />
-                              </button>
-                            )}
+                            <button
+                              onClick={(e) => handleDelete(notification.id, e)}
+                              className="flex-shrink-0 p-1 hover:bg-red-500/10 rounded transition-colors opacity-0 group-hover:opacity-100"
+                              aria-label="Delete notification"
+                            >
+                              <X size={16} className="text-red-400" />
+                            </button>
                           </div>
                           <p className="text-sm text-[#E4DEAA] mt-1">
                             {notification.message}
                           </p>
-                          <p className="text-xs text-[#E4DEAA]/60 mt-2">
-                            {formatDistanceToNow(notification.createdAt, {
-                              addSuffix: true,
-                            })}
-                          </p>
+                          <div className="flex items-center justify-between mt-2">
+                            <p className="text-xs text-[#E4DEAA]/60">
+                              {formatDistanceToNow(notification.createdAt, {
+                                addSuffix: true,
+                              })}
+                            </p>
+                            {notification.link && (
+                              <span className="text-xs text-[#A343EC] font-medium">
+                                Click to view →
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>

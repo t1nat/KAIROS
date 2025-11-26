@@ -11,7 +11,6 @@ import {
   Shield, 
   Globe, 
   Key,
-  Settings as SettingsIcon
 } from "lucide-react";
 
 type SearchParams = Record<string, string | string[] | undefined>;

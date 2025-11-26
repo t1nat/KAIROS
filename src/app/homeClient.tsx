@@ -21,7 +21,6 @@ import ScrollReveal from "./_components/ScrollReveal";
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 gsap.registerPlugin(ScrollTrigger);
 
 interface SessionData {

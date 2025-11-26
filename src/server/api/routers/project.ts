@@ -1,8 +1,8 @@
-// src/server/api/routers/project.ts - FIXED VERSION
+// src/server/api/routers/project.ts - FIXED NOTIFICATION LINK
 
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { projects, tasks, projectCollaborators, users, organizationMembers } from "~/server/db/schema";
+import { projects, tasks, projectCollaborators, users, organizationMembers, notifications } from "~/server/db/schema";
 import { eq, and, desc, isNull } from "drizzle-orm";
 
 export const projectRouter = createTRPCRouter({
@@ -195,16 +195,21 @@ export const projectRouter = createTRPCRouter({
 
       console.log("📋 Project tasks:", projectTasks.length);
 
+      // Determine if user has write access:
+      // - Owner always has write access
+      // - Org members have write access
+      // - Collaborators have write access if permission is "write"
+      const hasWriteAccess = isOwner || isOrgMember || (collaboration?.permission === "write");
+
       return {
         ...project,
         collaborators,
         tasks: projectTasks,
-        // Return whether user has write access (owner or org member)
-        userHasWriteAccess: isOwner || isOrgMember,
+        userHasWriteAccess: hasWriteAccess,
       };
     }),
 
-  // Add a collaborator to a project
+  // Add a collaborator to a project - FIXED NOTIFICATION LINK
   addCollaborator: protectedProcedure
     .input(
       z.object({
@@ -228,6 +233,16 @@ export const projectRouter = createTRPCRouter({
         if (project.createdById !== ctx.session.user.id) {
           throw new Error("Only the project owner can add collaborators.");
         }
+
+        // Get the owner's info for the notification
+        const [owner] = await ctx.db
+          .select({
+            name: users.name,
+            email: users.email,
+          })
+          .from(users)
+          .where(eq(users.id, ctx.session.user.id))
+          .limit(1);
 
         // Find user by email
         const [userToAdd] = await ctx.db
@@ -266,12 +281,38 @@ export const projectRouter = createTRPCRouter({
           permission: input.permission,
         });
 
+        // 🎯 CREATE IN-APP NOTIFICATION with correct link to the project
+        const ownerName = owner?.name ?? owner?.email ?? "Someone";
+        const permissionText = input.permission === "write" ? "edit" : "view";
+        
+        console.log("📬 Creating notification for user:", userToAdd.id);
+        
+        // Create a link that opens the specific project
+        const projectLink = `/create?action=new_project&projectId=${input.projectId}`;
+        
+        const [notification] = await ctx.db.insert(notifications).values({
+          userId: userToAdd.id,
+          type: "project",
+          title: "New Project Invitation",
+          message: `${ownerName} invited you to ${permissionText} "${project.title}"`,
+          link: projectLink,
+          read: false,
+        }).returning();
+
+        console.log("✅ Notification created:", notification);
+
         return { 
           success: true,
-          message: `Successfully added ${userToAdd.name ?? input.email} as a collaborator!`
+          message: `Successfully added ${userToAdd.name ?? input.email} as a collaborator!`,
+          user: {
+            id: userToAdd.id,
+            name: userToAdd.name,
+            email: userToAdd.email,
+            image: userToAdd.image,
+          }
         };
       } catch (error) {
-        console.error("Error adding collaborator:", error);
+        console.error("❌ Error adding collaborator:", error);
         
         if (error instanceof Error) {
           throw error;

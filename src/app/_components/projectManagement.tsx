@@ -1,9 +1,10 @@
 // src/app/_components/projectManagement.tsx
 "use client";
 
-import { useState } from "react";
-import { Trash2, FolderPlus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Trash2, FolderPlus, CheckCircle2 } from "lucide-react";
 import Image from "next/image";
+import { api } from "~/trpc/react";
 
 interface User {
   id: string;
@@ -278,18 +279,84 @@ export function CollaboratorManager({
   const [email, setEmail] = useState("");
   const [permission, setPermission] = useState<"read" | "write">("read");
   const [isAdding, setIsAdding] = useState(false);
+  const [searchedUser, setSearchedUser] = useState<{
+    id: string;
+    name: string | null;
+    email: string;
+    image: string | null;
+  } | null>(null);
+  const [searchError, setSearchError] = useState("");
 
-  void projectId;
+  const utils = api.useUtils();
+
+  // Helper to check if email is valid
+  const isValidEmail = (emailStr: string) => {
+    const trimmed = emailStr.trim();
+    return trimmed.length > 0 && trimmed.includes("@") && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+  };
+
+  // Search for user - only enabled when email is valid
+  const { refetch: searchUser, isFetching: isSearching } = api.user.searchByEmail.useQuery(
+    { email: email.trim() },
+    {
+      enabled: false, // Manual refetch only
+      retry: false,
+    }
+  );
+
+  // Debounced email search
+  useEffect(() => {
+    // Reset states when email changes
+    setSearchedUser(null);
+    setSearchError("");
+
+    // Only search if email is valid
+    if (isValidEmail(email)) {
+      const timer = setTimeout(() => {
+        void searchUser().then((result) => {
+          if (result.data) {
+            setSearchedUser(result.data);
+            setSearchError("");
+          } else {
+            setSearchedUser(null);
+            setSearchError("No user found with this email. They need to sign up first!");
+          }
+        }).catch((error) => {
+          console.error("Search error:", error);
+          setSearchedUser(null);
+          setSearchError("Error searching for user");
+        });
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [email, searchUser]);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    
+    if (!isValidEmail(email)) {
+      setSearchError("Please enter a valid email address");
+      return;
+    }
+
+    if (!searchedUser) {
+      setSearchError("Please wait for user search to complete");
+      return;
+    }
 
     setIsAdding(true);
     try {
-      await onAddCollaborator(email, permission);
+      await onAddCollaborator(searchedUser.email, permission);
       setEmail("");
+      setSearchedUser(null);
+      setSearchError("");
       setPermission("read");
+      void utils.project.getById.invalidate({ id: projectId });
+    } catch (error) {
+      console.error("Failed to add collaborator:", error);
+      if (error instanceof Error) {
+        setSearchError(error.message);
+      }
     } finally {
       setIsAdding(false);
     }
@@ -303,15 +370,55 @@ export function CollaboratorManager({
             <label className="block text-xs font-semibold text-[#E4DEEA] mb-2 uppercase tracking-wide">
               Add Team Member
             </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="colleague@example.com"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent text-[#FBF9F5] placeholder:text-[#59677C] transition-all"
-              disabled={isAdding}
-            />
+            <div className="relative">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="colleague@example.com"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent text-[#FBF9F5] placeholder:text-[#59677C] transition-all"
+                disabled={isAdding}
+              />
+              {isSearching && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <div className="w-4 h-4 border-2 border-[#A343EC] border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+            </div>
           </div>
+
+          {/* User Preview */}
+          {searchedUser && (
+            <div className="flex items-center gap-3 p-3 bg-[#80C49B]/10 border border-[#80C49B]/30 rounded-lg animate-in fade-in slide-in-from-top-1">
+              {searchedUser.image ? (
+                <Image
+                  src={searchedUser.image}
+                  alt={searchedUser.name ?? "User"}
+                  width={40}
+                  height={40}
+                  className="rounded-full object-cover ring-2 ring-[#80C49B]/30"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#A343EC] to-[#9448F2] flex items-center justify-center text-white font-semibold">
+                  {searchedUser.name?.[0]?.toUpperCase() ?? searchedUser.email[0]?.toUpperCase()}
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-[#FBF9F5] truncate">
+                  {searchedUser.name ?? "User"}
+                </p>
+                <p className="text-xs text-[#E4DEAA] truncate">{searchedUser.email}</p>
+              </div>
+              <CheckCircle2 size={20} className="text-[#80C49B] flex-shrink-0" />
+            </div>
+          )}
+
+          {/* Error Message */}
+          {searchError && (
+            <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-sm text-red-400 animate-in fade-in slide-in-from-top-1">
+              {searchError}
+            </div>
+          )}
 
           <div className="flex gap-2">
             <select
@@ -326,7 +433,7 @@ export function CollaboratorManager({
 
             <button
               type="submit"
-              disabled={isAdding || !email.trim()}
+              disabled={isAdding || !searchedUser || isSearching}
               className="px-6 py-3 border-2 border-[#80C49B] text-[#80C49B] font-semibold rounded-lg hover:bg-[#80C49B] hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isAdding ? "..." : "Add"}
@@ -388,7 +495,7 @@ export function CollaboratorManager({
                     </button>
                   </>
                 ) : (
-                  <span className="px-3 py-2 text-xs font-medium bg-white/5 text-[#E4DEEA] rounded-lg border border-white/10">
+                  <span className="px-3 py-2 text-xs font-medium bg-white/5 text-[#E4DEAA] rounded-lg border border-white/10">
                     {userPermission === "read" ? "View" : "Edit"}
                   </span>
                 )}

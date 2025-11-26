@@ -6,7 +6,8 @@ import { SideNav } from "~/app/_components/sideNav";
 import { CreateNoteForm } from "~/app/_components/createNoteForm";
 import { CreateProjectContainer } from "~/app/_components/createProjectContainer";
 import { NotesList } from "~/app/_components/notesList";
-import { LogIn, ArrowRight, Sparkles, FolderKanban, FileEdit } from "lucide-react";
+import { NotificationSystem } from "~/app/_components/notificationSystem";
+import { LogIn, ArrowRight, FolderKanban, FileEdit } from "lucide-react";
 
 export default async function CreatePage({ 
     searchParams 
@@ -76,7 +77,7 @@ export default async function CreatePage({
                 ) : shouldShowNoteForm ? (
                   <FileEdit className="text-[#181F25]" size={22} />
                 ) : (
-                  <Sparkles className="text-white" size={22} />
+                  <FolderKanban className="text-white" size={22} />
                 )}
               </div>
               <div>
@@ -85,25 +86,22 @@ export default async function CreatePage({
                 </h1>
               </div>
             </div>
-            <UserDisplay />
+            
+            {/* Notification System + UserDisplay */}
+            <div className="flex items-center gap-3">
+              <NotificationSystem />
+              <UserDisplay />
+            </div>
           </div>
         </header>
 
         {/* Main Content */}
         <main className="max-w-7xl mx-auto px-8 py-6">
           {shouldShowProjectManagement ? (
-            <div className="flex gap-6">
-              {/* Left sidebar - narrower project creation */}
-              <div className="w-80 flex-shrink-0">
-                <CreateProjectContainer userId={session.user.id} />
-              </div>
-              
-              {/* Right content area - for future use */}
-              <div className="flex-1">
-                {/* This space can be used for project details, analytics, etc. */}
-              </div>
+            <div className="relative w-full">
+              <CreateProjectContainer userId={session.user.id} />
             </div>
-          ) : shouldShowNoteForm ? (
+          ) : shouldShowNoteForm ?(
             <div className="space-y-5">
               <CreateNoteForm />
               <NotesList />
@@ -112,7 +110,7 @@ export default async function CreatePage({
             <div className="flex items-center justify-center min-h-[60vh]">
               <div className="text-center max-w-md">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-[#A343EC]/20 rounded-2xl mb-6">
-                  <Sparkles className="text-[#A343EC]" size={28} />
+                  <FolderKanban className="text-[#A343EC]" size={28} />
                 </div>
                 <h2 className="text-2xl font-bold text-[#FBF9F5] mb-3">
                   Welcome to your workspace
