@@ -100,101 +100,101 @@ export function ProjectsListWorkspace() {
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto">
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6">
       {/* Statistics Header - Floating Stats */}
-      <div className="mb-12">
-        <div className="flex items-center justify-between mb-8">
+      <div className="mb-8 sm:mb-12">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-3 sm:gap-0">
           <div>
-            <h3 className="text-2xl font-bold text-[#FBF9F5] mb-2 flex items-center gap-3">
+            <h3 className="text-xl sm:text-2xl font-bold text-[#FBF9F5] mb-1 sm:mb-2 flex items-center gap-2 sm:gap-3">
               Project Analytics
             </h3>
-            <p className="text-sm text-[#E4DEAA]">Real-time progress across all your projects</p>
+            <p className="text-xs sm:text-sm text-[#E4DEAA]">Real-time progress across all your projects</p>
           </div>
         </div>
         
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
           {/* Overall Completion - Featured */}
-          <div className="lg:col-span-1 flex flex-col items-center justify-center p-6 group cursor-default">
+          <div className="col-span-2 sm:col-span-1 lg:col-span-1 flex flex-col items-center justify-center p-4 sm:p-6 group cursor-default">
             <div
               className={`radial-progress ${getProgressColor(overallCompletion)} drop-shadow-2xl ${getProgressGlow(overallCompletion)} transition-all duration-[2000ms] ease-out`}
               style={{
                 // Animation logic: changes from 0 to actual value after mount
                 "--value": animateCharts ? overallCompletion : 0, 
-                "--size": "7rem",
-                "--thickness": "5px",
+                "--size": "6rem",
+                "--thickness": "4px",
               } as React.CSSProperties}
               role="progressbar"
               aria-valuenow={overallCompletion}
             >
-              <span className="text-2xl font-bold font-faustina">{overallCompletion}%</span>
+              <span className="text-xl sm:text-2xl font-bold font-faustina">{overallCompletion}%</span>
             </div>
-            <div className="mt-4 text-center">
-              <p className="text-xs text-[#E4DEAA] uppercase tracking-wider font-semibold font-faustina">Overall Progress</p>
-              <p className="text-[10px] text-[#59677C] mt-1 font-faustina">{totalCompletedTasks} of {totalAllTasks} tasks</p>
+            <div className="mt-3 sm:mt-4 text-center">
+              <p className="text-[10px] sm:text-xs text-[#E4DEAA] uppercase tracking-wider font-semibold font-faustina">Overall Progress</p>
+              <p className="text-[9px] sm:text-[10px] text-[#59677C] mt-1 font-faustina">{totalCompletedTasks} of {totalAllTasks} tasks</p>
             </div>
           </div>
 
           {/* Total Projects */}
-          <div className="flex flex-col items-center justify-center p-6 group cursor-default hover:bg-white/5 rounded-2xl transition-all">
+          <div className="flex flex-col items-center justify-center p-4 sm:p-6 group cursor-default hover:bg-white/5 rounded-xl sm:rounded-2xl transition-all">
             <div className="relative">
-              <div className="text-5xl font-bold bg-gradient-to-br from-[#A343EC] to-[#9448F2] bg-clip-text text-transparent font-faustina">
+              <div className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-br from-[#A343EC] to-[#9448F2] bg-clip-text text-transparent font-faustina">
                 {totalProjects}
               </div>
               <div className="absolute -inset-2 bg-gradient-to-br from-[#A343EC]/20 to-[#9448F2]/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity -z-10" />
             </div>
-            <p className="text-xs text-[#E4DEAA] mt-3 uppercase tracking-wider font-semibold font-faustina">Active Projects</p>
+            <p className="text-[10px] sm:text-xs text-[#E4DEAA] mt-2 sm:mt-3 uppercase tracking-wider font-semibold font-faustina text-center">Active Projects</p>
           </div>
 
           {/* Total Tasks */}
-          <div className="flex flex-col items-center justify-center p-6 group cursor-default hover:bg-white/5 rounded-2xl transition-all">
+          <div className="flex flex-col items-center justify-center p-4 sm:p-6 group cursor-default hover:bg-white/5 rounded-xl sm:rounded-2xl transition-all">
             <div className="relative">
-              <div className="text-5xl font-bold text-[#FBF9F5] font-faustina">
+              <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#FBF9F5] font-faustina">
                 {totalAllTasks}
               </div>
               <div className="absolute -inset-2 bg-[#FBF9F5]/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity -z-10" />
             </div>
-            <p className="text-xs text-[#E4DEAA] mt-3 uppercase tracking-wider font-semibold font-faustina">Total Tasks</p>
+            <p className="text-[10px] sm:text-xs text-[#E4DEAA] mt-2 sm:mt-3 uppercase tracking-wider font-semibold font-faustina text-center">Total Tasks</p>
           </div>
 
           {/* Completed Projects */}
-          <div className="flex flex-col items-center justify-center p-6 group cursor-default hover:bg-white/5 rounded-2xl transition-all">
+          <div className="flex flex-col items-center justify-center p-4 sm:p-6 group cursor-default hover:bg-white/5 rounded-xl sm:rounded-2xl transition-all">
             <div className="relative">
-              <div className="text-5xl font-bold bg-gradient-to-br from-[#80C49B] to-[#80C49B]/80 bg-clip-text text-transparent font-faustina">
+              <div className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-br from-[#80C49B] to-[#80C49B]/80 bg-clip-text text-transparent font-faustina">
                 {fullyCompletedProjects}
               </div>
               <div className="absolute -inset-2 bg-[#80C49B]/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity -z-10" />
             </div>
-            <p className="text-xs text-[#E4DEAA] mt-3 uppercase tracking-wider font-semibold font-faustina">Completed</p>
+            <p className="text-[10px] sm:text-xs text-[#E4DEAA] mt-2 sm:mt-3 uppercase tracking-wider font-semibold font-faustina text-center">Completed</p>
           </div>
         </div>
       </div>
 
       {/* Projects Grid Toggle */}
-      <div className="relative mb-6">
-        <div className="h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent mb-6" />
+      <div className="relative mb-4 sm:mb-6">
+        <div className="h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent mb-4 sm:mb-6" />
         
         <button
           onClick={() => setShowProjects((s) => !s)}
-          className="group flex items-center gap-3 mx-auto px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#A343EC]/50 transition-all"
+          className="group flex items-center gap-2 sm:gap-3 mx-auto px-4 sm:px-6 py-2.5 sm:py-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#A343EC]/50 transition-all"
         >
-          <Folder size={18} className="text-[#A343EC] group-hover:scale-110 transition-transform" />
-          <span className="text-sm font-semibold text-[#FBF9F5]">
+          <Folder size={16} className="text-[#A343EC] group-hover:scale-110 transition-transform sm:w-[18px] sm:h-[18px]" />
+          <span className="text-xs sm:text-sm font-semibold text-[#FBF9F5]">
             {showProjects ? "Hide" : "View"} All Projects
           </span>
-          <span className="text-xs text-[#E4DEAA] bg-white/5 px-2 py-0.5 rounded-full">
+          <span className="text-[10px] sm:text-xs text-[#E4DEAA] bg-white/5 px-1.5 sm:px-2 py-0.5 rounded-full">
             {totalProjects}
           </span>
           {showProjects ? (
-            <ChevronUp size={16} className="text-[#E4DEAA]" />
+            <ChevronUp size={14} className="text-[#E4DEAA] sm:w-4 sm:h-4" />
           ) : (
-            <ChevronDown size={16} className="text-[#E4DEAA]" />
+            <ChevronDown size={14} className="text-[#E4DEAA] sm:w-4 sm:h-4" />
           )}
         </button>
       </div>
 
       {/* Projects Grid */}
       {showProjects && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
           {projectsWithStats.map((project) => (
             <button
               key={project.id}
@@ -202,10 +202,10 @@ export function ProjectsListWorkspace() {
                 router.push(`/create?action=new_project&projectId=${project.id}`);
                 setShowProjects(false);
               }}
-              className="group relative p-6 rounded-2xl text-left transition-all duration-300 hover:scale-[1.02] bg-gradient-to-br from-white/5 to-transparent hover:from-white/10 hover:to-white/5 border border-white/10 hover:border-[#A343EC]/30"
+              className="group relative p-4 sm:p-6 rounded-xl sm:rounded-2xl text-left transition-all duration-300 hover:scale-[1.02] bg-gradient-to-br from-white/5 to-transparent hover:from-white/10 hover:to-white/5 border border-white/10 hover:border-[#A343EC]/30"
             >
-              <div className="flex items-start gap-5">
-                {/* Radial Progress - Larger and more prominent */}
+              <div className="flex items-start gap-3 sm:gap-5">
+                {/* Radial Progress - Responsive size */}
                 <div className="flex-shrink-0">
                   {project.totalTasks > 0 ? (
                     <div
@@ -213,55 +213,55 @@ export function ProjectsListWorkspace() {
                       style={{
                         // Animation logic: changes from 0 to actual value after mount
                         "--value": animateCharts ? project.completionPercentage : 0,
-                        "--size": "5.5rem",
-                        "--thickness": "5px",
+                        "--size": "4.5rem",
+                        "--thickness": "4px",
                       } as React.CSSProperties}
                       role="progressbar"
                       aria-valuenow={project.completionPercentage}
                     >
-                      <span className="text-base font-bold font-faustina">{project.completionPercentage}%</span>
+                      <span className="text-sm sm:text-base font-bold font-faustina">{project.completionPercentage}%</span>
                     </div>
                   ) : (
-                    <div className="w-[5.5rem] h-[5.5rem] rounded-full bg-white/5 border-2 border-dashed border-white/20 flex items-center justify-center transition-all">
-                      <AlertCircle size={28} className="text-[#59677C]" />
+                    <div className="w-[4.5rem] h-[4.5rem] rounded-full bg-white/5 border-2 border-dashed border-white/20 flex items-center justify-center transition-all">
+                      <AlertCircle size={24} className="text-[#59677C] sm:w-7 sm:h-7" />
                     </div>
                   )}
                 </div>
 
                 {/* Project Info */}
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-lg font-bold text-[#FBF9F5] mb-2 truncate group-hover:text-[#A343EC] transition-colors font-faustina">
+                  <h4 className="text-base sm:text-lg font-bold text-[#FBF9F5] mb-1.5 sm:mb-2 truncate group-hover:text-[#A343EC] transition-colors font-faustina">
                     {project.title}
                   </h4>
                   
                   {project.description && (
-                    <p className="text-sm text-[#E4DEAA]/80 mb-4 line-clamp-2 leading-relaxed font-faustina">
+                    <p className="text-xs sm:text-sm text-[#E4DEAA]/80 mb-3 sm:mb-4 line-clamp-2 leading-relaxed font-faustina">
                       {project.description}
                     </p>
                   )}
 
-                  {/* Task Stats */}
+                  {/* Task Stats - Stack on very small screens */}
                   {project.totalTasks > 0 ? (
-                    <div className="flex items-center gap-4 text-xs font-faustina">
-                      <div className="flex items-center gap-1.5 text-[#80C49B] bg-[#80C49B]/10 px-2.5 py-1 rounded-lg">
-                        <CheckCircle2 size={14} />
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-[10px] sm:text-xs font-faustina">
+                      <div className="flex items-center gap-1 sm:gap-1.5 text-[#80C49B] bg-[#80C49B]/10 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg">
+                        <CheckCircle2 size={12} className="sm:w-[14px] sm:h-[14px]" />
                         <span className="font-semibold">{project.completedTasks}</span>
-                        <span className="text-[#80C49B]/60">done</span>
+                        <span className="text-[#80C49B]/60 hidden xs:inline">done</span>
                       </div>
-                      <div className="flex items-center gap-1.5 text-[#F8D45E] bg-[#F8D45E]/10 px-2.5 py-1 rounded-lg">
-                        <Clock size={14} />
+                      <div className="flex items-center gap-1 sm:gap-1.5 text-[#F8D45E] bg-[#F8D45E]/10 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg">
+                        <Clock size={12} className="sm:w-[14px] sm:h-[14px]" />
                         <span className="font-semibold">{project.inProgressTasks}</span>
-                        <span className="text-[#F8D45E]/60">active</span>
+                        <span className="text-[#F8D45E]/60 hidden xs:inline">active</span>
                       </div>
-                      <div className="flex items-center gap-1.5 text-[#59677C] bg-white/5 px-2.5 py-1 rounded-lg">
-                        <AlertCircle size={14} />
+                      <div className="flex items-center gap-1 sm:gap-1.5 text-[#59677C] bg-white/5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg">
+                        <AlertCircle size={12} className="sm:w-[14px] sm:h-[14px]" />
                         <span className="font-semibold">{project.pendingTasks}</span>
-                        <span className="text-[#59677C]/60">pending</span>
+                        <span className="text-[#59677C]/60 hidden xs:inline">pending</span>
                       </div>
                     </div>
                   ) : (
-                    <div className="inline-flex items-center gap-2 text-xs text-[#59677C] bg-white/5 px-3 py-1.5 rounded-lg font-faustina">
-                      <AlertCircle size={12} />
+                    <div className="inline-flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-[#59677C] bg-white/5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg font-faustina">
+                      <AlertCircle size={10} className="sm:w-3 sm:h-3" />
                       <span className="italic">No tasks yet</span>
                     </div>
                   )}
@@ -270,7 +270,7 @@ export function ProjectsListWorkspace() {
 
               {/* Minimal Progress Bar */}
               {project.totalTasks > 0 && (
-                <div className="mt-5 w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                <div className="mt-4 sm:mt-5 w-full h-0.5 sm:h-1 bg-white/5 rounded-full overflow-hidden">
                   <div
                     className={`h-full transition-all duration-500 rounded-full ${
                       project.completionPercentage === 100
