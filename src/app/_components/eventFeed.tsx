@@ -37,7 +37,6 @@ const REGIONS = [
   { value: 'shumen', label: 'Shumen' },
 ] as const;
 
-// FIX: Made id optional (?) because comment authors might not have it loaded
 interface Author {
   id?: string; 
   name: string | null;
@@ -121,7 +120,6 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
   const maybePercentage = totalRsvps > 0 ? (event.rsvpCounts.maybe / totalRsvps) * 100 : 0;
   const notGoingPercentage = totalRsvps > 0 ? (event.rsvpCounts.notGoing / totalRsvps) * 100 : 0;
 
-  // FIXED: Format date and time separately
   const formatEventDateTime = (date: Date) => {
     const eventDate = new Date(date);
     const dateStr = eventDate.toLocaleDateString('en-US', { 
@@ -313,7 +311,6 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
     });
   };
 
-  // FIXED: Format date and time separately
   const formatDate = (date: Date) => {
     const eventDate = new Date(date);
     const dateStr = eventDate.toLocaleDateString('en-US', { 
@@ -617,11 +614,9 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
 
 export const EventFeed: React.FC = () => {
   const { data: session } = useSession();
-  // 1. Re-add selectedRegion state, initialized to '' (All Regions)
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   
-  // Note: For large datasets, you might pass `selectedRegion` to `useQuery`
-  // and filter on the backend for better performance. For now, we filter on the client.
+
   const { data: eventsData, isLoading, error } = api.event.getPublicEvents.useQuery(undefined, {
     enabled: true,
   });
@@ -649,15 +644,13 @@ export const EventFeed: React.FC = () => {
     );
   }
   
-  // 2. Apply client-side filtering based on selectedRegion
   const filteredEvents = eventsData?.filter(event => 
     selectedRegion === '' || event.region === selectedRegion
   ) ?? [];
 
   return (
     <div>
-      {/* 3. Region Filter UI */}
-      <div className="mb-6">
+=      <div className="mb-6">
         <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-4">
           <div className="flex items-center gap-3">
             <MapPin className="text-[#A343EC]" size={20} />

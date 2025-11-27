@@ -28,7 +28,7 @@ export const CreateEventForm: React.FC = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [eventDate, setEventDate] = useState('');
-  const [region, setRegion] = useState<string>('sofia'); // Default to Sofia
+  const [region, setRegion] = useState<string>('sofia'); // def is sofia
   const [enableRsvp, setEnableRsvp] = useState(false);
   const [sendReminders, setSendReminders] = useState(false);
   const [showForm, setShowForm] = useState(false);
