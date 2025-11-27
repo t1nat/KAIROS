@@ -8,7 +8,6 @@ import {
   FolderKanban,
   X,
   Settings,
-  Zap
 } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
@@ -96,8 +95,12 @@ export function SideNav() {
       
       {/* Logo Area */}
       <Link href="/" className="h-16 flex items-center justify-center border-b border-white/10 hover:bg-white/5 transition-colors group">
-        <div className="w-10 h-10 bg-gradient-to-br from-[#A343EC] to-[#9448F2] rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-          <Zap size={24} className="text-white" />
+        <div className="w-10 h-10 flex items-center justify-center group-hover:scale-110 transition-transform">
+          <img 
+            src="/logo_white.png" 
+            alt="Kairos Logo" 
+            className="w-10 h-10 object-contain"
+          />
         </div>
       </Link>
 

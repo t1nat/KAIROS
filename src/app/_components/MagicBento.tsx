@@ -49,7 +49,7 @@ const cardData: BentoCardProps[] = [
   {
     color: '#181F25',
     title: 'Personal Goals',
-    description: 'Master Your Focus. Never lose important notes. Eliminate the noise to find your perfect headspace.',
+    description: 'Master your focus. Never lose important notes. Eliminate the noise to find your perfect headspace.',
     icon: <Shield size={24} />
   }
 ];

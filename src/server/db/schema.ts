@@ -11,7 +11,6 @@ import {
   varchar,
   pgEnum,
   integer,
-  json,
   boolean,
 } from "drizzle-orm/pg-core";
 import type { AdapterAccount } from "next-auth/adapters";
@@ -254,78 +253,6 @@ export const tasks = createTable(
   ]
 );
 
-// --- DOCUMENTS TABLE ---
-export const documents = createTable(
-  "documents",
-  (_d) => ({
-    id: serial("id").primaryKey(),
-    title: varchar("title", { length: 256 }).notNull(),
-    content: text("content").notNull(),
-    passwordHash: varchar("password_hash", { length: 256 }),
-    organizationId: integer("organization_id").references(() => organizations.id, { onDelete: "cascade" }),
-    createdById: varchar("created_by_id", { length: 255 })
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    createdAt: timestamp("created_at")
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    updatedAt: timestamp("updated_at")
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    annotations: json("annotations"),
-    importedFrom: varchar("imported_from", { length: 256 }),
-    importedAt: timestamp("imported_at", { mode: "date", withTimezone: true }),
-  }),
-  (t) => [
-    index("doc_created_by_idx").on(t.createdById),
-    index("doc_org_idx").on(t.organizationId),
-  ]
-);
-
-// --- DOCUMENT COLLABORATORS TABLE ---
-export const documentCollaborators = createTable(
-  "document_collaborators",
-  (_d) => ({
-    id: serial("id").primaryKey(),
-    documentId: integer("document_id")
-      .notNull()
-      .references(() => documents.id, { onDelete: "cascade" }),
-    userId: varchar("user_id", { length: 255 })
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    lastEdit: timestamp("last_edit")
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    color: varchar("color", { length: 7 }).notNull().default("#3B82F6"),
-  }),
-  (t) => [
-    index("doc_collab_doc_idx").on(t.documentId),
-    index("doc_collab_user_idx").on(t.userId),
-  ]
-);
-
-// --- DOCUMENT VERSIONS TABLE ---
-export const documentVersions = createTable(
-  "document_versions",
-  (_d) => ({
-    id: serial("id").primaryKey(),
-    documentId: integer("document_id")
-      .notNull()
-      .references(() => documents.id, { onDelete: "cascade" }),
-    content: text("content").notNull(),
-    annotations: json("annotations"),
-    createdById: varchar("created_by_id", { length: 255 })
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    createdAt: timestamp("created_at")
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-  }),
-  (t) => [
-    index("doc_version_doc_idx").on(t.documentId),
-    index("doc_version_created_idx").on(t.createdAt),
-  ]
-);
 
 // --- STICKY NOTES TABLE ---
 export const stickyNotes = createTable(
@@ -354,24 +281,6 @@ export const stickyNotes = createTable(
   ]
 );
 
-// --- NOTE COLLABORATORS TABLE ---
-export const noteCollaborators = createTable(
-  "note_collaborators",
-  (d) => ({
-    noteId: integer("note_id")
-      .notNull()
-      .references(() => stickyNotes.id, { onDelete: "cascade" }),
-    collaboratorId: d
-      .varchar({ length: 255 })
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    permission: permissionEnum("permission").notNull(), 
-  }),
-  (t) => [
-    primaryKey({ columns: [t.noteId, t.collaboratorId] }),
-    index("collaborator_user_id_idx").on(t.collaboratorId),
-  ]
-);
 
 // --- PROJECT COLLABORATORS TABLE ---
 export const projectCollaborators = createTable(
@@ -443,28 +352,6 @@ export const taskActivityLog = createTable(
   ]
 );
 
-// --- POSTS TABLE ---
-export const posts = createTable(
-  "post",
-  (d) => ({
-    id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
-    name: d.varchar({ length: 256 }),
-    createdById: d
-      .varchar({ length: 255 })
-      .notNull()
-      .references(() => users.id),
-    createdAt: d
-      .timestamp({ withTimezone: true })
-      .$defaultFn(() => new Date())
-      .notNull(),
-    updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
-  }),
-  (t) => [
-    index("created_by_idx").on(t.createdById),
-    index("name_idx").on(t.name),
-  ],
-);
-
 // --- ACCOUNTS TABLE ---
 export const accounts = createTable(
   "account",
@@ -514,6 +401,8 @@ export const verificationTokens = createTable(
   }),
   (t) => [primaryKey({ columns: [t.identifier, t.token] })],
 );
+
+
 
 // --- EVENTS TABLE ---
 export const events = createTable(
@@ -660,7 +549,6 @@ export const organizationsRelations = relations(organizations, ({ one, many }) =
   creator: one(users, { fields: [organizations.createdById], references: [users.id] }),
   members: many(organizationMembers),
   projects: many(projects),
-  documents: many(documents),
 }));
 
 // Organization Members Relations
@@ -669,37 +557,14 @@ export const organizationMembersRelations = relations(organizationMembers, ({ on
   user: one(users, { fields: [organizationMembers.userId], references: [users.id] }),
 }));
 
-// Documents Relations
-export const documentsRelations = relations(documents, ({ one, many }) => ({
-  createdBy: one(users, { fields: [documents.createdById], references: [users.id] }),
-  organization: one(organizations, { fields: [documents.organizationId], references: [organizations.id] }),
-  collaborators: many(documentCollaborators),
-  versions: many(documentVersions),
-}));
 
-// Document Collaborators Relations
-export const documentCollaboratorsRelations = relations(documentCollaborators, ({ one }) => ({
-  document: one(documents, { fields: [documentCollaborators.documentId], references: [documents.id] }),
-  user: one(users, { fields: [documentCollaborators.userId], references: [users.id] }),
-}));
 
-// Document Versions Relations
-export const documentVersionsRelations = relations(documentVersions, ({ one }) => ({
-  document: one(documents, { fields: [documentVersions.documentId], references: [documents.id] }),
-  createdBy: one(users, { fields: [documentVersions.createdById], references: [users.id] }),
-}));
 
 // Sticky Notes Relations
-export const stickyNotesRelations = relations(stickyNotes, ({ one, many }) => ({
+export const stickyNotesRelations = relations(stickyNotes, ({ one }) => ({
   author: one(users, { fields: [stickyNotes.createdById], references: [users.id] }),
-  collaborators: many(noteCollaborators),
 }));
 
-// Note Collaborators Relations
-export const noteCollaboratorsRelations = relations(noteCollaborators, ({ one }) => ({
-  note: one(stickyNotes, { fields: [noteCollaborators.noteId], references: [stickyNotes.id] }),
-  collaborator: one(users, { fields: [noteCollaborators.collaboratorId], references: [users.id] }),
-}));
 
 // Projects Relations
 export const projectsRelations = relations(projects, ({ one, many }) => ({
@@ -746,7 +611,6 @@ export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
   sessions: many(sessions),
   notes: many(stickyNotes),
-  collaborations: many(noteCollaborators),
   authoredEvents: many(events),
   eventComments: many(eventComments),
   eventLikes: many(eventLikes),
@@ -758,9 +622,6 @@ export const usersRelations = relations(users, ({ many }) => ({
   taskActivities: many(taskActivityLog),
   organizationsOwned: many(organizations),
   organizationMemberships: many(organizationMembers),
-  documents: many(documents),
-  documentCollaborations: many(documentCollaborators),
-  documentVersions: many(documentVersions),
   notifications: many(notifications),
 }));
 
@@ -820,12 +681,6 @@ export type Organization = InferSelectModel<typeof organizations>;
 export type NewOrganization = InferInsertModel<typeof organizations>;
 export type OrganizationMember = InferSelectModel<typeof organizationMembers>;
 export type NewOrganizationMember = InferInsertModel<typeof organizationMembers>;
-export type Document = InferSelectModel<typeof documents>;
-export type NewDocument = InferInsertModel<typeof documents>;
-export type DocumentCollaborator = InferSelectModel<typeof documentCollaborators>;
-export type NewDocumentCollaborator = InferInsertModel<typeof documentCollaborators>;
-export type DocumentVersion = InferSelectModel<typeof documentVersions>;
-export type NewDocumentVersion = InferInsertModel<typeof documentVersions>;
 export type Notification = InferSelectModel<typeof notifications>;
 export type NewNotification = InferInsertModel<typeof notifications>;
 export type EventRsvp = InferSelectModel<typeof eventRsvps>;

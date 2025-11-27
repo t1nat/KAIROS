@@ -11,9 +11,8 @@ import {
     Calendar,
     CheckCircle2,
     ArrowRight,
-    BookOpen,
     Info,
-    X
+    
 } from "lucide-react";
 
 import ScrollReveal from "./_components/ScrollReveal";
@@ -31,20 +30,19 @@ export function HomeClient({ session }: {
     session: SessionData | null;
 }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isGuideOpen, setIsGuideOpen] = useState(false);
     const [showRoleSelection, setShowRoleSelection] = useState(false);
     const [hasAnimated, setHasAnimated] = useState(false);
     const aboutRef = useRef<HTMLElement>(null);
 
-    const { data: userProfile } = api.user.getProfile.useQuery(undefined, {
+    const { data: userProfile, isLoading: isProfileLoading } = api.user.getProfile.useQuery(undefined, {
         enabled: !!session?.user,
     });
 
     useEffect(() => {
-        if (session?.user && userProfile !== undefined && !userProfile) {
+        if (session?.user && userProfile !== undefined && !userProfile && !isProfileLoading) {
             setShowRoleSelection(true);
         }
-    }, [session, userProfile]);
+    }, [session, userProfile, isProfileLoading]);
 
     useEffect(() => {
         setHasAnimated(true);
@@ -61,6 +59,19 @@ export function HomeClient({ session }: {
         setShowRoleSelection(false);
         window.location.href = "/create";
     };
+
+    const handleSignInClose = () => {
+        setIsModalOpen(false);
+        // Small delay to allow the sign-in modal to close before showing role selection
+        if (session?.user && userProfile !== undefined && !userProfile) {
+            setTimeout(() => {
+                setShowRoleSelection(true);
+            }, 300);
+        }
+    };
+
+    // Don't show buttons while role selection is pending or active
+    const showActionButtons = session && !showRoleSelection && userProfile !== undefined && userProfile !== null;
 
     return (
         <main className="min-h-screen bg-[#181F25] relative overflow-hidden" style={{ fontFamily: 'Faustina, serif' }}>
@@ -83,6 +94,11 @@ export function HomeClient({ session }: {
                     <div className="max-w-7xl mx-auto px-6 py-4">
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-3">
+                                <img 
+                                    src="/logo_white.png" 
+                                    alt="Kairos Logo" 
+                                    className="w-8 h-8 object-contain"
+                                />
                                 <h1 className="text-2xl font-bold text-[#FBF9F5]" style={{ fontFamily: 'Uncial Antiqua, serif' }}>KAIROS</h1>
                             </div>
                             
@@ -93,13 +109,6 @@ export function HomeClient({ session }: {
                                 >
                                     <Info size={18} />
                                     <span>About</span>
-                                </button>
-                                <button 
-                                    onClick={() => setIsGuideOpen(true)} 
-                                    className="flex items-center gap-2 px-5 py-2.5 text-[#E4DEAA] hover:text-[#FBF9F5] hover:bg-white/5 rounded-full font-medium transition-all duration-200"
-                                >
-                                    <BookOpen size={18} />
-                                    <span>Guide</span>
                                 </button>
                             </div>
                             
@@ -122,7 +131,7 @@ export function HomeClient({ session }: {
                                 </p>
                             </div>
                             <div className={`flex flex-col gap-4 w-full lg:w-auto lg:min-w-[400px] justify-center lg:mt-24 ${!hasAnimated ? 'animate-smooth-fade-in' : ''}`} style={{ animationDelay: !hasAnimated ? '0.4s' : '0s' }}>
-                                {session && !showRoleSelection && (
+                                {showActionButtons && (
                                     <>
                                         <Link 
                                             href="/create" 
@@ -212,26 +221,26 @@ export function HomeClient({ session }: {
                                         <CheckCircle2 className="text-[#181F25]" size={16} />
                                     </div>
                                     <div>
-                                        <h5 className="font-semibold text-[#FBF9F5] mb-2">Document Collaboration</h5>
-                                        <p className="text-sm text-[#E4DEAA]">TOVA OSHTE GO NQMAME</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-4">
-                                    <div className="flex-shrink-0 w-6 h-6 bg-[#A3D3B4] rounded-full flex items-center justify-center mt-1">
-                                        <CheckCircle2 className="text-[#181F25]" size={16} />
-                                    </div>
-                                    <div>
-                                        <h5 className="font-semibold text-[#FBF9F5] mb-2">Password Protection</h5>
-                                        <p className="text-sm text-[#E4DEAA]">Total control. Never worry again about privacy.</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-4">
-                                    <div className="flex-shrink-0 w-6 h-6 bg-[#A3D3B4] rounded-full flex items-center justify-center mt-1">
-                                        <CheckCircle2 className="text-[#181F25]" size={16} />
-                                    </div>
-                                    <div>
                                         <h5 className="font-semibold text-[#FBF9F5] mb-2">Event Publishing</h5>
                                         <p className="text-sm text-[#E4DEAA]">Go live. Turn internal project plans into public events in seconds.</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-4">
+                                    <div className="flex-shrink-0 w-6 h-6 bg-[#A3D3B4] rounded-full flex items-center justify-center mt-1">
+                                        <CheckCircle2 className="text-[#181F25]" size={16} />
+                                    </div>
+                                    <div>
+                                        <h5 className="font-semibold text-[#FBF9F5] mb-2">Secure Team Access</h5>
+                                        <p className="text-sm text-[#E4DEAA]">Total control. Secure your organization with unique auto-generated access codes.</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-4">
+                                    <div className="flex-shrink-0 w-6 h-6 bg-[#A3D3B4] rounded-full flex items-center justify-center mt-1">
+                                        <CheckCircle2 className="text-[#181F25]" size={16} />
+                                    </div>
+                                    <div>
+                                        <h5 className="font-semibold text-[#FBF9F5] mb-2">Unified Workspace</h5>
+                                        <p className="text-sm text-[#E4DEAA]">Bring teams together. Always connected.</p>
                                     </div>
                                 </div>
                             </div>
@@ -265,41 +274,13 @@ export function HomeClient({ session }: {
                             <span className="text-xl font-bold text-[#FBF9F5]" style={{ fontFamily: 'Uncial Antiqua, serif' }}>Kairos</span>
                         </div>
                         <p className="text-[#E4DEAA]">
-                            © 2024 Kairos. Professional event and project management platform.
+                            © 2025 Kairos.
                         </p>
                     </div>
                 </footer>
             </div>
 
-            <SignInModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-
-            {isGuideOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div 
-                        className="absolute inset-0 bg-black/90 backdrop-blur-md"
-                        onClick={() => setIsGuideOpen(false)}
-                    />
-                    <div className="relative bg-gradient-to-br from-[#1a2128] to-[#181F25] rounded-3xl w-full max-w-4xl max-h-[85vh] overflow-hidden border border-[#A343EC]/20 shadow-2xl shadow-[#A343EC]/10">
-                        <div className="sticky top-0 bg-gradient-to-r from-[#A343EC]/10 to-transparent border-b border-white/5 p-8 backdrop-blur-xl">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <h3 className="text-3xl font-bold text-[#FBF9F5] mb-2">Getting Started with Kairos</h3>
-                                    <p className="text-sm text-[#E4DEAA]/70">Everything you need to know to get up and running</p>
-                                </div>
-                                <button 
-                                    onClick={() => setIsGuideOpen(false)}
-                                    className="p-2 text-[#E4DEAA] hover:text-[#FBF9F5] hover:bg-white/10 rounded-xl transition-all duration-200"
-                                >
-                                    <X size={24} />
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div className="overflow-y-auto max-h-[calc(85vh-120px)] p-8 space-y-8">
-                        </div>
-                    </div>
-                </div>
-            )}
+            <SignInModal isOpen={isModalOpen} onClose={handleSignInClose} />
 
             <style jsx>{`
                 @keyframes hero-fade-in {
@@ -314,8 +295,6 @@ export function HomeClient({ session }: {
                         filter: blur(0px);
                     }
                 }
-                /* The 'hero-float' keyframes are kept in case they are used elsewhere, 
-                but they are removed from .animate-hero-fade-in */
                 @keyframes hero-float {
                     0% { 
                         transform: translateY(-8px);
@@ -328,13 +307,11 @@ export function HomeClient({ session }: {
                     }
                 }
                 .animate-hero-fade-in {
-                    /* Only run hero-fade-in once and stop at the end state (forwards) */
                     animation: hero-fade-in 1.5s ease-out forwards;
                     opacity: 0;
                 }
-                /* New class for the descriptive text: delayed and using the same keyframes */
                 .animate-hero-fade-in-delayed {
-                    animation: hero-fade-in 1.5s ease-out 0.3s forwards; /* 0.3s delay */
+                    animation: hero-fade-in 1.5s ease-out 0.3s forwards;
                     opacity: 0;
                 }
                 @keyframes fade-in {

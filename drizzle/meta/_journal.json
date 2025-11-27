@@ -36,6 +36,20 @@
       "when": 1764174948706,
       "tag": "0004_ambitious_old_lace",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1764220099568,
+      "tag": "0005_youthful_maestro",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1764263184175,
+      "tag": "0006_perfect_electro",
+      "breakpoints": true
     }
   ]
 }

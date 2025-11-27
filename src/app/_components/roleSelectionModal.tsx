@@ -91,25 +91,15 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
   if (!isOpen) return null;
 
   return (
-    <div className="w-full max-w-2xl mx-auto animate-slideUp">
-      <div className="bg-[#1a2128] backdrop-blur-sm rounded-2xl border border-white/20 p-8 shadow-xl">
+    <div className="w-full max-w-2xl mx-auto animate-slideUp -mt-26">
+      <div className="p-8">
         {step === "choose" && (
           <>
-            <h3 className="text-2xl font-semibold text-[#FBF9F5] mb-6 text-center">
+            <h3 className="text-2xl font-semibold text-[#FBF9F5] mb-6 text-left">
               What will you be using Kairos for?
             </h3>
 
             <div className="space-y-3">
-              {/* Personal Use */}
-              <button
-                onClick={() => setPersonalMode.mutate()}
-                disabled={setPersonalMode.isPending}
-                className="w-full p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-[#A343EC]/50 transition-all duration-200 text-left group disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
-              >
-                <span className="text-[#FBF9F5] font-medium">Personal Use</span>
-                <ChevronRight className="text-[#E4DEAA] group-hover:text-[#A343EC] transition-colors" size={20} />
-              </button>
-
               {/* Organization Admin */}
               <button
                 onClick={() => setStep("admin-setup")}
@@ -125,6 +115,16 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
                 className="w-full p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-[#A343EC]/50 transition-all duration-200 text-left group flex items-center justify-between"
               >
                 <span className="text-[#FBF9F5] font-medium">Join Organization</span>
+                <ChevronRight className="text-[#E4DEAA] group-hover:text-[#A343EC] transition-colors" size={20} />
+              </button>
+
+              {/* Personal Use */}
+              <button
+                onClick={() => setPersonalMode.mutate()}
+                disabled={setPersonalMode.isPending}
+                className="w-full p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-[#A343EC]/50 transition-all duration-200 text-left group disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
+              >
+                <span className="text-[#FBF9F5] font-medium">Personal Use</span>
                 <ChevronRight className="text-[#E4DEAA] group-hover:text-[#A343EC] transition-colors" size={20} />
               </button>
             </div>

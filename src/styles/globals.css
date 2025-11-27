@@ -1,9 +1,5 @@
   /* src/styles/globals.css */
   @import "tailwindcss";
-  @theme {
-    --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
-      "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  }
 
   /* ========================================
       THEME VARIABLES
@@ -11,6 +7,8 @@
 
   /* Light Mode (Default) */
   :root {
+    --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
+      "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     /* Backgrounds */
     /* Changed background to a slightly off-white for aesthetic appeal */
     --bg-primary: 250 250 252;        /* #FAFAFC - Main backgrounds (Slightly off-white) */
@@ -108,7 +106,7 @@
   }
 
   .input-base:focus {
-    ring: 2px solid rgb(var(--accent-primary));
+    outline: 2px solid rgb(var(--accent-primary));
     border-color: transparent;
   }
 
@@ -445,72 +443,57 @@
 
 .radial-progress {
   position: relative;
-  display: inline-grid;
-  place-content: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: var(--size, 5rem);
   height: var(--size, 5rem);
-  border-radius: 9999px;
-  background-color: transparent;
+  border-radius: 50%;
+  
+  /* ************************************************* */
+  /* THE FIX: Transition the custom property --value */
+  /* ************************************************* */
+  transition: --value 2s ease-out; 
 }
 
 .radial-progress::before {
   content: "";
   position: absolute;
   inset: 0;
-  border-radius: 9999px;
-  background: radial-gradient(
+  border-radius: 50%;
+  /* This background property now updates smoothly because the variable it depends on is transitioned */
+  background: conic-gradient(
+    currentColor calc(var(--value, 0) * 1%),
+    transparent calc(var(--value, 0) * 1%)
+  );
+  mask: radial-gradient(
     farthest-side,
-    currentColor 98%,
-    transparent
+    transparent calc(100% - var(--thickness, 4px)),
+    white calc(100% - var(--thickness, 4px))
   );
-  -webkit-mask-image: radial-gradient(
+  -webkit-mask: radial-gradient(
     farthest-side,
-    transparent calc(100% - var(--thickness, 0.2em)),
-    #000 calc(100% - var(--thickness, 0.2em) + 1px)
+    transparent calc(100% - var(--thickness, 4px)),
+    white calc(100% - var(--thickness, 4px))
   );
-  mask-image: radial-gradient(
-    farthest-side,
-    transparent calc(100% - var(--thickness, 0.2em)),
-    #000 calc(100% - var(--thickness, 0.2em) + 1px)
-  );
-  -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
-  -webkit-mask-position: center;
-  mask-position: center;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  background-image: conic-gradient(
-    currentColor calc(var(--value) * 1%),
-    transparent 0
-  );
+  /* REMOVED: transition: all 2s ease-out; */
 }
 
-/* Optional: Add a background track */
 .radial-progress::after {
+  /* This element creates the background track, no change needed */
   content: "";
   position: absolute;
   inset: 0;
-  border-radius: 9999px;
-  background: radial-gradient(
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  mask: radial-gradient(
     farthest-side,
-    rgba(255, 255, 255, 0.05) 98%,
-    transparent
+    transparent calc(100% - var(--thickness, 4px)),
+    white calc(100% - var(--thickness, 4px))
   );
-  -webkit-mask-image: radial-gradient(
+  -webkit-mask: radial-gradient(
     farthest-side,
-    transparent calc(100% - var(--thickness, 0.2em)),
-    #000 calc(100% - var(--thickness, 0.2em) + 1px)
+    transparent calc(100% - var(--thickness, 4px)),
+    white calc(100% - var(--thickness, 4px))
   );
-  mask-image: radial-gradient(
-    farthest-side,
-    transparent calc(100% - var(--thickness, 0.2em)),
-    #000 calc(100% - var(--thickness, 0.2em) + 1px)
-  );
-  -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
-  -webkit-mask-position: center;
-  mask-position: center;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  z-index: -1;
 }

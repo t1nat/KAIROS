@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { api } from "~/trpc/react";
-import { Folder, ChevronDown, ChevronUp, CheckCircle2, Clock, AlertCircle, TrendingUp } from "lucide-react";
+import { Folder, ChevronDown, ChevronUp, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface ProjectWithStats {
@@ -39,6 +39,7 @@ export function ProjectsListWorkspace() {
 
   // Trigger chart animation on mount
   useState(() => {
+    // This is the trigger that starts the animation from 0%
     const timer = setTimeout(() => setAnimateCharts(true), 100);
     return () => clearTimeout(timer);
   });
@@ -105,7 +106,6 @@ export function ProjectsListWorkspace() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h3 className="text-2xl font-bold text-[#FBF9F5] mb-2 flex items-center gap-3">
-              <TrendingUp className="text-[#A343EC]" size={28} />
               Project Analytics
             </h3>
             <p className="text-sm text-[#E4DEAA]">Real-time progress across all your projects</p>
@@ -116,9 +116,10 @@ export function ProjectsListWorkspace() {
           {/* Overall Completion - Featured */}
           <div className="lg:col-span-1 flex flex-col items-center justify-center p-6 group cursor-default">
             <div
-              className={`radial-progress ${getProgressColor(overallCompletion)} drop-shadow-2xl ${getProgressGlow(overallCompletion)} transition-all duration-1000 ease-out`}
+              className={`radial-progress ${getProgressColor(overallCompletion)} drop-shadow-2xl ${getProgressGlow(overallCompletion)} transition-all duration-[2000ms] ease-out`}
               style={{
-                "--value": animateCharts ? overallCompletion : 0,
+                // Animation logic: changes from 0 to actual value after mount
+                "--value": animateCharts ? overallCompletion : 0, 
                 "--size": "7rem",
                 "--thickness": "5px",
               } as React.CSSProperties}
@@ -210,6 +211,7 @@ export function ProjectsListWorkspace() {
                     <div
                       className={`radial-progress ${getProgressColor(project.completionPercentage)} drop-shadow-lg ${getProgressGlow(project.completionPercentage)} transition-all duration-1000 ease-out`}
                       style={{
+                        // Animation logic: changes from 0 to actual value after mount
                         "--value": animateCharts ? project.completionPercentage : 0,
                         "--size": "5.5rem",
                         "--thickness": "5px",

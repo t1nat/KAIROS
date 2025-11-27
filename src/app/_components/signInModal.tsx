@@ -133,10 +133,12 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
         </button>
 
         <div className="relative p-8 pb-6 text-center border-b border-white/5">
-          <div className="w-16 h-16 bg-[#A343EC] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[#A343EC]/30">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <img 
+              src="/logo_white.png" 
+              alt="Kairos Logo" 
+              className="w-16 h-16 object-contain"
+            />
           </div>
           <h2 className="text-2xl font-bold text-[#FBF9F5] mb-2">
             {isSignUp ? "Create Account" : "Welcome to Kairos"}
