@@ -97,18 +97,22 @@ export default async function CreatePage({
         </header>
 
         {/* Main Content - Full Height with Scrolling */}
-        <main className="flex-1 max-w-7xl w-full mx-auto px-8 py-6 overflow-auto"style={{ fontFamily: 'Faustina, serif' }}>
+        <main className="flex-1 w-full px-8 py-6 overflow-auto"style={{ fontFamily: 'Faustina, serif' }}>
           {shouldShowProjectManagement ? (
             <div className="relative w-full h-full">
               <CreateProjectContainer userId={session.user.id} />
             </div>
           ) : shouldShowNoteForm ?(
-            <div className="space-y-5">
-              <CreateNoteForm />
-              <NotesList />
-            </div>
+                <div className="flex gap-6 w-full">
+                   <div className="w-96 flex-shrink-0">
+                       <CreateNoteForm />
+                   </div>
+                    <div className="flex-1">
+                          <NotesList />
+                    </div>
+                   </div>
           ) : (
-            <div className="flex flex-col items-center justify-start pt-16 pb-20">
+            <div className="flex flex-col items-center justify-start pt-16 pb-20 max-w-7xl mx-auto">
               <div className="text-center max-w-lg mb-16">
                 <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-[#A343EC]/20 to-[#9448F2]/10 rounded-3xl mb-8 shadow-lg shadow-[#A343EC]/20">
                   <FolderKanban className="text-[#A343EC]" size={36} />

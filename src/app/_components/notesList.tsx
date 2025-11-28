@@ -109,8 +109,8 @@ export function NotesList() {
   }
 
   return (
-    // Relative container
-    <div className="relative h-[calc(100vh-140px)] w-full">
+    // Relative container - CHANGED HEIGHT HERE
+    <div className="relative h-[calc(100vh-200px)] w-full">
       
       {/* --- ENCRYPTED FOLDER (Positioned Top Right, aligned with New Note button) --- */}
       <div className="absolute -top-14 right-0 z-50">
@@ -208,7 +208,7 @@ export function NotesList() {
         <div className="h-full min-h-0 flex flex-col items-end"> 
           
           {selectedNoteId && selectedNote ? (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-300 w-full max-w-[480px] flex flex-col gap-4">
+            <div className="animate-in fade-in slide-in-from-right-4 duration-300 w-full max-w-[480px] flex flex-col gap-4 h-full">
               
               {/* === LOCKED STATE UI === */}
               {isLocked ? (
@@ -303,8 +303,8 @@ export function NotesList() {
                 </>
               ) : (
                 /* === UNLOCKED CONTENT VIEW === */
-                <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6 h-full flex flex-col shadow-2xl">
-                   <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6 flex-1 flex flex-col shadow-2xl min-h-0">
+                   <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10 flex-shrink-0">
                       <div className="flex items-center gap-3">
                          <div className="w-10 h-10 bg-gradient-to-br from-[#9448F2] to-[#80C49B] rounded-lg flex items-center justify-center text-white shadow-lg">
                            <FileText size={20} />
@@ -334,10 +334,10 @@ export function NotesList() {
                       </div>
                    </div>
                    
-                   <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#0F1115] rounded-lg p-6 shadow-inner border border-white/5">
-                      <p className="text-[#FBF9F5] whitespace-pre-wrap leading-relaxed">
-                        {unlockedContent ?? selectedNote.content}
-                      </p>
+                   <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#0F1115] rounded-lg p-6 shadow-inner border border-white/5 min-h-0">
+                      <p className="text-[#FBF9F5] whitespace-normal break-words leading-relaxed">
+                         {unlockedContent ?? selectedNote.content}
+                         </p>
                    </div>
                 </div>
               )}

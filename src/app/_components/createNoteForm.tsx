@@ -34,7 +34,7 @@ export const CreateNoteForm: React.FC = () => {
   };
 
   return (
-    <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 mb-6 sm:mb-8 overflow-hidden">
+    <div className="max-w-2xl bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 mb-6 sm:mb-8 overflow-hidden">
       {!showForm ? (
         <button
           onClick={() => setShowForm(true)}
