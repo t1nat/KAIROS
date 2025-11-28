@@ -116,6 +116,31 @@ export const noteRouter = createTRPCRouter({
       };
     }),
 
+  update: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      content: z.string().min(1),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const note = await ctx.db.query.stickyNotes.findFirst({
+        where: eq(stickyNotes.id, input.id),
+      });
+
+      if (!note) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Note not found." });
+      }
+
+      if (note.createdById !== ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You don't own this note." });
+      }
+
+      await ctx.db.update(stickyNotes)
+        .set({ content: input.content })
+        .where(eq(stickyNotes.id, input.id));
+
+      return { success: true, message: "Note updated successfully" };
+    }),
+
   delete: protectedProcedure
     .input(z.object({
       id: z.number(),

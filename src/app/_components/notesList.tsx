@@ -1,8 +1,9 @@
+// src/app/_components/notesList.tsx
 "use client";
 
 import { useState } from "react";
 import { api } from "~/trpc/react";
-import { Lock, Trash2, Eye, EyeOff, Mail, AlertCircle, FileText, ChevronDown, RefreshCw, FolderLock } from "lucide-react";
+import { Lock, Trash2, Eye, EyeOff, Mail, AlertCircle, FileText, ChevronDown, RefreshCw, FolderLock, X } from "lucide-react";
 
 export function NotesList() {
   const [selectedNoteId, setSelectedNoteId] = useState<number | null>(null);
@@ -13,6 +14,8 @@ export function NotesList() {
   const [passwordErrors, setPasswordErrors] = useState<Record<number, string>>({});
   const [showResetModal, setShowResetModal] = useState<number | null>(null);
 
+  const [editingContent, setEditingContent] = useState<Record<number, string>>({});
+
   const { data: notes, refetch } = api.note.getAll.useQuery();
   
   const deleteNote = api.note.delete.useMutation({
@@ -20,6 +23,13 @@ export function NotesList() {
       if (selectedNoteId) {
         setSelectedNoteId(null);
       }
+      void refetch();
+    },
+  });
+
+  const updateNote = api.note.update.useMutation({
+    onSuccess: () => {
+      setSelectedNoteId(null);
       void refetch();
     },
   });
@@ -85,9 +95,9 @@ export function NotesList() {
     requestPasswordReset.mutate({ noteId });
   };
 
+  // Separate notes into locked and unlocked
   const unlockedNotesArray = notes?.filter(n => !n.passwordHash) ?? [];
   const lockedNotesArray = notes?.filter(n => n.passwordHash) ?? [];
-  
 
   if (!notes || notes.length === 0) {
     return (
@@ -101,9 +111,9 @@ export function NotesList() {
   }
 
   return (
-
     <div className="relative h-[calc(100vh-200px)] w-full">
       
+      {/* --- ENCRYPTED FOLDER (Positioned Top Right, aligned with New Note button) --- */}
       <div className="absolute -top-14 right-0 z-50">
         {lockedNotesArray.length > 0 && (
           <button
@@ -120,7 +130,8 @@ export function NotesList() {
         )}
       </div>
 
-      <div className="flex flex-col h-full pt-2 max-w-3xl mx-auto">
+      {/* --- SINGLE COLUMN LAYOUT --- */}
+      <div className="flex flex-col h-full max-w-3xl mx-auto">
         <h3 className="text-[#E4DEAA] text-xs font-bold uppercase tracking-widest mb-4 pl-1">Your Notes</h3>
         
         <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-3">
@@ -135,34 +146,54 @@ export function NotesList() {
 
               return (
                 <div key={note.id} className="space-y-3">
-                  <button
-                    onClick={() => setSelectedNoteId(isSelected ? null : note.id)}
-                    className={`w-full text-left p-4 rounded-xl border transition-all group ${
-                      isSelected 
-                        ? 'bg-[#9448F2]/10 border-[#9448F2]/50 shadow-lg shadow-[#9448F2]/10' 
-                        : 'bg-[#1E2024] border-white/5 hover:bg-[#2A2D35] hover:border-white/10'
-                    }`}
-                  >
+                  <div className={`w-full p-4 rounded-xl border transition-all group ${
+                    isSelected 
+                      ? 'bg-[#9448F2]/10 border-[#9448F2]/50 shadow-lg shadow-[#9448F2]/10' 
+                      : 'bg-[#1E2024] border-white/5 hover:bg-[#2A2D35] hover:border-white/10'
+                  }`}>
                     <div className="flex items-center justify-between mb-2">
-                      <span className={`text-xs font-medium ${isSelected ? 'text-[#A343EC]' : 'text-[#E4DEAA]'}`}>
-                        {new Date(note.createdAt).toLocaleDateString()}
-                      </span>
+                      <button
+                        onClick={() => setSelectedNoteId(isSelected ? null : note.id)}
+                        className="flex-1 text-left"
+                      >
+                        <span className={`text-xs font-medium ${isSelected ? 'text-[#A343EC]' : 'text-[#E4DEAA]'}`}>
+                          {new Date(note.createdAt).toLocaleDateString()}
+                        </span>
+                      </button>
                       <div className="flex items-center gap-2">
                         {note.passwordHash && (
                           <Lock size={12} className="text-red-400" />
                         )}
                         <FileText size={14} className={isSelected ? 'text-[#A343EC]' : 'text-white/20 group-hover:text-white/40'} />
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm('Delete this note? This cannot be undone.')) {
+                              deleteNote.mutate({ id: note.id });
+                            }
+                          }}
+                          className="text-red-400/60 hover:text-red-400 transition-colors p-1"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </div>
-                    <p className={`text-sm line-clamp-3 font-medium ${isSelected ? 'text-white' : 'text-[#FBF9F5]/80'}`}>
-                      {note.content.substring(0, 100)}...
-                    </p>
-                  </button>
+                    <button
+                      onClick={() => setSelectedNoteId(isSelected ? null : note.id)}
+                      className="w-full text-left"
+                    >
+                      <p className={`text-sm line-clamp-3 font-medium ${isSelected ? 'text-white' : 'text-[#FBF9F5]/80'}`}>
+                        {note.content.substring(0, 100)}...
+                      </p>
+                    </button>
+                  </div>
 
+                  {/* EXPANDED CONTENT */}
                   {isSelected && (
                     <div className="animate-in fade-in slide-in-from-top-2 duration-200 space-y-3">
                       {isLocked ? (
                         <>
+                          {/* Password Input Card */}
                           <div className="bg-[#1E2024] border border-white/10 rounded-xl p-6 shadow-xl">
                             <div className="flex items-center gap-2 mb-1">
                                <Lock className="text-red-400" size={20} />
@@ -211,36 +242,42 @@ export function NotesList() {
                           </div>
                         </>
                       ) : (
+                        /* UNLOCKED CONTENT - EDITABLE */
                         <div className="bg-[#0F1115] border border-white/10 rounded-xl p-6 shadow-xl">
                           <div className="flex items-center justify-between mb-4 pb-4 border-b border-white/10">
                             <div className="flex items-center gap-2">
                               <FileText size={18} className="text-[#A343EC]" />
-                              <h4 className="text-white font-semibold">Full Content</h4>
+                              <h4 className="text-white font-semibold">Edit Note</h4>
                             </div>
-                            <button
-                              onClick={() => void refetch()}
-                              className="text-[#E4DEAA] hover:text-white transition-colors p-1"
-                            >
-                              <RefreshCw size={16} />
-                            </button>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => {
+                                  const content = editingContent[note.id] ?? (unlockedContent ?? note.content);
+                                  updateNote.mutate({ id: note.id, content });
+                                }}
+                                disabled={updateNote.isPending}
+                                className="text-[#80C49B] hover:text-[#9BDB9B] transition-colors px-3 py-1 text-sm font-medium disabled:opacity-50"
+                              >
+                                {updateNote.isPending ? 'Saving...' : 'Save'}
+                              </button>
+                              <button
+                                onClick={() => void refetch()}
+                                className="text-[#E4DEAA] hover:text-white transition-colors p-1"
+                              >
+                                <RefreshCw size={16} />
+                              </button>
+                            </div>
                           </div>
-                          <p className="text-[#FBF9F5] whitespace-pre-wrap break-words leading-relaxed">
-                            {unlockedContent ?? note.content}
-                          </p>
+                          <textarea
+                            value={editingContent[note.id] ?? (unlockedContent ?? note.content)}
+                            onChange={(e) => setEditingContent(prev => ({ ...prev, [note.id]: e.target.value }))}
+                            className="w-full min-h-[300px] bg-[#1E2024] border border-white/10 text-[#FBF9F5] rounded-lg p-4 outline-none focus:border-[#9448F2] focus:ring-1 focus:ring-[#9448F2] transition-all resize-y font-mono text-sm leading-relaxed"
+                            placeholder="Write your note here..."
+                          />
                         </div>
                       )}
 
-                      <button
-                        onClick={() => {
-                          if (confirm('Delete this note? This cannot be undone.')) {
-                            deleteNote.mutate({ id: note.id });
-                          }
-                        }}
-                        className="w-full bg-[#3B1E22] border border-red-500/30 text-red-300 text-sm font-medium py-3 rounded-xl hover:bg-red-950/50 transition-colors flex items-center justify-center gap-2"
-                      >
-                        <Trash2 size={16} />
-                        Delete Note
-                      </button>
+
                     </div>
                   )}
                 </div>
@@ -258,6 +295,7 @@ export function NotesList() {
             )
           )}
 
+          {/* Locked Notes Section - Expands Inline */}
           {showLockedNotes && lockedNotesArray.length > 0 && (
             <div className="animate-in fade-in slide-in-from-top-2 duration-200">
               <h4 className="px-1 py-2 text-[10px] font-bold text-[#80C49B] uppercase tracking-wider opacity-80">
@@ -274,25 +312,47 @@ export function NotesList() {
 
                   return (
                     <div key={note.id} className="space-y-3">
-                      <button
-                        onClick={() => setSelectedNoteId(isSelected ? null : note.id)}
-                        className="w-full text-left p-4 rounded-xl border transition-all group bg-[#1E2024] border-red-500/20 hover:bg-[#2A2D35] hover:border-red-500/40"
-                      >
+                      <div className="w-full p-4 rounded-xl border transition-all group bg-[#1E2024] border-red-500/20 hover:bg-[#2A2D35] hover:border-red-500/40">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs text-[#E4DEAA]">
-                            {new Date(note.createdAt).toLocaleDateString()}
-                          </span>
-                          <Lock size={14} className="text-red-400 opacity-70 group-hover:opacity-100" />
+                          <button
+                            onClick={() => setSelectedNoteId(isSelected ? null : note.id)}
+                            className="flex-1 text-left"
+                          >
+                            <span className="text-xs text-[#E4DEAA]">
+                              {new Date(note.createdAt).toLocaleDateString()}
+                            </span>
+                          </button>
+                          <div className="flex items-center gap-2">
+                            <Lock size={14} className="text-red-400 opacity-70 group-hover:opacity-100" />
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (confirm('Delete this note? This cannot be undone.')) {
+                                  deleteNote.mutate({ id: note.id });
+                                }
+                              }}
+                              className="text-red-400/60 hover:text-red-400 transition-colors p-1"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
                         </div>
-                        <p className="text-sm text-[#FBF9F5] line-clamp-3 font-medium">
-                          🔒 Encrypted Note
-                        </p>
-                      </button>
+                        <button
+                          onClick={() => setSelectedNoteId(isSelected ? null : note.id)}
+                          className="w-full text-left"
+                        >
+                          <p className="text-sm text-[#FBF9F5] line-clamp-3 font-medium">
+                            🔒 Encrypted Note
+                          </p>
+                        </button>
+                      </div>
 
+                      {/* EXPANDED CONTENT FOR LOCKED NOTES */}
                       {isSelected && (
                         <div className="animate-in fade-in slide-in-from-top-2 duration-200 space-y-3">
                           {isLocked ? (
                             <>
+                              {/* Password Input Card */}
                               <div className="bg-[#1E2024] border border-white/10 rounded-xl p-6 shadow-xl">
                                 <div className="flex items-center gap-2 mb-1">
                                    <Lock className="text-red-400" size={20} />
@@ -341,36 +401,42 @@ export function NotesList() {
                               </div>
                             </>
                           ) : (
+                            /* UNLOCKED CONTENT - EDITABLE */
                             <div className="bg-[#0F1115] border border-white/10 rounded-xl p-6 shadow-xl">
                               <div className="flex items-center justify-between mb-4 pb-4 border-b border-white/10">
                                 <div className="flex items-center gap-2">
                                   <FileText size={18} className="text-[#A343EC]" />
-                                  <h4 className="text-white font-semibold">Full Content</h4>
+                                  <h4 className="text-white font-semibold">Edit Note</h4>
                                 </div>
-                                <button
-                                  onClick={() => void refetch()}
-                                  className="text-[#E4DEAA] hover:text-white transition-colors p-1"
-                                >
-                                  <RefreshCw size={16} />
-                                </button>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => {
+                                      const content = editingContent[note.id] ?? (unlockedContent ?? note.content);
+                                      updateNote.mutate({ id: note.id, content });
+                                    }}
+                                    disabled={updateNote.isPending}
+                                    className="text-[#80C49B] hover:text-[#9BDB9B] transition-colors px-3 py-1 text-sm font-medium disabled:opacity-50"
+                                  >
+                                    {updateNote.isPending ? 'Saving...' : 'Save'}
+                                  </button>
+                                  <button
+                                    onClick={() => void refetch()}
+                                    className="text-[#E4DEAA] hover:text-white transition-colors p-1"
+                                  >
+                                    <RefreshCw size={16} />
+                                  </button>
+                                </div>
                               </div>
-                              <p className="text-[#FBF9F5] whitespace-pre-wrap break-words leading-relaxed">
-                                {unlockedContent ?? note.content}
-                              </p>
+                              <textarea
+                                value={editingContent[note.id] ?? (unlockedContent ?? note.content)}
+                                onChange={(e) => setEditingContent(prev => ({ ...prev, [note.id]: e.target.value }))}
+                                className="w-full min-h-[300px] bg-[#1E2024] border border-white/10 text-[#FBF9F5] rounded-lg p-4 outline-none focus:border-[#9448F2] focus:ring-1 focus:ring-[#9448F2] transition-all resize-y font-mono text-sm leading-relaxed"
+                                placeholder="Write your note here..."
+                              />
                             </div>
                           )}
 
-                          <button
-                            onClick={() => {
-                              if (confirm('Delete this note? This cannot be undone.')) {
-                                deleteNote.mutate({ id: note.id });
-                              }
-                            }}
-                            className="w-full bg-[#3B1E22] border border-red-500/30 text-red-300 text-sm font-medium py-3 rounded-xl hover:bg-red-950/50 transition-colors flex items-center justify-center gap-2"
-                          >
-                            <Trash2 size={16} />
-                            Delete Note
-                          </button>
+
                         </div>
                       )}
                     </div>
@@ -382,6 +448,7 @@ export function NotesList() {
         </div>
       </div>
 
+      {/* Password Reset Modal */}
       {showResetModal !== null && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-[#0F1115] rounded-2xl shadow-2xl max-w-md w-full p-6 border border-white/10">
