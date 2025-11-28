@@ -102,7 +102,7 @@ export function HomeClient({ session }: {
                                 <h1 className="text-2xl font-bold text-[#FBF9F5]" style={{ fontFamily: 'Uncial Antiqua, serif' }}>KAIROS</h1>
                             </div>
                             
-                            <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2">
+                            {/* <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2">
                                 <button 
                                     onClick={scrollToAbout} 
                                     className="flex items-center gap-2 px-5 py-2.5 text-[#E4DEAA] hover:text-[#FBF9F5] hover:bg-white/5 rounded-full font-medium transition-all duration-200"
@@ -110,7 +110,7 @@ export function HomeClient({ session }: {
                                     <Info size={18} />
                                     <span>About</span>
                                 </button>
-                            </div>
+                            </div> */}
                             
                             <div className="flex items-center">
                                 {session && <UserDisplay />}
@@ -121,7 +121,7 @@ export function HomeClient({ session }: {
 
                 <section className="pt-40 pb-32 px-6 min-h-screen flex items-center">
                     <div className="max-w-7xl mx-auto w-full">
-                        <div className="flex flex-col lg:flex-row justify-between items-start gap-12 mb-8">
+                        <div className="flex flex-col lg:flex-row justify-between items-center gap-12 mb-8">
                            <div className="flex-1 text-center lg:text-left">
                                 <h2 className="text-7xl md:text-8xl lg:text-9xl font-bold text-[#FBF9F5] mb-2 leading-tight tracking-tight animate-hero-fade-in" style={{ fontFamily: 'Uncial Antiqua, serif' }}>
                                     <span className="inline-block">KAIROS</span>
@@ -130,7 +130,7 @@ export function HomeClient({ session }: {
                                     Discover the perfect moment with Kairos.
                                 </p>
                             </div>
-                            <div className={`flex flex-col gap-4 w-full lg:w-auto lg:min-w-[400px] justify-center lg:mt-24 ${!hasAnimated ? 'animate-smooth-fade-in' : ''}`} style={{ animationDelay: !hasAnimated ? '0.4s' : '0s' }}>
+                            <div className={`flex flex-col gap-4 w-full lg:w-auto lg:min-w-[400px] justify-center ${!hasAnimated ? 'animate-smooth-fade-in' : ''}`} style={{ animationDelay: !hasAnimated ? '0.4s' : '0s' }}>
                                 {showActionButtons && (
                                     <>
                                         <Link 
