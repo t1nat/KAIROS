@@ -144,7 +144,7 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
             <div className="w-10 h-10 bg-[#A343EC]/20 rounded-lg flex items-center justify-center">
               <BarChart3 size={20} className="text-[#A343EC]" />
             </div>
-            <h2 className="text-xl font-bold text-[#FBF9F5]">RSVP Dashboard</h2>
+            <h2 className="text-xl font-bold text-[#FBF9F5]">Responses Dashboard</h2>
           </div>
           <button
             onClick={onClose}

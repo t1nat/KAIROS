@@ -37,7 +37,6 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
       if (result?.error) {
         setError("Invalid email or password");
       } else {
-        setLoadingMessage("Success! Redirecting...");
         onClose();
         router.push("/");
         router.refresh();
@@ -55,7 +54,6 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
     e.preventDefault();
     setIsLoading(true);
     setError("");
-    setLoadingMessage("Creating your account...");
 
     try {
       await signupMutation.mutateAsync({
@@ -64,7 +62,6 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
         name: name || undefined,
       });
 
-      setLoadingMessage("Signing you in...");
 
       const result = await signIn("credentials", {
         email,
@@ -75,7 +72,6 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
       if (result?.error) {
         setError("Account created but sign in failed. Please try signing in.");
       } else {
-        setLoadingMessage("Success! Redirecting...");
         setTimeout(() => {
           onClose();
           router.push("/");
@@ -97,7 +93,6 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
   };
 
   const handleGoogleSignIn = async () => {
-    setLoadingMessage("Redirecting to Google...");
     await signIn("google", { callbackUrl: "/" });
   };
 
