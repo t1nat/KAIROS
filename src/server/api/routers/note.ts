@@ -1,4 +1,3 @@
-// src/server/api/routers/note.ts
 import { z } from "zod";
 import { TRPCError } from "@trpc/server"; 
 import { protectedProcedure, createTRPCRouter } from "~/server/api/trpc";
@@ -15,7 +14,6 @@ export const noteRouter = createTRPCRouter({
       password: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      // 1. Prepare password data
       let passwordHash: string | null = null;
       let passwordSalt: string | null = null;
 
@@ -35,7 +33,6 @@ export const noteRouter = createTRPCRouter({
         }
       }
       
-      // 2. Database Insertion
       try {
         const [newNote] = await ctx.db.insert(stickyNotes).values({
           content: input.content,
@@ -81,7 +78,6 @@ export const noteRouter = createTRPCRouter({
       attemptedPassword: z.string().optional(), 
     }))
     .query(async ({ ctx, input }) => {
-      // 1. Fetch the note
       const note = await ctx.db.query.stickyNotes.findFirst({
         where: eq(stickyNotes.id, input.id),
       });
@@ -90,15 +86,12 @@ export const noteRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Note not found." });
       }
 
-      // 2. Authorization Check
       if (note.createdById !== ctx.session.user.id) {
         throw new TRPCError({ code: "FORBIDDEN", message: "You don't own this note." });
       }
 
-      // 3. Password Protection Logic
       if (note.passwordHash) {
         if (!input.attemptedPassword) {
-          // Content locked, prompt for password
           return {
             id: note.id,
             content: null, 
@@ -106,7 +99,6 @@ export const noteRouter = createTRPCRouter({
           };
         }
 
-        // Verify the attempted password
         const isMatch = await bcrypt.compare(
           input.attemptedPassword, 
           note.passwordHash
@@ -117,7 +109,6 @@ export const noteRouter = createTRPCRouter({
         }
       }
 
-      // If unlocked, return the content
       return {
         id: note.id,
         content: note.content,
@@ -130,7 +121,6 @@ export const noteRouter = createTRPCRouter({
       id: z.number(),
     }))
     .mutation(async ({ ctx, input }) => {
-      // 1. Fetch the note to verify ownership
       const note = await ctx.db.query.stickyNotes.findFirst({
         where: eq(stickyNotes.id, input.id),
       });
@@ -139,12 +129,10 @@ export const noteRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Note not found." });
       }
 
-      // 2. Authorization Check
       if (note.createdById !== ctx.session.user.id) {
         throw new TRPCError({ code: "FORBIDDEN", message: "You don't own this note." });
       }
 
-      // 3. Delete the note
       await ctx.db.delete(stickyNotes).where(eq(stickyNotes.id, input.id));
 
       return { success: true };
@@ -156,7 +144,6 @@ export const noteRouter = createTRPCRouter({
       password: z.string(),
     }))
     .mutation(async ({ ctx, input }) => {
-      // 1. Fetch the note
       const note = await ctx.db.query.stickyNotes.findFirst({
         where: eq(stickyNotes.id, input.noteId),
       });
@@ -165,12 +152,10 @@ export const noteRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Note not found." });
       }
 
-      // 2. Authorization Check
       if (note.createdById !== ctx.session.user.id) {
         throw new TRPCError({ code: "FORBIDDEN", message: "You don't own this note." });
       }
 
-      // 3. Check if password protected
       if (!note.passwordHash) {
         throw new TRPCError({ 
           code: "BAD_REQUEST", 
@@ -178,14 +163,12 @@ export const noteRouter = createTRPCRouter({
         });
       }
 
-      // 4. Verify the password
       const isMatch = await bcrypt.compare(input.password, note.passwordHash);
 
       if (!isMatch) {
         return { valid: false };
       }
 
-      // 5. Return the content if password is correct
       return { 
         valid: true, 
         content: note.content 
@@ -197,7 +180,6 @@ export const noteRouter = createTRPCRouter({
       noteId: z.number(),
     }))
     .mutation(async ({ ctx, input }) => {
-      // 1. Fetch the note
       const note = await ctx.db.query.stickyNotes.findFirst({
         where: eq(stickyNotes.id, input.noteId),
       });
@@ -206,12 +188,10 @@ export const noteRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Note not found." });
       }
 
-      // 2. Authorization Check
       if (note.createdById !== ctx.session.user.id) {
         throw new TRPCError({ code: "FORBIDDEN", message: "You don't own this note." });
       }
 
-      // 3. Check if password protected
       if (!note.passwordHash) {
         throw new TRPCError({ 
           code: "BAD_REQUEST", 
@@ -219,7 +199,6 @@ export const noteRouter = createTRPCRouter({
         });
       }
 
-      // 4. Check if user has an email
       if (!ctx.session.user.email) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -227,12 +206,10 @@ export const noteRouter = createTRPCRouter({
         });
       }
 
-      // 5. Generate reset token
       const resetToken = crypto.randomBytes(32).toString('hex');
       const resetTokenHash = await bcrypt.hash(resetToken, 10);
       const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
 
-      // 6. Update note with reset token
       await ctx.db.update(stickyNotes)
         .set({
           resetToken: resetTokenHash,
@@ -240,7 +217,6 @@ export const noteRouter = createTRPCRouter({
         })
         .where(eq(stickyNotes.id, input.noteId));
 
-      // 7. Send email
       try {
         await sendPasswordResetEmail({
           email: ctx.session.user.email,
@@ -253,7 +229,6 @@ export const noteRouter = createTRPCRouter({
       } catch (emailError) {
         console.error("❌ Email Error:", emailError);
         
-        // Provide more specific error message
         const errorMessage = emailError instanceof Error 
           ? emailError.message 
           : "Failed to send reset email. Please try again later.";
@@ -272,7 +247,6 @@ export const noteRouter = createTRPCRouter({
       newPassword: z.string().min(1),
     }))
     .mutation(async ({ ctx, input }) => {
-      // 1. Fetch the note
       const note = await ctx.db.query.stickyNotes.findFirst({
         where: eq(stickyNotes.id, input.noteId),
       });
@@ -281,12 +255,10 @@ export const noteRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Note not found." });
       }
 
-      // 2. Authorization Check
       if (note.createdById !== ctx.session.user.id) {
         throw new TRPCError({ code: "FORBIDDEN", message: "You don't own this note." });
       }
 
-      // 3. Verify reset token exists and hasn't expired
       if (!note.resetToken || !note.resetTokenExpiry) {
         throw new TRPCError({ 
           code: "BAD_REQUEST", 
@@ -301,7 +273,6 @@ export const noteRouter = createTRPCRouter({
         });
       }
 
-      // 4. Verify the token
       const isValidToken = await bcrypt.compare(input.resetToken, note.resetToken);
 
       if (!isValidToken) {
@@ -311,12 +282,10 @@ export const noteRouter = createTRPCRouter({
         });
       }
 
-      // 5. Hash new password
       const saltRounds = 10;
       const salt = await bcrypt.genSalt(saltRounds);
       const newPasswordHash = await bcrypt.hash(input.newPassword, salt);
 
-      // 6. Update note with new password and clear reset token
       await ctx.db.update(stickyNotes)
         .set({
           passwordHash: newPasswordHash,

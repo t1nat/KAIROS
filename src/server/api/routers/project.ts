@@ -1,4 +1,4 @@
-// src/server/api/routers/project.ts - FIXED: Now includes tasks in getMyProjects
+
 
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
@@ -6,7 +6,7 @@ import { projects, tasks, projectCollaborators, users, organizationMembers, noti
 import { eq, and, desc, isNull, sql } from "drizzle-orm";
 
 export const projectRouter = createTRPCRouter({
-  // Create a new project
+  
   create: protectedProcedure
     .input(
       z.object({
@@ -16,7 +16,7 @@ export const projectRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // Get user's organization if they have one
+      
       const [membership] = await ctx.db
         .select()
         .from(organizationMembers)
@@ -46,11 +46,11 @@ export const projectRouter = createTRPCRouter({
       return project;
     }),
 
-  // Get all projects the user has access to - WITH TASKS FOR STATS
+ 
   getMyProjects: protectedProcedure.query(async ({ ctx }) => {
     console.log("🔍 Fetching projects for user:", ctx.session.user.id);
 
-    // Check if user is in an organization
+    
     const [membership] = await ctx.db
       .select()
       .from(organizationMembers)
@@ -62,7 +62,7 @@ export const projectRouter = createTRPCRouter({
     let projectsList;
 
     if (membership) {
-      // User is in an organization - show ALL organization projects
+      
       projectsList = await ctx.db
         .select()
         .from(projects)
@@ -71,7 +71,7 @@ export const projectRouter = createTRPCRouter({
 
       console.log("📦 Found organization projects:", projectsList.length);
     } else {
-      // User is in personal mode - show only their own projects
+      
       projectsList = await ctx.db
         .select()
         .from(projects)
@@ -86,7 +86,7 @@ export const projectRouter = createTRPCRouter({
       console.log("📦 Found personal projects:", projectsList.length);
     }
 
-    // For each project, get its tasks (only id and status for statistics)
+    
     const projectsWithTasks = await Promise.all(
       projectsList.map(async (project) => {
         const projectTasks = await ctx.db
@@ -114,11 +114,11 @@ export const projectRouter = createTRPCRouter({
     return projectsWithTasks;
   }),
 
-  // Get project by ID with all details INCLUDING task creator, completer, and last editor
+  
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
-      // Get the project
+     
       const [project] = await ctx.db
         .select()
         .from(projects)
@@ -134,10 +134,11 @@ export const projectRouter = createTRPCRouter({
         createdById: project.createdById,
       });
 
-      // Check if user has access
+      
+
       const isOwner = project.createdById === ctx.session.user.id;
       
-      // Check if user is in the same organization (org members have write access)
+      
       let hasOrgAccess = false;
       let isOrgMember = false;
       if (project.organizationId) {
@@ -155,7 +156,7 @@ export const projectRouter = createTRPCRouter({
         console.log("🔍 User has org access:", hasOrgAccess, "via membership:", !!membership);
       }
 
-      // Check if user is a collaborator
+      
       const [collaboration] = await ctx.db
         .select()
         .from(projectCollaborators)
@@ -172,7 +173,7 @@ export const projectRouter = createTRPCRouter({
         throw new Error("Access denied - You don't have permission to view this project");
       }
 
-      // Get all collaborators
+      
       const collaborators = await ctx.db
         .select({
           collaboratorId: projectCollaborators.collaboratorId,
@@ -189,7 +190,7 @@ export const projectRouter = createTRPCRouter({
         .leftJoin(users, eq(projectCollaborators.collaboratorId, users.id))
         .where(eq(projectCollaborators.projectId, input.id));
 
-      // Get all tasks with user information using SQL aliases
+     
       const projectTasks = await ctx.db
         .select({
           id: tasks.id,
@@ -202,19 +203,19 @@ export const projectRouter = createTRPCRouter({
           orderIndex: tasks.orderIndex,
           createdAt: tasks.createdAt,
           lastEditedAt: tasks.lastEditedAt,
-          // Assigned user
+       
           assignedToId: tasks.assignedToId,
           assignedToName: sql<string | null>`assigned_user.name`.as('assignedToName'),
           assignedToImage: sql<string | null>`assigned_user.image`.as('assignedToImage'),
-          // Creator user
+       
           createdById: tasks.createdById,
           createdByName: sql<string | null>`creator_user.name`.as('createdByName'),
           createdByImage: sql<string | null>`creator_user.image`.as('createdByImage'),
-          // Completer user
+     
           completedById: tasks.completedById,
           completedByName: sql<string | null>`completer_user.name`.as('completedByName'),
           completedByImage: sql<string | null>`completer_user.image`.as('completedByImage'),
-          // Editor user
+          
           lastEditedById: tasks.lastEditedById,
           lastEditedByName: sql<string | null>`editor_user.name`.as('lastEditedByName'),
           lastEditedByImage: sql<string | null>`editor_user.image`.as('lastEditedByImage'),
@@ -227,7 +228,7 @@ export const projectRouter = createTRPCRouter({
         .where(eq(tasks.projectId, input.id))
         .orderBy(tasks.orderIndex, tasks.createdAt);
 
-      // Transform the flat result into nested objects
+      
       const formattedTasks = projectTasks.map((task) => ({
         id: task.id,
         title: task.title,
@@ -271,10 +272,7 @@ export const projectRouter = createTRPCRouter({
 
       console.log("📋 Project tasks:", formattedTasks.length);
 
-      // Determine if user has write access:
-      // - Owner always has write access
-      // - Org members have write access
-      // - Collaborators have write access if permission is "write"
+      
       const hasWriteAccess = isOwner || isOrgMember || (collaboration?.permission === "write");
 
       return {
@@ -285,7 +283,7 @@ export const projectRouter = createTRPCRouter({
       };
     }),
 
-  // Add a collaborator to a project
+  
   addCollaborator: protectedProcedure
     .input(
       z.object({
@@ -296,7 +294,7 @@ export const projectRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        // Verify user is the project owner
+      
         const [project] = await ctx.db
           .select()
           .from(projects)
@@ -310,7 +308,7 @@ export const projectRouter = createTRPCRouter({
           throw new Error("Only the project owner can add collaborators.");
         }
 
-        // Get the owner's info for the notification
+        
         const [owner] = await ctx.db
           .select({
             name: users.name,
@@ -320,7 +318,7 @@ export const projectRouter = createTRPCRouter({
           .where(eq(users.id, ctx.session.user.id))
           .limit(1);
 
-        // Find user by email
+       
         const [userToAdd] = await ctx.db
           .select()
           .from(users)
@@ -330,12 +328,12 @@ export const projectRouter = createTRPCRouter({
           throw new Error(`No user found with email: ${input.email}. They must sign up first!`);
         }
 
-        // Check if trying to add themselves
+        
         if (userToAdd.id === ctx.session.user.id) {
           throw new Error("You can't add yourself as a collaborator - you're already the owner!");
         }
 
-        // Check if already a collaborator
+        
         const [existing] = await ctx.db
           .select()
           .from(projectCollaborators)
@@ -350,20 +348,20 @@ export const projectRouter = createTRPCRouter({
           throw new Error(`${input.email} is already a collaborator on this project.`);
         }
 
-        // Add collaborator
+        
         await ctx.db.insert(projectCollaborators).values({
           projectId: input.projectId,
           collaboratorId: userToAdd.id,
           permission: input.permission,
         });
 
-        // CREATE IN-APP NOTIFICATION with correct link to the project
+        
         const ownerName = owner?.name ?? owner?.email ?? "Someone";
         const permissionText = input.permission === "write" ? "edit" : "view";
         
         console.log("📬 Creating notification for user:", userToAdd.id);
         
-        // Create a link that opens the specific project
+        
         const projectLink = `/create?action=new_project&projectId=${input.projectId}`;
         
         const [notification] = await ctx.db.insert(notifications).values({
@@ -397,7 +395,7 @@ export const projectRouter = createTRPCRouter({
       }
     }),
 
-  // Remove a collaborator
+  
   removeCollaborator: protectedProcedure
     .input(
       z.object({
@@ -406,7 +404,7 @@ export const projectRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // Verify user is the project owner
+      
       const [project] = await ctx.db
         .select()
         .from(projects)
@@ -428,7 +426,7 @@ export const projectRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // Update collaborator permission
+  
   updateCollaboratorPermission: protectedProcedure
     .input(
       z.object({
@@ -438,7 +436,7 @@ export const projectRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // Verify user is the project owner
+      
       const [project] = await ctx.db
         .select()
         .from(projects)

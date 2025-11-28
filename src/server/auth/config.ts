@@ -1,4 +1,3 @@
-// src/server/auth/config.ts
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import Google from "next-auth/providers/google";
@@ -15,31 +14,21 @@ import {
   verificationTokens,
 } from "~/server/db/schema";
 
-/**
- * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
- * object and keep type safety.
- *
- * @see https://next-auth.js.org/getting-started/typescript#module-augmentation
- */
+
 declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
       id: string;
-      // ...other properties
-      // role: UserRole;
+    
     } & DefaultSession["user"];
   }
 }
 
-/**
- * Options for NextAuth.js used to configure adapters, providers, callbacks, etc.
- *
- * @see https://next-auth.js.org/configuration/options
- */
+
 export const authConfig = {
   secret: env.AUTH_SECRET,
   
-  // Use JWT strategy when using Credentials provider
+
   session: {
     strategy: "jwt" as const,
   },
@@ -60,7 +49,6 @@ export const authConfig = {
           return null;
         }
 
-        // Find user in database
         const user = await db.query.users.findFirst({
           where: eq(users.email, credentials.email as string),
         });
@@ -69,7 +57,6 @@ export const authConfig = {
           return null;
         }
 
-        // Verify password with argon2
         const isPasswordValid = await argon2.verify(
           user.password,
           credentials.password as string
@@ -97,7 +84,6 @@ export const authConfig = {
   }),
   
   callbacks: {
-    // JWT callback - adds user id to token
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
@@ -105,7 +91,6 @@ export const authConfig = {
       return token;
     },
     
-    // Session callback - adds user id to session
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;

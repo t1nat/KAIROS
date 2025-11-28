@@ -4,7 +4,7 @@ import { users } from "~/server/db/schema";
 import { eq } from "drizzle-orm";
 
 export const userRouter = createTRPCRouter({
-  // Get current user info (for userDisplay and other components)
+  
   getCurrentUser: protectedProcedure
     .query(async ({ ctx }) => {
       const user = await ctx.db.query.users.findFirst({
@@ -15,7 +15,7 @@ export const userRouter = createTRPCRouter({
           email: true,
           image: true,
           bio: true,
-          createdAt: true, // Added for consistency
+          createdAt: true, 
         },
       });
 
@@ -26,7 +26,7 @@ export const userRouter = createTRPCRouter({
       return user;
     }),
 
-  // Set user to personal mode
+  
   setPersonalMode: protectedProcedure
     .mutation(async ({ ctx }) => {
       await ctx.db.update(users)
@@ -36,7 +36,7 @@ export const userRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // Get user profile - returns null if user hasn't completed onboarding
+  
   getProfile: protectedProcedure
     .query(async ({ ctx }) => {
       const user = await ctx.db.query.users.findFirst({
@@ -46,9 +46,9 @@ export const userRouter = createTRPCRouter({
           usageMode: true,
           name: true,
           email: true,
-          bio: true,       // Added for settings page
-          image: true,     // Added for settings page
-          createdAt: true, // Added for "Member Since"
+          bio: true,       
+          image: true,     
+          createdAt: true, 
         },
         with: {
           organizationMemberships: {
@@ -60,7 +60,7 @@ export const userRouter = createTRPCRouter({
         },
       });
 
-      // Return null if user hasn't set their usage mode (needs onboarding)
+      
       if (!user?.usageMode) {
         return null;
       }
@@ -69,16 +69,16 @@ export const userRouter = createTRPCRouter({
         id: user.id,
         name: user.name,
         email: user.email,
-        bio: user.bio,           // Included in return
-        image: user.image,       // Included in return
-        createdAt: user.createdAt, // Included in return
+        bio: user.bio,           
+        image: user.image,       
+        createdAt: user.createdAt, 
         usageMode: user.usageMode,
         organization: user.organizationMemberships[0]?.organization ?? null,
         role: user.organizationMemberships[0]?.role ?? null,
       };
     }),
 
-  // Check if user needs onboarding
+
   checkOnboardingStatus: protectedProcedure
     .query(async ({ ctx }) => {
       const user = await ctx.db.query.users.findFirst({
@@ -100,19 +100,16 @@ export const userRouter = createTRPCRouter({
       };
     }),
 
-  // Upload Profile Image
+
   uploadProfileImage: protectedProcedure
     .input(
       z.object({
-        image: z.string().min(1), // Base64 string or URL
+        image: z.string().min(1), 
         filename: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // TODO: In a production app, upload the buffer to S3/UploadThing here
-      // For now, we are saving the base64 string directly to the DB
       
-      // Simulating a network delay
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       await ctx.db.update(users)

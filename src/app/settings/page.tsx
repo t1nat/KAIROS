@@ -1,4 +1,3 @@
-// src/app/settings/page.tsx
 import { auth } from "~/server/auth";
 import { redirect } from "next/navigation";
 import { SideNav } from "~/app/_components/sideNav";

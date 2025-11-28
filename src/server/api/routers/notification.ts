@@ -1,4 +1,3 @@
-// src/server/api/routers/notification.ts
 
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
@@ -6,7 +5,6 @@ import { notifications } from "~/server/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 
 export const notificationRouter = createTRPCRouter({
-  // Get all notifications for the current user
   getAll: protectedProcedure.query(async ({ ctx }) => {
     const userNotifications = await ctx.db
       .select()
@@ -17,7 +15,6 @@ export const notificationRouter = createTRPCRouter({
     return userNotifications;
   }),
 
-  // Get unread notification count
   getUnreadCount: protectedProcedure.query(async ({ ctx }) => {
     const unreadNotifications = await ctx.db
       .select()
@@ -32,7 +29,6 @@ export const notificationRouter = createTRPCRouter({
     return unreadNotifications.length;
   }),
 
-  // Mark a notification as read
   markAsRead: protectedProcedure
     .input(
       z.object({
@@ -40,7 +36,6 @@ export const notificationRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // Extract the actual notification ID from compound ID (e.g., "event-123" -> 123)
       const idParts = input.notificationId.split("-");
       const actualId = idParts.length > 1 ? parseInt(idParts[1]!) : parseInt(input.notificationId);
 
@@ -48,7 +43,6 @@ export const notificationRouter = createTRPCRouter({
         return { success: true, message: "Client-side notification marked as read" };
       }
 
-      // Try to find the notification
       const notification = await ctx.db
         .select()
         .from(notifications)
@@ -64,7 +58,7 @@ export const notificationRouter = createTRPCRouter({
         return { success: true, message: "Notification not found or already handled" };
       }
 
-      // Update the notification
+
       await ctx.db
         .update(notifications)
         .set({ read: true })
@@ -73,7 +67,6 @@ export const notificationRouter = createTRPCRouter({
       return { success: true, message: "Notification marked as read" };
     }),
 
-  // Mark all notifications as read
   markAllAsRead: protectedProcedure.mutation(async ({ ctx }) => {
     await ctx.db
       .update(notifications)
@@ -88,7 +81,6 @@ export const notificationRouter = createTRPCRouter({
     return { success: true, message: "All notifications marked as read" };
   }),
 
-  // Delete a notification
   delete: protectedProcedure
     .input(
       z.object({
@@ -114,7 +106,6 @@ export const notificationRouter = createTRPCRouter({
       return { success: true, message: "Notification deleted" };
     }),
 
-  // Delete all notifications
   deleteAll: protectedProcedure.mutation(async ({ ctx }) => {
     await ctx.db
       .delete(notifications)
@@ -123,7 +114,6 @@ export const notificationRouter = createTRPCRouter({
     return { success: true, message: "All notifications deleted" };
   }),
 
-  // Create a notification
   create: protectedProcedure
     .input(
       z.object({

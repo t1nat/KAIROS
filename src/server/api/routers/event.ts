@@ -1,4 +1,3 @@
-// src/server/api/routers/event.ts
 
 import { z } from "zod";
 import { protectedProcedure, publicProcedure, createTRPCRouter } from "../trpc";
@@ -7,7 +6,6 @@ import { eq, desc, and } from "drizzle-orm";
 import { type NewEvent } from "~/server/db/schema";
 import { TRPCError } from "@trpc/server";
 
-// Define the input schema for creating an event - FIXED: Added region field
 const createEventSchema = z.object({
   title: z.string().min(1, "Title is required").max(256),
   description: z.string().min(1, "Description is required"),
@@ -23,13 +21,12 @@ const createEventSchema = z.object({
     "sliven",
     "dobrich",
     "shumen"
-  ]), // REQUIRED FIELD - Must match schema enum
+  ]), 
   imageUrl: z.string().url().optional(),
   enableRsvp: z.boolean().default(false),
   sendReminders: z.boolean().default(false),
 });
 
-// Updated schema: text can be empty if there's an image
 const addCommentSchema = z.object({
   eventId: z.number(),
   text: z.string().max(500),
@@ -43,7 +40,6 @@ const toggleLikeSchema = z.object({
   eventId: z.number(),
 });
 
-// RSVP Schema
 const updateRsvpSchema = z.object({
   eventId: z.number(),
   status: z.enum(["going", "maybe", "not_going"]),
@@ -52,14 +48,13 @@ const updateRsvpSchema = z.object({
 const sendRemindersSchema = z.void();
 
 export const eventRouter = createTRPCRouter({
-  // 1. Create Event - FIXED: Added region field
   createEvent: protectedProcedure
     .input(createEventSchema)
     .mutation(async ({ ctx, input }) => {
       const { title, description, eventDate, region, imageUrl, enableRsvp, sendReminders } = input;
       const createdById = ctx.session.user.id;
 
-      // Validate that region is not null/undefined
+      // Validate that region is not null
       if (!region) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -71,7 +66,7 @@ export const eventRouter = createTRPCRouter({
         title,
         description,
         eventDate,
-        region, // REQUIRED FIELD
+        region, 
         imageUrl: imageUrl ?? null,
         createdById,
         enableRsvp,
@@ -82,8 +77,7 @@ export const eventRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // 2. Get Public Events with RSVP counts
-  getPublicEvents: publicProcedure
+    getPublicEvents: publicProcedure
     .query(async ({ ctx }) => {
       const allEvents = await ctx.db.query.events.findMany({
         orderBy: desc(events.createdAt),
@@ -111,14 +105,12 @@ export const eventRouter = createTRPCRouter({
       const currentUserId = ctx.session?.user?.id;
 
       return allEvents.map(event => {
-        // Calculate RSVP counts
         const rsvpCounts = {
           going: event.rsvps.filter(r => r.status === "going").length,
           maybe: event.rsvps.filter(r => r.status === "maybe").length,
           notGoing: event.rsvps.filter(r => r.status === "not_going").length,
         };
 
-        // Find current user's RSVP status
         const userRsvp = currentUserId 
           ? event.rsvps.find(r => r.userId === currentUserId)
           : null;
@@ -136,7 +128,6 @@ export const eventRouter = createTRPCRouter({
       });
     }),
 
-  // 3. Add Comment
   addComment: protectedProcedure
     .input(addCommentSchema)
     .mutation(async ({ ctx, input }) => {
@@ -149,7 +140,6 @@ export const eventRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // 4. Toggle Like
   toggleLike: protectedProcedure
     .input(toggleLikeSchema)
     .mutation(async ({ ctx, input }) => {
@@ -181,13 +171,12 @@ export const eventRouter = createTRPCRouter({
       }
     }),
 
-  // 5. Update RSVP
   updateRsvp: protectedProcedure
     .input(updateRsvpSchema)
     .mutation(async ({ ctx, input }) => {
       const currentUserId = ctx.session.user.id;
 
-      // Check if user already has an RSVP
+      // CHECK IF USER AKEREADY HAS RSVP
       const existingRsvp = await ctx.db.query.eventRsvps.findFirst({
         where: and(
           eq(eventRsvps.eventId, input.eventId),
@@ -196,7 +185,6 @@ export const eventRouter = createTRPCRouter({
       });
 
       if (existingRsvp) {
-        // Update existing RSVP
         await ctx.db
           .update(eventRsvps)
           .set({ 
@@ -221,7 +209,6 @@ export const eventRouter = createTRPCRouter({
       return { success: true, status: input.status };
     }),
     
-  // 6. Send Event Reminders
   sendEventReminders: protectedProcedure
     .input(sendRemindersSchema)
     .mutation(async ({ ctx: _ctx }) => {

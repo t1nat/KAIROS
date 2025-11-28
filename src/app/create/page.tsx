@@ -1,4 +1,3 @@
-// src/app/create/page.tsx - UPDATED FOR FULL-HEIGHT TIMELINE
 import Link from "next/link";
 import { auth } from "~/server/auth";
 import { UserDisplay } from "~/app/_components/userDisplay";
@@ -60,9 +59,7 @@ export default async function CreatePage({
     <div className="min-h-screen bg-[#181F25]"> 
       <SideNav />
 
-      {/* Main content area */}
       <div className="ml-16 h-screen flex flex-col">
-        {/* Header */}
         <header className="sticky top-0 z-30 bg-[#181F25]/80 backdrop-blur-xl border-b border-white/5">
           <div className="max-w-7xl mx-auto px-8 py-4 flex justify-between items-center">
             <div className="flex items-center gap-3">
@@ -88,7 +85,6 @@ export default async function CreatePage({
               </div>
             </div>
             
-            {/* Notification System + UserDisplay */}
             <div className="flex items-center gap-3">
               <NotificationSystem />
               <UserDisplay />
@@ -96,7 +92,6 @@ export default async function CreatePage({
           </div>
         </header>
 
-        {/* Main Content - Full Height with Scrolling */}
         <main className="flex-1 w-full px-8 py-6 overflow-auto"style={{ fontFamily: 'Faustina, serif' }}>
           {shouldShowProjectManagement ? (
             <div className="relative w-full h-full">
@@ -130,7 +125,6 @@ export default async function CreatePage({
                 </div>
               </div>
               
-              {/* Projects Statistics Dashboard */}
               <div className="w-full">
                 <ProjectsListWorkspace />
               </div>

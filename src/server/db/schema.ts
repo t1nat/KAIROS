@@ -1,4 +1,3 @@
-// src/server/db/schema.ts - COMPLETE SCHEMA WITH TASK TRACKING FIELDS
 
 import { type InferInsertModel, type InferSelectModel, relations, sql } from "drizzle-orm"; 
 import {
@@ -16,12 +15,9 @@ import {
 import type { AdapterAccount } from "next-auth/adapters";
 import crypto from "node:crypto";
 
-/**
- * This is an example of how to use the multi-project schema feature of Drizzle ORM.
- */
+
 export const createTable = pgTableCreator((name) => `app_${name}`);
  
-// --- ENUM DEFINITIONS ---
 export const shareStatusEnum = pgEnum("share_status", ['private', 'shared_read', 'shared_write']);
 export const permissionEnum = pgEnum("permission", ['read', 'write']); 
 export const taskStatusEnum = pgEnum("task_status", ['pending', 'in_progress', 'completed', 'blocked']);
@@ -47,7 +43,6 @@ export const regionEnum = pgEnum("region", [
 ]);
 
 
-// --- USER TABLE (UPDATED WITH SETTINGS) ---
 export const users = createTable("user", (d) => ({
     id: d
       .varchar({ length: 255 })
@@ -68,35 +63,28 @@ export const users = createTable("user", (d) => ({
     passwordResetToken: varchar("password_reset_token", { length: 255 }),
     passwordResetExpires: timestamp("password_reset_expires", { mode: "date", withTimezone: true }),
     
-    // === PROFILE SETTINGS ===
     bio: text("bio"),
     
-    // === NOTIFICATION SETTINGS ===
     emailNotifications: boolean("email_notifications").default(true).notNull(),
     projectUpdatesNotifications: boolean("project_updates_notifications").default(true).notNull(),
     eventRemindersNotifications: boolean("event_reminders_notifications").default(false).notNull(),
     marketingEmailsNotifications: boolean("marketing_emails_notifications").default(false).notNull(),
     
-    // === LANGUAGE & REGION SETTINGS ===
     language: languageEnum("language").default("en").notNull(),
     timezone: varchar("timezone", { length: 100 }).default("UTC").notNull(),
     dateFormat: dateFormatEnum("date_format").default("MM/DD/YYYY").notNull(),
     
-    // === APPEARANCE SETTINGS ===
     theme: themeEnum("theme").default("light").notNull(),
     accentColor: varchar("accent_color", { length: 20 }).default("indigo").notNull(),
     
-    // === PRIVACY SETTINGS ===
     profileVisibility: boolean("profile_visibility").default(true).notNull(),
     showOnlineStatus: boolean("show_online_status").default(true).notNull(),
     activityTracking: boolean("activity_tracking").default(false).notNull(),
     dataCollection: boolean("data_collection").default(false).notNull(),
     
-    // === SECURITY SETTINGS ===
     twoFactorEnabled: boolean("two_factor_enabled").default(false).notNull(),
     twoFactorSecret: varchar("two_factor_secret", { length: 255 }),
     
-    // === TIMESTAMPS ===
     createdAt: timestamp("created_at")
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -105,39 +93,32 @@ export const users = createTable("user", (d) => ({
       .notNull(),
 }));
 
-// --- USER SETTINGS TYPE EXPORT ---
 export type UserSettings = {
-  // Profile
   name: string | null;
   bio: string | null;
   image: string | null;
   
-  // Notifications
   emailNotifications: boolean;
   projectUpdatesNotifications: boolean;
   eventRemindersNotifications: boolean;
   marketingEmailsNotifications: boolean;
   
-  // Language & Region
   language: "en" | "es" | "fr" | "de" | "it" | "pt" | "ja" | "ko" | "zh" | "ar";
   timezone: string;
   dateFormat: "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD";
   
-  // Appearance
+
   theme: "light" | "dark" | "system";
   accentColor: string;
   
-  // Privacy
   profileVisibility: boolean;
   showOnlineStatus: boolean;
   activityTracking: boolean;
   dataCollection: boolean;
   
-  // Security
   twoFactorEnabled: boolean;
 };
 
-// --- ORGANIZATIONS TABLE ---
 export const organizations = createTable(
   "organizations",
   (_d) => ({
@@ -160,7 +141,6 @@ export const organizations = createTable(
   ]
 );
 
-// --- ORGANIZATION MEMBERS TABLE ---
 export const organizationMembers = createTable(
   "organization_members",
   (_d) => ({
@@ -182,7 +162,6 @@ export const organizationMembers = createTable(
   ]
 );
 
-// --- PROJECTS TABLE ---
 export const projects = createTable(
   "projects",
   (d) => ({
@@ -208,7 +187,6 @@ export const projects = createTable(
   ]
 );
 
-// --- TASKS TABLE (UPDATED WITH TRACKING FIELDS) ---
 export const tasks = createTable(
   "tasks",
   (d) => ({
@@ -254,7 +232,6 @@ export const tasks = createTable(
 );
 
 
-// --- STICKY NOTES TABLE ---
 export const stickyNotes = createTable(
   "sticky_notes",
   (d) => ({
@@ -270,7 +247,6 @@ export const stickyNotes = createTable(
     passwordHash: varchar("password_hash", { length: 256 }),
     passwordSalt: varchar("password_salt", { length: 256 }),
 
-    // Password reset fields
     resetToken: text("reset_token"),
     resetTokenExpiry: timestamp("reset_token_expiry", { withTimezone: true }),
 
@@ -282,7 +258,6 @@ export const stickyNotes = createTable(
 );
 
 
-// --- PROJECT COLLABORATORS TABLE ---
 export const projectCollaborators = createTable(
   "project_collaborators",
   (d) => ({
@@ -304,7 +279,6 @@ export const projectCollaborators = createTable(
   ]
 );
 
-// --- TASK COMMENTS TABLE ---
 export const taskComments = createTable(
   "task_comments",
   (d) => ({
@@ -327,7 +301,6 @@ export const taskComments = createTable(
   ]
 );
 
-// --- TASK ACTIVITY LOG TABLE ---
 export const taskActivityLog = createTable(
   "task_activity_log",
   (d) => ({
@@ -352,7 +325,6 @@ export const taskActivityLog = createTable(
   ]
 );
 
-// --- ACCOUNTS TABLE ---
 export const accounts = createTable(
   "account",
   (d) => ({
@@ -377,7 +349,6 @@ export const accounts = createTable(
   ],
 );
 
-// --- SESSIONS TABLE ---
 export const sessions = createTable(
   "session",
   (d) => ({
@@ -391,7 +362,6 @@ export const sessions = createTable(
   (t) => [index("t_user_id_idx").on(t.userId)],
 );
 
-// --- VERIFICATION TOKENS TABLE ---
 export const verificationTokens = createTable(
   "verification_token",
   (d) => ({
@@ -402,9 +372,6 @@ export const verificationTokens = createTable(
   (t) => [primaryKey({ columns: [t.identifier, t.token] })],
 );
 
-
-
-// --- EVENTS TABLE ---
 export const events = createTable(
   "event",
   (d) => ({
@@ -435,7 +402,6 @@ export const events = createTable(
   ],
 );
 
-// --- EVENT RSVP TABLE ---
 export const eventRsvps = createTable(
   "event_rsvp",
   (d) => ({
@@ -465,7 +431,6 @@ export const eventRsvps = createTable(
   ]
 );
 
-// --- EVENT COMMENTS TABLE ---
 export const eventComments = createTable(
   "event_comment",
   (d) => ({
@@ -491,7 +456,6 @@ export const eventComments = createTable(
   ],
 );
 
-// --- EVENT LIKES TABLE ---
 export const eventLikes = createTable(
   "event_like",
   (d) => ({
@@ -514,7 +478,6 @@ export const eventLikes = createTable(
   ],
 );
 
-// --- NOTIFICATIONS TABLE ---
 export const notifications = createTable(
   "notifications",
   (d) => ({
@@ -540,33 +503,22 @@ export const notifications = createTable(
   ]
 );
 
-// ===================
-// ===== RELATIONS =====
-// ===================
 
-// Organizations Relations
 export const organizationsRelations = relations(organizations, ({ one, many }) => ({
   creator: one(users, { fields: [organizations.createdById], references: [users.id] }),
   members: many(organizationMembers),
   projects: many(projects),
 }));
 
-// Organization Members Relations
 export const organizationMembersRelations = relations(organizationMembers, ({ one }) => ({
   organization: one(organizations, { fields: [organizationMembers.organizationId], references: [organizations.id] }),
   user: one(users, { fields: [organizationMembers.userId], references: [users.id] }),
 }));
 
-
-
-
-// Sticky Notes Relations
 export const stickyNotesRelations = relations(stickyNotes, ({ one }) => ({
   author: one(users, { fields: [stickyNotes.createdById], references: [users.id] }),
 }));
 
-
-// Projects Relations
 export const projectsRelations = relations(projects, ({ one, many }) => ({
   creator: one(users, { fields: [projects.createdById], references: [users.id] }),
   organization: one(organizations, { fields: [projects.organizationId], references: [organizations.id] }),
@@ -574,13 +526,11 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
   collaborators: many(projectCollaborators),
 }));
 
-// Project Collaborators Relations
 export const projectCollaboratorsRelations = relations(projectCollaborators, ({ one }) => ({
   project: one(projects, { fields: [projectCollaborators.projectId], references: [projects.id] }),
   user: one(users, { fields: [projectCollaborators.collaboratorId], references: [users.id] }),
 }));
 
-// Tasks Relations
 export const tasksRelations = relations(tasks, ({ one, many }) => ({
   project: one(projects, { fields: [tasks.projectId], references: [projects.id] }),
   assignedTo: one(users, { fields: [tasks.assignedToId], references: [users.id] }),
@@ -589,24 +539,20 @@ export const tasksRelations = relations(tasks, ({ one, many }) => ({
   activityLog: many(taskActivityLog),
 }));
 
-// Task Comments Relations
 export const taskCommentsRelations = relations(taskComments, ({ one }) => ({
   task: one(tasks, { fields: [taskComments.taskId], references: [tasks.id] }),
   author: one(users, { fields: [taskComments.createdById], references: [users.id] }),
 }));
 
-// Task Activity Log Relations
 export const taskActivityLogRelations = relations(taskActivityLog, ({ one }) => ({
   task: one(tasks, { fields: [taskActivityLog.taskId], references: [tasks.id] }),
   user: one(users, { fields: [taskActivityLog.userId], references: [users.id] }),
 }));
 
-// Notifications Relations
 export const notificationsRelations = relations(notifications, ({ one }) => ({
   user: one(users, { fields: [notifications.userId], references: [users.id] }),
 }));
 
-// Users Relations
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
   sessions: many(sessions),
@@ -625,17 +571,14 @@ export const usersRelations = relations(users, ({ many }) => ({
   notifications: many(notifications),
 }));
 
-// Accounts Relations
 export const accountsRelations = relations(accounts, ({ one }) => ({
   user: one(users, { fields: [accounts.userId], references: [users.id] }),
 }));
 
-// Sessions Relations
 export const sessionsRelations = relations(sessions, ({ one }) => ({
   user: one(users, { fields: [sessions.userId], references: [users.id] }),
 }));
 
-// Events Relations
 export const eventsRelations = relations(events, ({ one, many }) => ({
   author: one(users, { fields: [events.createdById], references: [users.id] }),
   comments: many(eventComments),
@@ -643,27 +586,21 @@ export const eventsRelations = relations(events, ({ one, many }) => ({
   rsvps: many(eventRsvps),
 }));
 
-// Event RSVPs Relations
 export const eventRsvpsRelations = relations(eventRsvps, ({ one }) => ({
   event: one(events, { fields: [eventRsvps.eventId], references: [events.id] }),
   user: one(users, { fields: [eventRsvps.userId], references: [users.id] }),
 }));
 
-// Event Comments Relations
 export const eventCommentsRelations = relations(eventComments, ({ one }) => ({
   event: one(events, { fields: [eventComments.eventId], references: [events.id] }),
   author: one(users, { fields: [eventComments.createdById], references: [users.id] }),
 }));
 
-// Event Likes Relations
 export const eventLikesRelations = relations(eventLikes, ({ one }) => ({
   event: one(events, { fields: [eventLikes.eventId], references: [events.id] }),
   user: one(users, { fields: [eventLikes.createdById], references: [users.id] }),
 }));
 
-// ===================
-// ===== TYPE EXPORTS =====
-// ===================
 
 export type User = InferSelectModel<typeof users>;
 export type NewUser = InferInsertModel<typeof users>;

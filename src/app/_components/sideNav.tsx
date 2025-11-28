@@ -1,4 +1,3 @@
-// src/app/_components/sideNav.tsx
 "use client";
 
 import {  
@@ -12,7 +11,6 @@ import {
 import { useState } from "react";
 import Link from "next/link";
 
-// Sub-Menu Component
 const FileMenu = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   if (!isOpen) return null;
 
@@ -79,7 +77,6 @@ const FileMenu = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
   );
 };
 
-// Tooltip Component
 const NavTooltip = ({ text }: { text: string }) => (
   <div className="absolute left-full ml-2 px-3 py-2 bg-[#181F25] border border-white/10 text-[#FBF9F5] text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 shadow-xl">
     {text}
@@ -93,7 +90,6 @@ export function SideNav() {
   return (
     <nav className="fixed left-0 top-0 h-full w-16 bg-[#181F25] border-r border-white/10 shadow-xl z-40 flex flex-col">
       
-      {/* Logo Area */}
       <Link href="/" className="h-16 flex items-center justify-center border-b border-white/10 hover:bg-white/5 transition-colors group">
         <div className="w-10 h-10 flex items-center justify-center group-hover:scale-110 transition-transform">
           <img 
@@ -104,7 +100,6 @@ export function SideNav() {
         </div>
       </Link>
 
-      {/* Navigation */}
       <div className="flex-1 py-4">
         
         <button 
@@ -131,7 +126,6 @@ export function SideNav() {
         </Link>
       </div>
 
-      {/* Bottom Items */}
       <div className="border-t border-white/10">
         <Link 
           href="/settings" 

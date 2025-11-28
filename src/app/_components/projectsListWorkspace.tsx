@@ -1,4 +1,3 @@
-// src/app/_components/projectsListWorkspace.tsx
 "use client";
 
 import { useState } from "react";
@@ -17,7 +16,6 @@ interface ProjectWithStats {
   completionPercentage: number;
 }
 
-// Type guard to check if a value has a tasks property
 function hasTasks(value: unknown): value is { tasks: Array<{ status: string }> } {
   if (value == null || typeof value !== "object") return false;
 
@@ -36,10 +34,7 @@ export function ProjectsListWorkspace() {
   const [showProjects, setShowProjects] = useState(false);
   const [animateCharts, setAnimateCharts] = useState(false);
   const router = useRouter();
-
-  // Trigger chart animation on mount
   useState(() => {
-    // This is the trigger that starts the animation from 0%
     const timer = setTimeout(() => setAnimateCharts(true), 100);
     return () => clearTimeout(timer);
   });
@@ -48,14 +43,11 @@ export function ProjectsListWorkspace() {
     staleTime: 1000 * 60 * 5,
   });
 
-  // Don't show anything if no projects or still loading
   if (isLoading || !projects || projects.length === 0) {
     return null;
   }
 
-  // Calculate stats for each project with proper type safety
   const projectsWithStats: ProjectWithStats[] = projects.map((project) => {
-    // Safely extract tasks with type guard
     const projectTasks = hasTasks(project) ? project.tasks : [];
     
     const totalTasks = projectTasks.length;
@@ -76,7 +68,6 @@ export function ProjectsListWorkspace() {
     };
   });
 
-  // Calculate overall stats
   const totalProjects = projectsWithStats.length;
   const totalAllTasks = projectsWithStats.reduce((sum, p) => sum + p.totalTasks, 0);
   const totalCompletedTasks = projectsWithStats.reduce((sum, p) => sum + p.completedTasks, 0);
@@ -101,7 +92,6 @@ export function ProjectsListWorkspace() {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-6">
-      {/* Statistics Header - Floating Stats */}
       <div className="mb-8 sm:mb-12">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-3 sm:gap-0">
           <div>
@@ -113,12 +103,10 @@ export function ProjectsListWorkspace() {
         </div>
         
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-          {/* Overall Completion - Featured */}
           <div className="col-span-2 sm:col-span-1 lg:col-span-1 flex flex-col items-center justify-center p-4 sm:p-6 group cursor-default">
             <div
               className={`radial-progress ${getProgressColor(overallCompletion)} drop-shadow-2xl ${getProgressGlow(overallCompletion)} transition-all duration-[2000ms] ease-out`}
               style={{
-                // Animation logic: changes from 0 to actual value after mount
                 "--value": animateCharts ? overallCompletion : 0, 
                 "--size": "6rem",
                 "--thickness": "4px",
@@ -134,7 +122,6 @@ export function ProjectsListWorkspace() {
             </div>
           </div>
 
-          {/* Total Projects */}
           <div className="flex flex-col items-center justify-center p-4 sm:p-6 group cursor-default hover:bg-white/5 rounded-xl sm:rounded-2xl transition-all">
             <div className="relative">
               <div className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-br from-[#A343EC] to-[#9448F2] bg-clip-text text-transparent font-faustina">
@@ -145,7 +132,6 @@ export function ProjectsListWorkspace() {
             <p className="text-[10px] sm:text-xs text-[#E4DEAA] mt-2 sm:mt-3 uppercase tracking-wider font-semibold font-faustina text-center">Active Projects</p>
           </div>
 
-          {/* Total Tasks */}
           <div className="flex flex-col items-center justify-center p-4 sm:p-6 group cursor-default hover:bg-white/5 rounded-xl sm:rounded-2xl transition-all">
             <div className="relative">
               <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#FBF9F5] font-faustina">
@@ -156,7 +142,6 @@ export function ProjectsListWorkspace() {
             <p className="text-[10px] sm:text-xs text-[#E4DEAA] mt-2 sm:mt-3 uppercase tracking-wider font-semibold font-faustina text-center">Total Tasks</p>
           </div>
 
-          {/* Completed Projects */}
           <div className="flex flex-col items-center justify-center p-4 sm:p-6 group cursor-default hover:bg-white/5 rounded-xl sm:rounded-2xl transition-all">
             <div className="relative">
               <div className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-br from-[#80C49B] to-[#80C49B]/80 bg-clip-text text-transparent font-faustina">
@@ -169,7 +154,6 @@ export function ProjectsListWorkspace() {
         </div>
       </div>
 
-      {/* Projects Grid Toggle */}
       <div className="relative mb-4 sm:mb-6">
         <div className="h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent mb-4 sm:mb-6" />
         
@@ -192,7 +176,6 @@ export function ProjectsListWorkspace() {
         </button>
       </div>
 
-      {/* Projects Grid */}
       {showProjects && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
           {projectsWithStats.map((project) => (
@@ -205,13 +188,11 @@ export function ProjectsListWorkspace() {
               className="group relative p-4 sm:p-6 rounded-xl sm:rounded-2xl text-left transition-all duration-300 hover:scale-[1.02] bg-gradient-to-br from-white/5 to-transparent hover:from-white/10 hover:to-white/5 border border-white/10 hover:border-[#A343EC]/30"
             >
               <div className="flex items-start gap-3 sm:gap-5">
-                {/* Radial Progress - Responsive size */}
                 <div className="flex-shrink-0">
                   {project.totalTasks > 0 ? (
                     <div
                       className={`radial-progress ${getProgressColor(project.completionPercentage)} drop-shadow-lg ${getProgressGlow(project.completionPercentage)} transition-all duration-1000 ease-out`}
                       style={{
-                        // Animation logic: changes from 0 to actual value after mount
                         "--value": animateCharts ? project.completionPercentage : 0,
                         "--size": "4.5rem",
                         "--thickness": "4px",
@@ -228,7 +209,6 @@ export function ProjectsListWorkspace() {
                   )}
                 </div>
 
-                {/* Project Info */}
                 <div className="flex-1 min-w-0">
                   <h4 className="text-base sm:text-lg font-bold text-[#FBF9F5] mb-1.5 sm:mb-2 truncate group-hover:text-[#A343EC] transition-colors font-faustina">
                     {project.title}
@@ -240,7 +220,6 @@ export function ProjectsListWorkspace() {
                     </p>
                   )}
 
-                  {/* Task Stats - Stack on very small screens */}
                   {project.totalTasks > 0 ? (
                     <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-[10px] sm:text-xs font-faustina">
                       <div className="flex items-center gap-1 sm:gap-1.5 text-[#80C49B] bg-[#80C49B]/10 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg">
@@ -268,7 +247,6 @@ export function ProjectsListWorkspace() {
                 </div>
               </div>
 
-              {/* Minimal Progress Bar */}
               {project.totalTasks > 0 && (
                 <div className="mt-4 sm:mt-5 w-full h-0.5 sm:h-1 bg-white/5 rounded-full overflow-hidden">
                   <div

@@ -206,7 +206,6 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
 
   return (
     <div className="flex gap-6 relative w-full h-full">
-      {/* LEFT SIDEBAR - Controls */}
       <div className="w-96 flex-shrink-0 space-y-4">
         {!selectedProjectId && (
           <div className="animate-in slide-in-from-top-2 duration-200">
@@ -221,7 +220,6 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
 
         {selectedProjectId && projectDetails && (
           <div className="space-y-3 animate-in fade-in slide-in-from-left-2 duration-300">
-            {/* Project Header Card */}
             <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-5">
               <div className="flex items-start justify-between mb-4">
                 <button
@@ -271,7 +269,6 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
               )}
             </div>
 
-            {/* Stats Card */}
             {projectDetails.tasks && projectDetails.tasks.length > 0 && (
               <div className="bg-gradient-to-br from-[#A343EC]/10 to-[#9448F2]/5 rounded-xl border border-[#A343EC]/20 p-4">
                 <div className="flex items-center justify-between">
@@ -296,7 +293,6 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
               </div>
             )}
 
-            {/* Add Task Accordion */}
             {hasWriteAccess && (
               <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
                 <button
@@ -319,7 +315,6 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
               </div>
             )}
 
-            {/* Team Members Accordion */}
             {isOwner && (
               <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
                 <button
@@ -355,7 +350,6 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
           </div>
         )}
 
-        {/* Other Projects Dropdown */}
         {projects && projects.filter((p) => p.id !== selectedProjectId).length > 0 && selectedProjectId && (
           <div className="relative">
             <button
@@ -389,7 +383,6 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
         )}
       </div>
 
-      {/* RIGHT SIDE - Timeline Display (No Container) */}
       <div className="flex-1 min-w-0">
         {selectedProjectId && projectDetails && (
           <InteractiveTimeline

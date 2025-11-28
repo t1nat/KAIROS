@@ -1,4 +1,3 @@
-// src/app/_components/notificationSystem.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -24,10 +23,9 @@ export function NotificationSystem() {
 
   const utils = api.useUtils();
 
-  // Fetch stored notifications from database with MORE FREQUENT polling
   const { data: storedNotifications, refetch } = api.notification.getAll.useQuery(undefined, {
-    refetchInterval: 5000, // Poll every 5 seconds instead of 60
-    refetchOnWindowFocus: true, // Refetch when window gains focus
+    refetchInterval: 5000, 
+    refetchOnWindowFocus: true, 
     refetchOnMount: true,
   });
 
@@ -53,7 +51,6 @@ export function NotificationSystem() {
     },
   });
 
-  // Update local state when stored notifications change
   useEffect(() => {
     if (storedNotifications) {
       const formattedNotifications: Notification[] = storedNotifications.map((notif) => {
@@ -77,7 +74,6 @@ export function NotificationSystem() {
     }
   }, [storedNotifications]);
 
-  // Force refetch when panel opens
   useEffect(() => {
     if (isOpen) {
       void refetch();
@@ -100,12 +96,10 @@ export function NotificationSystem() {
   };
 
   const handleNotificationClick = (notification: Notification) => {
-    // Mark as read
     if (!notification.read) {
       handleMarkAsRead(notification.id);
     }
 
-    // Navigate if there's a link
     if (notification.link) {
       setIsOpen(false);
       router.push(notification.link);

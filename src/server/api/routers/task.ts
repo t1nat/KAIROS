@@ -1,11 +1,11 @@
-// src/server/api/routers/task.ts - UPDATED WITH COMPLETION AND EDIT TRACKING
+
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { tasks, projects, projectCollaborators, taskActivityLog, organizationMembers } from "~/server/db/schema";
 import { eq, and } from "drizzle-orm";
 
 export const taskRouter = createTRPCRouter({
-  // Create a new task
+ 
   create: protectedProcedure
     .input(
       z.object({
@@ -18,7 +18,7 @@ export const taskRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // Check if user has write access to the project
+      
       const [project] = await ctx.db
         .select()
         .from(projects)
@@ -30,7 +30,7 @@ export const taskRouter = createTRPCRouter({
 
       const isOwner = project.createdById === ctx.session.user.id;
       
-      // Check if user is in the same organization
+     
       let isOrgMember = false;
       if (project.organizationId) {
         const [membership] = await ctx.db
@@ -46,7 +46,7 @@ export const taskRouter = createTRPCRouter({
       }
 
       if (!isOwner && !isOrgMember) {
-        // Check if user is a collaborator with write permission
+       
         const [collaboration] = await ctx.db
           .select()
           .from(projectCollaborators)
@@ -63,7 +63,7 @@ export const taskRouter = createTRPCRouter({
         }
       }
 
-      // Get the highest orderIndex for this project
+      
       const existingTasks = await ctx.db
         .select()
         .from(tasks)
@@ -73,7 +73,7 @@ export const taskRouter = createTRPCRouter({
         ? Math.max(...existingTasks.map(t => t.orderIndex))
         : 0;
 
-      // Create the task
+      
       const [task] = await ctx.db
         .insert(tasks)
         .values({
@@ -89,7 +89,7 @@ export const taskRouter = createTRPCRouter({
         })
         .returning();
 
-      // Log the activity
+      
       if (task) {
         await ctx.db.insert(taskActivityLog).values({
           taskId: task.id,
@@ -102,7 +102,7 @@ export const taskRouter = createTRPCRouter({
       return task;
     }),
 
-  // Update task status - NOW TRACKS WHO COMPLETED IT
+ 
   updateStatus: protectedProcedure
     .input(
       z.object({
@@ -111,7 +111,7 @@ export const taskRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // Get the task and check permissions
+      
       const [task] = await ctx.db
         .select()
         .from(tasks)
@@ -121,7 +121,7 @@ export const taskRouter = createTRPCRouter({
         throw new Error("Task not found");
       }
 
-      // Check if user has write access
+     
       const [project] = await ctx.db
         .select()
         .from(projects)
@@ -134,7 +134,7 @@ export const taskRouter = createTRPCRouter({
       const isOwner = project.createdById === ctx.session.user.id;
       const isAssignee = task.assignedToId === ctx.session.user.id;
       
-      // Check if user is in the same organization
+      
       let isOrgMember = false;
       if (project.organizationId) {
         const [membership] = await ctx.db
@@ -182,12 +182,12 @@ export const taskRouter = createTRPCRouter({
         lastEditedAt: new Date(),
       };
 
-      // If marking as completed, set completedAt timestamp and track who completed it
+      
       if (input.status === "completed" && oldStatus !== "completed") {
         updateData.completedAt = new Date();
         updateData.completedById = ctx.session.user.id;
       }
-      // If unmarking as completed, clear completedAt and completedById
+      
       else if (input.status !== "completed" && oldStatus === "completed") {
         updateData.completedAt = null;
         updateData.completedById = null;
@@ -198,7 +198,7 @@ export const taskRouter = createTRPCRouter({
         .set(updateData)
         .where(eq(tasks.id, input.taskId));
 
-      // Log the activity
+      
       await ctx.db.insert(taskActivityLog).values({
         taskId: input.taskId,
         userId: ctx.session.user.id,
@@ -210,7 +210,7 @@ export const taskRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // Update task details - NOW TRACKS WHO LAST EDITED
+  
   update: protectedProcedure
     .input(
       z.object({
@@ -223,7 +223,7 @@ export const taskRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // Get the task and check permissions
+      
       const [task] = await ctx.db
         .select()
         .from(tasks)
@@ -233,7 +233,7 @@ export const taskRouter = createTRPCRouter({
         throw new Error("Task not found");
       }
 
-      // Check if user has write access
+     
       const [project] = await ctx.db
         .select()
         .from(projects)
@@ -245,7 +245,7 @@ export const taskRouter = createTRPCRouter({
 
       const isOwner = project.createdById === ctx.session.user.id;
       
-      // Check if user is in the same organization
+      
       let isOrgMember = false;
       if (project.organizationId) {
         const [membership] = await ctx.db
@@ -303,7 +303,7 @@ export const taskRouter = createTRPCRouter({
         .set(updateData)
         .where(eq(tasks.id, input.taskId));
 
-      // Log the activity
+     
       await ctx.db.insert(taskActivityLog).values({
         taskId: input.taskId,
         userId: ctx.session.user.id,
@@ -314,11 +314,11 @@ export const taskRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // Delete a task
+  
   delete: protectedProcedure
     .input(z.object({ taskId: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      // Get the task and check permissions
+     
       const [task] = await ctx.db
         .select()
         .from(tasks)
@@ -328,7 +328,7 @@ export const taskRouter = createTRPCRouter({
         throw new Error("Task not found");
       }
 
-      // Check if user has write access
+     
       const [project] = await ctx.db
         .select()
         .from(projects)
@@ -340,7 +340,7 @@ export const taskRouter = createTRPCRouter({
 
       const isOwner = project.createdById === ctx.session.user.id;
       
-      // Check if user is in the same organization
+      
       let isOrgMember = false;
       if (project.organizationId) {
         const [membership] = await ctx.db
@@ -377,7 +377,7 @@ export const taskRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // Get task activity log
+  
   getActivityLog: protectedProcedure
     .input(z.object({ taskId: z.number() }))
     .query(async ({ ctx, input }) => {

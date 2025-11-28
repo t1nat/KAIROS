@@ -1,10 +1,9 @@
-"use client"; // REQUIRED directive for client component
+"use client"; 
 
 import { SessionProvider } from "next-auth/react";
 import type { Session } from "next-auth";
 import React from "react";
 
-// This component wraps your app and passes the session data down to hooks
 export default function NextAuthSessionProvider({
   children,
   session,

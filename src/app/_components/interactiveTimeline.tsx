@@ -59,7 +59,6 @@ export function InteractiveTimeline({
     setOptimisticTasks(tasks);
   }, [tasks]);
 
-  // Animate progress bar changes
   useEffect(() => {
     const targetPercentage = optimisticTasks.length === 0 
       ? 0 
@@ -141,7 +140,6 @@ export function InteractiveTimeline({
 
   return (
     <div className="flex-1 flex flex-col min-h-[500px] p-8">
-      {/* Header */}
       <div className="mb-12">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -162,7 +160,6 @@ export function InteractiveTimeline({
           </div>
         </div>
 
-        {/* Progress Bar */}
         <div className="relative w-full h-3 bg-white/5 rounded-full overflow-hidden border border-white/10">
           <div 
             className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#A343EC] to-[#9448F2] rounded-full shadow-lg shadow-[#A343EC]/40 transition-shadow duration-300"
@@ -177,12 +174,9 @@ export function InteractiveTimeline({
         </div>
       </div>
 
-      {/* Horizontal Timeline */}
       <div className="relative flex-1 pb-8">
-        {/* Main Timeline Line */}
         <div className="absolute top-[52px] left-0 right-0 h-[3px] bg-gradient-to-r from-[#A343EC]/20 via-[#A343EC]/40 to-[#A343EC]/20" />
         
-        {/* Tasks Container - Horizontal Scroll */}
         <div className="relative flex items-start gap-8 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-[#A343EC]/30 scrollbar-track-white/5">
           {sortedTasks.map((task, index) => {
             const isCompleted = task.status === "completed";
@@ -199,14 +193,12 @@ export function InteractiveTimeline({
                 onMouseEnter={() => setHoveredTaskId(task.id)}
                 onMouseLeave={() => setHoveredTaskId(null)}
               >
-                {/* Vertical connector line */}
                 <div className={`absolute left-1/2 -translate-x-1/2 w-[2px] h-12 transition-all duration-300 ${
                   isCompleted 
                     ? "bg-gradient-to-b from-[#A343EC] to-transparent" 
                     : "bg-gradient-to-b from-[#A343EC]/30 to-transparent"
                 }`} />
 
-                {/* Timeline Node/Checkpoint */}
                 <div className="absolute left-1/2 -translate-x-1/2 top-[42px] z-10">
                   <button
                     onClick={() => handleCheckboxToggle(task)}
@@ -223,7 +215,6 @@ export function InteractiveTimeline({
                   </button>
                 </div>
 
-                {/* Task Card */}
                 <div 
                   className={`mt-24 bg-white/5 backdrop-blur-sm rounded-xl p-5 border transition-all duration-300 ${
                     isCompleted 
@@ -231,7 +222,6 @@ export function InteractiveTimeline({
                       : "border-white/10 hover:border-[#A343EC]/50 hover:bg-white/10 hover:shadow-lg hover:shadow-[#A343EC]/20"
                   } ${isHovered ? "scale-105" : ""}`}
                 >
-                  {/* Priority Badge */}
                   <div className="flex items-center justify-between mb-3">
                     <div className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
                       task.priority === "urgent" 
@@ -253,23 +243,19 @@ export function InteractiveTimeline({
                     )}
                   </div>
 
-                  {/* Title */}
                   <h4 className={`font-bold text-[#FBF9F5] mb-2 leading-snug transition-all duration-300 ${
                     isCompleted ? "line-through text-[#FBF9F5]/60" : ""
                   }`}>
                     {task.title}
                   </h4>
 
-                  {/* Description */}
                   {task.description && (
                     <p className="text-sm text-[#E4DEAA]/80 mb-4 line-clamp-2 leading-relaxed">
                       {task.description}
                     </p>
                   )}
 
-                  {/* Metadata Row */}
                   <div className="flex items-center gap-3 text-xs text-[#E4DEAA] flex-wrap">
-                    {/* Due Date */}
                     {task.dueDate && (
                       <div className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-md">
                         <Clock size={12} className="text-[#A343EC]" />
@@ -280,7 +266,6 @@ export function InteractiveTimeline({
                       </div>
                     )}
 
-                    {/* Assignee */}
                     {task.assignedTo && (
                       <div className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-md">
                         {task.assignedTo.image ? (
@@ -301,10 +286,8 @@ export function InteractiveTimeline({
                     )}
                   </div>
 
-                  {/* Hover Info - Creator, Completer & Last Editor */}
                   {isHovered && (
                     <div className="mt-4 pt-4 border-t border-white/10 space-y-2 animate-fadeIn">
-                      {/* Created By */}
                       {task.createdBy && (
                         <div className="flex items-center gap-2 text-xs text-[#E4DEAA]">
                           <User size={12} className="text-[#A343EC]" />
@@ -328,7 +311,6 @@ export function InteractiveTimeline({
                         </div>
                       )}
 
-                      {/* Last Modified By */}
                       {task.lastEditedBy && task.lastEditedAt && (
                         <div className="flex items-center gap-2 text-xs text-[#F8D45E]">
                           <Clock size={12} />
@@ -361,7 +343,6 @@ export function InteractiveTimeline({
                         </div>
                       )}
 
-                      {/* Completed By */}
                       {isCompleted && task.completedBy && (
                         <div className="flex items-center gap-2 text-xs text-[#80C49B]">
                           <CheckCircle2 size={12} />

@@ -1,4 +1,3 @@
-// src/app/_components/projectManagement.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -289,24 +288,20 @@ export function CollaboratorManager({
 
   const utils = api.useUtils();
 
-  // Helper to check if email is valid
   const isValidEmail = (emailStr: string) => {
     const trimmed = emailStr.trim();
     return trimmed.length > 0 && trimmed.includes("@") && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
   };
 
-  // Search for user - only enabled when email is valid
   const { refetch: searchUser, isFetching: isSearching } = api.user.searchByEmail.useQuery(
     { email: email.trim() },
     {
-      enabled: false, // Manual refetch only
+      enabled: false, 
       retry: false,
     }
   );
 
-  // Debounced email search
   useEffect(() => {
-    // Reset states when email changes
     setSearchedUser(null);
     setSearchError("");
 
@@ -387,7 +382,6 @@ export function CollaboratorManager({
             </div>
           </div>
 
-          {/* User Preview */}
           {searchedUser && (
             <div className="flex items-center gap-3 p-3 bg-[#80C49B]/10 border border-[#80C49B]/30 rounded-lg animate-in fade-in slide-in-from-top-1">
               {searchedUser.image ? (
@@ -413,7 +407,6 @@ export function CollaboratorManager({
             </div>
           )}
 
-          {/* Error Message */}
           {searchError && (
             <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-sm text-red-400 animate-in fade-in slide-in-from-top-1">
               {searchError}

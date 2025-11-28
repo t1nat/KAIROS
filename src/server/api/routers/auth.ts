@@ -1,4 +1,3 @@
-// src/server/api/routers/auth.ts
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { users } from "~/server/db/schema";
@@ -29,7 +28,6 @@ export const authRouter = createTRPCRouter({
         });
       }
 
-      // Argon2 is faster and more secure than bcrypt
       const hashedPassword = await argon2.hash(password);
 
       const [newUser] = await ctx.db

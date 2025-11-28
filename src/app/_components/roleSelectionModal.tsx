@@ -63,7 +63,6 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
       await navigator.clipboard.writeText(generatedCode);
       alert("Code copied to clipboard!");
    } catch {
-    // Fallback for older browsers
     const textArea = document.createElement("textarea");
     textArea.value = generatedCode;
     document.body.appendChild(textArea);
@@ -100,7 +99,6 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
             </h3>
 
             <div className="space-y-3">
-              {/* Organization Admin */}
               <button
                 onClick={() => setStep("admin-setup")}
                 className="w-full p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-[#A343EC]/50 transition-all duration-200 text-left group flex items-center justify-between"
@@ -109,7 +107,6 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
                 <ChevronRight className="text-[#E4DEAA] group-hover:text-[#A343EC] transition-colors" size={20} />
               </button>
 
-              {/* Join Organization */}
               <button
                 onClick={() => setStep("worker-join")}
                 className="w-full p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-[#A343EC]/50 transition-all duration-200 text-left group flex items-center justify-between"
@@ -118,7 +115,6 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
                 <ChevronRight className="text-[#E4DEAA] group-hover:text-[#A343EC] transition-colors" size={20} />
               </button>
 
-              {/* Personal Use */}
               <button
                 onClick={() => setPersonalMode.mutate()}
                 disabled={setPersonalMode.isPending}

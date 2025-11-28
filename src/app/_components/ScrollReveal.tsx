@@ -1,4 +1,3 @@
-// ScrollReveal.tsx
 "use client";
 
 import React, { useEffect, useRef, useMemo, type ReactNode, type RefObject } from 'react';
@@ -57,9 +56,7 @@ const ScrollReveal: React.FC<ScrollRevealProps> = ({
         const scroller = scrollContainerRef?.current ?? undefined;
         const triggers: ScrollTrigger[] = [];
 
-        // Wait for DOM to be ready
         const setupAnimations = () => {
-            // Rotation animation
             const rotationTween = gsap.fromTo(
                 el,
                 { transformOrigin: '0% 50%', rotate: baseRotation },
@@ -82,7 +79,6 @@ const ScrollReveal: React.FC<ScrollRevealProps> = ({
             const wordElements = el.querySelectorAll<HTMLElement>('.word');
             if (wordElements.length === 0) return;
 
-            // Opacity animation
             const opacityTween = gsap.fromTo(
                 wordElements,
                 { opacity: baseOpacity, willChange: 'opacity' },
@@ -103,7 +99,6 @@ const ScrollReveal: React.FC<ScrollRevealProps> = ({
                 triggers.push(opacityTween.scrollTrigger as ScrollTrigger);
             }
 
-            // Blur animation
             if (enableBlur) {
                 const blurTween = gsap.fromTo(
                     wordElements,

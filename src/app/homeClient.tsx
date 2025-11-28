@@ -11,8 +11,6 @@ import {
     Calendar,
     CheckCircle2,
     ArrowRight,
-    Info,
-    
 } from "lucide-react";
 
 import ScrollReveal from "./_components/ScrollReveal";
@@ -62,7 +60,6 @@ export function HomeClient({ session }: {
 
     const handleSignInClose = () => {
         setIsModalOpen(false);
-        // Small delay to allow the sign-in modal to close before showing role selection
         if (session?.user && userProfile !== undefined && !userProfile) {
             setTimeout(() => {
                 setShowRoleSelection(true);
@@ -70,7 +67,6 @@ export function HomeClient({ session }: {
         }
     };
 
-    // Don't show buttons while role selection is pending or active
     const showActionButtons = session && !showRoleSelection && userProfile !== undefined && userProfile !== null;
 
     return (
@@ -102,15 +98,6 @@ export function HomeClient({ session }: {
                                 <h1 className="text-2xl font-bold text-[#FBF9F5]" style={{ fontFamily: 'Uncial Antiqua, serif' }}>KAIROS</h1>
                             </div>
                             
-                            {/* <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2">
-                                <button 
-                                    onClick={scrollToAbout} 
-                                    className="flex items-center gap-2 px-5 py-2.5 text-[#E4DEAA] hover:text-[#FBF9F5] hover:bg-white/5 rounded-full font-medium transition-all duration-200"
-                                >
-                                    <Info size={18} />
-                                    <span>About</span>
-                                </button>
-                            </div> */}
                             
                             <div className="flex items-center">
                                 {session && <UserDisplay />}

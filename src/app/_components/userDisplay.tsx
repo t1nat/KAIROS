@@ -1,4 +1,3 @@
-// src/app/_components/userDisplay.tsx
 "use client";
 
 import { api } from "~/trpc/react";
@@ -77,7 +76,6 @@ export function UserDisplay() {
         />
       </button>
 
-      {/* Dropdown Menu */}
       {isOpen && (
         <div className="absolute right-0 mt-3 w-64 bg-[#181F25]/95 rounded-2xl border border-white/10 shadow-2xl overflow-hidden z-50 backdrop-blur-xl">
           <div className="p-4 border-b border-white/10 bg-white/5">

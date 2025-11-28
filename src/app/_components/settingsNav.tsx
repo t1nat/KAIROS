@@ -1,4 +1,3 @@
-// src/app/_components/settingsNav.tsx
 "use client";
 
 import Link from "next/link";

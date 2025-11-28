@@ -1,4 +1,3 @@
-// src/app/_components/signInModal.tsx - FIXED TYPE ERRORS
 "use client";
 
 import { signIn } from "next-auth/react";
@@ -80,7 +79,6 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
       }
     } catch (error) {
       console.error("Sign up error:", error);
-      // Type-safe error handling
       if (error instanceof Error) {
         setError(error.message);
       } else {

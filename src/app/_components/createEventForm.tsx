@@ -1,4 +1,3 @@
-// src/app/_components/createEventForm.tsx
 'use client';
 
 import React, { useState } from 'react';
@@ -140,7 +139,6 @@ export const CreateEventForm: React.FC = () => {
         </button>
       ) : (
         <form onSubmit={handleSubmit} className="p-8">
-          {/* Header */}
           <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/10">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-[#A343EC]/20 rounded-lg flex items-center justify-center">
@@ -158,7 +156,6 @@ export const CreateEventForm: React.FC = () => {
           </div>
 
           <div className="space-y-6">
-            {/* Title Input */}
             <div>
               <label htmlFor="title" className="block text-sm font-semibold text-[#E4DEEA] mb-2">
                 Event Title <span className="text-[#A343EC]">*</span>
@@ -176,7 +173,6 @@ export const CreateEventForm: React.FC = () => {
               />
             </div>
 
-            {/* Description Input */}
             <div>
               <label htmlFor="description" className="block text-sm font-semibold text-[#E4DEEA] mb-2">
                 Description <span className="text-[#A343EC]">*</span>
@@ -193,7 +189,6 @@ export const CreateEventForm: React.FC = () => {
               />
             </div>
 
-            {/* Event Date Input */}
             <div>
               <label htmlFor="eventDate" className="block text-sm font-semibold text-[#E4DEEA] mb-2">
                 Event Date & Time <span className="text-[#A343EC]">*</span>
@@ -209,8 +204,7 @@ export const CreateEventForm: React.FC = () => {
               />
             </div>
 
-            {/* Region Select */}
-            <div>
+=            <div>
               <label htmlFor="region" className="block text-sm font-semibold text-[#E4DEEA] mb-2">
                 <MapPin className="inline mr-1" size={16} />
                 Region <span className="text-[#A343EC]">*</span>
@@ -231,7 +225,6 @@ export const CreateEventForm: React.FC = () => {
               </select>
             </div>
 
-            {/* Image Upload */}
             <div>
               <label className="block text-sm font-semibold text-[#E4DEEA] mb-2">
                 Event Image <span className="text-[#59677C] font-normal">(optional)</span>
@@ -277,7 +270,6 @@ export const CreateEventForm: React.FC = () => {
               )}
             </div>
 
-            {/* RSVP Options */}
             <div className="space-y-3 p-4 bg-white/5 rounded-xl border border-white/10">
               <div className="flex items-center gap-3">
                 <input
@@ -308,7 +300,6 @@ export const CreateEventForm: React.FC = () => {
               )}
             </div>
 
-            {/* Action Buttons */}
             <div className="flex gap-3 pt-6 border-t border-white/10">
               <button
                 type="submit"

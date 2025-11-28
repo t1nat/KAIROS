@@ -1,4 +1,3 @@
-// src/app/layout.tsx
 import "~/styles/globals.css";
 
 import { type Metadata } from "next";
@@ -20,7 +19,6 @@ const geist = Geist({
   variable: "--font-geist-sans",
 });
 
-// Using Cinzel as an elegant serif alternative to Arsenica
 const arsenica = Cinzel({
   subsets: ["latin"],
   weight: ["400", "700"],

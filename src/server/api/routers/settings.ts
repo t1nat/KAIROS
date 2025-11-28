@@ -1,4 +1,4 @@
-// src/server/api/routers/settings.ts
+
 
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
@@ -6,7 +6,7 @@ import { users } from "~/server/db/schema";
 import { eq } from "drizzle-orm";
 
 export const settingsRouter = createTRPCRouter({
-  // Get all user settings
+ 
   get: protectedProcedure
     .query(async ({ ctx }) => {
       const user = await ctx.db.query.users.findFirst({
@@ -17,26 +17,26 @@ export const settingsRouter = createTRPCRouter({
           email: true,
           image: true,
           bio: true,
-          // Notifications
+         
           emailNotifications: true,
           projectUpdatesNotifications: true,
           eventRemindersNotifications: true,
           marketingEmailsNotifications: true,
-          // Language & Region
+        
           language: true,
           timezone: true,
           dateFormat: true,
-          // Appearance
+         
           theme: true,
           accentColor: true,
-          // Privacy
+        
           profileVisibility: true,
           showOnlineStatus: true,
           activityTracking: true,
           dataCollection: true,
-          // Security
+        
           twoFactorEnabled: true,
-          // Account
+          
           createdAt: true,
         },
       });
@@ -48,7 +48,7 @@ export const settingsRouter = createTRPCRouter({
       return user;
     }),
 
-  // Update profile settings
+
   updateProfile: protectedProcedure
     .input(z.object({
       name: z.string().min(1).max(255).optional(),
@@ -66,7 +66,7 @@ export const settingsRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // Update notification settings
+
   updateNotifications: protectedProcedure
     .input(z.object({
       emailNotifications: z.boolean().optional(),
@@ -85,7 +85,7 @@ export const settingsRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // Update language & region settings
+ 
   updateLanguageRegion: protectedProcedure
     .input(z.object({
       language: z.enum(["en", "es", "fr", "de", "it", "pt", "ja", "ko", "zh", "ar"]).optional(),
@@ -103,7 +103,7 @@ export const settingsRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // Update appearance settings
+  
   updateAppearance: protectedProcedure
     .input(z.object({
       theme: z.enum(["light", "dark", "system"]).optional(),
@@ -120,7 +120,7 @@ export const settingsRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // Update privacy settings
+
   updatePrivacy: protectedProcedure
     .input(z.object({
       profileVisibility: z.boolean().optional(),
@@ -139,17 +139,17 @@ export const settingsRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // Request data export
+
   requestDataExport: protectedProcedure
     .mutation(async ({ ctx:_ctx }) => {
-      // TODO: Implement actual data export logic
+  
       return { 
         success: true,
         message: "Data export request received. You'll receive an email when it's ready."
       };
     }),
 
-  // Delete all user data
+ 
   deleteAllData: protectedProcedure
     .mutation(async ({ ctx }) => {
       await ctx.db.delete(users)

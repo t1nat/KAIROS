@@ -31,7 +31,6 @@ const DEFAULT_SPOTLIGHT_RADIUS = 300;
 const DEFAULT_GLOW_COLOR = '163, 67, 236';
 const MOBILE_BREAKPOINT = 768;
 
-// Kairos-specific card data
 const cardData: BentoCardProps[] = [
   {
     color: '#181F25',
@@ -391,7 +390,6 @@ const GlobalSpotlight: React.FC<{
       
       if (!spotlightElement || !gridElement) return;
 
-      // Note: This relies on a parent element having the class 'bento-section'
       const section = gridElement.closest('.bento-section');
       const rect = section?.getBoundingClientRect();
       const mouseInside =
@@ -513,9 +511,7 @@ const useMobileDetection = () => {
   return isMobile;
 };
 
-// --- FIX START ---
 
-// Use a global flag to ensure the style block is only injected once across all instances.
 let isStylesInjected = false;
 
 const GlobalBentoStyles: React.FC<{ glowColor: string }> = ({ glowColor }) => {
@@ -592,17 +588,13 @@ const GlobalBentoStyles: React.FC<{ glowColor: string }> = ({ glowColor }) => {
     isStylesInjected = true;
 
     return () => {
-      // Cleanup is technically unnecessary for globally injected styles unless the component
-      // might be fully unmounted AND you want to remove the styles.
-      // Since `isStylesInjected` prevents re-injection, we'll leave it as is.
-      // If we *did* want cleanup, we'd need a more robust check for other instances.
+      // WSETRYIOL;
     };
-  }, [glowColor]); // Re-run if glowColor changes, but only inject once.
+  }, [glowColor]); 
 
   return null;
 };
 
-// --- FIX END ---
 
 
 const MagicBento: React.FC<BentoProps> = ({
@@ -622,12 +614,10 @@ const MagicBento: React.FC<BentoProps> = ({
   const isMobile = useMobileDetection();
   const shouldDisableAnimations = disableAnimations || isMobile;
 
-  // Icon background colors for each card
   const iconColors = ['#A343EC', '#F8D45E', '#A3D3B4'];
 
   return (
     <>
-      {/* ADDED: Inject styles only once */}
       <GlobalBentoStyles glowColor={glowColor} />
 
       {enableSpotlight && (

@@ -1,9 +1,8 @@
-// src/app/_components/notesList.tsx
 "use client";
 
 import { useState } from "react";
 import { api } from "~/trpc/react";
-import { Lock, Trash2, Eye, EyeOff, Mail, AlertCircle, FileText, ChevronDown, RefreshCw, FolderLock, X } from "lucide-react";
+import { Lock, Trash2, Eye, EyeOff, Mail, AlertCircle, FileText, ChevronDown, RefreshCw, FolderLock } from "lucide-react";
 
 export function NotesList() {
   const [selectedNoteId, setSelectedNoteId] = useState<number | null>(null);
@@ -86,7 +85,6 @@ export function NotesList() {
     requestPasswordReset.mutate({ noteId });
   };
 
-  // Separate notes into locked and unlocked
   const unlockedNotesArray = notes?.filter(n => !n.passwordHash) ?? [];
   const lockedNotesArray = notes?.filter(n => n.passwordHash) ?? [];
   
@@ -106,7 +104,6 @@ export function NotesList() {
 
     <div className="relative h-[calc(100vh-200px)] w-full">
       
-      {/* --- ENCRYPTED FOLDER (Positioned Top Right, aligned with New Note button) --- */}
       <div className="absolute -top-14 right-0 z-50">
         {lockedNotesArray.length > 0 && (
           <button
@@ -123,7 +120,6 @@ export function NotesList() {
         )}
       </div>
 
-      {/* --- SINGLE COLUMN LAYOUT --- */}
       <div className="flex flex-col h-full pt-2 max-w-3xl mx-auto">
         <h3 className="text-[#E4DEAA] text-xs font-bold uppercase tracking-widest mb-4 pl-1">Your Notes</h3>
         
@@ -163,12 +159,10 @@ export function NotesList() {
                     </p>
                   </button>
 
-                  {/* EXPANDED CONTENT */}
                   {isSelected && (
                     <div className="animate-in fade-in slide-in-from-top-2 duration-200 space-y-3">
                       {isLocked ? (
                         <>
-                          {/* Password Input Card */}
                           <div className="bg-[#1E2024] border border-white/10 rounded-xl p-6 shadow-xl">
                             <div className="flex items-center gap-2 mb-1">
                                <Lock className="text-red-400" size={20} />
@@ -217,7 +211,6 @@ export function NotesList() {
                           </div>
                         </>
                       ) : (
-                        /* UNLOCKED CONTENT */
                         <div className="bg-[#0F1115] border border-white/10 rounded-xl p-6 shadow-xl">
                           <div className="flex items-center justify-between mb-4 pb-4 border-b border-white/10">
                             <div className="flex items-center gap-2">
@@ -237,7 +230,6 @@ export function NotesList() {
                         </div>
                       )}
 
-                      {/* Delete Button */}
                       <button
                         onClick={() => {
                           if (confirm('Delete this note? This cannot be undone.')) {
@@ -266,7 +258,6 @@ export function NotesList() {
             )
           )}
 
-          {/* Locked Notes Section - Expands Inline */}
           {showLockedNotes && lockedNotesArray.length > 0 && (
             <div className="animate-in fade-in slide-in-from-top-2 duration-200">
               <h4 className="px-1 py-2 text-[10px] font-bold text-[#80C49B] uppercase tracking-wider opacity-80">
@@ -298,12 +289,10 @@ export function NotesList() {
                         </p>
                       </button>
 
-                      {/* EXPANDED CONTENT FOR LOCKED NOTES */}
                       {isSelected && (
                         <div className="animate-in fade-in slide-in-from-top-2 duration-200 space-y-3">
                           {isLocked ? (
                             <>
-                              {/* Password Input Card */}
                               <div className="bg-[#1E2024] border border-white/10 rounded-xl p-6 shadow-xl">
                                 <div className="flex items-center gap-2 mb-1">
                                    <Lock className="text-red-400" size={20} />
@@ -352,7 +341,6 @@ export function NotesList() {
                               </div>
                             </>
                           ) : (
-                            /* UNLOCKED CONTENT */
                             <div className="bg-[#0F1115] border border-white/10 rounded-xl p-6 shadow-xl">
                               <div className="flex items-center justify-between mb-4 pb-4 border-b border-white/10">
                                 <div className="flex items-center gap-2">
@@ -372,7 +360,6 @@ export function NotesList() {
                             </div>
                           )}
 
-                          {/* Delete Button */}
                           <button
                             onClick={() => {
                               if (confirm('Delete this note? This cannot be undone.')) {
@@ -395,7 +382,6 @@ export function NotesList() {
         </div>
       </div>
 
-      {/* Password Reset Modal */}
       {showResetModal !== null && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-[#0F1115] rounded-2xl shadow-2xl max-w-md w-full p-6 border border-white/10">

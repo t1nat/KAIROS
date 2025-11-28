@@ -24,7 +24,7 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 
 const REGIONS = [
-  { value: '', label: 'All Regions' }, // Re-added "All Regions" option for filtering
+  { value: '', label: 'All Regions' }, 
   { value: 'sofia', label: 'Sofia' },
   { value: 'plovdiv', label: 'Plovdiv' },
   { value: 'varna', label: 'Varna' },
@@ -138,7 +138,6 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-[#1E252D] rounded-2xl border border-white/10 max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
         <div className="p-6 border-b border-white/10 flex items-center justify-between sticky top-0 bg-[#1E252D] z-10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-[#A343EC]/20 rounded-lg flex items-center justify-center">
@@ -154,9 +153,7 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
           </button>
         </div>
 
-        {/* Content */}
         <div className="p-6 space-y-6">
-          {/* Total Responses */}
           <div className="bg-white/5 rounded-xl p-5 border border-white/10">
             <div className="flex items-center gap-3 mb-2">
               <Users className="text-[#A343EC]" size={24} />
@@ -165,14 +162,12 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
             <p className="text-4xl font-bold text-[#A343EC] mt-2">{totalRsvps}</p>
           </div>
 
-          {/* Breakdown */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-[#E4DEEA] flex items-center gap-2">
               <TrendingUp size={16} />
               Response Breakdown
             </h3>
 
-            {/* Going */}
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
@@ -190,7 +185,6 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
               <p className="text-xs text-[#59677C] text-right">{goingPercentage.toFixed(1)}%</p>
             </div>
 
-            {/* Maybe */}
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
@@ -208,7 +202,6 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
               <p className="text-xs text-[#59677C] text-right">{maybePercentage.toFixed(1)}%</p>
             </div>
 
-            {/* Not Going */}
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
@@ -227,7 +220,6 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
             </div>
           </div>
 
-          {/* Event Info */}
           <div className="bg-white/5 rounded-xl p-4 border border-white/10">
             <h4 className="text-sm font-semibold text-[#E4DEEA] mb-2">Event Details</h4>
             <p className="text-[#FBF9F5] font-medium mb-1">{event.title}</p>
@@ -347,7 +339,6 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
           onClose={() => setInfoMessage(null)}
         />
 
-        {/* Header */}
         <div className="p-6 border-b border-white/10">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-full bg-white/10 overflow-hidden">
@@ -402,7 +393,6 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
           </div>
         </div>
 
-        {/* Event image */}
         {event.imageUrl && (
           <div className="relative aspect-video bg-white/10">
             <Image
@@ -420,7 +410,6 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
           </p>
         </div>
 
-        {/* RSVP Section */}
         {event.enableRsvp && (
           <div className="px-6 pb-4">
             <div className="bg-white/5 rounded-xl p-4 border border-white/10">
@@ -480,7 +469,6 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
           </div>
         )}
 
-        {/* Actions */}
         <div className="px-6 py-4 border-t border-white/10 flex items-center gap-6">
           <button
             onClick={handleLike}
@@ -504,7 +492,6 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
           </button>
         </div>
 
-        {/* Comments */}
         <div className="border-t border-white/10">
           {displayedComments.length > 0 && (
             <div className="p-6 space-y-4">
@@ -552,7 +539,6 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
             </div>
           )}
 
-          {/* Add Comment */}
           {session && (
             <div className="p-6 border-t border-white/10">
               <div className="flex gap-3">
@@ -604,7 +590,6 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
         </div>
       </div>
 
-      {/* RSVP Dashboard Modal */}
       {showDashboard && event.isOwner && (
         <RsvpDashboard event={event} onClose={() => setShowDashboard(false)} />
       )}
@@ -669,7 +654,6 @@ export const EventFeed: React.FC = () => {
         </div>
       </div>
 
-      {/* Events List */}
       {!filteredEvents || filteredEvents.length === 0 ? (
         <div className="text-center py-20">
           <div className="w-16 h-16 bg-[#A343EC]/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -679,7 +663,6 @@ export const EventFeed: React.FC = () => {
             No Events Found
           </h3>
           <p className="text-[#E4DEEA]">
-            {/* 4. Update messaging to reflect filtering */}
             {selectedRegion 
               ? `No events currently listed for ${REGIONS.find(r => r.value === selectedRegion)?.label}.` 
               : `Create your first event to get started!`}

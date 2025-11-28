@@ -1,11 +1,10 @@
-// src/server/api/routers/organization.ts
 
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { organizations, organizationMembers, users } from "~/server/db/schema";
 import { eq, and } from "drizzle-orm";
 
-// Helper function to generate access code
+
 function generateAccessCode(): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let code = "";
@@ -17,7 +16,6 @@ function generateAccessCode(): string {
 }
 
 export const organizationRouter = createTRPCRouter({
-  // Create a new organization (Admin)
   create: protectedProcedure
     .input(
       z.object({
@@ -26,11 +24,11 @@ export const organizationRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        // Generate unique access code
+        
         let accessCode = generateAccessCode();
         let isUnique = false;
         
-        // Ensure access code is unique
+        
         while (!isUnique) {
           const [existing] = await ctx.db
             .select()
@@ -45,7 +43,7 @@ export const organizationRouter = createTRPCRouter({
           }
         }
 
-        // Create the organization
+        
         const [organization] = await ctx.db
           .insert(organizations)
           .values({
@@ -59,14 +57,14 @@ export const organizationRouter = createTRPCRouter({
           throw new Error("Failed to create organization");
         }
 
-        // Add creator as admin member
+        
         await ctx.db.insert(organizationMembers).values({
           organizationId: organization.id,
           userId: ctx.session.user.id,
           role: "admin",
         });
 
-        // Update user's usage mode to organization
+        
         await ctx.db
           .update(users)
           .set({ usageMode: "organization" })
@@ -83,7 +81,7 @@ export const organizationRouter = createTRPCRouter({
       }
     }),
 
-  // Join an organization (Worker)
+
   join: protectedProcedure
     .input(
       z.object({
@@ -92,7 +90,7 @@ export const organizationRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        // Find organization by access code
+        
         const [organization] = await ctx.db
           .select()
           .from(organizations)
@@ -102,7 +100,7 @@ export const organizationRouter = createTRPCRouter({
           throw new Error("Invalid access code. Please check and try again.");
         }
 
-        // Check if user is already a member
+        
         const [existingMember] = await ctx.db
           .select()
           .from(organizationMembers)
@@ -117,14 +115,14 @@ export const organizationRouter = createTRPCRouter({
           throw new Error("You are already a member of this organization.");
         }
 
-        // Add user as worker member
+        
         await ctx.db.insert(organizationMembers).values({
           organizationId: organization.id,
           userId: ctx.session.user.id,
           role: "worker",
         });
 
-        // Update user's usage mode to organization
+        
         await ctx.db
           .update(users)
           .set({ usageMode: "organization" })
@@ -143,7 +141,7 @@ export const organizationRouter = createTRPCRouter({
       }
     }),
 
-  // Get current user's organization
+
   getMy: protectedProcedure.query(async ({ ctx }) => {
     const [membership] = await ctx.db
       .select({
@@ -171,11 +169,12 @@ export const organizationRouter = createTRPCRouter({
     };
   }),
 
-  // Get organization members
+  
+
   getMembers: protectedProcedure
     .input(z.object({ organizationId: z.number() }))
     .query(async ({ ctx, input }) => {
-      // Verify user is a member of this organization
+      
       const [membership] = await ctx.db
         .select()
         .from(organizationMembers)
@@ -190,7 +189,7 @@ export const organizationRouter = createTRPCRouter({
         throw new Error("You are not a member of this organization");
       }
 
-      // Get all members
+      
       const members = await ctx.db
         .select({
           id: users.id,
@@ -207,9 +206,9 @@ export const organizationRouter = createTRPCRouter({
       return members;
     }),
 
-  // Leave organization
+  
   leave: protectedProcedure.mutation(async ({ ctx }) => {
-    // Get user's membership
+    
     const [membership] = await ctx.db
       .select()
       .from(organizationMembers)
@@ -219,7 +218,7 @@ export const organizationRouter = createTRPCRouter({
       throw new Error("You are not a member of any organization");
     }
 
-    // Check if user is the only admin
+    
     if (membership.role === "admin") {
       const [organization] = await ctx.db
         .select()
@@ -227,7 +226,7 @@ export const organizationRouter = createTRPCRouter({
         .where(eq(organizations.id, membership.organizationId));
 
       if (organization?.createdById === ctx.session.user.id) {
-        // Count other admins
+        
         const admins = await ctx.db
           .select()
           .from(organizationMembers)
@@ -246,12 +245,12 @@ export const organizationRouter = createTRPCRouter({
       }
     }
 
-    // Remove membership
+    
     await ctx.db
       .delete(organizationMembers)
       .where(eq(organizationMembers.userId, ctx.session.user.id));
 
-    // Set user back to personal mode
+    
     await ctx.db
       .update(users)
       .set({ usageMode: "personal" })

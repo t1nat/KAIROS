@@ -1,4 +1,3 @@
-// src/app/_components/createNoteForm.tsx
 'use client';
 
 import React, { useState } from 'react';

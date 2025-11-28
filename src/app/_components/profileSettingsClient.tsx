@@ -63,8 +63,7 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
     },
   });
 
-  // Safe wrapper for the upload mutation
-  // If this errors, check your api/root.ts or api/routers/user.ts to ensure uploadProfileImage exists
+ 
   const uploadImageMutation = api.user.uploadProfileImage?.useMutation({
     onSuccess: (data: { imageUrl: string }) => {
       setImagePreview(data.imageUrl);
@@ -100,7 +99,6 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
 
     setIsUploading(true);
 
-    // Create preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setImagePreview(reader.result as string);
@@ -128,7 +126,6 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
     });
   };
 
-  // Helper to safely get the date since TypeScript thinks it might not exist
   const getJoinedDate = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
     const createdAt = (userProfile as any)?.createdAt as string | Date | undefined;
@@ -157,7 +154,6 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Profile Picture Upload */}
         <div>
           <label className="block text-sm font-semibold text-[#E4DEEA] mb-4">
             Profile Picture
@@ -210,7 +206,6 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
           />
         </div>
 
-        {/* Full Name */}
         <div>
           <label className="block text-sm font-semibold text-[#E4DEEA] mb-2">
             Full Name
@@ -224,7 +219,6 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
           />
         </div>
 
-        {/* Email Address */}
         <div>
           <label className="block text-sm font-semibold text-[#E4DEEA] mb-2">
             Email Address
@@ -239,7 +233,6 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
           <p className="text-xs text-[#59677C] mt-1">Email cannot be changed</p>
         </div>
 
-        {/* Bio */}
         <div>
           <label className="block text-sm font-semibold text-[#E4DEEA] mb-2">
             Bio
@@ -257,7 +250,6 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
           </p>
         </div>
 
-        {/* Member Since */}
         {joinedDate && (
           <div className="p-4 bg-white/5 rounded-xl border border-white/10">
             <h3 className="font-semibold text-[#FBF9F5] mb-2">Member Since</h3>
@@ -267,7 +259,6 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
           </div>
         )}
 
-        {/* Save Button */}
         <div className="pt-4 border-t border-white/10">
           <button
             type="submit"

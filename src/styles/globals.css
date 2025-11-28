@@ -1,86 +1,76 @@
-  /* src/styles/globals.css */
   @import "tailwindcss";
 
-  /* ========================================
-      THEME VARIABLES
-      ======================================== */
+ 
 
   /* Light Mode (Default) */
   :root {
     --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
       "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     /* Backgrounds */
-    /* Changed background to a slightly off-white for aesthetic appeal */
-    --bg-primary: 250 250 252;        /* #FAFAFC - Main backgrounds (Slightly off-white) */
-    --bg-secondary: 248 250 252;       /* #F8FAFC - Cards, panels */
-    --bg-tertiary: 241 245 249;       /* #F1F5F9 - Hover states */
+
+    --bg-primary: 250 250 252;       
+    --bg-secondary: 248 250 252;       
+    --bg-tertiary: 241 245 249;      
     
     /* Text */
-    --text-primary: 15 23 42;         /* #0F172A - Main text */
-    --text-secondary: 71 85 105;      /* #475569 - Secondary text */
-    --text-tertiary: 148 163 184;     /* #94A3B8 - Muted text */
+    --text-primary: 15 23 42;         
+    --text-secondary: 71 85 105;      
+    --text-tertiary: 148 163 184;    
     
     /* Borders */
-    --border-light: 226 232 240;      /* #E2E8F0 - Light borders */
-    --border-medium: 203 213 225;     /* #CBD5E1 - Medium borders */
+    --border-light: 226 232 240;      
+    --border-medium: 203 213 225;     
     
     /* Accents */
-    --accent-primary: 79 70 229;      /* #4F46E5 - Primary actions (Indigo) */
-    --accent-secondary: 124 58 237;  /* #7C3AED - Secondary actions (Purple) */
+    --accent-primary: 79 70 229;      
+    --accent-secondary: 124 58 237;  
     
     /* Status Colors */
-    --success: 34 197 94;             /* #22C55E - Success states */
-    --warning: 251 146 60;             /* #FB923C - Warning states */
-    --error: 239 68 68;               /* #EF4444 - Error states */
+    --success: 34 197 94;             
+    --warning: 251 146 60;             
+    --error: 239 68 68;              
   }
 
   /* Dark Mode */
   .dark {
     /* Backgrounds */
-    --bg-primary: 15 23 42;           /* #0F172A - Main backgrounds */
-    --bg-secondary: 30 41 59;          /* #1E293B - Cards, panels */
-    --bg-tertiary: 51 65 85;          /* #334155 - Hover states */
+    --bg-primary: 15 23 42;           
+    --bg-secondary: 30 41 59;          
+    --bg-tertiary: 51 65 85;         
     
     /* Text */
-    --text-primary: 248 250 252;       /* #F8FAFC - Main text */
-    --text-secondary: 203 213 225;     /* #CBD5E1 - Secondary text */
-    --text-tertiary: 148 163 184;      /* #94A3B8 - Muted text */
+    --text-primary: 248 250 252;      
+    --text-secondary: 203 213 225;     
+    --text-tertiary: 148 163 184;     
     
     /* Borders */
-    --border-light: 51 65 85;          /* #334155 - Light borders */
-    --border-medium: 71 85 105;        /* #475569 - Medium borders */
+    --border-light: 51 65 85;         
+    --border-medium: 71 85 105;      
     
     /* Accents */
-    --accent-primary: 99 102 241;      /* #6366F1 - Primary actions (Lighter Indigo) */
-    --accent-secondary: 139 92 246;  /* #8B5CF6 - Secondary actions (Lighter Purple) */
+    --accent-primary: 99 102 241;      
+    --accent-secondary: 139 92 246; 
     
     /* Status Colors */
-    --success: 74 222 128;             /* #4ADE80 - Success states */
-    --warning: 251 191 36;             /* #FBBF24 - Warning states */
-    --error: 248 113 113;              /* #F87171 - Error states */
+    --success: 74 222 128;          
+    --warning: 251 191 36;           
+    --error: 248 113 113;         
   }
 
-  /* ========================================
-      BASE STYLES
-      ======================================== */
-
+ 
   body {
     background-color: rgb(var(--bg-primary));
     color: rgb(var(--text-primary));
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 
-  /* Smooth transitions for theme switching */
   * {
     transition-property: background-color, border-color, color, fill, stroke;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 200ms;
   }
 
-  /* ========================================
-      UTILITY CLASSES
-      ======================================== */
-
+ 
   /* Theme transition utility */
   .theme-transition {
     transition: all 0.3s ease-in-out;
@@ -150,9 +140,6 @@
     background-color: rgb(var(--bg-secondary));
   }
 
-  /* ========================================
-      SCROLLBAR STYLING
-      ======================================== */
 
   ::-webkit-scrollbar {
     width: 8px;
@@ -172,9 +159,7 @@
     background-color: rgb(var(--text-tertiary));
   }
 
-  /* ========================================
-      ANIMATION KEYFRAMES
-      ======================================== */
+ 
 
   @keyframes fadeIn {
     from {
@@ -220,22 +205,6 @@
     }
   }
 
-  /* Animation for the writing "K" */
-  @keyframes writing {
-      0% {
-          stroke-dashoffset: 100%;
-          fill: transparent;
-      }
-      50% {
-          stroke-dashoffset: 0%;
-          fill: transparent;
-      }
-      100% {
-          stroke-dashoffset: 0%;
-          fill: currentColor; /* Fill the letter after writing */
-      }
-  }
-
   /*pop up text*/
   @keyframes pop-up {
       0% {
@@ -270,7 +239,7 @@
       left: -5px;
       right: -5px;
       bottom: -5px;
-      border-radius: 1rem; /* Slightly larger than card border-radius */
+      border-radius: 1rem; 
       background: transparent;
       transition: opacity 0.3s ease-in-out;
       pointer-events: none;
@@ -280,17 +249,16 @@
 
   .magic-bento-card:hover:before {
       opacity: 1;
-      /* This creates a glowing border effect */
       box-shadow: 
           0 0 10px rgba(var(--hover-color), 0.5),
           0 0 20px rgba(var(--hover-color), 0.3),
           0 0 30px rgba(var(--hover-color), 0.1);
   }
 
-  /* Define hover colors for each card */
-  .card-org:hover:before { --hover-color: 148 72 242; /* Equivalent to #9448F2 */ }
-  .card-team:hover:before { --hover-color: 128 196 155; /* Equivalent to #80C49B */ }
-  .card-personal:hover:before { --hover-color: 255 197 61; /* Equivalent to #FFC53D */ }
+
+  .card-org:hover:before { --hover-color: 148 72 242;  }
+  .card-team:hover:before { --hover-color: 128 196 155;  }
+  .card-personal:hover:before { --hover-color: 255 197 61; }
 
 
   .animate-fadeIn {
@@ -310,7 +278,6 @@
   }
 
   .animate-writing-k {
-      /* Total duration of animation is 2s (1s for drawing, 1s for filling) */
       animation: writing 2s ease-in-out forwards;
       stroke-dasharray: 100%;
       stroke-dashoffset: 100%;
@@ -319,7 +286,7 @@
 
   .animate-pop-up {
       animation: popUp 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-      opacity: 0; /* Start invisible */
+      opacity: 0; 
   }
 
   /* Custom delay utility classes */
@@ -342,9 +309,7 @@
   .pop-up-delay-17 { animation-delay: 1.7s; }
   .pop-up-delay-18 { animation-delay: 1.8s; }
 
-  /* ========================================
-      SELECTION STYLING
-      ======================================== */
+
 
   ::selection {
     background-color: rgba(var(--accent-primary), 0.2);
@@ -354,18 +319,14 @@
     background-color: rgba(var(--accent-primary), 0.2);
   }
 
-  /* ========================================
-      FOCUS VISIBLE (Accessibility)
-      ======================================== */
+
 
   *:focus-visible {
     outline: 2px solid rgb(var(--accent-primary));
     outline-offset: 2px;
   }
 
-  /* ========================================
-      DARK MODE SPECIFIC ADJUSTMENTS
-      ======================================== */
+
 
   .dark .shadow-sm {
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
@@ -387,9 +348,6 @@
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   }
 
-  /* ========================================
-      PRINT STYLES
-      ======================================== */
 
   @media print {
     * {
@@ -450,9 +408,7 @@
   height: var(--size, 5rem);
   border-radius: 50%;
   
-  /* ************************************************* */
-  /* THE FIX: Transition the custom property --value */
-  /* ************************************************* */
+
   transition: --value 2s ease-out; 
 }
 
@@ -461,7 +417,6 @@
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  /* This background property now updates smoothly because the variable it depends on is transitioned */
   background: conic-gradient(
     currentColor calc(var(--value, 0) * 1%),
     transparent calc(var(--value, 0) * 1%)
@@ -476,11 +431,9 @@
     transparent calc(100% - var(--thickness, 4px)),
     white calc(100% - var(--thickness, 4px))
   );
-  /* REMOVED: transition: all 2s ease-out; */
 }
 
 .radial-progress::after {
-  /* This element creates the background track, no change needed */
   content: "";
   position: absolute;
   inset: 0;
