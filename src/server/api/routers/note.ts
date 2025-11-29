@@ -50,11 +50,11 @@ export const noteRouter = createTRPCRouter({
           });
         }
 
-        console.log("✅ Note Inserted Successfully. New ID:", newNote.id);
+        console.log("Note Inserted Successfully. New ID:", newNote.id);
         return newNote;
 
       } catch (dbError) {
-        console.error("❌ Database Insertion Error:", dbError); 
+        console.error("Database Insertion Error:", dbError); 
         throw new TRPCError({ 
           code: "INTERNAL_SERVER_ERROR", 
           message: "Database insertion failed. Check your schema and database logs." 

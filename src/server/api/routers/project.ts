@@ -23,8 +23,8 @@ export const projectRouter = createTRPCRouter({
         .where(eq(organizationMembers.userId, ctx.session.user.id))
         .limit(1);
 
-      console.log("🔍 Creating project - User ID:", ctx.session.user.id);
-      console.log("🔍 User's organization membership:", membership);
+      console.log("Creating project - User ID:", ctx.session.user.id);
+      console.log("User's organization membership:", membership);
 
       const [project] = await ctx.db
         .insert(projects)
@@ -37,7 +37,7 @@ export const projectRouter = createTRPCRouter({
         })
         .returning();
 
-      console.log("✅ Created project:", {
+      console.log("Created project:", {
         id: project?.id,
         title: project?.title,
         organizationId: project?.organizationId,
@@ -48,7 +48,7 @@ export const projectRouter = createTRPCRouter({
 
  
   getMyProjects: protectedProcedure.query(async ({ ctx }) => {
-    console.log("🔍 Fetching projects for user:", ctx.session.user.id);
+    console.log("Fetching projects for user:", ctx.session.user.id);
 
     
     const [membership] = await ctx.db
@@ -57,7 +57,7 @@ export const projectRouter = createTRPCRouter({
       .where(eq(organizationMembers.userId, ctx.session.user.id))
       .limit(1);
 
-    console.log("🔍 User organization membership:", membership);
+    console.log("User organization membership:", membership);
 
     let projectsList;
 
@@ -69,7 +69,7 @@ export const projectRouter = createTRPCRouter({
         .where(eq(projects.organizationId, membership.organizationId))
         .orderBy(desc(projects.createdAt));
 
-      console.log("📦 Found organization projects:", projectsList.length);
+      console.log("Found organization projects:", projectsList.length);
     } else {
       
       projectsList = await ctx.db
@@ -83,7 +83,7 @@ export const projectRouter = createTRPCRouter({
         )
         .orderBy(desc(projects.createdAt));
 
-      console.log("📦 Found personal projects:", projectsList.length);
+      console.log("Found personal projects:", projectsList.length);
     }
 
     
@@ -104,7 +104,7 @@ export const projectRouter = createTRPCRouter({
       })
     );
 
-    console.log("📦 Projects with tasks:", projectsWithTasks.map(p => ({
+    console.log("Projects with tasks:", projectsWithTasks.map(p => ({
       id: p.id,
       title: p.title,
       tasksCount: p.tasks.length,
@@ -128,7 +128,7 @@ export const projectRouter = createTRPCRouter({
         throw new Error("Project not found");
       }
 
-      console.log("🔍 Fetching project:", {
+      console.log("Fetching project:", {
         id: project.id,
         organizationId: project.organizationId,
         createdById: project.createdById,
@@ -153,7 +153,7 @@ export const projectRouter = createTRPCRouter({
           );
         hasOrgAccess = !!membership;
         isOrgMember = !!membership;
-        console.log("🔍 User has org access:", hasOrgAccess, "via membership:", !!membership);
+        console.log("User has org access:", hasOrgAccess, "via membership:", !!membership);
       }
 
       
@@ -167,7 +167,7 @@ export const projectRouter = createTRPCRouter({
           )
         );
 
-      console.log("🔍 Access check:", { isOwner, hasOrgAccess, isCollaborator: !!collaboration });
+      console.log("Access check:", { isOwner, hasOrgAccess, isCollaborator: !!collaboration });
 
       if (!isOwner && !collaboration && !hasOrgAccess) {
         throw new Error("Access denied - You don't have permission to view this project");
@@ -270,7 +270,7 @@ export const projectRouter = createTRPCRouter({
           : null,
       }));
 
-      console.log("📋 Project tasks:", formattedTasks.length);
+      console.log("Project tasks:", formattedTasks.length);
 
       
       const hasWriteAccess = isOwner || isOrgMember || (collaboration?.permission === "write");
@@ -359,7 +359,7 @@ export const projectRouter = createTRPCRouter({
         const ownerName = owner?.name ?? owner?.email ?? "Someone";
         const permissionText = input.permission === "write" ? "edit" : "view";
         
-        console.log("📬 Creating notification for user:", userToAdd.id);
+        console.log("Creating notification for user:", userToAdd.id);
         
         
         const projectLink = `/create?action=new_project&projectId=${input.projectId}`;
@@ -373,7 +373,7 @@ export const projectRouter = createTRPCRouter({
           read: false,
         }).returning();
 
-        console.log("✅ Notification created:", notification);
+        console.log("Notification created:", notification);
 
         return { 
           success: true,
@@ -386,7 +386,7 @@ export const projectRouter = createTRPCRouter({
           }
         };
       } catch (error) {
-        console.error("❌ Error adding collaborator:", error);
+        console.error("Error adding collaborator:", error);
         
         if (error instanceof Error) {
           throw new Error(error.message);

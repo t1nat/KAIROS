@@ -59,7 +59,7 @@ export default async function CreatePage({
     <div className="min-h-screen bg-[#181F25]"> 
       <SideNav />
 
-      <div className="ml-16 h-screen flex flex-col">
+      <div className="lg:ml-16 min-h-screen flex flex-col pt-16 lg:pt-0">
         <header className="sticky top-0 z-30 bg-[#181F25]/80 backdrop-blur-xl border-b border-white/5">
           <div className="max-w-7xl mx-auto px-8 py-4 flex justify-between items-center">
             <div className="flex items-center gap-3">

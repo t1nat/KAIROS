@@ -1,146 +1,123 @@
 "use client";
 
-import {  
-  Plus, 
-  Calendar,
-  FileEdit,
-  FolderKanban,
-  X,
-  Settings,
-} from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { 
+  Home, 
+  FolderKanban, 
+  FileEdit, 
+  Calendar,
+  Menu,
+  X,
+  Plus
+} from "lucide-react";
 
-const FileMenu = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
-  if (!isOpen) return null;
+export function SideNav() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+
+  const navItems = [
+    { href: "/", icon: Home, label: "Home" },
+    { href: "/create?action=new_project", icon: FolderKanban, label: "Projects" },
+    { href: "/create?action=new_note", icon: FileEdit, label: "Notes" },
+  ];
 
   return (
     <>
-      <div 
-        className="fixed inset-0 z-40" 
-        onClick={onClose}
-      />
-      
-      <div className="fixed left-20 top-4 bg-[#181F25] border border-white/10 shadow-2xl rounded-xl p-3 z-50 w-64 backdrop-blur-xl">
-        <div className="flex justify-between items-center mb-3 pb-3 border-b border-white/10">
-          <h4 className="text-sm font-bold text-[#FBF9F5]">Create New</h4>
-          <button onClick={onClose} className="text-[#E4DEEA] hover:text-[#FBF9F5] p-1 hover:bg-white/5 rounded transition-colors">
-            <X size={16} />
-          </button>
+      {/* Mobile Header - Only visible on mobile/tablet */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-[#181F25]/95 backdrop-blur-md border-b border-white/5 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#A343EC] to-[#9448F2] flex items-center justify-center shadow-lg shadow-[#A343EC]/30">
+            <span className="text-white font-bold text-sm">K</span>
+          </div>
+          <h1 className="text-lg font-bold text-[#FBF9F5] font-faustina">KAIROS</h1>
         </div>
-        
-        <div className="space-y-1">
-          <Link 
-            href="/create?action=new_project"
-            onClick={onClose}
-            className="flex items-center gap-3 px-3 py-3 text-[#FBF9F5] hover:bg-white/5 rounded-lg transition-all group"
-          >
-            <div className="w-8 h-8 bg-[#A343EC]/20 rounded-lg flex items-center justify-center group-hover:bg-[#A343EC]/30 transition-colors">
-              <FolderKanban size={16} className="text-[#A343EC]" />
-            </div>
-            <div className="flex-1">
-              <div className="font-semibold text-sm">Project</div>
-              <div className="text-xs text-[#E4DEEA]">New workspace</div>
-            </div>
-          </Link>
-
-          <Link 
-            href="/publish?action=new_event"
-            onClick={onClose}
-            className="flex items-center gap-3 px-3 py-3 text-[#FBF9F5] hover:bg-white/5 rounded-lg transition-all group"
-          >
-            <div className="w-8 h-8 bg-[#80C49B]/20 rounded-lg flex items-center justify-center group-hover:bg-[#80C49B]/30 transition-colors">
-              <Calendar size={16} className="text-[#80C49B]" />
-            </div>
-            <div className="flex-1">
-              <div className="font-semibold text-sm">Event</div>
-              <div className="text-xs text-[#E4DEEA]">Publish event</div>
-            </div>
-          </Link>
-
-          <Link 
-            href="/create?action=new_note"
-            onClick={onClose}
-            className="flex items-center gap-3 px-3 py-3 text-[#FBF9F5] hover:bg-white/5 rounded-lg transition-all group"
-          >
-            <div className="w-8 h-8 bg-[#F8D45E]/20 rounded-lg flex items-center justify-center group-hover:bg-[#F8D45E]/30 transition-colors">
-              <FileEdit size={16} className="text-[#F8D45E]" />
-            </div>
-            <div className="flex-1">
-              <div className="font-semibold text-sm">Note</div>
-              <div className="text-xs text-[#E4DEEA]">Secure note</div>
-            </div>
-          </Link>
-        </div>
-      </div>
-    </>
-  );
-};
-
-const NavTooltip = ({ text }: { text: string }) => (
-  <div className="absolute left-full ml-2 px-3 py-2 bg-[#181F25] border border-white/10 text-[#FBF9F5] text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 shadow-xl">
-    {text}
-    <div className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 w-0 h-0 border-t-4 border-t-transparent border-b-4 border-b-transparent border-r-4 border-r-[#181F25]"></div>
-  </div>
-);
-
-export function SideNav() {
-  const [isFilingMenuOpen, setIsFilingMenuOpen] = useState(false);
-
-  return (
-    <nav className="fixed left-0 top-0 h-full w-16 bg-[#181F25] border-r border-white/10 shadow-xl z-40 flex flex-col">
-      
-      <Link href="/" className="h-16 flex items-center justify-center border-b border-white/10 hover:bg-white/5 transition-colors group">
-        <div className="w-10 h-10 flex items-center justify-center group-hover:scale-110 transition-transform">
-          <img 
-            src="/logo_white.png" 
-            alt="Kairos Logo" 
-            className="w-10 h-10 object-contain"
-          />
-        </div>
-      </Link>
-
-      <div className="flex-1 py-4">
-        
-        <button 
-          onClick={() => setIsFilingMenuOpen(!isFilingMenuOpen)}
-          className={`relative flex items-center justify-center w-full h-14 transition-all group ${
-            isFilingMenuOpen 
-              ? 'text-[#A343EC] bg-white/5' 
-              : 'text-[#E4DEEA] hover:text-[#A343EC] hover:bg-white/5'
-          }`}
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+          aria-label="Toggle menu"
         >
-          <Plus size={26} />
-          <NavTooltip text="Create" />
-          {isFilingMenuOpen && (
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-[#A343EC] rounded-l-full"></div>
+          {isMobileMenuOpen ? (
+            <X size={24} className="text-[#FBF9F5]" />
+          ) : (
+            <Menu size={24} className="text-[#FBF9F5]" />
           )}
         </button>
-
-        <Link 
-          href="/publish" 
-          className="relative flex items-center justify-center w-full h-14 text-[#E4DEEA] hover:text-[#F8D45E] hover:bg-white/5 transition-all group"
-        >
-          <Calendar size={26} />
-          <NavTooltip text="Events" />
-        </Link>
       </div>
 
-      <div className="border-t border-white/10">
-        <Link 
-          href="/settings" 
-          className="relative flex items-center justify-center w-full h-14 text-[#E4DEEA] hover:text-[#A343EC] hover:bg-white/5 transition-all group"
-          title="Settings"
-        >
-          <Settings size={26} />
-          <NavTooltip text="Settings" />
-        </Link>
-      </div>
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <>
+          <div 
+            className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 animate-in fade-in duration-200"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          <div className="lg:hidden fixed left-0 top-0 bottom-0 w-72 bg-[#0F1115] z-50 border-r border-white/10 pt-16 animate-in slide-in-from-left duration-300">
+            <nav className="flex flex-col gap-1 p-3">
+              {navItems.map((item) => {
+                const isActive = pathname === item.href || pathname.startsWith(item.href + '?');
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium ${
+                      isActive
+                        ? "bg-gradient-to-r from-[#A343EC] to-[#9448F2] text-white shadow-lg shadow-[#A343EC]/30"
+                        : "text-[#E4DEAA] hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <item.icon size={20} />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+              
+              {/* Mobile Quick Actions */}
+              <div className="mt-6 pt-6 border-t border-white/10">
+                <p className="text-xs font-semibold text-[#E4DEAA] uppercase tracking-wider mb-3 px-4">
+                  Quick Actions
+                </p>
+                <Link
+                  href="/create?action=new_project"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-[#A343EC] hover:bg-[#A343EC]/10 transition-all border border-[#A343EC]/30 font-medium"
+                >
+                  <Plus size={20} />
+                  <span>New Project</span>
+                </Link>
+              </div>
+            </nav>
+          </div>
+        </>
+      )}
 
-      <FileMenu 
-        isOpen={isFilingMenuOpen} 
-        onClose={() => setIsFilingMenuOpen(false)} 
-      />
-    </nav>
+      {/* Desktop Sidebar - Hidden on mobile/tablet */}
+      <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-16 bg-[#0F1115] border-r border-white/5 flex-col items-center py-8 gap-6 z-40">
+        {navItems.map((item) => {
+          const isActive = pathname === item.href || pathname.startsWith(item.href + '?');
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all group relative ${
+                isActive
+                  ? "bg-gradient-to-br from-[#A343EC] to-[#9448F2] text-white shadow-lg shadow-[#A343EC]/30"
+                  : "text-[#E4DEAA] hover:bg-white/5 hover:text-white"
+              }`}
+              title={item.label}
+            >
+              <item.icon size={20} />
+              
+              {/* Tooltip on hover */}
+              <span className="absolute left-full ml-4 px-3 py-1.5 bg-[#0F1115] text-[#FBF9F5] text-sm rounded-lg border border-white/10 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
+                {item.label}
+              </span>
+            </Link>
+          );
+        })}
+      </aside>
+    </>
   );
 }

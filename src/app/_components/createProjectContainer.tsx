@@ -205,8 +205,8 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
     : [];
 
   return (
-    <div className="flex gap-6 relative w-full h-full">
-      <div className="w-96 flex-shrink-0 space-y-4">
+    <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 relative w-full h-full">
+      <div className="w-full lg:w-96 lg:flex-shrink-0 space-y-3 sm:space-y-4">
         {!selectedProjectId && (
           <div className="animate-in slide-in-from-top-2 duration-200">
             <CreateProjectForm
