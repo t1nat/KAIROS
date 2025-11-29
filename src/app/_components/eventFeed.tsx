@@ -38,7 +38,7 @@ const REGIONS = [
 ] as const;
 
 interface Author {
-  id?: string; 
+  id?: string | null; 
   name: string | null;
   image: string | null;
 }
@@ -323,7 +323,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
   };
 
   const isPastEvent = new Date(event.eventDate) < new Date();
-  const sortedComments = [...event.comments].sort(
+  const sortedComments = (event.comments ?? []).sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
   const displayedComments = showAllComments

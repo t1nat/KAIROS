@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { api } from "~/trpc/react";
-import { Lock, Trash2, Eye, EyeOff, Mail, AlertCircle, FileText, ChevronDown, RefreshCw, FolderLock, X } from "lucide-react";
+import { Lock, Trash2, Eye, EyeOff, Mail, AlertCircle, FileText, ChevronDown, RefreshCw, FolderLock } from "lucide-react";
 
 export function NotesList() {
   const [selectedNoteId, setSelectedNoteId] = useState<number | null>(null);

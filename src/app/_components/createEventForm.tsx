@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '~/trpc/react';
 import { useSession } from 'next-auth/react';
 import { useUploadThing } from '~/lib/uploadthing';
@@ -37,6 +37,13 @@ export const CreateEventForm: React.FC = () => {
 
   const { startUpload } = useUploadThing("imageUploader");
 
+  // Automatically disable sendReminders when enableRsvp is turned off
+  useEffect(() => {
+    if (!enableRsvp && sendReminders) {
+      setSendReminders(false);
+    }
+  }, [enableRsvp, sendReminders]);
+
   const createEvent = api.event.createEvent.useMutation({
     onSuccess: () => {
       setTitle('');
@@ -51,6 +58,7 @@ export const CreateEventForm: React.FC = () => {
       void utils.event.getPublicEvents.invalidate();
     },
     onError: (error) => {
+      console.error('Error creating event:', error);
       alert(`Failed to create event: ${error.message}`);
     },
   });
@@ -101,7 +109,7 @@ export const CreateEventForm: React.FC = () => {
         region: region as "sofia" | "plovdiv" | "varna" | "burgas" | "ruse" | "stara_zagora" | "pleven" | "sliven" | "dobrich" | "shumen",
         imageUrl,
         enableRsvp,
-        sendReminders,
+        sendReminders: enableRsvp ? sendReminders : false, // Only send reminders if RSVP is enabled
       });
     } catch (error) {
       alert('Failed to upload image');
