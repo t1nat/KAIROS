@@ -4,7 +4,6 @@ import { auth } from "~/server/auth";
 const f = createUploadthing();
 
 export const ourFileRouter = {
-  // Image uploader for events and comments
   imageUploader: f({ image: { maxFileSize: "4MB", maxFileCount: 1 } })
     .middleware(async () => {
       const session = await auth();

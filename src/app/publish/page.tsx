@@ -11,7 +11,7 @@ export default function PublishPage() {
             <SideNav />
             
             <div className="ml-16">
-=                <header className="sticky top-0 z-30 bg-[#181F25]/80 backdrop-blur-xl border-b border-white/5">
+               <header className="sticky top-0 z-30 bg-[#181F25]/80 backdrop-blur-xl border-b border-white/5">
                     <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-[#A343EC] rounded-xl flex items-center justify-center">
