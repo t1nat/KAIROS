@@ -1,8 +1,12 @@
 # KAIROS
 
-<img src="public/logo_white.png" width="120" />
+<div align="center">
+  <img src="public/logo_white.png" width="120" />
+</div>
 
-**All-in-One Platform for Team Coordination, Project Management & Event Planning**
+<div align="center">
+  <strong>All-in-One Platform for Team Coordination, Project Management & Event Planning</strong>
+</div>
 
 ## 📋 About KAIROS
 
@@ -51,4 +55,6 @@ Email: tinatuncheva27@itpg-varna.bg
 
 ---
 
-*KAIROS. For the perfect timing.*
+<div align="center">
+  <em>For the perfect timing.</em>
+</div>
