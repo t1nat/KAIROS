@@ -1,48 +1,57 @@
+# KAIROS
 
-# Project Title
+![KAIROS Logo](public/logo_white.png)
 
-Ime Ime Ime 
+**Integrated Platform for Project and Event Management**
 
-A unified platform that connects the entire workflow – from idea generation to project and event execution. Ideal for both internal collaboration and public engagement.
+## 📋 About
 
+KAIROS is an innovative digital platform that unifies the entire project lifecycle - from initial idea generation to public presentation. It combines internal project management tools with social features for event promotion in one comprehensive solution.
 
-## Features
+## 🎯 Purpose
 
-- Interactive timeline for visualizing tasks, goals, and milestones
+KAIROS addresses the fragmentation between multiple platforms by providing a unified environment that serves both internal team coordination and external community engagement. The platform eliminates the need to switch between different tools for organization, communication, teamwork, and promotion.
 
-- Role-based permissions tailored to each project
+## 🚀 Key Features
 
-- Task statuses and clear workflow tracking
+### Project Management
+- Create and administer projects with clear progress tracking
+- Interactive timeline for visualizing goals and milestones
+- Task management system with priorities and deadlines
+- Secure idea storage with password protection
 
-- Smart notifications for deadlines and updates // TODO
+### Team Collaboration
+- Join organizations using unique access codes
+- Role-based permissions (Moderator, Member, Individual)
+- Progress monitoring and status updates
+- Shared workspace for team coordination
 
-- Built-in chat and video chat for smooth communication // TODO
+### Events & Community
+- Create and promote public events
+- RSVP system for attendance confirmation
+- Social features including likes and comments
+- Geographic filtering and real-time statistics
 
-- Comments and reactions on tasks and events
+## 🛠 Technology
 
-- Public events module for creating, sharing, and promoting initiatives
+Built with modern full-stack architecture:
+- **Frontend:** Next.js, React, TypeScript, Tailwind CSS
+- **Backend:** Next.js API, tRPC, TypeScript
+- **Authentication:** NextAuth.js with Argon2Id encryption
+- **Security:** JWT tokens and role-based access control
 
+## 🔮 Future Vision
 
-## Ideal for
+Planned enhancements include:
+- Real-time video communication
+- Intelligent chat system
+- Virtual collaborative workspaces
+- Enhanced ecosystem for business interactions
 
+## 📞 Contact
 
+For more information about KAIROS, please contact the development team.
 
-- Students and school clubs 
+---
 
-- Teachers and educational staff 
-
-- Event creators and artists 
-
-- Employers and companies
-
-- Content creators
-
-- Personal use
-
-
-
-
-## Authors
-[![github](https://github.com/t1nat](https://www.github.com/)
-
-
+*Project for National Autumn Tournament in Information Technologies "John Atanasov" - 2025*
