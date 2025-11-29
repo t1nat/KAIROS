@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { protectedProcedure, publicProcedure, createTRPCRouter } from "../trpc";
-// Make sure to import 'users' schema for the join
 import { events, eventComments, eventLikes, eventRsvps, users } from "~/server/db/schema";
 import { eq, desc, and, sql } from "drizzle-orm";
 import { type NewEvent } from "~/server/db/schema";
@@ -72,11 +71,8 @@ export const eventRouter = createTRPCRouter({
     .query(async ({ ctx }) => {
       const currentUserId = ctx.session?.user?.id ?? null;
 
-      // OPTIMIZATION: Use db.select with SQL subqueries to aggregate counts
-      // This avoids fetching thousands of rows (likes/comments) into memory.
       const rows = await ctx.db
         .select({
-          // Event Fields
           id: events.id,
           title: events.title,
           description: events.description,
@@ -87,16 +83,13 @@ export const eventRouter = createTRPCRouter({
           createdById: events.createdById,
           enableRsvp: events.enableRsvp,
           
-          // Author Fields
           authorId: users.id,
           authorName: users.name,
           authorImage: users.image,
 
-          // Computed Counts (Done in DB, extremely fast)
           commentCount: sql<number>`(SELECT count(*) FROM ${eventComments} WHERE ${eventComments.eventId} = ${events.id})`.mapWith(Number),
           likeCount: sql<number>`(SELECT count(*) FROM ${eventLikes} WHERE ${eventLikes.eventId} = ${events.id})`.mapWith(Number),
           
-          // User Specific State (Optimized subqueries)
           hasLiked: currentUserId 
             ? sql<boolean>`EXISTS(SELECT 1 FROM ${eventLikes} WHERE ${eventLikes.eventId} = ${events.id} AND ${eventLikes.createdById} = ${currentUserId})`
             : sql<boolean>`false`,
@@ -104,7 +97,6 @@ export const eventRouter = createTRPCRouter({
             ? sql<string>`(SELECT status FROM ${eventRsvps} WHERE ${eventRsvps.eventId} = ${events.id} AND ${eventRsvps.userId} = ${currentUserId})`
             : sql<null>`null`,
 
-          // RSVP Counts
           rsvpGoing: sql<number>`(SELECT count(*) FROM ${eventRsvps} WHERE ${eventRsvps.eventId} = ${events.id} AND status = 'going')`.mapWith(Number),
           rsvpMaybe: sql<number>`(SELECT count(*) FROM ${eventRsvps} WHERE ${eventRsvps.eventId} = ${events.id} AND status = 'maybe')`.mapWith(Number),
           rsvpNotGoing: sql<number>`(SELECT count(*) FROM ${eventRsvps} WHERE ${eventRsvps.eventId} = ${events.id} AND status = 'not_going')`.mapWith(Number),
@@ -112,9 +104,8 @@ export const eventRouter = createTRPCRouter({
         .from(events)
         .leftJoin(users, eq(events.createdById, users.id))
         .orderBy(desc(events.createdAt))
-        .limit(50); // OPTIMIZATION: Always add a limit
+        .limit(50); 
 
-      // Fetch comments for all events (optimized batch query)
       const eventIds = rows.map(r => r.id);
       const allComments = eventIds.length > 0 
         ? await ctx.db
@@ -134,7 +125,6 @@ export const eventRouter = createTRPCRouter({
             .orderBy(desc(eventComments.createdAt))
         : [];
 
-      // Group comments by eventId
       interface CommentWithAuthor {
         id: number;
         text: string;
@@ -163,7 +153,6 @@ export const eventRouter = createTRPCRouter({
         return acc;
       }, {} as Record<number, CommentWithAuthor[]>);
 
-      // Map to match your component's expected structure
       return rows.map((row) => ({
         id: row.id,
         title: row.title,
@@ -209,7 +198,6 @@ export const eventRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const currentUserId = ctx.session.user.id;
 
-      // Transaction ensures consistency
       return await ctx.db.transaction(async (tx) => {
         const existingLike = await tx.query.eventLikes.findFirst({
           where: and(
@@ -234,31 +222,41 @@ export const eventRouter = createTRPCRouter({
     }),
 
   updateRsvp: protectedProcedure
-    .input(updateRsvpSchema)
-    .mutation(async ({ ctx, input }) => {
-      const currentUserId = ctx.session.user.id;
+  .input(updateRsvpSchema)
+  .mutation(async ({ ctx, input }) => {
+    const currentUserId = ctx.session.user.id;
 
-      // OPTIMIZATION: Use ON CONFLICT (Upsert)
-      // This replaces "Find -> If exists Update -> Else Insert" with 1 query
-      // Note: This assumes you have a composite unique constraint on [eventId, userId] in your schema
+    const existingRsvp = await ctx.db.query.eventRsvps.findFirst({
+      where: and(
+        eq(eventRsvps.eventId, input.eventId),
+        eq(eventRsvps.userId, currentUserId),
+      ),
+    });
+
+    if (existingRsvp) {
       await ctx.db
-        .insert(eventRsvps)
-        .values({
-          eventId: input.eventId,
-          userId: currentUserId,
+        .update(eventRsvps)
+        .set({ 
           status: input.status,
           updatedAt: new Date(),
         })
-        .onConflictDoUpdate({
-          target: [eventRsvps.eventId, eventRsvps.userId],
-          set: { 
-            status: input.status,
-            updatedAt: new Date(),
-          },
-        });
+        .where(
+          and(
+            eq(eventRsvps.eventId, input.eventId),
+            eq(eventRsvps.userId, currentUserId)
+          )
+        );
+    } else {
+      await ctx.db.insert(eventRsvps).values({
+        eventId: input.eventId,
+        userId: currentUserId,
+        status: input.status,
+        updatedAt: new Date(),
+      });
+    }
 
-      return { success: true, status: input.status };
-    }),
+    return { success: true, status: input.status };
+  }),
     
   sendEventReminders: protectedProcedure
     .input(sendRemindersSchema)
