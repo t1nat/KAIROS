@@ -61,7 +61,6 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
   const handleCopyCode = async () => {
     try {
       await navigator.clipboard.writeText(generatedCode);
-      alert("Code copied to clipboard!");
    } catch {
     const textArea = document.createElement("textarea");
     textArea.value = generatedCode;
@@ -69,7 +68,6 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
     textArea.select();
     document.execCommand("copy");
     document.body.removeChild(textArea);
-    alert("Code copied to clipboard!");
   }
   };
 
