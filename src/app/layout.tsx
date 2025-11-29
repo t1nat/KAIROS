@@ -11,7 +11,7 @@ import { ThemeProvider } from "./_components/themeProvider";
 export const metadata: Metadata = {
   title: "KAIROS",
   description: "Coordinate events, manage projects, and collaborate with your team",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+  icons: [{ rel: "icon", url: "/logo_purple.png" }],
 };
 
 const geist = Geist({
