@@ -1,7 +1,7 @@
 # KAIROS
 
 <div align="center">
-  <img src="public/logo_white.png" width="120" />
+  <img src="public/logo_white.png" width="150" />
 </div>
 
 <div align="center">
@@ -56,5 +56,5 @@ Email: tinatuncheva27@itpg-varna.bg
 ---
 
 <div align="center">
-  <em>For the perfect timing.</em>
+  <em>KAIROS. For the perfect timing.</em>
 </div>

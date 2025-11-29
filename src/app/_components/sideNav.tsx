@@ -7,7 +7,6 @@ import {
   Home, 
   FolderKanban, 
   FileEdit, 
-  Calendar,
   Menu,
   X,
   Plus
@@ -25,7 +24,6 @@ export function SideNav() {
 
   return (
     <>
-      {/* Mobile Header - Only visible on mobile/tablet */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-[#181F25]/95 backdrop-blur-md border-b border-white/5 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#A343EC] to-[#9448F2] flex items-center justify-center shadow-lg shadow-[#A343EC]/30">
@@ -46,7 +44,6 @@ export function SideNav() {
         </button>
       </div>
 
-      {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <>
           <div 
@@ -74,7 +71,6 @@ export function SideNav() {
                 );
               })}
               
-              {/* Mobile Quick Actions */}
               <div className="mt-6 pt-6 border-t border-white/10">
                 <p className="text-xs font-semibold text-[#E4DEAA] uppercase tracking-wider mb-3 px-4">
                   Quick Actions
@@ -93,7 +89,6 @@ export function SideNav() {
         </>
       )}
 
-      {/* Desktop Sidebar - Hidden on mobile/tablet */}
       <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-16 bg-[#0F1115] border-r border-white/5 flex-col items-center py-8 gap-6 z-40">
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '?');
@@ -110,7 +105,6 @@ export function SideNav() {
             >
               <item.icon size={20} />
               
-              {/* Tooltip on hover */}
               <span className="absolute left-full ml-4 px-3 py-1.5 bg-[#0F1115] text-[#FBF9F5] text-sm rounded-lg border border-white/10 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
                 {item.label}
               </span>

@@ -138,12 +138,12 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-[#1E252D] rounded-2xl border border-white/10 max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-white/10 flex items-center justify-between sticky top-0 bg-[#1E252D] z-10">
+        <div className="p-4 sm:p-6 border-b border-white/10 flex items-center justify-between sticky top-0 bg-[#1E252D] z-10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#A343EC]/20 rounded-lg flex items-center justify-center">
-              <BarChart3 size={20} className="text-[#A343EC]" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#A343EC]/20 rounded-lg flex items-center justify-center">
+              <BarChart3 size={18} className="sm:w-5 sm:h-5 text-[#A343EC]" />
             </div>
-            <h2 className="text-xl font-bold text-[#FBF9F5]">Responses Dashboard</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-[#FBF9F5]">Responses Dashboard</h2>
           </div>
           <button
             onClick={onClose}
@@ -153,13 +153,13 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
-          <div className="bg-white/5 rounded-xl p-5 border border-white/10">
+        <div className="p-4 sm:p-6 space-y-6">
+          <div className="bg-white/5 rounded-xl p-4 sm:p-5 border border-white/10">
             <div className="flex items-center gap-3 mb-2">
-              <Users className="text-[#A343EC]" size={24} />
-              <h3 className="text-lg font-semibold text-[#FBF9F5]">Total Responses</h3>
+              <Users className="text-[#A343EC]" size={20} />
+              <h3 className="text-base sm:text-lg font-semibold text-[#FBF9F5]">Total Responses</h3>
             </div>
-            <p className="text-4xl font-bold text-[#A343EC] mt-2">{totalRsvps}</p>
+            <p className="text-3xl sm:text-4xl font-bold text-[#A343EC] mt-2">{totalRsvps}</p>
           </div>
 
           <div className="space-y-4">
@@ -332,16 +332,16 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
 
   return (
     <>
-      <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden mb-6 transition-all duration-300">
+      <div className="mb-8 pb-8 border-b border-white/5 last:border-0 transition-all duration-300">
         <InfoMessageToast
           message={infoMessage?.message ?? null}
           type={infoMessage?.type ?? null}
           onClose={() => setInfoMessage(null)}
         />
 
-        <div className="p-6 border-b border-white/10">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-full bg-white/10 overflow-hidden">
+        <div className="px-2 sm:px-4 mb-4">
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/5 overflow-hidden flex-shrink-0">
               {event.author.image ? (
                 <Image
                   src={event.author.image}
@@ -352,38 +352,39 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <User size={24} className="text-[#E4DEEA]" />
+                  <User size={20} className="text-[#E4DEEA]" />
                 </div>
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="text-2xl font-bold text-[#FBF9F5] mb-2 break-words">
+              <h2 className="text-xl sm:text-2xl font-bold text-[#FBF9F5] mb-2 break-words">
                 {event.title}
               </h2>
-              <div className="flex flex-wrap items-center gap-3 text-sm text-[#E4DEEA]">
-                <div className="flex items-center gap-2">
-                  <User size={16} />
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-[#E4DEEA]">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <User size={14} className="sm:w-4 sm:h-4" />
                   <span className="font-medium">{event.author.name}</span>
                 </div>
 
-                <span className="text-[#59677C]">•</span>
+                <span className="text-[#59677C] hidden sm:inline">•</span>
 
-                <div className="flex items-center gap-2">
-                  <MapPin size={16} />
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <MapPin size={14} className="sm:w-4 sm:h-4" />
                   <span>{getRegionLabel(event.region)}</span>
                 </div>
 
-                <span className="text-[#59677C]">•</span>
+                <span className="text-[#59677C] hidden sm:inline">•</span>
 
-                <div className="flex items-center gap-2">
-                  <Calendar size={16} />
-                  <span>{formatDate(event.eventDate)}</span>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <Calendar size={14} className="sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{formatDate(event.eventDate)}</span>
+                  <span className="sm:hidden">{new Date(event.eventDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                 </div>
 
                 {isPastEvent && (
                   <>
-                    <span className="text-[#59677C]">•</span>
-                    <span className="px-2 py-0.5 bg-white/10 rounded text-xs text-[#E4DEAA]">
+                    <span className="text-[#59677C] hidden sm:inline">•</span>
+                    <span className="px-2 py-0.5 bg-white/5 rounded text-xs text-[#E4DEAA]">
                       Past Event
                     </span>
                   </>
@@ -394,7 +395,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
         </div>
 
         {event.imageUrl && (
-          <div className="relative aspect-video bg-white/10">
+          <div className="relative aspect-video bg-white/5 my-4 rounded-lg sm:rounded-xl overflow-hidden">
             <Image
               src={event.imageUrl}
               alt={event.title}
@@ -404,100 +405,101 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
           </div>
         )}
 
-        <div className="p-6">
-          <p className="text-[#E4DEEA] whitespace-pre-wrap leading-relaxed">
+        <div className="px-2 sm:px-4 mb-4">
+          <p className="text-sm sm:text-base text-[#E4DEEA] whitespace-pre-wrap leading-relaxed">
             {event.description}
           </p>
         </div>
 
         {event.enableRsvp && (
-          <div className="px-6 pb-4">
-            <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+          <div className="px-2 sm:px-4 mb-4">
+            <div className="bg-white/5 rounded-xl p-3 sm:p-4 border border-white/10">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-[#E4DEEA]">
+                <h3 className="text-xs sm:text-sm font-semibold text-[#E4DEEA]">
                   Will you come?
                 </h3>
                 {event.isOwner && (
                   <button
                     onClick={() => setShowDashboard(true)}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-[#A343EC]/20 hover:bg-[#A343EC]/30 text-[#A343EC] rounded-lg transition-colors text-sm font-medium"
+                    className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-[#A343EC]/20 hover:bg-[#A343EC]/30 text-[#A343EC] rounded-lg transition-colors text-xs sm:text-sm font-medium"
                   >
-                    <BarChart3 size={16} />
-                    View Stats
+                    <BarChart3 size={14} className="sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline">View Stats</span>
+                    <span className="sm:hidden">Stats</span>
                   </button>
                 )}
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   onClick={() => handleRsvpClick("going")}
                   disabled={updateRsvp.isPending}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg border transition-all ${
                     event.userRsvpStatus === "going"
                       ? "bg-green-500/20 border-green-500/50 text-green-300"
                       : "border-white/10 text-[#E4DEEA] hover:bg-white/5"
                   }`}
                 >
-                  <CheckCircle2 size={16} />
-                  <span className="text-sm font-medium">Going ({event.rsvpCounts.going})</span>
+                  <CheckCircle2 size={14} className="sm:w-4 sm:h-4" />
+                  <span className="text-xs sm:text-sm font-medium">Going ({event.rsvpCounts.going})</span>
                 </button>
                 <button
                   onClick={() => handleRsvpClick("maybe")}
                   disabled={updateRsvp.isPending}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg border transition-all ${
                     event.userRsvpStatus === "maybe"
                       ? "bg-yellow-500/20 border-yellow-500/50 text-yellow-300"
                       : "border-white/10 text-[#E4DEEA] hover:bg-white/5"
                   }`}
                 >
-                  <HelpCircle size={16} />
-                  <span className="text-sm font-medium">Maybe ({event.rsvpCounts.maybe})</span>
+                  <HelpCircle size={14} className="sm:w-4 sm:h-4" />
+                  <span className="text-xs sm:text-sm font-medium">Maybe ({event.rsvpCounts.maybe})</span>
                 </button>
                 <button
                   onClick={() => handleRsvpClick("not_going")}
                   disabled={updateRsvp.isPending}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg border transition-all ${
                     event.userRsvpStatus === "not_going"
                       ? "bg-red-500/20 border-red-500/50 text-red-300"
                       : "border-white/10 text-[#E4DEEA] hover:bg-white/5"
                   }`}
                 >
-                  <XCircle size={16} />
-                  <span className="text-sm font-medium">Can&apos;t Go ({event.rsvpCounts.notGoing})</span>
+                  <XCircle size={14} className="sm:w-4 sm:h-4" />
+                  <span className="text-xs sm:text-sm font-medium">Can&apos;t Go ({event.rsvpCounts.notGoing})</span>
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        <div className="px-6 py-4 border-t border-white/10 flex items-center gap-6">
+        <div className="px-2 sm:px-4 py-3 border-t border-white/5 flex items-center gap-4 sm:gap-6">
           <button
             onClick={handleLike}
             disabled={toggleLike.isPending}
-            className={`flex items-center gap-2 transition-all ${
+            className={`flex items-center gap-1.5 sm:gap-2 transition-all ${
               event.hasLiked
                 ? "text-red-400"
                 : "text-[#E4DEEA] hover:text-red-400"
             }`}
           >
             <Heart
-              size={20}
-              className={event.hasLiked ? "fill-current" : ""}
+              size={18}
+              className={`sm:w-5 sm:h-5 ${event.hasLiked ? "fill-current" : ""}`}
             />
-            <span className="text-sm font-medium">{event.likeCount}</span>
+            <span className="text-xs sm:text-sm font-medium">{event.likeCount}</span>
           </button>
 
-          <button className="flex items-center gap-2 text-[#E4DEEA] hover:text-[#A343EC] transition-colors">
-            <MessageCircle size={20} />
-            <span className="text-sm font-medium">{event.commentCount}</span>
+          <button className="flex items-center gap-1.5 sm:gap-2 text-[#E4DEEA] hover:text-[#A343EC] transition-colors">
+            <MessageCircle size={18} className="sm:w-5 sm:h-5" />
+            <span className="text-xs sm:text-sm font-medium">{event.commentCount}</span>
           </button>
         </div>
 
-        <div className="border-t border-white/10">
+        <div className="border-t border-white/5">
           {displayedComments.length > 0 && (
-            <div className="p-6 space-y-4">
+            <div className="px-2 sm:px-4 py-4 sm:py-6 space-y-4">
               {displayedComments.map((comment) => (
-                <div key={comment.id} className="flex gap-3">
-                  <div className="w-8 h-8 rounded-full bg-white/10 flex-shrink-0 overflow-hidden">
+                <div key={comment.id} className="flex gap-2 sm:gap-3">
+                  <div className="w-8 h-8 rounded-full bg-white/5 flex-shrink-0 overflow-hidden">
                     {comment.author.image ? (
                       <Image
                         src={comment.author.image}
@@ -508,18 +510,18 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <User size={16} className="text-[#E4DEEA]" />
+                        <User size={14} className="text-[#E4DEEA]" />
                       </div>
                     )}
                   </div>
                   <div className="flex-1">
-                    <div className="bg-white/5 rounded-lg p-3">
-                      <p className="text-sm font-semibold text-[#FBF9F5] mb-1">
+                    <div className="bg-white/5 rounded-lg p-2.5 sm:p-3">
+                      <p className="text-xs sm:text-sm font-semibold text-[#FBF9F5] mb-1">
                         {comment.author.name}
                       </p>
-                      <p className="text-sm text-[#E4DEEA]">{comment.text}</p>
+                      <p className="text-xs sm:text-sm text-[#E4DEEA]">{comment.text}</p>
                     </div>
-                    <p className="text-xs text-[#59677C] mt-1 ml-3">
+                    <p className="text-xs text-[#59677C] mt-1 ml-2 sm:ml-3">
                       {new Date(comment.createdAt).toLocaleDateString()}
                     </p>
                   </div>
@@ -529,7 +531,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
               {sortedComments.length > 3 && (
                 <button
                   onClick={() => setShowAllComments(!showAllComments)}
-                  className="text-sm text-[#A343EC] hover:text-[#9448F2] font-medium transition-colors"
+                  className="text-xs sm:text-sm text-[#A343EC] hover:text-[#9448F2] font-medium transition-colors"
                 >
                   {showAllComments
                     ? "Show less"
@@ -540,9 +542,9 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
           )}
 
           {session && (
-            <div className="p-6 border-t border-white/10">
-              <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-white/10 flex-shrink-0 overflow-hidden">
+            <div className="px-2 sm:px-4 py-4 sm:py-6 border-t border-white/5">
+              <div className="flex gap-2 sm:gap-3">
+                <div className="w-8 h-8 rounded-full bg-white/5 flex-shrink-0 overflow-hidden">
                   {session.user.image ? (
                     <Image
                       src={session.user.image}
@@ -553,7 +555,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <User size={16} className="text-[#E4DEEA]" />
+                      <User size={14} className="text-[#E4DEEA]" />
                     </div>
                   )}
                 </div>
@@ -569,18 +571,18 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                       }
                     }}
                     placeholder="Write a comment..."
-                    className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent transition-all text-[#FBF9F5] placeholder:text-[#59677C]"
+                    className="flex-1 px-3 sm:px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent transition-all text-sm sm:text-base text-[#FBF9F5] placeholder:text-[#59677C]"
                     disabled={addComment.isPending}
                   />
                   <button
                     onClick={handleAddComment}
                     disabled={addComment.isPending || !commentText.trim()}
-                    className="px-4 py-2 bg-[#A343EC] text-white rounded-lg hover:bg-[#9448F2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-3 sm:px-4 py-2 bg-[#A343EC] text-white rounded-lg hover:bg-[#9448F2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {addComment.isPending ? (
-                      <Loader2 className="animate-spin" size={20} />
+                      <Loader2 className="animate-spin" size={18} />
                     ) : (
-                      <Send size={20} />
+                      <Send size={18} />
                     )}
                   </button>
                 </div>
@@ -634,15 +636,15 @@ export const EventFeed: React.FC = () => {
   ) ?? [];
 
   return (
-    <div>
-=      <div className="mb-6">
-        <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-4">
-          <div className="flex items-center gap-3">
-            <MapPin className="text-[#A343EC]" size={20} />
+    <div className="max-w-2xl mx-auto">
+      <div className="mb-6">
+        <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-3 sm:p-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <MapPin className="text-[#A343EC]" size={18} />
             <select
               value={selectedRegion}
               onChange={(e) => setSelectedRegion(e.target.value)}
-              className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent transition-all text-[#FBF9F5] appearance-none cursor-pointer"
+              className="flex-1 px-3 sm:px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent transition-all text-sm sm:text-base text-[#FBF9F5] appearance-none cursor-pointer"
             >
               {REGIONS.map((region) => (
                 <option key={region.value} value={region.value} className="bg-[#181F25] text-[#FBF9F5]">
