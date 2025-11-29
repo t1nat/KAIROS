@@ -1,57 +1,54 @@
 # KAIROS
 
-![KAIROS Logo](public/logo_white.png)
+![KAIROS Logo](public/logo_white.png){width="150"}
 
-**Integrated Platform for Project and Event Management**
+**All-in-One Platform for Team Coordination, Project Management & Event Planning**
 
-## 📋 About
+## 📋 About KAIROS
 
-KAIROS is an innovative digital platform that unifies the entire project lifecycle - from initial idea generation to public presentation. It combines internal project management tools with social features for event promotion in one comprehensive solution.
+KAIROS is a comprehensive digital platform that brings together everything you need to coordinate teams, manage projects, and organize events in one unified workspace. Streamline your workflow from initial planning to final execution without switching between multiple tools.
 
-## 🎯 Purpose
+## 🎯 Why KAIROS?
 
-KAIROS addresses the fragmentation between multiple platforms by providing a unified environment that serves both internal team coordination and external community engagement. The platform eliminates the need to switch between different tools for organization, communication, teamwork, and promotion.
+Stop juggling disconnected apps and platforms. KAIROS provides a complete ecosystem where team coordination, task management, and event planning work seamlessly together. Whether you're managing a small team, organizing community events, or running complex projects, KAIROS has the tools you need in one integrated solution.
 
-## 🚀 Key Features
+## 🚀 Everything You Need in One Platform
+
+### Team Coordination
+- **Unified Workspace** - Bring your entire team together in one space
+- **Role-Based Access** - Control permissions with Moderator, Member, and Individual roles
+- **Unique Access Codes** - Simple team onboarding with secure invitation system
+- **Progress Monitoring** - Track team performance and project status in real-time
 
 ### Project Management
-- Create and administer projects with clear progress tracking
-- Interactive timeline for visualizing goals and milestones
-- Task management system with priorities and deadlines
-- Secure idea storage with password protection
+- **Interactive Timelines** - Visualize project progress with dynamic timelines
+- **Task Management** - Create, assign, and track tasks with deadlines and priorities
+- **Secure Documentation** - Store and protect project ideas and notes
+- **Progress Analytics** - Monitor project health and team productivity
 
-### Team Collaboration
-- Join organizations using unique access codes
-- Role-based permissions (Moderator, Member, Individual)
-- Progress monitoring and status updates
-- Shared workspace for team coordination
+### Event Planning
+- **Public Event Creation** - Design and promote events with custom details and images
+- **RSVP Management** - Track attendance with smart confirmation system
+- **Community Engagement** - Build audience interaction through likes and comments
+- **Geographic Targeting** - Reach the right audience with location-based filtering
 
-### Events & Community
-- Create and promote public events
-- RSVP system for attendance confirmation
-- Social features including likes and comments
-- Geographic filtering and real-time statistics
+## 🛠 Built With Modern Technology
 
-## 🛠 Technology
-
-Built with modern full-stack architecture:
 - **Frontend:** Next.js, React, TypeScript, Tailwind CSS
 - **Backend:** Next.js API, tRPC, TypeScript
-- **Authentication:** NextAuth.js with Argon2Id encryption
-- **Security:** JWT tokens and role-based access control
+- **Authentication:** NextAuth.js with enterprise-grade security
+- **Database:** PostgreSQL with advanced security features
 
-## 🔮 Future Vision
+## 👥 Development Team
 
-Planned enhancements include:
-- Real-time video communication
-- Intelligent chat system
-- Virtual collaborative workspaces
-- Enhanced ecosystem for business interactions
+**Alexandra Kostova** - Frontend Developer  
+Email: alexandrakostova28@itpg-varna.bg
 
-## 📞 Contact
+**Tina Tuncheva** - Backend Developer  
+Email: tinatuncheva27@itpg-varna.bg
 
-For more information about KAIROS, please contact the development team.
+*Building innovative solutions for modern team collaboration*
 
 ---
 
-*Project for National Autumn Tournament in Information Technologies "John Atanasov" - 2025*
+*For the moments that matter.*
