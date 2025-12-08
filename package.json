@@ -21,9 +21,6 @@
     "postinstall": "npm run db:generate"
   },
   "dependencies": {
-    "next-intl": "^3.22.0",
-    "@vercel/blob": "^0.23.0",
-    "date-fns": "^3.0.0",
     "@auth/drizzle-adapter": "^1.7.2",
     "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "^5.2.2",
@@ -34,17 +31,20 @@
     "@trpc/react-query": "^11.0.0",
     "@trpc/server": "^11.0.0",
     "@uploadthing/react": "^7.3.3",
+    "@vercel/blob": "^0.23.0",
     "argon2": "^0.44.0",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "date-fns": "^3.0.0",
     "drizzle-orm": "^0.41.0",
     "gsap": "^3.13.0",
     "lucide-react": "^0.554.0",
     "motion": "^12.23.24",
     "next": "^15.5.6",
     "next-auth": "5.0.0-beta.25",
+    "next-intl": "^3.22.0",
     "next-themes": "^0.4.6",
     "postgres": "^3.4.4",
     "react": "^19.2.0",
@@ -84,5 +84,5 @@
   "ct3aMetadata": {
     "initVersion": "7.40.0"
   },
-  "packageManager": "pnpm@10.23.0"
+  "packageManager": "pnpm@10.25.0"
 }
