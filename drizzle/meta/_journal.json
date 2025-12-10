@@ -50,6 +50,13 @@
       "when": 1764263184175,
       "tag": "0006_perfect_electro",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1765394209195,
+      "tag": "0007_complete_lethal_legion",
+      "breakpoints": true
     }
   ]
 }

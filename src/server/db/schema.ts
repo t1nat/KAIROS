@@ -15,9 +15,8 @@ import {
 import type { AdapterAccount } from "next-auth/adapters";
 import crypto from "node:crypto";
 
+export const createTable = pgTableCreator((name) => name); 
 
-export const createTable = pgTableCreator((name) => `app_${name}`);
- 
 export const shareStatusEnum = pgEnum("share_status", ['private', 'shared_read', 'shared_write']);
 export const permissionEnum = pgEnum("permission", ['read', 'write']); 
 export const taskStatusEnum = pgEnum("task_status", ['pending', 'in_progress', 'completed', 'blocked']);
@@ -57,7 +56,7 @@ export const users = createTable("user", (d) => ({
         withTimezone: true,
       })
       .$defaultFn(() => new Date()),
-    image: d.varchar({ length: 255 }), // This is automatically set by Google OAuth
+    image: d.varchar({ length: 255 }), 
     usageMode: usageModeEnum("usage_mode"),
     password: varchar("password", { length: 255 }),
     passwordResetToken: varchar("password_reset_token", { length: 255 }),
