@@ -1,3 +1,30 @@
+CREATE TYPE "public"."date_format" AS ENUM('MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD');--> statement-breakpoint
+CREATE TYPE "public"."language" AS ENUM('en', 'es', 'fr', 'de', 'it', 'pt', 'ja', 'ko', 'zh', 'ar');--> statement-breakpoint
+CREATE TYPE "public"."notification_type" AS ENUM('event', 'task', 'project', 'system');--> statement-breakpoint
+CREATE TYPE "public"."org_role" AS ENUM('admin', 'worker');--> statement-breakpoint
+CREATE TYPE "public"."permission" AS ENUM('read', 'write');--> statement-breakpoint
+CREATE TYPE "public"."region" AS ENUM('sofia', 'plovdiv', 'varna', 'burgas', 'ruse', 'stara_zagora', 'pleven', 'sliven', 'dobrich', 'shumen');--> statement-breakpoint
+CREATE TYPE "public"."rsvp_status" AS ENUM('going', 'maybe', 'not_going');--> statement-breakpoint
+CREATE TYPE "public"."share_status" AS ENUM('private', 'shared_read', 'shared_write');--> statement-breakpoint
+CREATE TYPE "public"."task_priority" AS ENUM('low', 'medium', 'high', 'urgent');--> statement-breakpoint
+CREATE TYPE "public"."task_status" AS ENUM('pending', 'in_progress', 'completed', 'blocked');--> statement-breakpoint
+CREATE TYPE "public"."theme" AS ENUM('light', 'dark', 'system');--> statement-breakpoint
+CREATE TYPE "public"."usage_mode" AS ENUM('personal', 'organization');--> statement-breakpoint
+CREATE TABLE "account" (
+	"userId" varchar(255) NOT NULL,
+	"type" varchar(255) NOT NULL,
+	"provider" varchar(255) NOT NULL,
+	"providerAccountId" varchar(255) NOT NULL,
+	"refresh_token" text,
+	"access_token" text,
+	"expires_at" integer,
+	"token_type" varchar(255),
+	"scope" varchar(255),
+	"id_token" text,
+	"session_state" varchar(255),
+	CONSTRAINT "account_provider_providerAccountId_pk" PRIMARY KEY("provider","providerAccountId")
+);
+--> statement-breakpoint
 CREATE TABLE "event_comment" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"text" text NOT NULL,
@@ -177,43 +204,7 @@ CREATE TABLE "verification_token" (
 	CONSTRAINT "verification_token_identifier_token_pk" PRIMARY KEY("identifier","token")
 );
 --> statement-breakpoint
-ALTER TABLE "app_event_comment" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
-ALTER TABLE "app_event_like" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
-ALTER TABLE "app_event_rsvp" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
-ALTER TABLE "app_event" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
-ALTER TABLE "app_notifications" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
-ALTER TABLE "app_organization_members" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
-ALTER TABLE "app_organizations" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
-ALTER TABLE "app_project_collaborators" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
-ALTER TABLE "app_projects" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
-ALTER TABLE "app_session" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
-ALTER TABLE "app_sticky_notes" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
-ALTER TABLE "app_task_activity_log" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
-ALTER TABLE "app_task_comments" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
-ALTER TABLE "app_tasks" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
-ALTER TABLE "app_user" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
-ALTER TABLE "app_verification_token" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
-DROP TABLE "app_event_comment" CASCADE;--> statement-breakpoint
-DROP TABLE "app_event_like" CASCADE;--> statement-breakpoint
-DROP TABLE "app_event_rsvp" CASCADE;--> statement-breakpoint
-DROP TABLE "app_event" CASCADE;--> statement-breakpoint
-DROP TABLE "app_notifications" CASCADE;--> statement-breakpoint
-DROP TABLE "app_organization_members" CASCADE;--> statement-breakpoint
-DROP TABLE "app_organizations" CASCADE;--> statement-breakpoint
-DROP TABLE "app_project_collaborators" CASCADE;--> statement-breakpoint
-DROP TABLE "app_projects" CASCADE;--> statement-breakpoint
-DROP TABLE "app_session" CASCADE;--> statement-breakpoint
-DROP TABLE "app_sticky_notes" CASCADE;--> statement-breakpoint
-DROP TABLE "app_task_activity_log" CASCADE;--> statement-breakpoint
-DROP TABLE "app_task_comments" CASCADE;--> statement-breakpoint
-DROP TABLE "app_tasks" CASCADE;--> statement-breakpoint
-DROP TABLE "app_user" CASCADE;--> statement-breakpoint
-DROP TABLE "app_verification_token" CASCADE;--> statement-breakpoint
-ALTER TABLE "app_account" RENAME TO "account";--> statement-breakpoint
-ALTER TABLE "account" DROP CONSTRAINT "app_account_userId_app_user_id_fk";
---> statement-breakpoint
-ALTER TABLE "account" DROP CONSTRAINT "app_account_provider_providerAccountId_pk";--> statement-breakpoint
-ALTER TABLE "account" ADD CONSTRAINT "account_provider_providerAccountId_pk" PRIMARY KEY("provider","providerAccountId");--> statement-breakpoint
+ALTER TABLE "account" ADD CONSTRAINT "account_userId_user_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "event_comment" ADD CONSTRAINT "event_comment_event_id_event_id_fk" FOREIGN KEY ("event_id") REFERENCES "public"."event"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "event_comment" ADD CONSTRAINT "event_comment_createdById_user_id_fk" FOREIGN KEY ("createdById") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "event_like" ADD CONSTRAINT "event_like_event_id_event_id_fk" FOREIGN KEY ("event_id") REFERENCES "public"."event"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -240,6 +231,7 @@ ALTER TABLE "tasks" ADD CONSTRAINT "tasks_assignedToId_user_id_fk" FOREIGN KEY (
 ALTER TABLE "tasks" ADD CONSTRAINT "tasks_completed_by_id_user_id_fk" FOREIGN KEY ("completed_by_id") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tasks" ADD CONSTRAINT "tasks_createdById_user_id_fk" FOREIGN KEY ("createdById") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "tasks" ADD CONSTRAINT "tasks_last_edited_by_id_user_id_fk" FOREIGN KEY ("last_edited_by_id") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "account_user_id_idx" ON "account" USING btree ("userId");--> statement-breakpoint
 CREATE INDEX "comment_event_id_idx" ON "event_comment" USING btree ("event_id");--> statement-breakpoint
 CREATE INDEX "comment_created_by_idx" ON "event_comment" USING btree ("createdById");--> statement-breakpoint
 CREATE INDEX "like_event_id_idx" ON "event_like" USING btree ("event_id");--> statement-breakpoint
@@ -269,5 +261,4 @@ CREATE INDEX "task_project_idx" ON "tasks" USING btree ("project_id");--> statem
 CREATE INDEX "task_assigned_to_idx" ON "tasks" USING btree ("assignedToId");--> statement-breakpoint
 CREATE INDEX "task_created_by_idx" ON "tasks" USING btree ("createdById");--> statement-breakpoint
 CREATE INDEX "task_completed_by_idx" ON "tasks" USING btree ("completed_by_id");--> statement-breakpoint
-CREATE INDEX "task_last_edited_by_idx" ON "tasks" USING btree ("last_edited_by_id");--> statement-breakpoint
-ALTER TABLE "account" ADD CONSTRAINT "account_userId_user_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;
+CREATE INDEX "task_last_edited_by_idx" ON "tasks" USING btree ("last_edited_by_id");
