@@ -79,7 +79,7 @@ export default async function CreatePage({
                 )}
               </div>
               <div>
-                <h1 className="text-xl font-bold text-[#FBF9F5] tracking-tight font-faustina">
+                <h1 className="text-xl font-bold text-[#FBF9F5] tracking-tight" style={{ fontFamily: 'Faustina, serif' }}>
                   {shouldShowProjectManagement ? 'Projects' : shouldShowNoteForm ? 'Notes' : 'Workspace'}
                 </h1>
               </div>

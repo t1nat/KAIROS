@@ -18,8 +18,8 @@ export default function PublishPage() {
                                 <Calendar className="text-white" size={22} />
                             </div>
                             <div>
-                                <h1 className="text-3xl font-bold text-[#FBF9F5]">Events</h1>
-                                <p className="text-sm text-[#E4DEEA]">Create and discover events</p>
+                                <h1 className="text-3xl font-bold text-[#FBF9F5]" style={{ fontFamily: 'Faustina, serif' }}>Events</h1>
+                                <p className="text-sm text-[#E4DEEA]" style={{ fontFamily: 'Faustina, serif' }}>Create and discover events</p>
                             </div>
                         </div>
                         <UserDisplay />

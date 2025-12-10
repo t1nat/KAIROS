@@ -46,12 +46,6 @@ export function HomeClient({ session }: {
         setHasAnimated(true);
     }, []);
 
-    const scrollToAbout = () => {
-        aboutRef.current?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-        });
-    };
 
     const handleRoleSelectionComplete = () => {
         setShowRoleSelection(false);
@@ -110,12 +104,12 @@ export function HomeClient({ session }: {
                     <div className="max-w-7xl mx-auto w-full">
                         <div className="flex flex-col lg:flex-row justify-between items-center gap-12 mb-8">
                            <div className="flex-1 text-center lg:text-left">
-                                <h2 className="text-7xl md:text-8xl lg:text-9xl font-bold text-[#FBF9F5] mb-2 leading-tight tracking-tight animate-hero-fade-in" style={{ fontFamily: 'Uncial Antiqua, serif' }}>
+                                <p className={`text-3xl md:text-4xl text-[#E4DEAA] leading-relaxed max-w-2xl mx-auto lg:mx-0 mb-2 animate-hero-fade-in`}>
+                                    Discover the perfect moment with
+                                </p>
+                                <h2 className="text-7xl md:text-8xl lg:text-9xl font-bold text-[#FBF9F5] leading-tight tracking-tight animate-hero-fade-in-delayed" style={{ fontFamily: 'Uncial Antiqua, serif' }}>
                                     <span className="inline-block">KAIROS</span>
                                 </h2>
-                                <p className={`text-3xl md:text-4xl text-[#E4DEAA] leading-relaxed max-w-2xl mx-auto lg:mx-0 animate-hero-fade-in-delayed`}>
-                                    Discover the perfect moment with Kairos.
-                                </p>
                             </div>
                             <div className={`flex flex-col gap-4 w-full lg:w-auto lg:min-w-[400px] justify-center ${!hasAnimated ? 'animate-smooth-fade-in' : ''}`} style={{ animationDelay: !hasAnimated ? '0.4s' : '0s' }}>
                                 {showActionButtons && (
