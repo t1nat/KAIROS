@@ -1,5 +1,3 @@
-
-
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { projects, tasks, projectCollaborators, users, organizationMembers, notifications } from "~/server/db/schema";
@@ -221,10 +219,10 @@ export const projectRouter = createTRPCRouter({
           lastEditedByImage: sql<string | null>`editor_user.image`.as('lastEditedByImage'),
         })
         .from(tasks)
-        .leftJoin(sql`app_user AS assigned_user`, sql`${tasks.assignedToId} = assigned_user.id`)
-        .leftJoin(sql`app_user AS creator_user`, sql`${tasks.createdById} = creator_user.id`)
-        .leftJoin(sql`app_user AS completer_user`, sql`${tasks.completedById} = completer_user.id`)
-        .leftJoin(sql`app_user AS editor_user`, sql`${tasks.lastEditedById} = editor_user.id`)
+        .leftJoin(sql`"user" AS assigned_user`, sql`${tasks.assignedToId} = assigned_user.id`)
+        .leftJoin(sql`"user" AS creator_user`, sql`${tasks.createdById} = creator_user.id`)
+        .leftJoin(sql`"user" AS completer_user`, sql`${tasks.completedById} = completer_user.id`)
+        .leftJoin(sql`"user" AS editor_user`, sql`${tasks.lastEditedById} = editor_user.id`)
         .where(eq(tasks.projectId, input.id))
         .orderBy(tasks.orderIndex, tasks.createdAt);
 

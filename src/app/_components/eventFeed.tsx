@@ -76,6 +76,97 @@ interface EventWithDetails {
   isOwner: boolean;
 }
 
+// Optimistic update hooks
+function useOptimisticLike(eventId: number) {
+  const utils = api.useUtils();
+  const toggleLike = api.event.toggleLike.useMutation({
+    onMutate: async () => {
+      await utils.event.getPublicEvents.cancel();
+      const previousEvents = utils.event.getPublicEvents.getData();
+
+      utils.event.getPublicEvents.setData(undefined, (old) => {
+        if (!old) return old;
+        
+        return old.map((event) => {
+          if (event.id === eventId) {
+            const wasLiked = event.hasLiked;
+            return {
+              ...event,
+              hasLiked: !wasLiked,
+              likeCount: wasLiked ? event.likeCount - 1 : event.likeCount + 1,
+            };
+          }
+          return event;
+        });
+      });
+
+      return { previousEvents };
+    },
+    
+    onError: (_err, _variables, context) => {
+      if (context?.previousEvents) {
+        utils.event.getPublicEvents.setData(undefined, context.previousEvents);
+      }
+    },
+    
+    onSettled: () => {
+      void utils.event.getPublicEvents.invalidate();
+    },
+  });
+
+  return toggleLike;
+}
+
+function useOptimisticRsvp(eventId: number) {
+  const utils = api.useUtils();
+  const updateRsvp = api.event.updateRsvp.useMutation({
+    onMutate: async ({ status }) => {
+      await utils.event.getPublicEvents.cancel();
+      const previousEvents = utils.event.getPublicEvents.getData();
+
+      utils.event.getPublicEvents.setData(undefined, (old) => {
+        if (!old) return old;
+        
+        return old.map((event) => {
+          if (event.id === eventId) {
+            const oldStatus = event.userRsvpStatus;
+            const newCounts = { ...event.rsvpCounts };
+            
+            if (oldStatus === "going") newCounts.going--;
+            else if (oldStatus === "maybe") newCounts.maybe--;
+            else if (oldStatus === "not_going") newCounts.notGoing--;
+            
+            if (status === "going") newCounts.going++;
+            else if (status === "maybe") newCounts.maybe++;
+            else if (status === "not_going") newCounts.notGoing++;
+            
+            return {
+              ...event,
+              userRsvpStatus: status,
+              rsvpCounts: newCounts,
+            };
+          }
+          return event;
+        });
+      });
+
+      return { previousEvents };
+    },
+    
+    onError: (_err, _variables, context) => {
+      if (context?.previousEvents) {
+        utils.event.getPublicEvents.setData(undefined, context.previousEvents);
+      }
+    },
+    
+    onSettled: () => {
+      void utils.event.getPublicEvents.invalidate();
+    },
+  });
+
+  return updateRsvp;
+}
+
 const InfoMessageToast: React.FC<{
   message: string | null;
   type: "error" | "info" | null;
@@ -189,7 +280,7 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
                   <HelpCircle size={16} className="text-yellow-400" />
-                  <span className="text-[#E4DEEA] font-medium">Maybe</span>
+                  <span className="text-[#E4DEAA] font-medium">Maybe</span>
                 </div>
                 <span className="text-[#FBF9F5] font-semibold">{event.rsvpCounts.maybe}</span>
               </div>
@@ -206,7 +297,7 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
                   <XCircle size={16} className="text-red-400" />
-                  <span className="text-[#E4DEEA] font-medium">Can&apos;t Go</span>
+                  <span className="text-[#E4DEAA] font-medium">Can&apos;t Go</span>
                 </div>
                 <span className="text-[#FBF9F5] font-semibold">{event.rsvpCounts.notGoing}</span>
               </div>
@@ -221,7 +312,7 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
           </div>
 
           <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-            <h4 className="text-sm font-semibold text-[#E4DEEA] mb-2">Event Details</h4>
+            <h4 className="text-sm font-semibold text-[#E4DEAA] mb-2">Event Details</h4>
             <p className="text-[#FBF9F5] font-medium mb-1">{event.title}</p>
             <div className="flex items-center gap-2 text-xs text-[#59677C]">
               <Calendar size={14} />
@@ -245,27 +336,13 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
     type: "error" | "info";
   } | null>(null);
 
-  const toggleLike = api.event.toggleLike.useMutation({
-    onSuccess: () => {
-      void utils.event.getPublicEvents.invalidate();
-    },
-    onError: (error) => {
-      setInfoMessage({ message: error.message, type: "error" });
-    },
-  });
+  // Use optimistic hooks instead of regular mutations
+  const toggleLike = useOptimisticLike(event.id);
+  const updateRsvp = useOptimisticRsvp(event.id);
 
   const addComment = api.event.addComment.useMutation({
     onSuccess: () => {
       setCommentText("");
-      void utils.event.getPublicEvents.invalidate();
-    },
-    onError: (error) => {
-      setInfoMessage({ message: error.message, type: "error" });
-    },
-  });
-
-  const updateRsvp = api.event.updateRsvp.useMutation({
-    onSuccess: () => {
       void utils.event.getPublicEvents.invalidate();
     },
     onError: (error) => {
@@ -360,7 +437,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
               <h2 className="text-xl sm:text-2xl font-bold text-[#FBF9F5] mb-2 break-words">
                 {event.title}
               </h2>
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-[#E4DEEA]">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-[#E4DEAA]">
                 <div className="flex items-center gap-1.5 sm:gap-2">
                   <User size={14} className="sm:w-4 sm:h-4" />
                   <span className="font-medium">{event.author.name}</span>
@@ -406,7 +483,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
         )}
 
         <div className="px-2 sm:px-4 mb-4">
-          <p className="text-sm sm:text-base text-[#E4DEEA] whitespace-pre-wrap leading-relaxed">
+          <p className="text-sm sm:text-base text-[#E4DEAA] whitespace-pre-wrap leading-relaxed">
             {event.description}
           </p>
         </div>
@@ -415,7 +492,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
           <div className="px-2 sm:px-4 mb-4">
             <div className="bg-white/5 rounded-xl p-3 sm:p-4 border border-white/10">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs sm:text-sm font-semibold text-[#E4DEEA]">
+                <h3 className="text-xs sm:text-sm font-semibold text-[#E4DEAA]">
                   Will you come?
                 </h3>
                 {event.isOwner && (
@@ -436,7 +513,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                   className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg border transition-all ${
                     event.userRsvpStatus === "going"
                       ? "bg-green-500/20 border-green-500/50 text-green-300"
-                      : "border-white/10 text-[#E4DEEA] hover:bg-white/5"
+                      : "border-white/10 text-[#E4DEAA] hover:bg-white/5"
                   }`}
                 >
                   <CheckCircle2 size={14} className="sm:w-4 sm:h-4" />
@@ -448,7 +525,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                   className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg border transition-all ${
                     event.userRsvpStatus === "maybe"
                       ? "bg-yellow-500/20 border-yellow-500/50 text-yellow-300"
-                      : "border-white/10 text-[#E4DEEA] hover:bg-white/5"
+                      : "border-white/10 text-[#E4DEAA] hover:bg-white/5"
                   }`}
                 >
                   <HelpCircle size={14} className="sm:w-4 sm:h-4" />
@@ -460,7 +537,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                   className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg border transition-all ${
                     event.userRsvpStatus === "not_going"
                       ? "bg-red-500/20 border-red-500/50 text-red-300"
-                      : "border-white/10 text-[#E4DEEA] hover:bg-white/5"
+                      : "border-white/10 text-[#E4DEAA] hover:bg-white/5"
                   }`}
                 >
                   <XCircle size={14} className="sm:w-4 sm:h-4" />
@@ -478,7 +555,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
             className={`flex items-center gap-1.5 sm:gap-2 transition-all ${
               event.hasLiked
                 ? "text-red-400"
-                : "text-[#E4DEEA] hover:text-red-400"
+                : "text-[#E4DEAA] hover:text-red-400"
             }`}
           >
             <Heart
@@ -488,7 +565,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
             <span className="text-xs sm:text-sm font-medium">{event.likeCount}</span>
           </button>
 
-          <button className="flex items-center gap-1.5 sm:gap-2 text-[#E4DEEA] hover:text-[#A343EC] transition-colors">
+          <button className="flex items-center gap-1.5 sm:gap-2 text-[#E4DEAA] hover:text-[#A343EC] transition-colors">
             <MessageCircle size={18} className="sm:w-5 sm:h-5" />
             <span className="text-xs sm:text-sm font-medium">{event.commentCount}</span>
           </button>
@@ -510,7 +587,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <User size={14} className="text-[#E4DEEA]" />
+                        <User size={14} className="text-[#E4DEAA]" />
                       </div>
                     )}
                   </div>
@@ -519,7 +596,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                       <p className="text-xs sm:text-sm font-semibold text-[#FBF9F5] mb-1">
                         {comment.author.name}
                       </p>
-                      <p className="text-xs sm:text-sm text-[#E4DEEA]">{comment.text}</p>
+                      <p className="text-xs sm:text-sm text-[#E4DEAA]">{comment.text}</p>
                     </div>
                     <p className="text-xs text-[#59677C] mt-1 ml-2 sm:ml-3">
                       {new Date(comment.createdAt).toLocaleDateString()}
@@ -555,7 +632,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <User size={14} className="text-[#E4DEEA]" />
+                      <User size={14} className="text-[#E4DEAA]" />
                     </div>
                   )}
                 </div>
@@ -612,7 +689,7 @@ export const EventFeed: React.FC = () => {
     return (
       <div className="text-center py-20">
         <Loader2 className="animate-spin w-12 h-12 text-[#A343EC] mx-auto mb-4" />
-        <p className="text-[#E4DEEA]">Loading events...</p>
+        <p className="text-[#E4DEAA]">Loading events...</p>
       </div>
     );
   }
@@ -626,7 +703,7 @@ export const EventFeed: React.FC = () => {
         <h3 className="text-xl font-semibold text-[#FBF9F5] mb-2">
           Error Loading Events
         </h3>
-        <p className="text-[#E4DEEA]">{error.message}</p>
+        <p className="text-[#E4DEAA]">{error.message}</p>
       </div>
     );
   }
@@ -664,7 +741,7 @@ export const EventFeed: React.FC = () => {
           <h3 className="text-xl font-semibold text-[#FBF9F5] mb-2">
             No Events Found
           </h3>
-          <p className="text-[#E4DEEA]">
+          <p className="text-[#E4DEAA]">
             {selectedRegion 
               ? `No events currently listed for ${REGIONS.find(r => r.value === selectedRegion)?.label}.` 
               : `Create your first event to get started!`}

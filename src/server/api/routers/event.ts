@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { protectedProcedure, publicProcedure, createTRPCRouter } from "../trpc";
 import { events, eventComments, eventLikes, eventRsvps, users } from "~/server/db/schema";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, inArray } from "drizzle-orm";
 import { type NewEvent } from "~/server/db/schema";
 import { TRPCError } from "@trpc/server";
 
@@ -121,7 +121,7 @@ export const eventRouter = createTRPCRouter({
             })
             .from(eventComments)
             .leftJoin(users, eq(eventComments.createdById, users.id))
-            .where(sql`${eventComments.eventId} IN ${eventIds}`)
+            .where(inArray(eventComments.eventId, eventIds))
             .orderBy(desc(eventComments.createdAt))
         : [];
 
@@ -198,65 +198,78 @@ export const eventRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const currentUserId = ctx.session.user.id;
 
-      return await ctx.db.transaction(async (tx) => {
-        const existingLike = await tx.query.eventLikes.findFirst({
-          where: and(
+      // Direct check without transaction for speed
+      const existingLike = await ctx.db
+        .select()
+        .from(eventLikes)
+        .where(
+          and(
             eq(eventLikes.eventId, input.eventId),
-            eq(eventLikes.createdById, currentUserId),
-          ),
-        });
+            eq(eventLikes.createdById, currentUserId)
+          )
+        )
+        .limit(1);
 
-        if (existingLike) {
-          await tx
-            .delete(eventLikes)
-            .where(and(eq(eventLikes.eventId, input.eventId), eq(eventLikes.createdById, currentUserId)));
-          return { action: 'unliked' };
-        } else {
-          await tx.insert(eventLikes).values({
-            eventId: input.eventId,
-            createdById: currentUserId,
-          });
-          return { action: 'liked' };
-        }
-      });
+      if (existingLike.length > 0) {
+        await ctx.db
+          .delete(eventLikes)
+          .where(
+            and(
+              eq(eventLikes.eventId, input.eventId),
+              eq(eventLikes.createdById, currentUserId)
+            )
+          );
+        return { action: 'unliked', hasLiked: false };
+      } else {
+        await ctx.db.insert(eventLikes).values({
+          eventId: input.eventId,
+          createdById: currentUserId,
+        });
+        return { action: 'liked', hasLiked: true };
+      }
     }),
 
   updateRsvp: protectedProcedure
-  .input(updateRsvpSchema)
-  .mutation(async ({ ctx, input }) => {
-    const currentUserId = ctx.session.user.id;
+    .input(updateRsvpSchema)
+    .mutation(async ({ ctx, input }) => {
+      const currentUserId = ctx.session.user.id;
 
-    const existingRsvp = await ctx.db.query.eventRsvps.findFirst({
-      where: and(
-        eq(eventRsvps.eventId, input.eventId),
-        eq(eventRsvps.userId, currentUserId),
-      ),
-    });
-
-    if (existingRsvp) {
-      await ctx.db
-        .update(eventRsvps)
-        .set({ 
-          status: input.status,
-          updatedAt: new Date(),
-        })
+      // Direct check without findFirst for speed
+      const existingRsvp = await ctx.db
+        .select()
+        .from(eventRsvps)
         .where(
           and(
             eq(eventRsvps.eventId, input.eventId),
             eq(eventRsvps.userId, currentUserId)
           )
-        );
-    } else {
-      await ctx.db.insert(eventRsvps).values({
-        eventId: input.eventId,
-        userId: currentUserId,
-        status: input.status,
-        updatedAt: new Date(),
-      });
-    }
+        )
+        .limit(1);
 
-    return { success: true, status: input.status };
-  }),
+      if (existingRsvp.length > 0) {
+        await ctx.db
+          .update(eventRsvps)
+          .set({ 
+            status: input.status,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(eventRsvps.eventId, input.eventId),
+              eq(eventRsvps.userId, currentUserId)
+            )
+          );
+      } else {
+        await ctx.db.insert(eventRsvps).values({
+          eventId: input.eventId,
+          userId: currentUserId,
+          status: input.status,
+          updatedAt: new Date(),
+        });
+      }
+
+      return { success: true, status: input.status };
+    }),
     
   sendEventReminders: protectedProcedure
     .input(sendRemindersSchema)
