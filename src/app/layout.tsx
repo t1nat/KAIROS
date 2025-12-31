@@ -52,7 +52,10 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className={`${geist.variable} ${arsenica.variable} ${newsreader.variable} ${uncialAntiqua.variable} ${faustina.variable}`} suppressHydrationWarning>
-      <body>
+      <body className="min-h-dvh bg-bg-primary text-fg-primary font-sans antialiased">
+        <a href="#main-content" className="skip-link">
+          Skip to content
+        </a>
         <TRPCReactProvider>
           <NextAuthSessionProvider session={session}>
              <ThemeProvider>

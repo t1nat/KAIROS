@@ -2,59 +2,123 @@
 
  
 
-  /* Light Mode (Default) */
+  /* Light Mode (Default) - Professional Event Planning Theme */
   :root {
     --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
       "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-    /* Backgrounds */
-
-    --bg-primary: 250 250 252;       
-    --bg-secondary: 248 250 252;       
-    --bg-tertiary: 241 245 249;      
     
-    /* Text */
-    --text-primary: 15 23 42;         
-    --text-secondary: 71 85 105;      
-    --text-tertiary: 148 163 184;    
+    /* Backgrounds - Light */
+    --bg-primary: 255 255 255;
+    --bg-secondary: 248 250 252;
+    --bg-tertiary: 241 245 249;
+    --bg-elevated: 255 255 255;
+    --bg-surface: 250 251 253;
+    --bg-overlay: 255 255 255;
     
-    /* Borders */
-    --border-light: 226 232 240;      
-    --border-medium: 203 213 225;     
+    /* Text - Light */
+    --text-primary: 15 23 42;
+    --text-secondary: 71 85 105;
+    --text-tertiary: 100 116 139;
+    --text-quaternary: 148 163 184;
     
-    /* Accents */
-    --accent-primary: 79 70 229;      
-    --accent-secondary: 124 58 237;  
+    /* Borders - Light */
+    --border-light: 226 232 240;
+    --border-medium: 203 213 225;
+    --border-strong: 148 163 184;
+    
+    /* Accents - Purple Gradient */
+    --accent-primary: 139 92 246;
+    --accent-secondary: 168 85 247;
+    --accent-tertiary: 192 132 252;
+    --accent-hover: 124 58 237;
+    
+    /* Brand Colors */
+    --brand-purple: 139 92 246;
+    --brand-indigo: 99 102 241;
+    --brand-blue: 59 130 246;
     
     /* Status Colors */
-    --success: 34 197 94;             
-    --warning: 251 146 60;             
-    --error: 239 68 68;              
+    --success: 34 197 94;
+    --success-light: 220 252 231;
+    --warning: 251 146 60;
+    --warning-light: 254 243 199;
+    --error: 239 68 68;
+    --error-light: 254 226 226;
+    --info: 59 130 246;
+    --info-light: 219 234 254;
+    
+    /* Semantic Event Colors */
+    --event-active: 139 92 246;
+    --event-upcoming: 59 130 246;
+    --event-completed: 34 197 94;
+    --event-cancelled: 148 163 184;
+    
+    /* Shadow Tokens */
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+    --shadow-accent: 0 10px 25px -5px rgb(139 92 246 / 0.3);
   }
 
-  /* Dark Mode */
+/* Dark Mode - Professional Event Planning Theme */
   .dark {
-    /* Backgrounds */
-    --bg-primary: 15 23 42;           
-    --bg-secondary: 30 41 59;          
-    --bg-tertiary: 51 65 85;         
+    /* Backgrounds - Dark */
+    --bg-primary: 9 9 11;
+    --bg-secondary: 24 24 27;
+    --bg-tertiary: 39 39 42;
+    --bg-elevated: 24 24 27;
+    --bg-surface: 18 18 20;
+    --bg-overlay: 24 24 27;
     
-    /* Text */
-    --text-primary: 248 250 252;      
-    --text-secondary: 203 213 225;     
-    --text-tertiary: 148 163 184;     
+    /* Text - Dark */
+    --text-primary: 250 250 250;
+    --text-secondary: 212 212 216;
+    --text-tertiary: 161 161 170;
+    --text-quaternary: 113 113 122;
     
-    /* Borders */
-    --border-light: 51 65 85;         
-    --border-medium: 71 85 105;      
+    /* Borders - Dark */
+    --border-light: 39 39 42;
+    --border-medium: 63 63 70;
+    --border-strong: 82 82 91;
     
-    /* Accents */
-    --accent-primary: 99 102 241;      
-    --accent-secondary: 139 92 246; 
+    /* Accents - Purple Gradient (slightly brighter for dark) */
+    --accent-primary: 168 85 247;
+    --accent-secondary: 192 132 252;
+    --accent-tertiary: 216 180 254;
+    --accent-hover: 147 51 234;
     
-    /* Status Colors */
-    --success: 74 222 128;          
-    --warning: 251 191 36;           
-    --error: 248 113 113;         
+    /* Brand Colors - Dark adjusted */
+    --brand-purple: 168 85 247;
+    --brand-indigo: 129 140 248;
+    --brand-blue: 96 165 250;
+    
+    /* Status Colors - Dark */
+    --success: 74 222 128;
+    --success-light: 20 83 45;
+    --warning: 251 191 36;
+    --warning-light: 120 53 15;
+    --error: 248 113 113;
+    --error-light: 127 29 29;
+    --info: 96 165 250;
+    --info-light: 30 58 138;
+    
+    /* Semantic Event Colors - Dark */
+    --event-active: 168 85 247;
+    --event-upcoming: 96 165 250;
+    --event-completed: 74 222 128;
+    --event-cancelled: 113 113 122;
+    
+    /* Shadow Tokens - Dark (more prominent) */
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.5);
+    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.7);
+    --shadow-accent: 0 10px 25px -5px rgb(168 85 247 / 0.4);
   }
 
  
@@ -64,10 +128,77 @@
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 
-  * {
-    transition-property: background-color, border-color, color, fill, stroke;
+  html {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Professional elevated surfaces with depth */
+  .surface-elevated {
+    background-color: rgb(var(--bg-elevated));
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgb(var(--border-light));
+  }
+
+  .surface-card {
+    background-color: rgb(var(--bg-surface));
+    box-shadow: var(--shadow-md);
+    border: 1px solid rgb(var(--border-light));
+    border-radius: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .surface-card:hover {
+    box-shadow: var(--shadow-xl);
+    transform: translateY(-2px);
+  }
+
+  /* Professional glass effect */
+  .glass-effect {
+    background: linear-gradient(
+      135deg,
+      rgb(var(--bg-surface) / 0.7) 0%,
+      rgb(var(--bg-surface) / 0.5) 100%
+    );
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgb(var(--border-light) / 0.5);
+  }
+
+  /* Prefer targeted transitions over global * transitions (perf + a11y) */
+  a,
+  button,
+  input,
+  textarea,
+  select,
+  summary,
+  [role="button"] {
+    transition-property: color, background-color, border-color, opacity, box-shadow, transform, filter;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 200ms;
+    transition-duration: 180ms;
+  }
+
+  /* Skip link for keyboard and screen readers */
+  .skip-link {
+    position: absolute;
+    left: 0.75rem;
+    top: 0.75rem;
+    z-index: 1000;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.75rem;
+    background-color: rgb(var(--bg-secondary));
+    color: rgb(var(--text-primary));
+    border: 1px solid rgb(var(--border-light));
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.25);
+    transform: translateY(-200%);
+  }
+
+  .skip-link:focus,
+  .skip-link:focus-visible {
+    transform: translateY(0);
+    outline: 2px solid rgb(var(--accent-primary));
+    outline-offset: 2px;
   }
 
  
@@ -76,68 +207,121 @@
     transition: all 0.3s ease-in-out;
   }
 
-  /* Card utilities */
-  .card-base {
-    background-color: rgb(var(--bg-secondary));
-    border: 1px solid rgb(var(--border-light));
-    border-radius: 0.75rem;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  }
-
-  /* Input base utility */
-  .input-base {
-    padding: 0.75rem 1rem;
-    border: 1px solid rgb(var(--border-light));
-    border-radius: 0.5rem;
-    background-color: rgb(var(--bg-primary));
-    color: rgb(var(--text-primary));
-    outline: none;
-    transition: all 0.2s;
-  }
-
-  .input-base:focus {
-    outline: 2px solid rgb(var(--accent-primary));
-    border-color: transparent;
-  }
-
-  .input-base::placeholder {
-    color: rgb(var(--text-tertiary));
-  }
-
-  /* Button utilities */
+  /* Professional Button System */
   .btn-primary {
     padding: 0.75rem 1.5rem;
-    background-color: rgb(var(--accent-primary));
+    background: linear-gradient(135deg, rgb(var(--accent-primary)) 0%, rgb(var(--accent-secondary)) 100%);
     color: white;
     font-weight: 600;
-    border-radius: 0.5rem;
-    transition: all 0.3s;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border-radius: 0.75rem;
+    border: none;
+    box-shadow: var(--shadow-md), var(--shadow-accent);
     cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgb(var(--accent-secondary)) 0%, rgb(var(--accent-tertiary)) 100%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .btn-primary:hover::before {
+    opacity: 1;
   }
 
   .btn-primary:hover {
-    opacity: 0.9;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-xl), var(--shadow-accent);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0);
   }
 
   .btn-primary:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    transform: none;
   }
 
   .btn-secondary {
     padding: 0.75rem 1.5rem;
+    background-color: rgb(var(--bg-secondary));
     border: 2px solid rgb(var(--border-medium));
     color: rgb(var(--text-primary));
     font-weight: 600;
-    border-radius: 0.5rem;
-    transition: all 0.2s;
+    border-radius: 0.75rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
+    box-shadow: var(--shadow-sm);
   }
 
   .btn-secondary:hover {
-    background-color: rgb(var(--bg-secondary));
+    background-color: rgb(var(--bg-tertiary));
+    border-color: rgb(var(--accent-primary));
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+
+  /* Professional Input System */
+  .input-base {
+    padding: 0.875rem 1rem;
+    border: 2px solid rgb(var(--border-light));
+    border-radius: 0.75rem;
+    background-color: rgb(var(--bg-surface));
+    color: rgb(var(--text-primary));
+    outline: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .input-base:hover {
+    border-color: rgb(var(--border-medium));
+  }
+
+  .input-base:focus {
+    border-color: rgb(var(--accent-primary));
+    box-shadow: var(--shadow-sm), 0 0 0 3px rgb(var(--accent-primary) / 0.1);
+    background-color: rgb(var(--bg-elevated));
+  }
+
+  .input-base::placeholder {
+    color: rgb(var(--text-quaternary));
+  }
+
+  /* Professional Card System */
+  .card-base {
+    background-color: rgb(var(--bg-surface));
+    border: 1px solid rgb(var(--border-light));
+    border-radius: 1rem;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-base:hover {
+    box-shadow: var(--shadow-lg);
+    border-color: rgb(var(--border-medium));
+  }
+
+  .card-interactive {
+    background-color: rgb(var(--bg-surface));
+    border: 1px solid rgb(var(--border-light));
+    border-radius: 1rem;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+  }
+
+  .card-interactive:hover {
+    box-shadow: var(--shadow-xl);
+    transform: translateY(-4px);
+    border-color: rgb(var(--accent-primary) / 0.5);
   }
 
 
@@ -324,6 +508,21 @@
   *:focus-visible {
     outline: 2px solid rgb(var(--accent-primary));
     outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html:focus-within {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 
 

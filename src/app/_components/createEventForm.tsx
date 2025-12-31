@@ -121,29 +121,29 @@ export const CreateEventForm: React.FC = () => {
 
   if (!session) {
     return (
-      <div className="bg-white/5 backdrop-blur-sm p-6 sm:p-8 rounded-xl sm:rounded-2xl border border-white/10 mb-8">
+      <div className="surface-card p-6 sm:p-8 rounded-xl sm:rounded-2xl mb-8">
         <div className="text-center">
-          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#A343EC]/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CalendarCheck size={24} className="sm:w-8 sm:h-8 text-[#A343EC]" />
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-accent-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CalendarCheck size={24} className="sm:w-8 sm:h-8 text-accent-primary" />
           </div>
-          <h3 className="text-base sm:text-lg font-semibold text-[#FBF9F5] mb-2">Authentication Required</h3>
-          <p className="text-sm sm:text-base text-[#E4DEEA]">Please sign in to create events</p>
+          <h3 className="text-base sm:text-lg font-semibold text-fg-primary mb-2">Authentication Required</h3>
+          <p className="text-sm sm:text-base text-fg-secondary">Please sign in to create events</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white/5 backdrop-blur-sm rounded-xl sm:rounded-2xl border border-white/10 mb-8 overflow-hidden">
+    <div className="surface-card rounded-xl sm:rounded-2xl mb-8 overflow-hidden shadow-md">
       {!showForm ? (
         <button
           onClick={() => setShowForm(true)}
-          className="w-full p-4 sm:p-6 flex items-center justify-center gap-3 text-[#A343EC] hover:bg-white/5 transition-all duration-300 group"
+          className="w-full p-4 sm:p-6 flex items-center justify-center gap-3 text-accent-primary hover:bg-accent-primary/5 transition-all duration-300 group"
         >
-          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#A343EC]/20 rounded-xl flex items-center justify-center group-hover:bg-[#A343EC]/30 transition-colors">
-            <Plus size={20} className="sm:w-6 sm:h-6 text-[#A343EC]" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent-primary/20 rounded-xl flex items-center justify-center group-hover:bg-accent-primary/30 transition-colors">
+            <Plus size={20} className="sm:w-6 sm:h-6 text-accent-primary" />
           </div>
-          <span className="text-base sm:text-lg font-semibold text-[#FBF9F5]">Create New Event</span>
+          <span className="text-base sm:text-lg font-semibold text-fg-primary">Create New Event</span>
         </button>
       ) : (
         <form onSubmit={handleSubmit} className="p-4 sm:p-8">
@@ -165,8 +165,8 @@ export const CreateEventForm: React.FC = () => {
 
           <div className="space-y-4 sm:space-y-6">
             <div>
-              <label htmlFor="title" className="block text-xs sm:text-sm font-semibold text-[#E4DEEA] mb-2">
-                Event Title <span className="text-[#A343EC]">*</span>
+              <label htmlFor="title" className="block text-xs sm:text-sm font-semibold text-fg-secondary mb-2">
+                Event Title <span className="text-accent-primary">*</span>
               </label>
               <input
                 id="title"
@@ -175,15 +175,15 @@ export const CreateEventForm: React.FC = () => {
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g., Summer BBQ Party, Team Building Event"
                 maxLength={256}
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent transition-all text-sm sm:text-base text-[#FBF9F5] placeholder:text-[#59677C]"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-bg-secondary border border-border-light rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all text-sm sm:text-base text-fg-primary placeholder:text-fg-tertiary"
                 disabled={createEvent.isPending || isUploading}
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-xs sm:text-sm font-semibold text-[#E4DEEA] mb-2">
-                Description <span className="text-[#A343EC]">*</span>
+              <label htmlFor="description" className="block text-xs sm:text-sm font-semibold text-fg-secondary mb-2">
+                Description <span className="text-accent-primary">*</span>
               </label>
               <textarea
                 id="description"
@@ -191,54 +191,54 @@ export const CreateEventForm: React.FC = () => {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe your event... What can attendees expect?"
                 rows={4}
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent transition-all text-sm sm:text-base text-[#FBF9F5] placeholder:text-[#59677C] resize-none"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-bg-secondary border border-border-light rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all text-sm sm:text-base text-fg-primary placeholder:text-fg-tertiary resize-none"
                 disabled={createEvent.isPending || isUploading}
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="eventDate" className="block text-xs sm:text-sm font-semibold text-[#E4DEEA] mb-2">
-                Event Date & Time <span className="text-[#A343EC]">*</span>
+              <label htmlFor="eventDate" className="block text-xs sm:text-sm font-semibold text-fg-secondary mb-2">
+                Event Date & Time <span className="text-accent-primary">*</span>
               </label>
               <input
                 id="eventDate"
                 type="datetime-local"
                 value={eventDate}
                 onChange={(e) => setEventDate(e.target.value)}
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent transition-all text-sm sm:text-base text-[#FBF9F5]"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-bg-secondary border border-border-light rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all text-sm sm:text-base text-fg-primary"
                 disabled={createEvent.isPending || isUploading}
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="region" className="block text-xs sm:text-sm font-semibold text-[#E4DEEA] mb-2">
+              <label htmlFor="region" className="block text-xs sm:text-sm font-semibold text-fg-secondary mb-2">
                 <MapPin className="inline mr-1" size={14} />
-                Region <span className="text-[#A343EC]">*</span>
+                Region <span className="text-accent-primary">*</span>
               </label>
               <select
                 id="region"
                 value={region}
                 onChange={(e) => setRegion(e.target.value)}
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent transition-all text-sm sm:text-base text-[#FBF9F5] appearance-none cursor-pointer"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-bg-secondary border border-border-light rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all text-sm sm:text-base text-fg-primary appearance-none cursor-pointer"
                 disabled={createEvent.isPending || isUploading}
                 required
               >
                 {REGIONS.map((r) => (
-                  <option key={r.value} value={r.value} className="bg-[#181F25] text-[#FBF9F5]">
+                  <option key={r.value} value={r.value} className="bg-bg-primary text-fg-primary">
                     {r.label}
                   </option>
-                ))}
+                ))})
               </select>
             </div>
 
             <div>
-              <label className="block text-xs sm:text-sm font-semibold text-[#E4DEEA] mb-2">
-                Event Image <span className="text-[#59677C] font-normal">(optional)</span>
+              <label className="block text-xs sm:text-sm font-semibold text-fg-secondary mb-2">
+                Event Image <span className="text-fg-tertiary font-normal">(optional)</span>
               </label>
               {imagePreview ? (
-                <div className="relative rounded-lg sm:rounded-xl overflow-hidden border-2 border-white/10">
+                <div className="relative rounded-lg sm:rounded-xl overflow-hidden border-2 border-border-light">
                   <Image
                     src={imagePreview}
                     alt="Preview"
@@ -255,7 +255,7 @@ export const CreateEventForm: React.FC = () => {
                   </button>
                 </div>
               ) : (
-                <div className="border-2 border-dashed border-white/10 rounded-lg sm:rounded-xl p-6 sm:p-8 text-center hover:border-[#A343EC]/50 hover:bg-white/5 transition-all duration-300">
+                <div className="border-2 border-dashed border-border-light rounded-lg sm:rounded-xl p-6 sm:p-8 text-center hover:border-accent-primary/50 hover:bg-bg-secondary transition-all duration-300">
                   <input
                     id="image"
                     type="file"
@@ -268,11 +268,11 @@ export const CreateEventForm: React.FC = () => {
                     htmlFor="image"
                     className="cursor-pointer flex flex-col items-center"
                   >
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#A343EC]/20 rounded-full flex items-center justify-center mb-3 sm:mb-4">
-                      <ImagePlus className="text-[#A343EC]" size={24} />
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-accent-primary/20 rounded-full flex items-center justify-center mb-3 sm:mb-4">
+                      <ImagePlus className="text-accent-primary" size={24} />
                     </div>
-                    <span className="text-xs sm:text-sm font-semibold text-[#E4DEEA] mb-1">Click to upload image</span>
-                    <span className="text-xs text-[#59677C]">PNG, JPG up to 10MB</span>
+                    <span className="text-xs sm:text-sm font-semibold text-fg-secondary mb-1">Click to upload image</span>
+                    <span className="text-xs text-fg-tertiary">PNG, JPG up to 10MB</span>
                   </label>
                 </div>
               )}
@@ -287,7 +287,7 @@ export const CreateEventForm: React.FC = () => {
                   onChange={(e) => setEnableRsvp(e.target.checked)}
                   className="w-4 h-4 sm:w-5 sm:h-5 rounded border-white/10 bg-white/5 text-[#A343EC] focus:ring-2 focus:ring-[#A343EC] cursor-pointer"
                 />
-                <label htmlFor="enableRsvp" className="text-xs sm:text-sm font-medium text-[#E4DEEA] cursor-pointer">
+                <label htmlFor="enableRsvp" className="text-xs sm:text-sm font-medium text-fg-secondary cursor-pointer">
                   Enable RSVP for this event
                 </label>
               </div>
@@ -299,20 +299,20 @@ export const CreateEventForm: React.FC = () => {
                     id="sendReminders"
                     checked={sendReminders}
                     onChange={(e) => setSendReminders(e.target.checked)}
-                    className="w-4 h-4 sm:w-5 sm:h-5 rounded border-white/10 bg-white/5 text-[#A343EC] focus:ring-2 focus:ring-[#A343EC] cursor-pointer"
+                    className="w-4 h-4 sm:w-5 sm:h-5 rounded border-border-light bg-bg-secondary text-accent-primary focus:ring-2 focus:ring-accent-primary cursor-pointer"
                   />
-                  <label htmlFor="sendReminders" className="text-xs sm:text-sm font-medium text-[#E4DEEA] cursor-pointer">
+                  <label htmlFor="sendReminders" className="text-xs sm:text-sm font-medium text-fg-secondary cursor-pointer">
                     Send reminders to attendees
                   </label>
                 </div>
               )}
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 pt-4 sm:pt-6 border-t border-white/10">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4 sm:pt-6 border-t border-border-light">
               <button
                 type="submit"
                 disabled={createEvent.isPending || isUploading || !title.trim() || !description.trim() || !eventDate || !region}
-                className="flex-1 flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-[#A343EC] to-[#9448F2] text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-[#A343EC]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+                className="btn-primary flex-1 flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base"
               >
                 {isUploading || createEvent.isPending ? (
                   <>
@@ -330,7 +330,7 @@ export const CreateEventForm: React.FC = () => {
                 type="button"
                 onClick={() => setShowForm(false)}
                 disabled={createEvent.isPending || isUploading}
-                className="px-4 sm:px-6 py-2.5 sm:py-3 border-2 border-white/10 text-[#E4DEEA] font-semibold rounded-lg hover:bg-white/5 transition-all text-sm sm:text-base"
+                className="px-4 sm:px-6 py-2.5 sm:py-3 border-2 border-border-light text-fg-secondary font-semibold rounded-lg hover:bg-bg-secondary transition-all text-sm sm:text-base"
               >
                 Cancel
               </button>

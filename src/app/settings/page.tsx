@@ -5,6 +5,7 @@ import { UserDisplay } from "~/app/_components/userDisplay";
 import { SettingsNav } from "~/app/_components/settingsNav";
 import { ProfileSettingsClient } from "~/app/_components/profileSettingsClient";
 import { AppearanceSettings } from "~/app/_components/appearanceSettings";
+import { ThemeToggle } from "~/app/_components/themeToggle";
 import { 
   Bell, 
   Shield, 
@@ -32,25 +33,28 @@ export default async function SettingsPage({
   const activeSection = typeof sectionParam === 'string' ? sectionParam : "profile";
 
   return (
-    <div className="min-h-screen bg-[#181F25]" style={{ fontFamily: 'var(--font-faustina)' }}>
+    <div className="min-h-screen bg-bg-primary font-faustina">
       <SideNav />
 
       <div className="ml-16 min-h-screen flex flex-col">
-        <header className="sticky top-0 z-30 bg-[#181F25]/80 backdrop-blur-xl border-b border-white/5">
+        <header className="sticky top-0 z-30 glass-effect border-b border-border-light">
           <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
             <div className="flex items-center gap-3">
               <div>
-                <h1 className="text-3xl font-bold text-[#FBF9F5]">Settings</h1>
-                <p className="text-sm text-[#E4DEEA]">
+                <h1 className="text-3xl font-bold text-fg-primary">Settings</h1>
+                <p className="text-sm text-fg-secondary">
                   Manage your account and preferences
                 </p>
               </div>
             </div>
-            <UserDisplay />
+            <div className="flex items-center gap-3">
+              <ThemeToggle />
+              <UserDisplay />
+            </div>
           </div>
         </header>
 
-        <main className="flex-1 max-w-7xl mx-auto px-6 py-8 w-full">
+        <main id="main-content" className="flex-1 max-w-7xl mx-auto px-6 py-8 w-full">
           <div className="flex gap-6 h-full">
             <aside className="w-64 flex-shrink-0">
               <div className="sticky top-24">

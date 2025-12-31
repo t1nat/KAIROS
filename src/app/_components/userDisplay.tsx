@@ -51,34 +51,36 @@ export function UserDisplay() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 group"
+        className="flex items-center gap-3 group rounded-xl focus-visible:outline-none"
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
       >
         <div className="hidden sm:flex flex-col items-end">
-          <div className="text-sm font-medium text-[#FBF9F5] group-hover:text-white transition-colors">
+          <div className="text-sm font-medium text-fg-primary group-hover:text-fg-primary transition-colors">
             {user.name ?? "User"}
           </div>
-          <div className="text-xs text-[#E4DEEA] group-hover:text-[#FBF9F5] transition-colors">
+          <div className="text-xs text-fg-secondary group-hover:text-fg-primary transition-colors">
             {user.email}
           </div>
         </div>
         
         {user.image ? (
-          <Image src={user.image} alt={user.name ?? "User"} width={32} height={32} className="w-8 h-8 rounded-full object-cover ring-2 ring-white/10 group-hover:ring-[#A343EC]/50 transition-all" />
+          <Image src={user.image} alt={user.name ?? "User"} width={32} height={32} className="w-8 h-8 rounded-full object-cover ring-2 ring-border-light/20 group-hover:ring-accent-primary/50 transition-all" />
         ) : (
-          <div className="w-8 h-8 bg-[#A343EC] rounded-full flex items-center justify-center text-white text-sm font-bold group-hover:bg-[#8B35C7] transition-colors">
+          <div className="w-8 h-8 bg-accent-primary rounded-full flex items-center justify-center text-white text-sm font-bold group-hover:bg-accent-secondary transition-colors">
             {user.name?.charAt(0).toUpperCase() ?? "U"}
           </div>
         )}
         
         <ChevronDown 
           size={16} 
-          className={`text-[#E4DEEA] group-hover:text-[#FBF9F5] transition-all ${isOpen ? "rotate-180" : ""}`}
+          className={`text-fg-secondary group-hover:text-fg-primary transition-transform ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-3 w-64 bg-[#181F25]/95 rounded-2xl border border-white/10 shadow-2xl overflow-hidden z-50 backdrop-blur-xl">
-          <div className="p-4 border-b border-white/10 bg-white/5">
+        <div className="absolute right-0 mt-3 w-64 bg-bg-primary/95 rounded-2xl border border-border-light/20 shadow-2xl overflow-hidden z-50 backdrop-blur-xl" role="menu" aria-label="User menu">
+          <div className="p-4 border-b border-border-light/20 bg-bg-secondary/40">
             <div className="flex items-center gap-3">
               {user.image ? (
                 <Image
@@ -86,24 +88,24 @@ export function UserDisplay() {
                   alt={user.name ?? "User"}
                   width={48}
                   height={48}
-                  className="w-12 h-12 rounded-full object-cover ring-2 ring-white/10"
+                  className="w-12 h-12 rounded-full object-cover ring-2 ring-border-light/20"
                 />
               ) : (
-                <div className="w-12 h-12 bg-[#A343EC] rounded-full flex items-center justify-center text-white text-lg font-bold">
+                <div className="w-12 h-12 bg-accent-primary rounded-full flex items-center justify-center text-white text-lg font-bold">
                   {user.name?.charAt(0).toUpperCase() ?? "U"}
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-[#FBF9F5] truncate">
+                <div className="text-sm font-semibold text-fg-primary truncate">
                   {user.name ?? "User"}
                 </div>
-                <div className="text-xs text-[#E4DEEA] truncate">
+                <div className="text-xs text-fg-secondary truncate">
                   {user.email}
                 </div>
               </div>
             </div>
             {user.bio && (
-              <p className="text-xs text-[#E4DEEA] mt-2 line-clamp-2">
+              <p className="text-xs text-fg-secondary mt-2 line-clamp-2">
                 {user.bio}
               </p>
             )}
@@ -112,8 +114,9 @@ export function UserDisplay() {
           <div className="p-2">
             <a
               href="/settings"
-              className="flex items-center gap-3 px-3 py-2.5 text-sm text-[#FBF9F5] hover:bg-white/5 rounded-xl transition-colors"
+              className="flex items-center gap-3 px-3 py-2.5 text-sm text-fg-primary hover:bg-bg-secondary/60 rounded-xl transition-colors"
               onClick={() => setIsOpen(false)}
+              role="menuitem"
             >
               <svg 
                 className="w-4 h-4" 
@@ -133,7 +136,8 @@ export function UserDisplay() {
             
             <button
               onClick={handleSignOut}
-              className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-[#A343EC] hover:bg-[#A343EC]/10 rounded-xl transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-accent-primary hover:bg-accent-primary/10 rounded-xl transition-colors"
+              role="menuitem"
             >
               <LogOut size={16} />
               Sign Out

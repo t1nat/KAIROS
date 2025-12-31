@@ -17,7 +17,7 @@ export function SettingsNav({ activeSection }: SettingsNavProps) {
   ];
 
   return (
-    <nav className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-2">
+    <nav className="bg-bg-secondary/40 backdrop-blur-sm rounded-2xl border border-border-light/20 p-2" aria-label="Settings">
       <div className="space-y-1">
         {sections.map((section) => {
           const Icon = section.icon;
@@ -27,10 +27,11 @@ export function SettingsNav({ activeSection }: SettingsNavProps) {
             <Link
               key={section.id}
               href={`/settings?section=${section.id}`}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+              aria-current={isActive ? "page" : undefined}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
                 isActive
-                  ? "bg-[#A343EC] text-white"
-                  : "text-[#E4DEEA] hover:bg-white/5"
+                  ? "bg-accent-primary text-white"
+                  : "text-fg-secondary hover:bg-bg-secondary/60"
               }`}
             >
               <Icon size={20} />
