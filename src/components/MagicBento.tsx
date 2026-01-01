@@ -33,20 +33,17 @@ const MOBILE_BREAKPOINT = 768;
 
 const cardData: BentoCardProps[] = [
   {
-    color: '#181F25',
     title: 'Organizations',
     description: 'Create dedicated spaces to assign roles and oversee progress with absolute clarity. Control the workflow in real-time.',
     label: 'Organizations',
     icon: <FolderKanban size={24} />
   },
   {
-    color: '#181F25',
     title: 'Teams',
     description: 'Collaborate securely in real-time spaces. Unify your workflow to ensure the entire team moves in perfect sync.',
     icon: <Users size={24} />
   },
   {
-    color: '#181F25',
     title: 'Personal Goals',
     description: 'Master your focus. Never lose important notes. Eliminate the noise to find your perfect headspace.',
     icon: <Shield size={24} />
@@ -527,9 +524,10 @@ const GlobalBentoStyles: React.FC<{ glowColor: string }> = ({ glowColor }) => {
         --glow-intensity: 0;
         --glow-radius: 200px;
         --glow-color: ${glowColor};
-        --border-color: rgba(255, 255, 255, 0.1);
-        --background-dark: #181F25;
-        --white: #FBF9F5;
+        --border-color: rgb(var(--border-light) / 0.45);
+        --surface: rgb(var(--bg-surface));
+        --surface-2: rgb(var(--bg-secondary));
+        --text: rgb(var(--text-primary));
       }
       
       .kairos-card-grid {
@@ -614,7 +612,23 @@ const MagicBento: React.FC<BentoProps> = ({
   const isMobile = useMobileDetection();
   const shouldDisableAnimations = disableAnimations || isMobile;
 
-  const iconColors = ['#A343EC', '#F8D45E', '#A3D3B4'];
+  const iconTokens = [
+    {
+      bg: 'rgb(var(--accent-primary) / 0.16)',
+      border: 'rgb(var(--accent-primary) / 0.28)',
+      fg: 'rgb(var(--accent-primary))'
+    },
+    {
+      bg: 'rgb(var(--warning-light))',
+      border: 'rgb(var(--warning) / 0.30)',
+      fg: 'rgb(var(--warning))'
+    },
+    {
+      bg: 'rgb(var(--success-light))',
+      border: 'rgb(var(--success) / 0.30)',
+      fg: 'rgb(var(--success))'
+    }
+  ];
 
   return (
     <>
@@ -638,9 +652,9 @@ const MagicBento: React.FC<BentoProps> = ({
             }`;
 
             const cardStyle = {
-              backgroundColor: card.color ?? 'var(--background-dark)',
+              backgroundImage: 'linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%)',
               borderColor: 'var(--border-color)',
-              color: 'var(--white)',
+              color: 'var(--text)',
               backdropFilter: 'blur(8px)',
               '--glow-x': '50%',
               '--glow-y': '50%',
@@ -662,23 +676,26 @@ const MagicBento: React.FC<BentoProps> = ({
                   enableMagnetism={enableMagnetism}
                 >
                   <div className="flex flex-col gap-6 relative z-10">
-                    <div style={{ 
-                      width: '48px', 
-                      height: '48px', 
-                      backgroundColor: iconColors[index], 
-                      borderRadius: '12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: index === 1 ? '#181F25' : 'white'
-                    }}>
+                    <div
+                      style={{
+                        width: '48px',
+                        height: '48px',
+                        backgroundColor: iconTokens[index]?.bg,
+                        border: `1px solid ${iconTokens[index]?.border}`,
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: iconTokens[index]?.fg
+                      }}
+                    >
                       {card.icon}
                     </div>
                     <div>
-                      <h4 className="text-xl font-bold text-[#FBF9F5] mb-3">
+                      <h4 className="text-xl font-bold text-fg-primary mb-3">
                         {card.title}
                       </h4>
-                      <p className="text-[#E4DEAA] leading-relaxed text-sm">
+                      <p className="text-fg-secondary leading-relaxed text-sm">
                         {card.description}
                       </p>
                     </div>
@@ -690,23 +707,26 @@ const MagicBento: React.FC<BentoProps> = ({
             return (
               <div key={index} className={baseClassName} style={cardStyle}>
                 <div className="flex flex-col gap-6 relative z-10">
-                  <div style={{ 
-                    width: '48px', 
-                    height: '48px', 
-                    backgroundColor: iconColors[index], 
-                    borderRadius: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: index === 1 ? '#181F25' : 'white'
-                  }}>
+                  <div
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      backgroundColor: iconTokens[index]?.bg,
+                      border: `1px solid ${iconTokens[index]?.border}`,
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: iconTokens[index]?.fg
+                    }}
+                  >
                     {card.icon}
                   </div>
                   <div>
-                    <h4 className="text-xl font-bold text-[#FBF9F5] mb-3">
+                    <h4 className="text-xl font-bold text-fg-primary mb-3">
                       {card.title}
                     </h4>
-                    <p className="text-[#E4DEAA] leading-relaxed text-sm">
+                    <p className="text-fg-secondary leading-relaxed text-sm">
                       {card.description}
                     </p>
                   </div>

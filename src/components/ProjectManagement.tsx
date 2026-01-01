@@ -209,7 +209,7 @@ export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskForm
           >
             <option value="">{t("taskForm.unassigned")}</option>
             {availableUsers.map((user) => (
-              <option key={user.id} value={user.id} className="bg-[#181F25]">
+              <option key={user.id} value={user.id} className="bg-bg-secondary text-fg-primary">
                 {user.name ?? user.email}
               </option>
             ))}
@@ -226,10 +226,10 @@ export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskForm
             className={`w-full px-4 py-3 bg-bg-surface/60 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 transition-all ${priorityColors[priority]}`}
             disabled={isSubmitting}
           >
-            <option value="low" className="bg-[#181F25]">{t("taskForm.priorityLow")}</option>
-            <option value="medium" className="bg-[#181F25]">{t("taskForm.priorityMedium")}</option>
-            <option value="high" className="bg-[#181F25]">{t("taskForm.priorityHigh")}</option>
-            <option value="urgent" className="bg-[#181F25]">{t("taskForm.priorityUrgent")}</option>
+            <option value="low" className="bg-bg-secondary text-fg-primary">{t("taskForm.priorityLow")}</option>
+            <option value="medium" className="bg-bg-secondary text-fg-primary">{t("taskForm.priorityMedium")}</option>
+            <option value="high" className="bg-bg-secondary text-fg-primary">{t("taskForm.priorityHigh")}</option>
+            <option value="urgent" className="bg-bg-secondary text-fg-primary">{t("taskForm.priorityUrgent")}</option>
           </select>
         </div>
       </div>
@@ -424,8 +424,8 @@ export function CollaboratorManager({
               className="flex-1 px-4 py-3 bg-bg-surface/60 border border-border-light/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary/50 text-fg-primary transition-all"
               disabled={isAdding}
             >
-              <option value="read" className="bg-[#181F25]">{t("team.canView")}</option>
-              <option value="write" className="bg-[#181F25]">{t("team.canEdit")}</option>
+              <option value="read" className="bg-bg-secondary text-fg-primary">{t("team.canView")}</option>
+              <option value="write" className="bg-bg-secondary text-fg-primary">{t("team.canEdit")}</option>
             </select>
 
             <button
@@ -480,8 +480,8 @@ export function CollaboratorManager({
                       onChange={(e) => onUpdatePermission(user.id, e.target.value as "read" | "write")}
                       className="px-3 py-2 text-xs border border-border-light/30 bg-bg-surface/50 rounded-lg text-fg-primary hover:bg-bg-elevated transition-all"
                     >
-                      <option value="read" className="bg-[#181F25]">{t("team.view")}</option>
-                      <option value="write" className="bg-[#181F25]">{t("team.edit")}</option>
+                      <option value="read" className="bg-bg-secondary text-fg-primary">{t("team.view")}</option>
+                      <option value="write" className="bg-bg-secondary text-fg-primary">{t("team.edit")}</option>
                     </select>
                     <button
                       onClick={() => onRemoveCollaborator(user.id)}

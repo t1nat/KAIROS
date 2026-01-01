@@ -3,12 +3,10 @@
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
 
 export function ThemeToggle() {
-  const t = useTranslations("common");
   const [mounted, setMounted] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
 
   useEffect(() => {
     setMounted(true);
@@ -20,8 +18,8 @@ export function ThemeToggle() {
     );
   }
 
-  const isDark = theme === "dark";
-  const toggleLabel = isDark ? t("lightMode") : t("darkMode");
+  const isDark = resolvedTheme === "dark";
+  const toggleLabel = isDark ? "Switch to light mode" : "Switch to dark mode";
 
   return (
     <button

@@ -1,7 +1,7 @@
 import "~/styles/globals.css";
 
 import { type Metadata } from "next";
-import { Geist, Cinzel, Newsreader, Uncial_Antiqua, Faustina, Space_Grotesk } from "next/font/google";
+import { Cinzel, Newsreader, Uncial_Antiqua, Faustina, Space_Grotesk } from "next/font/google";
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 
@@ -16,13 +16,15 @@ export const metadata: Metadata = {
   icons: [{ rel: "icon", url: "/logo_purple.png" }],
 };
 
-const geist = Geist({
+const sans = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-geist-sans",
+  display: "swap",
 });
 
-const display = Space_Grotesk({
+const display = Cinzel({
   subsets: ["latin"],
+  weight: ["400", "700"],
   variable: "--font-display",
   display: "swap",
 });
@@ -61,7 +63,7 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className={`${geist.variable} ${display.variable} ${arsenica.variable} ${newsreader.variable} ${uncialAntiqua.variable} ${faustina.variable}`} suppressHydrationWarning>
+    <html lang={locale} className={`${sans.variable} ${display.variable} ${arsenica.variable} ${newsreader.variable} ${uncialAntiqua.variable} ${faustina.variable}`} suppressHydrationWarning>
       <body className="min-h-dvh bg-bg-primary text-fg-primary font-sans antialiased">
         <a href="#main-content" className="skip-link">
           Skip to content
