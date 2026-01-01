@@ -1,10 +1,7 @@
-// tailwind.config.js
-// Place this file in the ROOT of your project (same level as package.json)
-
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
-  darkMode: "class", // CRITICAL: This enables dark mode!
+  darkMode: "class", 
   theme: {
     extend: {
       colors: {
@@ -68,6 +65,13 @@ module.exports = {
           "Segoe UI Emoji",
           "Segoe UI Symbol",
           "Noto Color Emoji",
+        ],
+        display: [
+          "var(--font-display)",
+          "var(--font-geist-sans)",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
         ],
         faustina: ["var(--font-faustina)", "serif"],
         uncial: ["var(--font-uncial-antiqua)", "serif"],

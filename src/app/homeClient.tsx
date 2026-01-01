@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
-import { UserDisplay } from "./_components/userDisplay";
-import { SignInModal } from "./_components/signInModal";
-import { RoleSelectionModal } from "./_components/roleSelectionModal";
-import { ThemeToggle } from "./_components/themeToggle";
+import { UserDisplay } from "./_components/UserDisplay";
+import { SignInModal } from "./_components/SignInModal";
+import { RoleSelectionModal } from "./_components/RoleSelectionModal";
+import { ThemeToggle } from "./_components/ThemeToggle";
 import MagicBento from "./_components/MagicBento";
 import { api } from "~/trpc/react";
 import {
@@ -65,7 +65,7 @@ export function HomeClient({ session }: {
     const showActionButtons = session && !showRoleSelection && userProfile !== undefined && userProfile !== null;
 
     return (
-        <main id="main-content" className="min-h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary relative overflow-hidden font-faustina">
+        <main id="main-content" className="min-h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary relative overflow-hidden">
             <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-30">
                 <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-gradient-to-br from-accent-primary/20 to-brand-indigo/20 rounded-full blur-3xl animate-fadeIn" />
                 <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-gradient-to-tl from-accent-secondary/20 to-brand-blue/20 rounded-full blur-3xl animate-fadeIn" style={{ animationDelay: '0.5s' }} />
@@ -84,7 +84,7 @@ export function HomeClient({ session }: {
                                         className="w-6 h-6 object-contain"
                                     />
                                 </div>
-                                <h1 className="text-2xl font-bold text-fg-primary font-uncial">KAIROS</h1>
+                                <h1 className="text-2xl font-bold text-fg-primary font-display tracking-tight">KAIROS</h1>
                             </div>
                             
                             
@@ -107,7 +107,7 @@ export function HomeClient({ session }: {
                                     </span>
                                     Event Planning & Coordination Platform
                                 </div>
-                                <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold text-fg-primary leading-tight tracking-tight font-uncial animate-slideUp" style={{ animationDelay: '0.1s' }}>
+                                <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold text-fg-primary leading-tight tracking-tight font-display animate-slideUp" style={{ animationDelay: '0.1s' }}>
                                     KAIROS
                                 </h2>
                                 <p className="text-xl md:text-2xl text-fg-secondary leading-relaxed max-w-2xl mx-auto lg:mx-0 animate-slideUp" style={{ animationDelay: '0.2s' }}>
@@ -199,7 +199,7 @@ export function HomeClient({ session }: {
                             clickEffect={false}
                             spotlightRadius={300}
                             particleCount={0}
-                            glowColor="163, 67, 236"
+                            glowColor="139, 92, 246"
                         />
 
                         <div className="surface-card p-8 md:p-10 mt-16">

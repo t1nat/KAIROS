@@ -2,18 +2,21 @@
 
 import Link from "next/link";
 import { User, Bell, Shield, Globe, Palette } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface SettingsNavProps {
   activeSection: string;
 }
 
 export function SettingsNav({ activeSection }: SettingsNavProps) {
+  const t = useTranslations("settings.nav");
+  
   const sections = [
-    { id: "profile", label: "Profile", icon: User },
-    { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "security", label: "Security", icon: Shield },
-    { id: "language", label: "Language", icon: Globe },
-    { id: "appearance", label: "Appearance", icon: Palette },
+    { id: "profile", label: t("profile"), icon: User },
+    { id: "notifications", label: t("notifications"), icon: Bell },
+    { id: "security", label: t("security"), icon: Shield },
+    { id: "language", label: t("language"), icon: Globe },
+    { id: "appearance", label: t("appearance"), icon: Palette },
   ];
 
   return (

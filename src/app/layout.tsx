@@ -1,12 +1,14 @@
 import "~/styles/globals.css";
 
 import { type Metadata } from "next";
-import { Geist, Cinzel, Newsreader, Uncial_Antiqua, Faustina } from "next/font/google";
+import { Geist, Cinzel, Newsreader, Uncial_Antiqua, Faustina, Space_Grotesk } from "next/font/google";
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale, getMessages } from 'next-intl/server';
 
 import { TRPCReactProvider } from "~/trpc/react";
 import { auth } from "~/server/auth";
 import NextAuthSessionProvider from "./sessionProvider";
-import { ThemeProvider } from "./_components/themeProvider";
+import { ThemeProvider } from "./_components/ThemeProvider";
 
 export const metadata: Metadata = {
   title: "KAIROS",
@@ -17,6 +19,12 @@ export const metadata: Metadata = {
 const geist = Geist({
   subsets: ["latin"],
   variable: "--font-geist-sans",
+});
+
+const display = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
 });
 
 const arsenica = Cinzel({
@@ -49,20 +57,24 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const session = await auth();
+  const locale = await getLocale();
+  const messages = await getMessages();
 
   return (
-    <html lang="en" className={`${geist.variable} ${arsenica.variable} ${newsreader.variable} ${uncialAntiqua.variable} ${faustina.variable}`} suppressHydrationWarning>
+    <html lang={locale} className={`${geist.variable} ${display.variable} ${arsenica.variable} ${newsreader.variable} ${uncialAntiqua.variable} ${faustina.variable}`} suppressHydrationWarning>
       <body className="min-h-dvh bg-bg-primary text-fg-primary font-sans antialiased">
         <a href="#main-content" className="skip-link">
           Skip to content
         </a>
-        <TRPCReactProvider>
-          <NextAuthSessionProvider session={session}>
-             <ThemeProvider>
-              {children}
-             </ThemeProvider>
-          </NextAuthSessionProvider>
-        </TRPCReactProvider>
+        <NextIntlClientProvider messages={messages} locale={locale}>
+          <TRPCReactProvider>
+            <NextAuthSessionProvider session={session}>
+              <ThemeProvider>
+                {children}
+              </ThemeProvider>
+            </NextAuthSessionProvider>
+          </TRPCReactProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

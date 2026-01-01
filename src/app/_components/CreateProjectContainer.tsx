@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { api } from "~/trpc/react";
-import { CreateProjectForm, CreateTaskForm, CollaboratorManager } from "./projectManagement";
-import { InteractiveTimeline } from "./interactiveTimeline";
+import { CreateProjectForm, CreateTaskForm, CollaboratorManager } from "./ProjectManagement";
+import { InteractiveTimeline } from "./InteractiveTimeline";
 import { ChevronDown, ChevronUp, RefreshCw, CheckCircle2, ArrowLeft, Folder } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 

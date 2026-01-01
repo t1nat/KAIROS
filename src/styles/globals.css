@@ -179,6 +179,12 @@
     transition-duration: 180ms;
   }
 
+  /* Consistent focus treatment (keyboard accessibility) */
+  :where(a, button, input, textarea, select, summary, [role="button"], [tabindex]):focus-visible {
+    outline: 2px solid rgb(var(--accent-primary));
+    outline-offset: 2px;
+  }
+
   /* Skip link for keyboard and screen readers */
   .skip-link {
     position: absolute;

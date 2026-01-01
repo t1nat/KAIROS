@@ -114,18 +114,18 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
         onClick={onClose}
       />
       
-      <div className="relative bg-gradient-to-br from-[#1a2128] to-[#181F25] rounded-3xl shadow-2xl w-full max-w-md border border-[#A343EC]/20 overflow-hidden">
+      <div className="relative bg-gradient-to-br from-bg-secondary to-bg-primary rounded-3xl shadow-2xl w-full max-w-md border border-accent-primary/20 overflow-hidden">
         
-        <div className="absolute inset-0 bg-gradient-to-br from-[#A343EC]/5 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-accent-primary/10 to-transparent pointer-events-none" />
         
         <button 
           onClick={onClose} 
-          className="absolute top-4 right-4 p-2 text-[#E4DEAA] hover:text-[#FBF9F5] hover:bg-white/10 rounded-xl transition-all duration-200 z-10"
+          className="absolute top-4 right-4 p-2 text-fg-secondary hover:text-fg-primary hover:bg-bg-secondary/60 rounded-xl transition-all duration-200 z-10"
         >
           <X size={20} />
         </button>
 
-        <div className="relative p-8 pb-6 text-center border-b border-white/5">
+        <div className="relative p-8 pb-6 text-center border-b border-border-light/20">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <img 
               src="/logo_white.png" 
@@ -133,10 +133,10 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
               className="w-16 h-16 object-contain"
             />
           </div>
-          <h2 className="text-2xl font-bold text-[#FBF9F5] mb-2">
+          <h2 className="text-2xl font-bold text-fg-primary mb-2 font-display tracking-tight">
             {isSignUp ? "Create Account" : "Welcome to Kairos"}
           </h2>
-          <p className="text-[#E4DEAA]">
+          <p className="text-fg-secondary">
             {isSignUp 
               ? "Sign up to launch your projects." 
               : "Sign in to launch your projects."
@@ -149,7 +149,7 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
           <button
             onClick={handleGoogleSignIn}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white/5 border border-white/10 rounded-2xl font-semibold text-[#FBF9F5] hover:bg-white/10 hover:border-white/20 transition-all duration-300 shadow-sm hover:shadow-md hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-bg-surface border border-border-light/20 rounded-2xl font-semibold text-fg-primary hover:bg-bg-elevated hover:border-border-medium/50 transition-all duration-300 shadow-sm hover:shadow-md hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
             <div className="w-5 h-5 bg-white rounded flex items-center justify-center">
               <svg viewBox="0 0 24 24" className="w-4 h-4">
@@ -164,10 +164,10 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
 
           <div className="relative py-2">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/10"></div>
+              <div className="w-full border-t border-border-light/20"></div>
             </div>
             <div className="relative flex justify-center">
-              <span className="px-4 text-sm text-[#E4DEAA] bg-gradient-to-br from-[#1a2128] to-[#181F25]">
+              <span className="px-4 text-sm text-fg-tertiary bg-gradient-to-br from-bg-secondary to-bg-primary">
                 or {isSignUp ? "sign up" : "sign in"} with email
               </span>
             </div>
@@ -181,7 +181,7 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             )}
 
             {loadingMessage && (
-              <div className="p-3 bg-[#A343EC]/10 border border-[#A343EC]/20 rounded-xl text-[#A343EC] text-sm text-center flex items-center justify-center gap-2">
+              <div className="p-3 bg-accent-primary/10 border border-accent-primary/20 rounded-xl text-accent-primary text-sm text-center flex items-center justify-center gap-2">
                 <Loader2 className="animate-spin" size={16} />
                 {loadingMessage}
               </div>
@@ -189,11 +189,11 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
 
             {isSignUp && (
               <div className="space-y-2">
-                <label htmlFor="name" className="block text-sm font-medium text-[#E4DEAA]">
+                <label htmlFor="name" className="block text-sm font-medium text-fg-secondary">
                   Name (Optional)
                 </label>
                 <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-[#E4DEAA]/50" size={18} />
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-fg-tertiary" size={18} />
                   <input
                     id="name"
                     type="text"
@@ -201,18 +201,18 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Your name"
                     disabled={isLoading}
-                    className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-[#FBF9F5] placeholder-[#E4DEAA]/40 focus:outline-none focus:border-[#A343EC]/50 focus:bg-white/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full pl-12 pr-4 py-3 bg-bg-surface border border-border-light/20 rounded-xl text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus:border-accent-primary/60 focus:bg-bg-elevated transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
               </div>
             )}
 
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium text-[#E4DEAA]">
+              <label htmlFor="email" className="block text-sm font-medium text-fg-secondary">
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-[#E4DEAA]/50" size={18} />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-fg-tertiary" size={18} />
                 <input
                   id="email"
                   type="email"
@@ -221,17 +221,17 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                   placeholder="your@email.com"
                   required
                   disabled={isLoading}
-                  className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-[#FBF9F5] placeholder-[#E4DEAA]/40 focus:outline-none focus:border-[#A343EC]/50 focus:bg-white/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full pl-12 pr-4 py-3 bg-bg-surface border border-border-light/20 rounded-xl text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus:border-accent-primary/60 focus:bg-bg-elevated transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password" className="block text-sm font-medium text-[#E4DEAA]">
+              <label htmlFor="password" className="block text-sm font-medium text-fg-secondary">
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#E4DEAA]/50" size={18} />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-fg-tertiary" size={18} />
                 <input
                   id="password"
                   type="password"
@@ -241,18 +241,18 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                   required
                   minLength={isSignUp ? 8 : undefined}
                   disabled={isLoading}
-                  className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-[#FBF9F5] placeholder-[#E4DEAA]/40 focus:outline-none focus:border-[#A343EC]/50 focus:bg-white/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full pl-12 pr-4 py-3 bg-bg-surface border border-border-light/20 rounded-xl text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus:border-accent-primary/60 focus:bg-bg-elevated transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
               {isSignUp && (
-                <p className="text-sm text-[#E4DEAA]/70">Password must be at least 8 characters</p>
+                <p className="text-sm text-fg-tertiary">Password must be at least 8 characters</p>
               )}
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full px-6 py-4 bg-[#A343EC] rounded-2xl font-semibold text-white hover:bg-[#8B35C7] transition-all duration-300 shadow-lg shadow-[#A343EC]/20 hover:shadow-xl hover:shadow-[#A343EC]/30 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+              className="w-full px-6 py-4 bg-accent-primary rounded-2xl font-semibold text-white hover:bg-accent-hover transition-all duration-300 shadow-lg shadow-accent-primary/20 hover:shadow-xl hover:shadow-accent-primary/30 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <>
@@ -269,13 +269,13 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             <button
               onClick={toggleMode}
               disabled={isLoading}
-              className="text-base text-[#E4DEAA] hover:text-[#A343EC] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              className="text-base text-fg-secondary hover:text-accent-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
               {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
             </button>
           </div>
 
-          <p className="text-sm text-center text-[#E4DEAA]/70 leading-relaxed pt-2">
+          <p className="text-sm text-center text-fg-tertiary leading-relaxed pt-2">
             By continuing, you agree to Kairos&#39;s Terms of Service and Privacy Policy.
           </p>
         </div>

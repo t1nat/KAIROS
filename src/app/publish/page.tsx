@@ -1,17 +1,17 @@
-import { EventFeed } from "../_components/eventFeed";
-import { CreateEventForm } from "../_components/createEventForm";
-import { SideNav } from "../_components/sideNav";
-import { UserDisplay } from "../_components/userDisplay";
+import { EventFeed } from "../_components/EventFeed";
+import { CreateEventForm } from "../_components/CreateEventForm";
+import { SideNav } from "../_components/SideNav";
+import { UserDisplay } from "../_components/UserDisplay";
 import { Calendar } from "lucide-react";
-import { EventReminderService } from "../_components/eventReminderService";
-import { ThemeToggle } from "../_components/themeToggle";
+import { EventReminderService } from "../_components/EventReminderService";
+import { ThemeToggle } from "../_components/ThemeToggle";
 
 export default function PublishPage() {
     return (
-        <div className="min-h-screen bg-bg-primary font-faustina relative">
+        <div className="min-h-screen bg-bg-primary relative">
             <SideNav />
             
-            <div className="ml-16">
+            <div className="lg:ml-16 pt-16 lg:pt-0">
                <header className="sticky top-0 z-30 glass-effect border-b border-border-light">
                     <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
                         <div className="flex items-center gap-3">

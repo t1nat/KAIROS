@@ -1,15 +1,16 @@
 import { auth } from "~/server/auth";
 import { redirect } from "next/navigation";
-import { SideNav } from "~/app/_components/sideNav";
-import { UserDisplay } from "~/app/_components/userDisplay";
-import { SettingsNav } from "~/app/_components/settingsNav";
-import { ProfileSettingsClient } from "~/app/_components/profileSettingsClient";
-import { AppearanceSettings } from "~/app/_components/appearanceSettings";
-import { ThemeToggle } from "~/app/_components/themeToggle";
+import { SideNav } from "~/app/_components/SideNav";
+import { UserDisplay } from "~/app/_components/UserDisplay";
+import { SettingsNav } from "~/app/_components/SettingsNav";
+import { ProfileSettingsClient } from "~/app/_components/ProfileSettingsClient";
+import { AppearanceSettings } from "~/app/_components/AppearanceSettings";
+import { ThemeToggle } from "~/app/_components/ThemeToggle";
+import { LanguageSettingsClient } from "~/app/_components/LanguageSettingsClient";
+import { getTranslations } from "next-intl/server";
 import { 
   Bell, 
   Shield, 
-  Globe, 
   Key,
 } from "lucide-react";
 
@@ -28,22 +29,24 @@ export default async function SettingsPage({
     redirect("/api/auth/signin");
   }
 
+  const t = await getTranslations("settings");
+
   const resolvedParams = await searchParams;
   const sectionParam = resolvedParams.section;
   const activeSection = typeof sectionParam === 'string' ? sectionParam : "profile";
 
   return (
-    <div className="min-h-screen bg-bg-primary font-faustina">
+    <div className="min-h-screen bg-bg-primary">
       <SideNav />
 
-      <div className="ml-16 min-h-screen flex flex-col">
+      <div className="lg:ml-16 pt-16 lg:pt-0 min-h-screen flex flex-col">
         <header className="sticky top-0 z-30 glass-effect border-b border-border-light">
           <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
             <div className="flex items-center gap-3">
               <div>
-                <h1 className="text-3xl font-bold text-fg-primary">Settings</h1>
+                <h1 className="text-3xl font-bold text-fg-primary">{t("title")}</h1>
                 <p className="text-sm text-fg-secondary">
-                  Manage your account and preferences
+                  {t("subtitle")}
                 </p>
               </div>
             </div>
@@ -66,7 +69,7 @@ export default async function SettingsPage({
               {activeSection === "profile" && <ProfileSettingsClient user={session.user} />}
               {activeSection === "notifications" && <NotificationSettings />}
               {activeSection === "security" && <SecuritySettings />}
-              {activeSection === "language" && <LanguageSettings />}
+              {activeSection === "language" && <LanguageSettingsClient />}
               {activeSection === "appearance" && <AppearanceSettings />}
             </div>
           </div>
@@ -78,14 +81,14 @@ export default async function SettingsPage({
 
 function NotificationSettings() {
   return (
-    <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8">
+    <div className="bg-bg-secondary/40 backdrop-blur-sm rounded-2xl border border-border-light/20 p-8">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-[#A343EC]/20 rounded-lg flex items-center justify-center">
-          <Bell className="text-[#A343EC]" size={20} />
+        <div className="w-10 h-10 bg-accent-primary/15 rounded-lg flex items-center justify-center">
+          <Bell className="text-accent-primary" size={20} />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-[#FBF9F5]">Notification Settings</h2>
-          <p className="text-sm text-[#E4DEEA]">Choose what notifications you receive</p>
+          <h2 className="text-2xl font-bold text-fg-primary">Notification Settings</h2>
+          <p className="text-sm text-fg-secondary">Choose what notifications you receive</p>
         </div>
       </div>
 
@@ -117,10 +120,10 @@ function NotificationSettings() {
         />
       </div>
 
-      <div className="mt-6 pt-6 border-t border-white/10">
+      <div className="mt-6 pt-6 border-t border-border-light/20">
         <button
           type="button"
-          className="px-8 py-3 bg-[#A343EC] text-white font-semibold rounded-xl hover:bg-[#8B35C7] transition-all"
+          className="px-8 py-3 bg-accent-primary text-white font-semibold rounded-xl hover:bg-accent-hover transition-all"
         >
           Save Notification Settings
         </button>
@@ -131,134 +134,70 @@ function NotificationSettings() {
 
 function SecuritySettings() {
   return (
-    <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8">
+    <div className="bg-bg-secondary/40 backdrop-blur-sm rounded-2xl border border-border-light/20 p-8">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-[#A343EC]/20 rounded-lg flex items-center justify-center">
-          <Shield className="text-[#A343EC]" size={20} />
+        <div className="w-10 h-10 bg-accent-primary/15 rounded-lg flex items-center justify-center">
+          <Shield className="text-accent-primary" size={20} />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-[#FBF9F5]">Security Settings</h2>
-          <p className="text-sm text-[#E4DEEA]">Manage your security preferences</p>
+          <h2 className="text-2xl font-bold text-fg-primary">Security Settings</h2>
+          <p className="text-sm text-fg-secondary">Manage your security preferences</p>
         </div>
       </div>
 
       <div className="space-y-6">
         <div>
-          <h3 className="font-semibold text-[#FBF9F5] mb-4 flex items-center gap-2">
-            <Key size={18} className="text-[#A343EC]" />
+          <h3 className="font-semibold text-fg-primary mb-4 flex items-center gap-2">
+            <Key size={18} className="text-accent-primary" />
             Password
           </h3>
           <button
             type="button"
-            className="px-6 py-2 bg-white/5 text-[#FBF9F5] font-semibold rounded-lg hover:bg-white/10 transition-colors border border-white/10"
+            className="px-6 py-2 bg-bg-surface text-fg-primary font-semibold rounded-lg hover:bg-bg-elevated transition-colors border border-border-light/20"
           >
             Change Password
           </button>
         </div>
 
-        <div className="pt-4 border-t border-white/10">
-          <h3 className="font-semibold text-[#FBF9F5] mb-4">Two-Factor Authentication</h3>
-          <p className="text-sm text-[#E4DEEA] mb-4">
+        <div className="pt-4 border-t border-border-light/20">
+          <h3 className="font-semibold text-fg-primary mb-4">Two-Factor Authentication</h3>
+          <p className="text-sm text-fg-secondary mb-4">
             Add an extra layer of security to your account
           </p>
           <button
             type="button"
-            className="px-6 py-2 bg-[#A343EC] text-white font-semibold rounded-lg hover:bg-[#8B35C7] transition-all"
+            className="px-6 py-2 bg-accent-primary text-white font-semibold rounded-lg hover:bg-accent-hover transition-all"
           >
             Enable 2FA
           </button>
         </div>
 
-        <div className="pt-4 border-t border-white/10">
-          <h3 className="font-semibold text-[#FBF9F5] mb-4">Active Sessions</h3>
-          <p className="text-sm text-[#E4DEEA] mb-4">
+        <div className="pt-4 border-t border-border-light/20">
+          <h3 className="font-semibold text-fg-primary mb-4">Active Sessions</h3>
+          <p className="text-sm text-fg-secondary mb-4">
             Manage devices where you&apos;re currently logged in
           </p>
           <button
             type="button"
-            className="px-6 py-2 bg-white/5 text-[#FBF9F5] font-semibold rounded-lg hover:bg-white/10 transition-colors border border-white/10"
+            className="px-6 py-2 bg-bg-surface text-fg-primary font-semibold rounded-lg hover:bg-bg-elevated transition-colors border border-border-light/20"
           >
             View Sessions
           </button>
         </div>
 
-        <div className="pt-4 border-t border-white/10">
-          <div className="p-4 bg-red-500/10 rounded-xl border-2 border-red-500/30">
-            <h3 className="font-semibold text-red-400 mb-2">Danger Zone</h3>
-            <p className="text-sm text-[#E4DEEA] mb-4">
+        <div className="pt-4 border-t border-border-light/20">
+          <div className="p-4 bg-error/10 rounded-xl border-2 border-error/30">
+            <h3 className="font-semibold text-error mb-2">Danger Zone</h3>
+            <p className="text-sm text-fg-secondary mb-4">
               Once you delete your account, there is no going back. Please be certain.
             </p>
             <button
               type="button"
-              className="px-6 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
+              className="px-6 py-2 bg-error text-white font-semibold rounded-lg hover:opacity-90 transition-colors"
             >
               Delete Account
             </button>
           </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function LanguageSettings() {
-  return (
-    <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-[#A343EC]/20 rounded-lg flex items-center justify-center">
-          <Globe className="text-[#A343EC]" size={20} />
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold text-[#FBF9F5]">Language & Region</h2>
-          <p className="text-sm text-[#E4DEEA]">Select your preferred language</p>
-        </div>
-      </div>
-
-      <div className="space-y-6">
-        <div>
-          <label className="block text-sm font-semibold text-[#E4DEEA] mb-2">
-            Display Language
-          </label>
-          <select className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-[#FBF9F5] focus:border-[#A343EC] focus:outline-none focus:ring-2 focus:ring-[#A343EC] transition-all">
-            <option value="en">English</option>
-            <option value="bg">Български (Bulgarian)</option>
-            <option value="es">Español</option>
-            <option value="fr">Français</option>
-            <option value="de">Deutsch</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-semibold text-[#E4DEEA] mb-2">
-            Timezone
-          </label>
-          <select className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-[#FBF9F5] focus:border-[#A343EC] focus:outline-none focus:ring-2 focus:ring-[#A343EC] transition-all">
-            <option value="UTC">UTC</option>
-            <option value="Europe/Sofia">Europe/Sofia</option>
-            <option value="America/New_York">America/New York</option>
-            <option value="Europe/London">Europe/London</option>
-            <option value="Asia/Tokyo">Asia/Tokyo</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-semibold text-[#E4DEEA] mb-2">
-            Date Format
-          </label>
-          <select className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-[#FBF9F5] focus:border-[#A343EC] focus:outline-none focus:ring-2 focus:ring-[#A343EC] transition-all">
-            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-            <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-          </select>
-        </div>
-
-        <div className="pt-4 border-t border-white/10">
-          <button
-            type="submit"
-            className="px-8 py-3 bg-[#A343EC] text-white font-semibold rounded-xl hover:bg-[#8B35C7] transition-all"
-          >
-            Save Preferences
-          </button>
         </div>
       </div>
     </div>

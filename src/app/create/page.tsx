@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { auth } from "~/server/auth";
-import { UserDisplay } from "~/app/_components/userDisplay";
-import { SideNav } from "~/app/_components/sideNav";
-import { CreateNoteForm } from "~/app/_components/createNoteForm";
-import { CreateProjectContainer } from "~/app/_components/createProjectContainer";
-import { NotesList } from "~/app/_components/notesList";
-import { NotificationSystem } from "~/app/_components/notificationSystem";
-import { ProjectsListWorkspace } from "~/app/_components/projectsListWorkspace";
+import { UserDisplay } from "~/app/_components/UserDisplay";
+import { SideNav } from "~/app/_components/SideNav";
+import { CreateNoteForm } from "~/app/_components/CreateNoteForm";
+import { CreateProjectContainer } from "~/app/_components/CreateProjectContainer";
+import { NotesList } from "~/app/_components/NotesList";
+import { NotificationSystem } from "~/app/_components/NotificationSystem";
+import { ProjectsListWorkspace } from "~/app/_components/ProjectsListWorkspace";
 import { LogIn, ArrowRight, FolderKanban, FileEdit } from "lucide-react";
-import { ThemeToggle } from "~/app/_components/themeToggle";
+import { ThemeToggle } from "~/app/_components/ThemeToggle";
 
 export default async function CreatePage({ 
     searchParams 
@@ -25,7 +25,7 @@ export default async function CreatePage({
   // If the user is not logged in
   if (!session?.user) {
     return (
-      <main id="main-content" className="flex min-h-screen flex-col items-center justify-center bg-bg-primary font-faustina">
+      <main id="main-content" className="flex min-h-screen flex-col items-center justify-center bg-bg-primary">
         <div className="absolute top-8 right-8 z-10">
           <UserDisplay />
         </div>
@@ -57,7 +57,7 @@ export default async function CreatePage({
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary font-faustina"> 
+    <div className="min-h-screen bg-bg-primary"> 
       <SideNav />
 
       <div className="lg:ml-16 min-h-screen flex flex-col pt-16 lg:pt-0">

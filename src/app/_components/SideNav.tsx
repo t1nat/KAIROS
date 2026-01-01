@@ -3,6 +3,7 @@
 import { useEffect, useId, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { 
   Home, 
   FolderKanban, 
@@ -13,6 +14,8 @@ import {
 } from "lucide-react";
 
 export function SideNav() {
+  const t = useTranslations("nav");
+  const tCommon = useTranslations("common");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const mobileNavId = useId();
@@ -31,9 +34,9 @@ export function SideNav() {
   }, [isMobileMenuOpen]);
 
   const navItems = [
-    { href: "/", icon: Home, label: "Home" },
-    { href: "/create?action=new_project", icon: FolderKanban, label: "Projects" },
-    { href: "/create?action=new_note", icon: FileEdit, label: "Notes" },
+    { href: "/", icon: Home, label: t("home") },
+    { href: "/create?action=new_project", icon: FolderKanban, label: t("projects") },
+    { href: "/create?action=new_note", icon: FileEdit, label: t("notes") },
   ];
 
   return (
@@ -43,14 +46,15 @@ export function SideNav() {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center shadow-lg shadow-accent-primary/25">
             <span className="text-white font-bold text-sm">K</span>
           </div>
-          <h1 className="text-lg font-bold text-fg-primary font-faustina">KAIROS</h1>
+          <h1 className="text-lg font-bold text-fg-primary font-display tracking-tight">KAIROS</h1>
         </div>
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="p-2 hover:bg-bg-secondary/60 rounded-lg transition-colors"
-          aria-label="Toggle menu"
+          aria-label={isMobileMenuOpen ? tCommon("close") : "Menu"}
           aria-expanded={isMobileMenuOpen}
           aria-controls={mobileNavId}
+          title={isMobileMenuOpen ? tCommon("close") : "Menu"}
         >
           {isMobileMenuOpen ? (
             <X size={24} className="text-fg-primary" />
@@ -95,15 +99,16 @@ export function SideNav() {
               
               <div className="mt-6 pt-6 border-t border-white/10">
                 <p className="text-xs font-semibold text-fg-secondary uppercase tracking-wider mb-3 px-4">
-                  Quick Actions
+                  {t("quickActions")}
                 </p>
                 <Link
                   href="/create?action=new_project"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="flex items-center gap-3 px-4 py-3 rounded-xl text-accent-primary hover:bg-accent-primary/10 transition-colors border border-accent-primary/30 font-medium"
+                  title={t("newProject")}
                 >
                   <Plus size={20} />
-                  <span>New Project</span>
+                  <span>{t("newProject")}</span>
                 </Link>
               </div>
             </nav>

@@ -142,20 +142,20 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
   const joinedDate = getJoinedDate();
 
   return (
-    <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8">
+    <div className="bg-bg-secondary/40 backdrop-blur-sm rounded-2xl border border-border-light/20 p-8">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-[#A343EC]/20 rounded-lg flex items-center justify-center">
-          <User className="text-[#A343EC]" size={20} />
+        <div className="w-10 h-10 bg-accent-primary/15 rounded-lg flex items-center justify-center">
+          <User className="text-accent-primary" size={20} />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-[#FBF9F5]">Profile Settings</h2>
-          <p className="text-sm text-[#E4DEEA]">Manage your public profile information</p>
+          <h2 className="text-2xl font-bold text-fg-primary">Profile Settings</h2>
+          <p className="text-sm text-fg-secondary">Manage your public profile information</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-sm font-semibold text-[#E4DEEA] mb-4">
+          <label className="block text-sm font-semibold text-fg-secondary mb-4">
             Profile Picture
           </label>
           <div className="flex items-center gap-6">
@@ -166,11 +166,11 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
                   alt="Profile"
                   width={96}
                   height={96}
-                  className="w-24 h-24 rounded-full object-cover border-2 border-[#A343EC]/30"
+                  className="w-24 h-24 rounded-full object-cover border-2 border-accent-primary/30"
                 />
               ) : (
-                <div className="w-24 h-24 rounded-full bg-[#A343EC]/20 flex items-center justify-center border-2 border-[#A343EC]/30">
-                  <User className="text-[#A343EC]" size={40} />
+                <div className="w-24 h-24 rounded-full bg-accent-primary/15 flex items-center justify-center border-2 border-accent-primary/30">
+                  <User className="text-accent-primary" size={40} />
                 </div>
               )}
               <button
@@ -187,12 +187,12 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                className="flex items-center gap-2 px-6 py-2 bg-[#A343EC] text-white font-semibold rounded-lg hover:bg-[#8B35C7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-6 py-2 bg-accent-primary text-white font-semibold rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Upload size={18} />
                 {isUploading ? "Uploading..." : "Upload New Picture"}
               </button>
-              <p className="text-xs text-[#E4DEEA] mt-2">
+              <p className="text-xs text-fg-secondary mt-2">
                 JPG, PNG or GIF. Max size 5MB.
               </p>
             </div>
@@ -207,34 +207,34 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-[#E4DEEA] mb-2">
+          <label className="block text-sm font-semibold text-fg-secondary mb-2">
             Full Name
           </label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-[#FBF9F5] placeholder:text-[#59677C] focus:border-[#A343EC] focus:outline-none focus:ring-2 focus:ring-[#A343EC] transition-all"
+            className="w-full px-4 py-3 rounded-xl bg-bg-surface border border-border-light/20 text-fg-primary placeholder:text-fg-tertiary focus:border-accent-primary/60 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 transition-all"
             placeholder="Enter your full name"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-[#E4DEEA] mb-2">
+          <label className="block text-sm font-semibold text-fg-secondary mb-2">
             Email Address
           </label>
           <input
             type="email"
             value={user.email ?? ""}
             disabled
-            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-[#59677C] cursor-not-allowed"
+            className="w-full px-4 py-3 rounded-xl bg-bg-tertiary border border-border-light/20 text-fg-tertiary cursor-not-allowed"
             placeholder="your.email@example.com"
           />
-          <p className="text-xs text-[#59677C] mt-1">Email cannot be changed</p>
+          <p className="text-xs text-fg-tertiary mt-1">Email cannot be changed</p>
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-[#E4DEEA] mb-2">
+          <label className="block text-sm font-semibold text-fg-secondary mb-2">
             Bio
           </label>
           <textarea
@@ -242,28 +242,28 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             maxLength={1000}
-            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-[#FBF9F5] placeholder:text-[#59677C] focus:border-[#A343EC] focus:outline-none focus:ring-2 focus:ring-[#A343EC] transition-all resize-none"
+            className="w-full px-4 py-3 rounded-xl bg-bg-surface border border-border-light/20 text-fg-primary placeholder:text-fg-tertiary focus:border-accent-primary/60 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 transition-all resize-none"
             placeholder="Tell us about yourself..."
           />
-          <p className="text-xs text-[#E4DEEA]/70 mt-1">
+          <p className="text-xs text-fg-tertiary mt-1">
             {bio.length}/1000 characters
           </p>
         </div>
 
         {joinedDate && (
-          <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-            <h3 className="font-semibold text-[#FBF9F5] mb-2">Member Since</h3>
-            <p className="text-sm text-[#E4DEEA]">
+          <div className="p-4 bg-bg-surface rounded-xl border border-border-light/20">
+            <h3 className="font-semibold text-fg-primary mb-2">Member Since</h3>
+            <p className="text-sm text-fg-secondary">
               {joinedDate}
             </p>
           </div>
         )}
 
-        <div className="pt-4 border-t border-white/10">
+        <div className="pt-4 border-t border-border-light/20">
           <button
             type="submit"
             disabled={isSaving}
-            className="px-8 py-3 bg-gradient-to-r from-[#A343EC] to-[#9448F2] text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-[#A343EC]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-8 py-3 bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-accent-primary/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isSaving ? (
               <>
@@ -275,7 +275,7 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
             )}
           </button>
           {!isSaving && updateProfile.isSuccess && (
-            <p className="text-sm text-[#80C49B] mt-2 flex items-center gap-1">
+            <p className="text-sm text-success mt-2 flex items-center gap-1">
               ✓ Changes saved successfully
             </p>
           )}

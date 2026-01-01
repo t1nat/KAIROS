@@ -1,0 +1,108 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "create": "Crear",
+    "publish": "Publicar",
+    "settings": "Ajustes",
+    "projects": "Proyectos",
+    "notes": "Notas",
+    "quickActions": "Acciones rápidas",
+    "newProject": "Nuevo proyecto"
+  },
+  "home": {
+    "title": "KAIROS",
+    "subtitle": "Domina tu Tiempo, Moldea tu Futuro",
+    "description": "Tu compañero inteligente para la gestión de proyectos, planificación de eventos y organización personal. Transforma el caos en claridad.",
+    "getStarted": "Comenzar",
+    "learnMore": "Más información",
+    "signIn": "Iniciar sesión"
+  },
+  "settings": {
+    "title": "Ajustes",
+    "subtitle": "Gestiona tu cuenta y preferencias",
+    "profile": {
+      "title": "Configuración del perfil",
+      "subtitle": "Gestiona tu información personal",
+      "updateProfile": "Actualizar perfil",
+      "uploadImage": "Subir imagen",
+      "removeImage": "Eliminar imagen"
+    },
+    "notifications": {
+      "title": "Configuración de notificaciones",
+      "subtitle": "Elige qué notificaciones recibir",
+      "email": "Notificaciones por correo",
+      "emailDesc": "Recibe actualizaciones por correo sobre tu actividad",
+      "projects": "Actualizaciones de proyectos",
+      "projectsDesc": "Recibe notificaciones cuando se actualicen los proyectos",
+      "events": "Recordatorios de eventos",
+      "eventsDesc": "Recibe recordatorios en la aplicación sobre próximos eventos",
+      "tasks": "Recordatorios de tareas",
+      "tasksDesc": "Recibe notificaciones cuando las tareas venzan",
+      "marketing": "Correos de marketing",
+      "marketingDesc": "Recibe noticias y contenido promocional",
+      "save": "Guardar configuración de notificaciones"
+    },
+    "security": {
+      "title": "Configuración de seguridad",
+      "subtitle": "Gestiona tus preferencias de seguridad",
+      "password": "Contraseña",
+      "changePassword": "Cambiar contraseña",
+      "twoFactor": "Autenticación de dos factores",
+      "twoFactorDesc": "Agrega una capa adicional de seguridad a tu cuenta",
+      "enableTwoFactor": "Activar 2FA",
+      "sessions": "Sesiones activas",
+      "sessionsDesc": "Gestiona los dispositivos donde has iniciado sesión",
+      "viewSessions": "Ver sesiones",
+      "dangerZone": "Zona de peligro",
+      "dangerZoneDesc": "Una vez que elimines tu cuenta, no hay vuelta atrás. Por favor, ten certeza.",
+      "deleteAccount": "Eliminar cuenta"
+    },
+    "language": {
+      "title": "Idioma y región",
+      "subtitle": "Selecciona tu idioma preferido",
+      "displayLanguage": "Idioma de visualización",
+      "timezone": "Zona horaria",
+      "dateFormat": "Formato de fecha",
+      "save": "Guardar preferencias",
+      "applying": "Aplicando cambios de idioma..."
+    },
+    "appearance": {
+      "title": "Apariencia",
+      "subtitle": "Personaliza cómo se ve KAIROS"
+    },
+    "nav": {
+      "profile": "Perfil",
+      "notifications": "Notificaciones",
+      "security": "Seguridad",
+      "language": "Idioma",
+      "appearance": "Apariencia"
+    }
+  },
+  "create": {
+    "title": "Espacio de trabajo",
+    "subtitle": "Gestiona tus proyectos y notas"
+  },
+  "publish": {
+    "title": "Eventos",
+    "subtitle": "Gestiona y rastrea tus eventos"
+  },
+  "auth": {
+    "signIn": "Iniciar sesión",
+    "signOut": "Cerrar sesión",
+    "signInWith": "Iniciar sesión con {provider}",
+    "orContinueWith": "O continuar con",
+    "welcome": "Bienvenido a KAIROS",
+    "welcomeDesc": "Inicia sesión para empezar a organizar tus proyectos"
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "close": "Cerrar",
+    "loading": "Cargando...",
+    "search": "Buscar",
+    "lightMode": "Cambiar a modo claro",
+    "darkMode": "Cambiar a modo oscuro"
+  }
+}

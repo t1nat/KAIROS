@@ -1,0 +1,108 @@
+{
+  "nav": {
+    "home": "Startseite",
+    "create": "Erstellen",
+    "publish": "Veröffentlichen",
+    "settings": "Einstellungen",
+    "projects": "Projekte",
+    "notes": "Notizen",
+    "quickActions": "Schnellaktionen",
+    "newProject": "Neues Projekt"
+  },
+  "home": {
+    "title": "KAIROS",
+    "subtitle": "Beherrsche deine Zeit, gestalte deine Zukunft",
+    "description": "Ihr intelligenter Begleiter für Projektmanagement, Veranstaltungsplanung und persönliche Organisation. Verwandeln Sie Chaos in Klarheit.",
+    "getStarted": "Loslegen",
+    "learnMore": "Mehr erfahren",
+    "signIn": "Anmelden"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "subtitle": "Verwalten Sie Ihr Konto und Ihre Einstellungen",
+    "profile": {
+      "title": "Profileinstellungen",
+      "subtitle": "Verwalten Sie Ihre persönlichen Informationen",
+      "updateProfile": "Profil aktualisieren",
+      "uploadImage": "Bild hochladen",
+      "removeImage": "Bild entfernen"
+    },
+    "notifications": {
+      "title": "Benachrichtigungseinstellungen",
+      "subtitle": "Wählen Sie, welche Benachrichtigungen Sie erhalten",
+      "email": "E-Mail-Benachrichtigungen",
+      "emailDesc": "Erhalten Sie E-Mail-Updates über Ihre Aktivitäten",
+      "projects": "Projekt-Updates",
+      "projectsDesc": "Werden Sie benachrichtigt, wenn Projekte aktualisiert werden",
+      "events": "Ereigniserinnerungen",
+      "eventsDesc": "Erhalten Sie In-App-Erinnerungen für bevorstehende Ereignisse",
+      "tasks": "Aufgabenerinnerungen",
+      "tasksDesc": "Werden Sie benachrichtigt, wenn Aufgaben fällig sind",
+      "marketing": "Marketing-E-Mails",
+      "marketingDesc": "Erhalten Sie Neuigkeiten und Werbeinhalte",
+      "save": "Benachrichtigungseinstellungen speichern"
+    },
+    "security": {
+      "title": "Sicherheitseinstellungen",
+      "subtitle": "Verwalten Sie Ihre Sicherheitseinstellungen",
+      "password": "Passwort",
+      "changePassword": "Passwort ändern",
+      "twoFactor": "Zwei-Faktor-Authentifizierung",
+      "twoFactorDesc": "Fügen Sie eine zusätzliche Sicherheitsebene zu Ihrem Konto hinzu",
+      "enableTwoFactor": "2FA aktivieren",
+      "sessions": "Aktive Sitzungen",
+      "sessionsDesc": "Verwalten Sie Geräte, auf denen Sie angemeldet sind",
+      "viewSessions": "Sitzungen anzeigen",
+      "dangerZone": "Gefahrenzone",
+      "dangerZoneDesc": "Sobald Sie Ihr Konto löschen, gibt es kein Zurück mehr. Bitte seien Sie sicher.",
+      "deleteAccount": "Konto löschen"
+    },
+    "language": {
+      "title": "Sprache und Region",
+      "subtitle": "Wählen Sie Ihre bevorzugte Sprache",
+      "displayLanguage": "Anzeigesprache",
+      "timezone": "Zeitzone",
+      "dateFormat": "Datumsformat",
+      "save": "Einstellungen speichern",
+      "applying": "Sprachänderungen werden angewendet..."
+    },
+    "appearance": {
+      "title": "Erscheinungsbild",
+      "subtitle": "Passen Sie das Aussehen von KAIROS an"
+    },
+    "nav": {
+      "profile": "Profil",
+      "notifications": "Benachrichtigungen",
+      "security": "Sicherheit",
+      "language": "Sprache",
+      "appearance": "Erscheinungsbild"
+    }
+  },
+  "create": {
+    "title": "Arbeitsbereich",
+    "subtitle": "Verwalten Sie Ihre Projekte und Notizen"
+  },
+  "publish": {
+    "title": "Ereignisse",
+    "subtitle": "Verwalten und verfolgen Sie Ihre Ereignisse"
+  },
+  "auth": {
+    "signIn": "Anmelden",
+    "signOut": "Abmelden",
+    "signInWith": "Anmelden mit {provider}",
+    "orContinueWith": "Oder fortfahren mit",
+    "welcome": "Willkommen bei KAIROS",
+    "welcomeDesc": "Melden Sie sich an, um Ihre Projekte zu organisieren"
+  },
+  "common": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "close": "Schließen",
+    "loading": "Laden...",
+    "search": "Suchen",
+    "lightMode": "Zum hellen Modus wechseln",
+    "darkMode": "Zum dunklen Modus wechseln"
+  }
+}
