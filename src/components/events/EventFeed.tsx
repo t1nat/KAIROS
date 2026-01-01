@@ -18,6 +18,7 @@ import {
   BarChart3,
   Users,
   TrendingUp,
+  Trash2,
 } from "lucide-react";
 import { api } from "~/trpc/react";
 import Image from "next/image";
@@ -330,6 +331,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
   const [showAllComments, setShowAllComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [showDashboard, setShowDashboard] = useState(false);
+  const [deleteEventArmed, setDeleteEventArmed] = useState(false);
   const [infoMessage, setInfoMessage] = useState<{
     message: string;
     type: "error" | "info";
@@ -348,6 +350,40 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
       setInfoMessage({ message: error.message, type: "error" });
     },
   });
+
+  const deleteEvent = api.event.deleteEvent.useMutation({
+    onMutate: async () => {
+      await utils.event.getPublicEvents.cancel();
+      const previousEvents = utils.event.getPublicEvents.getData();
+
+      utils.event.getPublicEvents.setData(undefined, (old) => {
+        if (!old) return old;
+        return old.filter((e) => e.id !== event.id);
+      });
+
+      return { previousEvents };
+    },
+    onError: (error, _variables, context) => {
+      if (context?.previousEvents) {
+        utils.event.getPublicEvents.setData(undefined, context.previousEvents);
+      }
+      setInfoMessage({ message: error.message, type: "error" });
+    },
+    onSuccess: () => {
+      setShowDashboard(false);
+      setDeleteEventArmed(false);
+      setInfoMessage({ message: "Event deleted", type: "info" });
+    },
+    onSettled: () => {
+      void utils.event.getPublicEvents.invalidate();
+    },
+  });
+
+  useEffect(() => {
+    if (!deleteEventArmed) return;
+    const tId = setTimeout(() => setDeleteEventArmed(false), 4000);
+    return () => clearTimeout(tId);
+  }, [deleteEventArmed]);
 
   const handleLike = () => {
     if (!session) {
@@ -377,6 +413,23 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
       eventId: event.id,
       text: commentText.trim(),
     });
+  };
+
+  const handleDeleteEvent = () => {
+    if (!session) {
+      setInfoMessage({ message: "Please sign in to delete events", type: "error" });
+      return;
+    }
+
+    if (!event.isOwner) return;
+
+    if (!deleteEventArmed) {
+      setDeleteEventArmed(true);
+      setInfoMessage({ message: "Click again to delete event", type: "info" });
+      return;
+    }
+
+    deleteEvent.mutate({ eventId: event.id });
   };
 
   const formatDate = (date: Date) => {
@@ -433,9 +486,25 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="text-xl sm:text-2xl font-bold text-fg-primary mb-2 break-words">
-                {event.title}
-              </h2>
+              <div className="flex items-start justify-between gap-3">
+                <h2 className="text-xl sm:text-2xl font-bold text-fg-primary mb-2 break-words flex-1 min-w-0">
+                  {event.title}
+                </h2>
+                {event.isOwner && (
+                  <button
+                    onClick={handleDeleteEvent}
+                    disabled={deleteEvent.isPending}
+                    className={`p-2 rounded-lg transition-all border ${
+                      deleteEventArmed
+                        ? "bg-error/10 border-error/30 text-error"
+                        : "text-fg-secondary border-transparent hover:text-error hover:bg-bg-secondary"
+                    }`}
+                    aria-label={deleteEventArmed ? "Confirm delete event" : "Delete event"}
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                )}
+              </div>
               <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-fg-secondary">
                 <div className="flex items-center gap-1.5 sm:gap-2">
                   <User size={14} className="sm:w-4 sm:h-4" />

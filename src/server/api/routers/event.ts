@@ -36,6 +36,10 @@ const updateRsvpSchema = z.object({
   status: z.enum(["going", "maybe", "not_going"]),
 });
 
+const deleteEventSchema = z.object({
+  eventId: z.number(),
+});
+
 const sendRemindersSchema = z.void();
 
 export const eventRouter = createTRPCRouter({
@@ -269,6 +273,28 @@ export const eventRouter = createTRPCRouter({
       }
 
       return { success: true, status: input.status };
+    }),
+
+  deleteEvent: protectedProcedure
+    .input(deleteEventSchema)
+    .mutation(async ({ ctx, input }) => {
+      const [event] = await ctx.db
+        .select({ id: events.id, createdById: events.createdById })
+        .from(events)
+        .where(eq(events.id, input.eventId))
+        .limit(1);
+
+      if (!event) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Event not found." });
+      }
+
+      if (event.createdById !== ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You don't own this event." });
+      }
+
+      await ctx.db.delete(events).where(eq(events.id, input.eventId));
+
+      return { success: true };
     }),
     
   sendEventReminders: protectedProcedure

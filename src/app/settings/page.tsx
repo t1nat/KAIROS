@@ -47,7 +47,7 @@ export default async function SettingsPage({
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <UserDisplay user={session.user} />
+              <UserDisplay />
             </div>
           </div>
         </header>

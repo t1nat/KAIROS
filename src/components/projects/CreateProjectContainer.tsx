@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { api } from "~/trpc/react";
 import { CreateProjectForm, CreateTaskForm, CollaboratorManager } from "./ProjectManagement";
 import { InteractiveTimeline } from "./InteractiveTimeline";
-import { ChevronDown, ChevronUp, RefreshCw, CheckCircle2, ArrowLeft, Folder } from "lucide-react";
+import { ChevronDown, ChevronUp, RefreshCw, CheckCircle2, ArrowLeft, Folder, Trash2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useToast } from "~/components/providers/ToastProvider";
@@ -76,6 +76,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [showCollaborators, setShowCollaborators] = useState(false);
   const [showOtherProjects, setShowOtherProjects] = useState(false);
+  const [deleteProjectArmed, setDeleteProjectArmed] = useState(false);
 
   const utils = api.useUtils();
 
@@ -100,6 +101,12 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
     }
   }, [projectIdFromUrl]);
 
+  useEffect(() => {
+    if (!deleteProjectArmed) return;
+    const tId = setTimeout(() => setDeleteProjectArmed(false), 4000);
+    return () => clearTimeout(tId);
+  }, [deleteProjectArmed]);
+
   const createProject = api.project.create.useMutation({
     onSuccess: (data) => {
       void utils.project.getMyProjects.invalidate();
@@ -111,6 +118,8 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
   const createTask = api.task.create.useMutation({
     onSuccess: () => {
       void utils.project.getById.invalidate({ id: selectedProjectId! });
+      void utils.project.getMyProjects.invalidate();
+      void utils.task.getOrgActivity.invalidate();
       setShowTaskForm(false);
     },
     onError: (error) => toast.error(t("errors.generic", { message: error.message })),
@@ -139,6 +148,8 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
     onSuccess: () => {
       setTimeout(() => {
         void utils.project.getById.invalidate({ id: selectedProjectId! });
+        void utils.project.getMyProjects.invalidate();
+        void utils.task.getOrgActivity.invalidate();
       }, 100);
     },
     onError: (error, _, ctx) => {
@@ -162,6 +173,16 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
   const updateCollaboratorPermission = api.project.updateCollaboratorPermission.useMutation({
     onSuccess: () => void utils.project.getById.invalidate({ id: selectedProjectId! }),
     onError: (e) => toast.error(t("errors.generic", { message: e.message })),
+  });
+
+  const deleteProject = api.project.delete.useMutation({
+    onSuccess: () => {
+      setDeleteProjectArmed(false);
+      setSelectedProjectId(null);
+      void utils.project.getMyProjects.invalidate();
+      toast.success("Project deleted");
+    },
+    onError: (error) => toast.error(t("errors.generic", { message: error.message })),
   });
 
   const handleCreateProject = async (data: CreateProjectInput) => createProject.mutate(data);
@@ -190,6 +211,18 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
     if (selectedProjectId) {
       updateCollaboratorPermission.mutate({ projectId: selectedProjectId, collaboratorId: id, permission: perm });
     }
+  };
+
+  const handleDeleteProject = () => {
+    if (!selectedProjectId) return;
+
+    if (!deleteProjectArmed) {
+      setDeleteProjectArmed(true);
+      toast.info("Click again to delete project");
+      return;
+    }
+
+    deleteProject.mutate({ id: selectedProjectId });
   };
 
   const isOwner = projectDetails?.createdById === userId;
@@ -237,13 +270,30 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                   <ArrowLeft size={20} className="text-fg-secondary group-hover:text-accent-primary" />
                 </button>
 
-                <button
-                  onClick={() => void refetchProjectDetails()}
-                  className="p-2 text-fg-secondary hover:text-accent-primary hover:bg-bg-elevated rounded-lg transition-all"
-                  aria-label={t("actions.refresh")}
-                >
-                  <RefreshCw size={18} />
-                </button>
+                <div className="flex items-center gap-2">
+                  {isOwner && (
+                    <button
+                      onClick={handleDeleteProject}
+                      disabled={deleteProject.isPending}
+                      className={`p-2 rounded-lg transition-all border ${
+                        deleteProjectArmed
+                          ? "bg-error/10 border-error/30 text-error"
+                          : "text-fg-secondary border-transparent hover:text-error hover:bg-bg-elevated"
+                      }`}
+                      aria-label={deleteProjectArmed ? "Confirm delete project" : "Delete project"}
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => void refetchProjectDetails()}
+                    className="p-2 text-fg-secondary hover:text-accent-primary hover:bg-bg-elevated rounded-lg transition-all"
+                    aria-label={t("actions.refresh")}
+                  >
+                    <RefreshCw size={18} />
+                  </button>
+                </div>
               </div>
 
               <div className="flex items-start gap-3 mb-3">

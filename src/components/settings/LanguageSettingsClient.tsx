@@ -76,7 +76,7 @@ export function LanguageSettingsClient() {
     setDirty(false);
   }, [initialTimezone, initialDateFormat]);
 
-  const currentLanguage = languages.find((lang) => lang.code === locale) ?? languages[0];
+  const currentLanguage = (languages.find((lang) => lang.code === locale) ?? languages[0])!;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

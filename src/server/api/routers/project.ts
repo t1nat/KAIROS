@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { projects, tasks, projectCollaborators, users, organizationMembers, notifications } from "~/server/db/schema";
-import { eq, and, desc, isNull, sql } from "drizzle-orm";
+import { eq, and, desc, inArray, isNull, sql } from "drizzle-orm";
 
 export const projectRouter = createTRPCRouter({
   
@@ -133,6 +133,20 @@ export const projectRouter = createTRPCRouter({
     }
 
     
+    const createdByIds = Array.from(new Set(projectsList.map((p) => p.createdById)));
+    const createdByUsers = createdByIds.length
+      ? await ctx.db
+          .select({
+            id: users.id,
+            name: users.name,
+            email: users.email,
+            image: users.image,
+          })
+          .from(users)
+          .where(inArray(users.id, createdByIds))
+      : [];
+    const createdByUserMap = new Map(createdByUsers.map((u) => [u.id, u] as const));
+
     const projectsWithTasks = await Promise.all(
       projectsList.map(async (project) => {
         const projectTasks = await ctx.db
@@ -145,6 +159,7 @@ export const projectRouter = createTRPCRouter({
 
         return {
           ...project,
+          createdByUser: createdByUserMap.get(project.createdById) ?? null,
           tasks: projectTasks,
         };
       })
@@ -501,6 +516,27 @@ export const projectRouter = createTRPCRouter({
             eq(projectCollaborators.collaboratorId, input.collaboratorId)
           )
         );
+
+      return { success: true };
+    }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const [project] = await ctx.db
+        .select()
+        .from(projects)
+        .where(eq(projects.id, input.id));
+
+      if (!project) {
+        throw new Error("Project not found");
+      }
+
+      if (project.createdById !== ctx.session.user.id) {
+        throw new Error("Only the project owner can delete this project");
+      }
+
+      await ctx.db.delete(projects).where(eq(projects.id, input.id));
 
       return { success: true };
     }),

@@ -8,6 +8,7 @@ import {
   Home, 
   FolderKanban, 
   FileEdit, 
+  BarChart3,
   Menu,
   X,
   Plus
@@ -37,6 +38,7 @@ export function SideNav() {
     { href: "/", icon: Home, label: t("home") },
     { href: "/create?action=new_project", icon: FolderKanban, label: t("projects") },
     { href: "/create?action=new_note", icon: FileEdit, label: t("notes") },
+    { href: "/progress", icon: BarChart3, label: t("progress") },
   ];
 
   return (
