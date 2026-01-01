@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useTransition, useRef, useEffect } from "react";
-import { Globe, Check, ChevronDown } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { Check, ChevronDown, Globe } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { api } from "~/trpc/react";
 
 const languages = [
   { code: "en", name: "English", flag: "🇬🇧" },
@@ -19,7 +20,29 @@ export function LanguageSettingsClient() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const currentLanguage = languages.find(lang => lang.code === locale) ?? languages[0];
+  const { data, isLoading } = api.settings.get.useQuery();
+  const utils = api.useUtils();
+
+  const updateLanguageRegion = api.settings.updateLanguageRegion.useMutation({
+    onSuccess: async () => {
+      await utils.settings.get.invalidate();
+    },
+  });
+
+  const initialTimezone = data?.timezone ?? "UTC";
+  const initialDateFormat = data?.dateFormat ?? "MM/DD/YYYY";
+
+  const [timezone, setTimezone] = useState<string>(initialTimezone);
+  const [dateFormat, setDateFormat] = useState<string>(initialDateFormat);
+  const [dirty, setDirty] = useState(false);
+
+  useEffect(() => {
+    setTimezone(initialTimezone);
+    setDateFormat(initialDateFormat);
+    setDirty(false);
+  }, [initialTimezone, initialDateFormat]);
+
+  const currentLanguage = languages.find((lang) => lang.code === locale) ?? languages[0];
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -32,14 +55,32 @@ export function LanguageSettingsClient() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const isBusy = isLoading || isPending || updateLanguageRegion.isPending;
+
   const handleLanguageChange = (newLocale: string) => {
     setIsOpen(false);
-    
+
     startTransition(async () => {
-      document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
-      window.location.reload();
+      try {
+        await updateLanguageRegion.mutateAsync({ language: newLocale as never });
+      } finally {
+        document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
+        window.location.reload();
+      }
     });
   };
+
+  const saveRegion = async () => {
+    await updateLanguageRegion.mutateAsync({
+      timezone,
+      dateFormat: dateFormat as never,
+    });
+    setDirty(false);
+  };
+
+  const languageMenuLabel = useMemo(() => {
+    return isOpen ? t("collapse") : t("expand");
+  }, [isOpen, t]);
 
   return (
     <div className="bg-bg-secondary/40 backdrop-blur-sm rounded-2xl border border-border-light/20 p-8">
@@ -58,11 +99,13 @@ export function LanguageSettingsClient() {
           <label className="block text-sm font-semibold text-fg-secondary mb-2">
             {t("displayLanguage")}
           </label>
-          <div className="relative" ref={dropdownRef}>
+          <div ref={dropdownRef}>
             <button
               type="button"
-              onClick={() => setIsOpen(!isOpen)}
-              disabled={isPending}
+              onClick={() => setIsOpen((v) => !v)}
+              disabled={isBusy}
+              aria-expanded={isOpen}
+              aria-label={languageMenuLabel}
               className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-bg-surface border border-border-light/20 text-fg-primary hover:border-accent-primary/40 focus:border-accent-primary/60 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
               <div className="flex items-center gap-2">
@@ -70,19 +113,20 @@ export function LanguageSettingsClient() {
                 <span className="font-medium">{currentLanguage?.name}</span>
               </div>
               <ChevronDown 
-                className={`text-fg-secondary transition-transform ${isOpen ? 'rotate-180' : ''}`} 
+                className={`text-fg-secondary transition-transform ${isOpen ? "rotate-180" : ""}`} 
                 size={16} 
               />
             </button>
 
             {isOpen && (
-              <div className="absolute z-50 w-full mt-1 bg-bg-elevated border border-border-light/20 rounded-lg shadow-2xl overflow-hidden">
+              <div className="mt-2 w-full bg-bg-elevated border border-border-light/20 rounded-lg overflow-hidden">
                 {languages.map((language) => (
                   <button
                     key={language.code}
                     type="button"
                     onClick={() => handleLanguageChange(language.code)}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${
+                    disabled={isBusy}
+                    className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                       locale === language.code
                         ? "bg-accent-primary/10 text-fg-primary"
                         : "text-fg-primary hover:bg-bg-secondary/60"
@@ -110,6 +154,12 @@ export function LanguageSettingsClient() {
             id="timezone-select"
             className="w-full px-3 py-2 rounded-lg bg-bg-surface border border-border-light/20 text-fg-primary text-sm focus:border-accent-primary/60 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 transition-all"
             title={t("timezone")}
+            value={timezone}
+            onChange={(e) => {
+              setTimezone(e.target.value);
+              setDirty(true);
+            }}
+            disabled={isBusy}
           >
             <option value="UTC">UTC</option>
             <option value="Europe/Sofia">Europe/Sofia (Bulgaria)</option>
@@ -128,11 +178,31 @@ export function LanguageSettingsClient() {
             id="date-format-select"
             className="w-full px-3 py-2 rounded-lg bg-bg-surface border border-border-light/20 text-fg-primary text-sm focus:border-accent-primary/60 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 transition-all"
             title={t("dateFormat")}
+            value={dateFormat}
+            onChange={(e) => {
+              setDateFormat(e.target.value);
+              setDirty(true);
+            }}
+            disabled={isBusy}
           >
             <option value="MM/DD/YYYY">MM/DD/YYYY</option>
             <option value="DD/MM/YYYY">DD/MM/YYYY</option>
             <option value="YYYY-MM-DD">YYYY-MM-DD</option>
           </select>
+        </div>
+
+        <div className="pt-2 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={saveRegion}
+            disabled={isBusy || !dirty}
+            className="px-8 py-3 bg-accent-primary text-white font-semibold rounded-xl hover:bg-accent-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {t("save")}
+          </button>
+          {updateLanguageRegion.error ? (
+            <p className="text-sm text-error">{updateLanguageRegion.error.message}</p>
+          ) : null}
         </div>
 
         {isPending && (

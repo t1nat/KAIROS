@@ -7,12 +7,17 @@
     "projects": "Projekte",
     "notes": "Notizen",
     "quickActions": "Schnellaktionen",
+      "disableTwoFactor": "2FA deaktivieren",
+      "session": "Sitzung",
+      "sessionDesc": "Melden Sie sich von Ihrer aktuellen Sitzung ab",
+      "signOut": "Abmelden",
     "newProject": "Neues Projekt"
   },
   "home": {
     "title": "KAIROS",
     "subtitle": "Beherrsche deine Zeit, gestalte deine Zukunft",
-    "description": "Ihr intelligenter Begleiter für Projektmanagement, Veranstaltungsplanung und persönliche Organisation. Verwandeln Sie Chaos in Klarheit.",
+      "deleteAccount": "Konto löschen",
+      "deleteConfirm": "Dadurch werden Ihr Konto und Ihre Daten dauerhaft gelöscht. Fortfahren?",
     "getStarted": "Loslegen",
     "learnMore": "Mehr erfahren",
     "signIn": "Anmelden"
@@ -21,6 +26,8 @@
     "title": "Einstellungen",
     "subtitle": "Verwalten Sie Ihr Konto und Ihre Einstellungen",
     "profile": {
+      "expand": "Sprachliste erweitern",
+      "collapse": "Sprachliste reduzieren",
       "title": "Profileinstellungen",
       "subtitle": "Verwalten Sie Ihre persönlichen Informationen",
       "updateProfile": "Profil aktualisieren",

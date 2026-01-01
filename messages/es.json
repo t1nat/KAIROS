@@ -45,17 +45,17 @@
     "security": {
       "title": "Configuración de seguridad",
       "subtitle": "Gestiona tus preferencias de seguridad",
-      "password": "Contraseña",
-      "changePassword": "Cambiar contraseña",
       "twoFactor": "Autenticación de dos factores",
       "twoFactorDesc": "Agrega una capa adicional de seguridad a tu cuenta",
       "enableTwoFactor": "Activar 2FA",
-      "sessions": "Sesiones activas",
-      "sessionsDesc": "Gestiona los dispositivos donde has iniciado sesión",
-      "viewSessions": "Ver sesiones",
+      "disableTwoFactor": "Desactivar 2FA",
+      "session": "Sesión",
+      "sessionDesc": "Cierra tu sesión actual",
+      "signOut": "Cerrar sesión",
       "dangerZone": "Zona de peligro",
       "dangerZoneDesc": "Una vez que elimines tu cuenta, no hay vuelta atrás. Por favor, ten certeza.",
-      "deleteAccount": "Eliminar cuenta"
+      "deleteAccount": "Eliminar cuenta",
+      "deleteConfirm": "Esto eliminará permanentemente tu cuenta y tus datos. ¿Continuar?"
     },
     "language": {
       "title": "Idioma y región",
@@ -64,6 +64,8 @@
       "timezone": "Zona horaria",
       "dateFormat": "Formato de fecha",
       "save": "Guardar preferencias",
+      "expand": "Expandir lista de idiomas",
+      "collapse": "Contraer lista de idiomas",
       "applying": "Aplicando cambios de idioma..."
     },
     "appearance": {

@@ -21,6 +21,7 @@ export const settingsRouter = createTRPCRouter({
           emailNotifications: true,
           projectUpdatesNotifications: true,
           eventRemindersNotifications: true,
+          taskDueRemindersNotifications: true,
           marketingEmailsNotifications: true,
         
           language: true,
@@ -72,6 +73,7 @@ export const settingsRouter = createTRPCRouter({
       emailNotifications: z.boolean().optional(),
       projectUpdatesNotifications: z.boolean().optional(),
       eventRemindersNotifications: z.boolean().optional(),
+      taskDueRemindersNotifications: z.boolean().optional(),
       marketingEmailsNotifications: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -88,9 +90,24 @@ export const settingsRouter = createTRPCRouter({
  
   updateLanguageRegion: protectedProcedure
     .input(z.object({
-      language: z.enum(["en", "es", "fr", "de", "it", "pt", "ja", "ko", "zh", "ar"]).optional(),
+      language: z.enum(["en", "bg", "es", "fr", "de", "it", "pt", "ja", "ko", "zh", "ar"]).optional(),
       timezone: z.string().optional(),
       dateFormat: z.enum(["MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"]).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.update(users)
+        .set({
+          ...input,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, ctx.session.user.id));
+
+      return { success: true };
+    }),
+
+  updateSecurity: protectedProcedure
+    .input(z.object({
+      twoFactorEnabled: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db.update(users)
@@ -127,6 +144,7 @@ export const settingsRouter = createTRPCRouter({
       showOnlineStatus: z.boolean().optional(),
       activityTracking: z.boolean().optional(),
       dataCollection: z.boolean().optional(),
+      twoFactorEnabled: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db.update(users)

@@ -45,17 +45,17 @@
     "security": {
       "title": "Security Settings",
       "subtitle": "Manage your security preferences",
-      "password": "Password",
-      "changePassword": "Change Password",
       "twoFactor": "Two-Factor Authentication",
       "twoFactorDesc": "Add an extra layer of security to your account",
       "enableTwoFactor": "Enable 2FA",
-      "sessions": "Active Sessions",
-      "sessionsDesc": "Manage devices where you're currently logged in",
-      "viewSessions": "View Sessions",
+      "disableTwoFactor": "Disable 2FA",
+      "session": "Session",
+      "sessionDesc": "Sign out from your current session",
+      "signOut": "Sign Out",
       "dangerZone": "Danger Zone",
       "dangerZoneDesc": "Once you delete your account, there is no going back. Please be certain.",
-      "deleteAccount": "Delete Account"
+      "deleteAccount": "Delete Account",
+      "deleteConfirm": "This will permanently delete your account and data. Continue?"
     },
     "language": {
       "title": "Language & Region",
@@ -64,6 +64,8 @@
       "timezone": "Timezone",
       "dateFormat": "Date Format",
       "save": "Save Preferences",
+      "expand": "Expand language list",
+      "collapse": "Collapse language list",
       "applying": "Applying language changes..."
     },
     "appearance": {

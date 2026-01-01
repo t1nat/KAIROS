@@ -24,7 +24,7 @@ export const taskPriorityEnum = pgEnum("task_priority", ['low', 'medium', 'high'
 export const usageModeEnum = pgEnum("usage_mode", ["personal", "organization"]);
 export const orgRoleEnum = pgEnum("org_role", ["admin", "worker"]);
 export const themeEnum = pgEnum("theme", ["light", "dark", "system"]);
-export const languageEnum = pgEnum("language", ["en", "es", "fr", "de", "it", "pt", "ja", "ko", "zh", "ar"]);
+export const languageEnum = pgEnum("language", ["en", "bg", "es", "fr", "de", "it", "pt", "ja", "ko", "zh", "ar"]);
 export const dateFormatEnum = pgEnum("date_format", ["MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"]);
 export const notificationTypeEnum = pgEnum("notification_type", ["event", "task", "project", "system"]);
 export const rsvpStatusEnum = pgEnum("rsvp_status", ["going", "maybe", "not_going"]);
@@ -67,6 +67,7 @@ export const users = createTable("user", (d) => ({
     emailNotifications: boolean("email_notifications").default(true).notNull(),
     projectUpdatesNotifications: boolean("project_updates_notifications").default(true).notNull(),
     eventRemindersNotifications: boolean("event_reminders_notifications").default(false).notNull(),
+    taskDueRemindersNotifications: boolean("task_due_reminders_notifications").default(true).notNull(),
     marketingEmailsNotifications: boolean("marketing_emails_notifications").default(false).notNull(),
     
     language: languageEnum("language").default("en").notNull(),
@@ -100,9 +101,10 @@ export type UserSettings = {
   emailNotifications: boolean;
   projectUpdatesNotifications: boolean;
   eventRemindersNotifications: boolean;
+  taskDueRemindersNotifications: boolean;
   marketingEmailsNotifications: boolean;
   
-  language: "en" | "es" | "fr" | "de" | "it" | "pt" | "ja" | "ko" | "zh" | "ar";
+  language: "en" | "bg" | "es" | "fr" | "de" | "it" | "pt" | "ja" | "ko" | "zh" | "ar";
   timezone: string;
   dateFormat: "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD";
   
