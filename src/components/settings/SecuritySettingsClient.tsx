@@ -5,7 +5,7 @@ import { Shield } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { api } from "~/trpc/react";
-import { useToast } from "~/components/ToastProvider";
+import { useToast } from "~/components/providers/ToastProvider";
 
 type Translator = (key: string, values?: Record<string, unknown>) => string;
 

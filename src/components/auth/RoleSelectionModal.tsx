@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { api } from "~/trpc/react";
 import { ChevronRight } from "lucide-react";
-import { useToast } from "~/components/ToastProvider";
+import { useToast } from "~/components/providers/ToastProvider";
 
 interface RoleSelectionModalProps {
   isOpen: boolean;

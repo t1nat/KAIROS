@@ -7,8 +7,11 @@ import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 
+type Translator = (key: string, values?: Record<string, unknown>) => string;
+
 export function UserDisplay() {
-  const tSettings = useTranslations("settings");
+  const useT = useTranslations as unknown as (namespace: string) => Translator;
+  const tSettings = useT("settings");
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 

@@ -1,10 +1,10 @@
-import { EventFeed } from "~/components/EventFeed";
-import { CreateEventForm } from "~/components/CreateEventForm";
-import { SideNav } from "~/components/SideNav";
-import { UserDisplay } from "~/components/UserDisplay";
+import { EventFeed } from "~/components/events/EventFeed";
+import { CreateEventForm } from "~/components/events/CreateEventForm";
+import { SideNav } from "~/components/layout/SideNav";
+import { UserDisplay } from "~/components/layout/UserDisplay";
 import { Calendar } from "lucide-react";
-import { EventReminderService } from "~/components/EventReminderService";
-import { ThemeToggle } from "~/components/ThemeToggle";
+import { EventReminderService } from "~/components/events/EventReminderService";
+import { ThemeToggle } from "~/components/providers/ThemeToggle";
 
 export default function PublishPage() {
     return (

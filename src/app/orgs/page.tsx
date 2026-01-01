@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "~/server/auth";
-import { OrgDashboardClient } from "~/components/OrgDashboardClient";
+import { OrgDashboardClient } from "~/components/orgs/OrgDashboardClient";
 
 export default async function OrgsPage() {
   const session = await auth();

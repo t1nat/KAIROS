@@ -5,7 +5,7 @@ import { Trash2, FolderPlus, CheckCircle2, Plus, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { api } from "~/trpc/react";
 import { useTranslations } from "next-intl";
-import { useToast } from "~/components/ToastProvider";
+import { useToast } from "~/components/providers/ToastProvider";
 
 type Translator = (key: string, values?: Record<string, unknown>) => string;
 

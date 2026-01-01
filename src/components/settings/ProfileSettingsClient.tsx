@@ -5,7 +5,7 @@ import { User, Loader2, Upload, Camera } from "lucide-react";
 import { api } from "~/trpc/react";
 import Image from "next/image";
 import { useUploadThing } from "~/lib/uploadthing";
-import { useToast } from "~/components/ToastProvider";
+import { useToast } from "~/components/providers/ToastProvider";
 
 interface ProfileSettingsClientProps {
   user: {

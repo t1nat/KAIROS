@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 import { useUploadThing } from '~/lib/uploadthing';
 import Image from 'next/image';
 import { Plus, X, CalendarCheck, ImagePlus, Loader2, MapPin } from 'lucide-react';
-import { useToast } from "~/components/ToastProvider";
+import { useToast } from "~/components/providers/ToastProvider";
 
 const REGIONS = [
   { value: 'sofia', label: 'Sofia' },

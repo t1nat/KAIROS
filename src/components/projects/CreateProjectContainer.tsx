@@ -7,7 +7,7 @@ import { InteractiveTimeline } from "./InteractiveTimeline";
 import { ChevronDown, ChevronUp, RefreshCw, CheckCircle2, ArrowLeft, Folder } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useToast } from "~/components/ToastProvider";
+import { useToast } from "~/components/providers/ToastProvider";
 
 type Translator = (key: string, values?: Record<string, unknown>) => string;
 

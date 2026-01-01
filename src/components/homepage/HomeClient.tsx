@@ -3,11 +3,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
-import { UserDisplay } from "~/components/UserDisplay";
-import { SignInModal } from "~/components/SignInModal";
-import { RoleSelectionModal } from "~/components/RoleSelectionModal";
-import { ThemeToggle } from "~/components/ThemeToggle";
-import MagicBento from "~/components/MagicBento";
+import { useTheme } from "next-themes";
+import { UserDisplay } from "~/components/layout/UserDisplay";
+import { SignInModal } from "~/components/auth/SignInModal";
+import { RoleSelectionModal } from "~/components/auth/RoleSelectionModal";
+import { ThemeToggle } from "~/components/providers/ThemeToggle";
+import MagicBento from "~/components/homepage/MagicBento";
 import { api } from "~/trpc/react";
 import {
     Calendar,
@@ -17,7 +18,7 @@ import {
     Sparkles,
 } from "lucide-react";
 
-import ScrollReveal from "~/components/ScrollReveal";
+import ScrollReveal from "~/components/homepage/ScrollReveal";
 
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -31,6 +32,8 @@ interface SessionData {
 export function HomeClient({ session }: {
     session: SessionData | null;
 }) {
+    const { resolvedTheme } = useTheme();
+    const [themeMounted, setThemeMounted] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [showRoleSelection, setShowRoleSelection] = useState(false);
     const [hasAnimated, setHasAnimated] = useState(false);
@@ -50,6 +53,10 @@ export function HomeClient({ session }: {
         setHasAnimated(true);
     }, []);
 
+    useEffect(() => {
+        setThemeMounted(true);
+    }, []);
+
 
     const handleRoleSelectionComplete = () => {
         setShowRoleSelection(false);
@@ -66,13 +73,15 @@ export function HomeClient({ session }: {
     };
 
     const showActionButtons = session && !showRoleSelection && userProfile !== undefined && userProfile !== null;
+    const isDarkTheme = themeMounted ? resolvedTheme === "dark" : false;
+    const logoSrc = isDarkTheme ? "/logo_white.png" : "/logo_purple.png";
 
     return (
         <main id="main-content" className="min-h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary relative overflow-hidden">
-            <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-40">
-                <div className="absolute top-0 left-0 w-[420px] h-[420px] sm:w-[560px] sm:h-[560px] lg:w-[700px] lg:h-[700px] bg-gradient-to-br from-accent-primary/30 via-brand-indigo/20 to-brand-purple/30 rounded-full blur-3xl animate-fadeIn animate-pulse" style={{ animationDuration: '8s' }} />
-                <div className="absolute bottom-0 right-0 w-[420px] h-[420px] sm:w-[560px] sm:h-[560px] lg:w-[700px] lg:h-[700px] bg-gradient-to-tl from-brand-cyan/20 via-brand-blue/20 to-accent-secondary/30 rounded-full blur-3xl animate-fadeIn" style={{ animationDelay: '0.5s', animationDuration: '10s' }} />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] sm:w-[420px] sm:h-[420px] lg:w-[500px] lg:h-[500px] bg-gradient-to-br from-brand-teal/10 via-brand-purple/15 to-transparent rounded-full blur-2xl" />
+            <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-70 dark:opacity-35">
+                <div className="absolute top-0 left-0 w-[420px] h-[420px] sm:w-[560px] sm:h-[560px] lg:w-[700px] lg:h-[700px] bg-gradient-to-br from-accent-primary/45 via-brand-indigo/25 to-brand-purple/45 dark:from-accent-primary/30 dark:via-brand-indigo/20 dark:to-brand-purple/30 rounded-full blur-3xl animate-fadeIn animate-pulse" style={{ animationDuration: '8s' }} />
+                <div className="absolute bottom-0 right-0 w-[420px] h-[420px] sm:w-[560px] sm:h-[560px] lg:w-[700px] lg:h-[700px] bg-gradient-to-tl from-brand-cyan/30 via-brand-blue/25 to-accent-secondary/45 dark:from-brand-cyan/20 dark:via-brand-blue/20 dark:to-accent-secondary/30 rounded-full blur-3xl animate-fadeIn" style={{ animationDelay: '0.5s', animationDuration: '10s' }} />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] sm:w-[420px] sm:h-[420px] lg:w-[500px] lg:h-[500px] bg-gradient-to-br from-brand-teal/18 via-brand-purple/22 to-transparent dark:from-brand-teal/10 dark:via-brand-purple/15 rounded-full blur-2xl" />
             </div>
 
             <div className="relative z-10">
@@ -80,9 +89,9 @@ export function HomeClient({ session }: {
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-accent-primary to-accent-secondary rounded-xl flex items-center justify-center shadow-md">
+                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-md border border-border-light/60 bg-bg-surface/80 dark:bg-gradient-to-br dark:from-accent-primary dark:to-accent-secondary dark:border-transparent">
                                     <Image
-                                        src="/logo_white.png"
+                                        src={logoSrc}
                                         alt="Kairos Logo"
                                         width={24}
                                         height={24}
@@ -139,7 +148,7 @@ export function HomeClient({ session }: {
                                     <div className="surface-card p-5 sm:p-6 space-y-4">
                                         <Link 
                                             href="/create" 
-                                            className="flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-accent transition-all hover:scale-[1.02] text-base sm:text-lg group"
+                                            className="flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 font-semibold rounded-xl shadow-md hover:shadow-xl transition-all hover:scale-[1.02] text-base sm:text-lg group bg-gradient-to-r from-accent-primary to-accent-secondary text-slate-900 dark:text-white hover:opacity-90 border-transparent"
                                         >
                                             Enter Project Space
                                             <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />

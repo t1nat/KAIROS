@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { api } from "~/trpc/react";
 import { Lock, Trash2, Eye, EyeOff, Mail, AlertCircle, FileText, ChevronDown, RefreshCw, FolderLock } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useToast } from "~/components/ToastProvider";
+import { useToast } from "~/components/providers/ToastProvider";
 
 export function NotesList() {
   const t = useTranslations("create");

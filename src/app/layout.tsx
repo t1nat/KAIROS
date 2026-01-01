@@ -7,10 +7,10 @@ import { getLocale, getMessages } from 'next-intl/server';
 
 import { TRPCReactProvider } from "~/trpc/react";
 import { auth } from "~/server/auth";
-import NextAuthSessionProvider from "~/components/SessionProvider";
-import { ThemeProvider } from "~/components/ThemeProvider";
-import { ToastProvider } from "~/components/ToastProvider";
-import { UserPreferencesProvider } from "~/components/UserPreferencesProvider";
+import NextAuthSessionProvider from "~/components/providers/SessionProvider";
+import { ThemeProvider } from "~/components/providers/ThemeProvider";
+import { ToastProvider } from "~/components/providers/ToastProvider";
+import { UserPreferencesProvider } from "~/components/providers/UserPreferencesProvider";
 
 export const metadata: Metadata = {
   title: "KAIROS",

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { api } from '~/trpc/react';
 import { Plus, X, FileEdit, Loader2 } from 'lucide-react';
 import { useTranslations } from "next-intl";
-import { useToast } from "~/components/ToastProvider";
+import { useToast } from "~/components/providers/ToastProvider";
 
 type Translator = (key: string, values?: Record<string, unknown>) => string;
 

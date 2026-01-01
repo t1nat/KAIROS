@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Palette, Sun, Moon, Monitor, Check } from "lucide-react";
 import { useTheme } from "next-themes";
 import { api } from "~/trpc/react";
-import { useToast } from "~/components/ToastProvider";
+import { useToast } from "~/components/providers/ToastProvider";
 
 export function AppearanceSettings() {
   const { theme, setTheme, systemTheme } = useTheme();

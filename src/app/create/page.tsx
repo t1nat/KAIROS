@@ -1,16 +1,16 @@
 import Link from "next/link";
 import { auth } from "~/server/auth";
-import { UserDisplay } from "~/components/UserDisplay";
-import { SideNav } from "~/components/SideNav";
-import { CreateNoteForm } from "~/components/CreateNoteForm";
-import { CreateProjectContainer } from "~/components/CreateProjectContainer";
-import { NotesList } from "~/components/NotesList";
-import { NotificationSystem } from "~/components/NotificationSystem";
-import { ProjectsListWorkspace } from "~/components/ProjectsListWorkspace";
+import { UserDisplay } from "~/components/layout/UserDisplay";
+import { SideNav } from "~/components/layout/SideNav";
+import { CreateNoteForm } from "~/components/notes/CreateNoteForm";
+import { CreateProjectContainer } from "~/components/projects/CreateProjectContainer";
+import { NotesList } from "~/components/notes/NotesList";
+import { NotificationSystem } from "~/components/notifications/NotificationSystem";
+import { ProjectsListWorkspace } from "~/components/projects/ProjectsListWorkspace";
 import { LogIn, ArrowRight, FolderKanban, FileEdit } from "lucide-react";
-import { ThemeToggle } from "~/components/ThemeToggle";
-import { OrgAccessCodeBadge } from "~/components/OrgAccessCodeBadge";
-import { OrgSwitcher } from "~/components/OrgSwitcher";
+import { ThemeToggle } from "~/components/providers/ThemeToggle";
+import { OrgAccessCodeBadge } from "~/components/orgs/OrgAccessCodeBadge";
+import { OrgSwitcher } from "~/components/orgs/OrgSwitcher";
 import { getTranslations } from "next-intl/server";
 
 export default async function CreatePage({ 
