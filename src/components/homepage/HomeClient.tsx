@@ -202,18 +202,23 @@ export function HomeClient({ session }: {
                             </p>
                         </div>
 
-                        <MagicBento 
-                            textAutoHide={false}
-                            enableStars={false}
-                            enableSpotlight={true}
-                            enableBorderGlow={true}
-                            enableTilt={false}
-                            enableMagnetism={false}
-                            clickEffect={false}
-                            spotlightRadius={300}
-                            particleCount={0}
-                            glowColor="139, 92, 246"
-                        />
+                        <div className="mt-10 flex justify-center">
+                            <div className="w-full max-w-5xl">
+                                <MagicBento 
+                                    textAutoHide={false}
+                                    enableStars={false}
+                                    enableSpotlight={true}
+                                    enableBorderGlow={true}
+                                    enableTilt={false}
+                                    enableMagnetism={false}
+                                    clickEffect={false}
+                                    spotlightRadius={300}
+                                    particleCount={0}
+                                    glowColor="139, 92, 246"
+                                />
+                            </div>
+                        </div>
+
 
                         <div className="surface-card p-5 sm:p-8 md:p-10 mt-12 sm:mt-16">
                             <h4 className="text-2xl md:text-3xl font-bold text-fg-primary mb-8">Why Teams Choose Kairos</h4>

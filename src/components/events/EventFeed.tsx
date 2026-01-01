@@ -778,7 +778,7 @@ export const EventFeed: React.FC = () => {
   ) ?? [];
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div>
       <div className="mb-6">
         <div className="surface-card rounded-xl p-3 sm:p-4">
           <div className="flex items-center gap-2 sm:gap-3">
@@ -802,25 +802,23 @@ export const EventFeed: React.FC = () => {
           <div className="w-16 h-16 bg-accent-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
             <Calendar size={32} className="text-accent-primary" />
           </div>
-          <h3 className="text-xl font-semibold text-fg-primary mb-2">
-            No Events Found
-          </h3>
+          <h3 className="text-xl font-semibold text-fg-primary mb-2">No Events Found</h3>
           <p className="text-fg-secondary">
-            {selectedRegion 
-              ? `No events currently listed for ${REGIONS.find(r => r.value === selectedRegion)?.label}.` 
+            {selectedRegion
+              ? `No events currently listed for ${REGIONS.find((r) => r.value === selectedRegion)?.label}.`
               : `Create your first event to get started!`}
           </p>
         </div>
       ) : (
         <div>
           {filteredEvents.map((event) => (
-            <EventCard 
-              key={event.id} 
+            <EventCard
+              key={event.id}
               event={{
                 ...event,
                 createdById: event.createdById,
-                isOwner: session?.user?.id === event.createdById
-              }} 
+                isOwner: session?.user?.id === event.createdById,
+              }}
             />
           ))}
         </div>
