@@ -7,17 +7,12 @@
     "projects": "Projets",
     "notes": "Notes",
     "quickActions": "Actions rapides",
-      "disableTwoFactor": "Désactiver l'A2F",
-      "session": "Session",
-      "sessionDesc": "Déconnectez-vous de votre session actuelle",
-      "signOut": "Se déconnecter",
     "newProject": "Nouveau projet"
   },
   "home": {
     "title": "KAIROS",
     "subtitle": "Maîtrisez votre temps, façonnez votre avenir",
-      "deleteAccount": "Supprimer le compte",
-      "deleteConfirm": "Cela supprimera définitivement votre compte et vos données. Continuer ?",
+    "description": "Votre compagnon intelligent pour la gestion de projets, la planification d’événements et l’organisation personnelle. Transformez le chaos en clarté.",
     "getStarted": "Commencer",
     "learnMore": "En savoir plus",
     "signIn": "Se connecter"
@@ -26,13 +21,11 @@
     "title": "Paramètres",
     "subtitle": "Gérez votre compte et vos préférences",
     "profile": {
-      "expand": "Développer la liste des langues",
-      "collapse": "Réduire la liste des langues",
       "title": "Paramètres du profil",
       "subtitle": "Gérez vos informations personnelles",
       "updateProfile": "Mettre à jour le profil",
       "uploadImage": "Télécharger une image",
-      "removeImage": "Supprimer l'image"
+      "removeImage": "Supprimer l’image"
     },
     "notifications": {
       "title": "Paramètres de notification",
@@ -41,9 +34,9 @@
       "emailDesc": "Recevez des mises à jour par e-mail sur votre activité",
       "projects": "Mises à jour de projets",
       "projectsDesc": "Soyez averti lorsque les projets sont mis à jour",
-      "events": "Rappels d'événements",
-      "eventsDesc": "Recevez des rappels dans l'application pour les événements à venir",
-      "tasks": "Rappels de tâches",
+      "events": "Rappels d’événements",
+      "eventsDesc": "Recevez des rappels dans l’application pour les événements à venir",
+      "tasks": "Rappels d’échéance des tâches",
       "tasksDesc": "Soyez averti lorsque les tâches sont dues",
       "marketing": "E-mails marketing",
       "marketingDesc": "Recevez des nouvelles et du contenu promotionnel",
@@ -52,30 +45,32 @@
     "security": {
       "title": "Paramètres de sécurité",
       "subtitle": "Gérez vos préférences de sécurité",
-      "password": "Mot de passe",
-      "changePassword": "Changer le mot de passe",
       "twoFactor": "Authentification à deux facteurs",
       "twoFactorDesc": "Ajoutez une couche de sécurité supplémentaire à votre compte",
       "enableTwoFactor": "Activer 2FA",
-      "sessions": "Sessions actives",
-      "sessionsDesc": "Gérez les appareils où vous êtes connecté",
-      "viewSessions": "Voir les sessions",
+      "disableTwoFactor": "Désactiver 2FA",
+      "session": "Session",
+      "sessionDesc": "Déconnectez-vous de votre session actuelle",
+      "signOut": "Se déconnecter",
       "dangerZone": "Zone de danger",
-      "dangerZoneDesc": "Une fois que vous supprimez votre compte, il n'y a pas de retour en arrière. Soyez certain.",
-      "deleteAccount": "Supprimer le compte"
+      "dangerZoneDesc": "Une fois que vous supprimez votre compte, il n’y a pas de retour en arrière. Veuillez en être certain.",
+      "deleteAccount": "Supprimer le compte",
+      "deleteConfirm": "Cela supprimera définitivement votre compte et vos données. Continuer ?"
     },
     "language": {
       "title": "Langue et région",
       "subtitle": "Sélectionnez votre langue préférée",
-      "displayLanguage": "Langue d'affichage",
+      "displayLanguage": "Langue d’affichage",
       "timezone": "Fuseau horaire",
       "dateFormat": "Format de date",
       "save": "Enregistrer les préférences",
+      "expand": "Développer la liste des langues",
+      "collapse": "Réduire la liste des langues",
       "applying": "Application des modifications de langue..."
     },
     "appearance": {
       "title": "Apparence",
-      "subtitle": "Personnalisez l'apparence de KAIROS"
+      "subtitle": "Personnalisez l’apparence de KAIROS"
     },
     "nav": {
       "profile": "Profil",
@@ -87,7 +82,161 @@
   },
   "create": {
     "title": "Espace de travail",
-    "subtitle": "Gérez vos projets et notes"
+    "subtitle": "Gérez vos projets et notes",
+    "headline": "Votre espace de travail, au centre.",
+    "tagline": "Créez des projets, prenez des notes et gardez le cap — sans bruit.",
+    "cta": "Commencez par créer un projet ou une note.",
+    "quickStart": "Démarrage rapide",
+    "quickStartDesc": "Créez un projet, puis ajoutez des notes au fil du temps.",
+    "errors": {
+      "generic": "Erreur : {message}"
+    },
+    "actions": {
+      "refresh": "Actualiser",
+      "addTask": "Ajouter une tâche"
+    },
+    "common": {
+      "description": "Description",
+      "optional": "facultatif"
+    },
+    "stats": {
+      "totalTasks": "Tâches au total",
+      "completed": "Terminées"
+    },
+    "team": {
+      "title": "Membres de l’équipe",
+      "projectOwner": "Responsable du projet",
+      "unknownUser": "Inconnu",
+      "canView": "Peut consulter",
+      "canEdit": "Peut modifier",
+      "viewOnly": "Lecture seule",
+      "addMember": "Ajouter un membre",
+      "emailPlaceholder": "nom@entreprise.com",
+      "add": "Ajouter",
+      "adding": "Ajout...",
+      "empty": "Aucun membre pour le moment",
+      "view": "Voir",
+      "edit": "Modifier",
+      "remove": "Retirer",
+      "search": {
+        "noUser": "Aucun utilisateur trouvé avec cet e-mail.",
+        "error": "Erreur de recherche. Réessayez.",
+        "invalidEmail": "Veuillez saisir une adresse e-mail valide.",
+        "wait": "Veuillez patienter..."
+      }
+    },
+    "projects": {
+      "otherProjects": "Autres projets",
+      "selectProject": "Sélectionner un projet",
+      "selectProjectDesc": "Choisissez un projet pour voir les tâches, gérer les collaborateurs et suivre la progression."
+    },
+    "projectForm": {
+      "title": "Nouveau projet",
+      "projectName": "Nom du projet",
+      "projectNamePlaceholder": "ex. Refonte du site",
+      "descriptionPlaceholder": "De quoi s’agit-il ?",
+      "create": "Créer le projet",
+      "creating": "Création...",
+      "validation": {
+        "projectTitleRequired": "Le nom du projet est obligatoire."
+      }
+    },
+    "taskForm": {
+      "taskName": "Nom de la tâche",
+      "taskNamePlaceholder": "ex. Rédiger le planning",
+      "descriptionPlaceholder": "Ajouter des détails (facultatif)",
+      "assignTo": "Assigner à",
+      "unassigned": "Non assignée",
+      "priority": "Priorité",
+      "priorityLow": "Basse",
+      "priorityMedium": "Moyenne",
+      "priorityHigh": "Haute",
+      "priorityUrgent": "Urgente",
+      "dueDate": "Échéance",
+      "add": "Ajouter une tâche",
+      "adding": "Ajout...",
+      "validation": {
+        "taskTitleRequired": "Le nom de la tâche est obligatoire."
+      }
+    },
+    "timeline": {
+      "emptyTitle": "Aucune tâche pour le moment",
+      "emptyDesc": "Créez des tâches pour les voir apparaître sur la timeline.",
+      "title": "Timeline du projet",
+      "progressLine": "{count, plural, =0 {Aucune tâche} one {# tâche} other {# tâches}}",
+      "completedLine": "{completed} sur {total} terminées",
+      "markComplete": "Marquer la tâche comme terminée",
+      "markIncomplete": "Marquer la tâche comme non terminée",
+      "done": "Terminé",
+      "overdue": "En retard",
+      "createdBy": "Créé par :",
+      "lastModified": "Dernière modification :",
+      "completedBy": "Terminé par :"
+    },
+    "projectsList": {
+      "subtitle": "Progression en temps réel sur tous vos projets",
+      "overallProgress": "Progression globale",
+      "tasksOfTasks": "{completed} sur {total} tâches",
+      "activeProjects": "Projets actifs",
+      "viewAll": "Afficher tous les projets",
+      "hideAll": "Masquer tous les projets",
+      "done": "faites",
+      "active": "actives",
+      "pending": "en attente",
+      "noTasksYet": "Aucune tâche pour le moment"
+    },
+    "notes": {
+      "title": "Vos notes",
+      "actions": {
+        "createNew": "Créer une nouvelle note",
+        "create": "Créer une note",
+        "creating": "Création...",
+        "cancel": "Annuler"
+      },
+      "fields": {
+        "content": "Contenu de la note"
+      },
+      "placeholders": {
+        "content": "Écrivez votre note ici..."
+      },
+      "validation": {
+        "contentRequired": "Veuillez ajouter du contenu à votre note."
+      },
+      "errors": {
+        "createFailed": "Impossible de créer la note : {message}"
+      },
+      "empty": "Aucune note pour le moment. Créez votre première note !",
+      "encrypted": "Chiffré ({count})",
+      "encryptedNote": "🔒 Note chiffrée",
+      "deleteConfirm": "Supprimer cette note ? Cette action est irréversible.",
+      "allLocked": "Toutes les notes sont verrouillées",
+      "allLockedHint": "Vérifiez le dossier chiffré",
+      "password": {
+        "sectionTitle": "Protégée par mot de passe",
+        "protected": "Protégée par mot de passe",
+        "protectedDesc": "Saisissez votre mot de passe pour voir cette note",
+        "placeholder": "Saisir le mot de passe",
+        "enter": "Veuillez saisir un mot de passe",
+        "incorrect": "Mot de passe incorrect",
+        "verifyFailed": "Échec de la vérification",
+        "unlock": "Déverrouiller la note",
+        "unlocking": "Déverrouillage..."
+      },
+      "edit": {
+        "title": "Modifier la note",
+        "save": "Enregistrer",
+        "saving": "Enregistrement..."
+      },
+      "reset": {
+        "cta": "Réinitialiser ?",
+        "title": "Réinitialiser le mot de passe",
+        "desc": "Nous vous enverrons un e-mail avec un lien pour réinitialiser le mot de passe de cette note.",
+        "expiry": "Le lien expirera dans 1 heure.",
+        "send": "Envoyer l’e-mail",
+        "sending": "Envoi...",
+        "success": "✅ E-mail de réinitialisation envoyé ! Vérifiez votre boîte de réception."
+      }
+    }
   },
   "publish": {
     "title": "Événements",
@@ -109,7 +258,23 @@
     "close": "Fermer",
     "loading": "Chargement...",
     "search": "Rechercher",
+    "copy": "Copier",
+    "copied": "Copié",
     "lightMode": "Passer en mode clair",
     "darkMode": "Passer en mode sombre"
+  },
+  "org": {
+    "accessCode": "Code de l’organisation",
+    "yourOrgs": "Organisations",
+    "switchOrg": "Changer d’organisation",
+    "viewAll": "Tout voir",
+    "setActive": "Définir active",
+    "active": "Active",
+    "noOrgs": "Vous ne faites encore partie d’aucune organisation.",
+    "activeOrgHint": "Choisissez une organisation active pour travailler dedans.",
+    "roleLabel": "Rôle",
+    "roleAdmin": "Admin",
+    "roleWorker": "Membre",
+    "roleMentor": "Mentor"
   }
 }

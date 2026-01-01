@@ -16,6 +16,137 @@ function generateAccessCode(): string {
 }
 
 export const organizationRouter = createTRPCRouter({
+  listMine: protectedProcedure.query(async ({ ctx }) => {
+    const memberships = await ctx.db
+      .select({
+        organization: organizations,
+        role: organizationMembers.role,
+        joinedAt: organizationMembers.joinedAt,
+      })
+      .from(organizationMembers)
+      .innerJoin(
+        organizations,
+        eq(organizationMembers.organizationId, organizations.id),
+      )
+      .where(eq(organizationMembers.userId, ctx.session.user.id));
+
+    return memberships.map((m) => ({
+      id: m.organization.id,
+      name: m.organization.name,
+      accessCode: m.organization.accessCode,
+      role: m.role,
+      joinedAt: m.joinedAt,
+      createdAt: m.organization.createdAt,
+    }));
+  }),
+
+  getActive: protectedProcedure.query(async ({ ctx }) => {
+    let activeOrganizationId: number | null = null;
+
+    try {
+      const user = await ctx.db
+        .select({
+          activeOrganizationId: users.activeOrganizationId,
+        })
+        .from(users)
+        .where(eq(users.id, ctx.session.user.id))
+        .limit(1);
+
+      activeOrganizationId = user[0]?.activeOrganizationId ?? null;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (!message.includes("active_organization_id")) {
+        throw err;
+      }
+      // Backwards-compat: DB may not have been migrated yet.
+      activeOrganizationId = null;
+    }
+
+    if (activeOrganizationId) {
+      const [membership] = await ctx.db
+        .select({
+          organization: organizations,
+          role: organizationMembers.role,
+        })
+        .from(organizationMembers)
+        .innerJoin(
+          organizations,
+          eq(organizationMembers.organizationId, organizations.id),
+        )
+        .where(
+          and(
+            eq(organizationMembers.userId, ctx.session.user.id),
+            eq(organizationMembers.organizationId, activeOrganizationId),
+          ),
+        )
+        .limit(1);
+
+      if (membership) {
+        return {
+          organization: {
+            id: membership.organization.id,
+            name: membership.organization.name,
+            accessCode: membership.organization.accessCode,
+          },
+          role: membership.role,
+        };
+      }
+    }
+
+    const [fallback] = await ctx.db
+      .select({
+        organization: organizations,
+        role: organizationMembers.role,
+      })
+      .from(organizationMembers)
+      .innerJoin(
+        organizations,
+        eq(organizationMembers.organizationId, organizations.id),
+      )
+      .where(eq(organizationMembers.userId, ctx.session.user.id))
+      .limit(1);
+
+    if (!fallback) return null;
+
+    return {
+      organization: {
+        id: fallback.organization.id,
+        name: fallback.organization.name,
+        accessCode: fallback.organization.accessCode,
+      },
+      role: fallback.role,
+    };
+  }),
+
+  setActive: protectedProcedure
+    .input(z.object({ organizationId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const [membership] = await ctx.db
+        .select({ id: organizationMembers.id })
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.userId, ctx.session.user.id),
+            eq(organizationMembers.organizationId, input.organizationId),
+          ),
+        )
+        .limit(1);
+
+      if (!membership) {
+        throw new Error("You are not a member of this organization");
+      }
+
+      await ctx.db
+        .update(users)
+        .set({
+          usageMode: "organization",
+          activeOrganizationId: input.organizationId,
+        })
+        .where(eq(users.id, ctx.session.user.id));
+
+      return { success: true };
+    }),
+
   create: protectedProcedure
     .input(
       z.object({
@@ -67,7 +198,7 @@ export const organizationRouter = createTRPCRouter({
         
         await ctx.db
           .update(users)
-          .set({ usageMode: "organization" })
+          .set({ usageMode: "organization", activeOrganizationId: organization.id })
           .where(eq(users.id, ctx.session.user.id));
 
         return {
@@ -86,6 +217,7 @@ export const organizationRouter = createTRPCRouter({
     .input(
       z.object({
         code: z.string().min(1),
+        role: z.enum(["worker", "mentor"]).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -119,13 +251,13 @@ export const organizationRouter = createTRPCRouter({
         await ctx.db.insert(organizationMembers).values({
           organizationId: organization.id,
           userId: ctx.session.user.id,
-          role: "worker",
+          role: input.role ?? "worker",
         });
 
         
         await ctx.db
           .update(users)
-          .set({ usageMode: "organization" })
+          .set({ usageMode: "organization", activeOrganizationId: organization.id })
           .where(eq(users.id, ctx.session.user.id));
 
         return {
@@ -143,6 +275,24 @@ export const organizationRouter = createTRPCRouter({
 
 
   getMy: protectedProcedure.query(async ({ ctx }) => {
+    let activeOrganizationId: number | null = null;
+
+    try {
+      const user = await ctx.db
+        .select({ activeOrganizationId: users.activeOrganizationId })
+        .from(users)
+        .where(eq(users.id, ctx.session.user.id))
+        .limit(1);
+
+      activeOrganizationId = user[0]?.activeOrganizationId ?? null;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (!message.includes("active_organization_id")) {
+        throw err;
+      }
+      activeOrganizationId = null;
+    }
+
     const [membership] = await ctx.db
       .select({
         organization: organizations,
@@ -151,14 +301,19 @@ export const organizationRouter = createTRPCRouter({
       .from(organizationMembers)
       .innerJoin(
         organizations,
-        eq(organizationMembers.organizationId, organizations.id)
+        eq(organizationMembers.organizationId, organizations.id),
       )
-      .where(eq(organizationMembers.userId, ctx.session.user.id))
+      .where(
+        activeOrganizationId
+          ? and(
+              eq(organizationMembers.userId, ctx.session.user.id),
+              eq(organizationMembers.organizationId, activeOrganizationId),
+            )
+          : eq(organizationMembers.userId, ctx.session.user.id),
+      )
       .limit(1);
 
-    if (!membership) {
-      return null;
-    }
+    if (!membership) return null;
 
     return {
       id: membership.organization.id,
@@ -207,55 +362,85 @@ export const organizationRouter = createTRPCRouter({
     }),
 
   
-  leave: protectedProcedure.mutation(async ({ ctx }) => {
-    
-    const [membership] = await ctx.db
-      .select()
-      .from(organizationMembers)
-      .where(eq(organizationMembers.userId, ctx.session.user.id));
-
-    if (!membership) {
-      throw new Error("You are not a member of any organization");
-    }
-
-    
-    if (membership.role === "admin") {
-      const [organization] = await ctx.db
+  leave: protectedProcedure
+    .input(z.object({ organizationId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const [membership] = await ctx.db
         .select()
-        .from(organizations)
-        .where(eq(organizations.id, membership.organizationId));
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.userId, ctx.session.user.id),
+            eq(organizationMembers.organizationId, input.organizationId),
+          ),
+        )
+        .limit(1);
 
-      if (organization?.createdById === ctx.session.user.id) {
-        
-        const admins = await ctx.db
+      if (!membership) {
+        throw new Error("You are not a member of this organization");
+      }
+
+      if (membership.role === "admin") {
+        const [organization] = await ctx.db
           .select()
-          .from(organizationMembers)
-          .where(
-            and(
-              eq(organizationMembers.organizationId, membership.organizationId),
-              eq(organizationMembers.role, "admin")
-            )
-          );
+          .from(organizations)
+          .where(eq(organizations.id, membership.organizationId))
+          .limit(1);
 
-        if (admins.length === 1) {
-          throw new Error(
-            "You cannot leave as you are the only admin. Please transfer ownership or delete the organization."
-          );
+        if (organization?.createdById === ctx.session.user.id) {
+          const admins = await ctx.db
+            .select()
+            .from(organizationMembers)
+            .where(
+              and(
+                eq(organizationMembers.organizationId, membership.organizationId),
+                eq(organizationMembers.role, "admin"),
+              ),
+            );
+
+          if (admins.length === 1) {
+            throw new Error(
+              "You cannot leave as you are the only admin. Please transfer ownership or delete the organization.",
+            );
+          }
         }
       }
-    }
 
-    
-    await ctx.db
-      .delete(organizationMembers)
-      .where(eq(organizationMembers.userId, ctx.session.user.id));
+      await ctx.db
+        .delete(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.userId, ctx.session.user.id),
+            eq(organizationMembers.organizationId, input.organizationId),
+          ),
+        );
 
-    
-    await ctx.db
-      .update(users)
-      .set({ usageMode: "personal" })
-      .where(eq(users.id, ctx.session.user.id));
+      const [user] = await ctx.db
+        .select({ activeOrganizationId: users.activeOrganizationId })
+        .from(users)
+        .where(eq(users.id, ctx.session.user.id))
+        .limit(1);
 
-    return { success: true };
-  }),
+      if (user?.activeOrganizationId === input.organizationId) {
+        const [nextMembership] = await ctx.db
+          .select({ organizationId: organizationMembers.organizationId })
+          .from(organizationMembers)
+          .where(eq(organizationMembers.userId, ctx.session.user.id))
+          .limit(1);
+
+        if (!nextMembership) {
+          await ctx.db
+            .update(users)
+            .set({ usageMode: "personal", activeOrganizationId: null })
+            .where(eq(users.id, ctx.session.user.id));
+        } else {
+          await ctx.db
+            .update(users)
+            .set({ activeOrganizationId: nextMembership.organizationId })
+            .where(eq(users.id, ctx.session.user.id));
+        }
+      }
+
+      return { success: true };
+    }),
 });

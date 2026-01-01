@@ -5,6 +5,7 @@ import { X, Mail, Lock, User, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
+import Image from "next/image";
 
 export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [email, setEmail] = useState("");
@@ -127,10 +128,13 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
 
         <div className="relative p-8 pb-6 text-center border-b border-border-light/20">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <img 
-              src="/logo_white.png" 
-              alt="Kairos Logo" 
+            <Image
+              src="/logo_white.png"
+              alt="Kairos Logo"
+              width={64}
+              height={64}
               className="w-16 h-16 object-contain"
+              priority
             />
           </div>
           <h2 className="text-2xl font-bold text-fg-primary mb-2 font-display tracking-tight">

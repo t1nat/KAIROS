@@ -3,8 +3,10 @@
 import React, { useState } from 'react';
 import { api } from '~/trpc/react';
 import { Plus, X, FileEdit, Loader2 } from 'lucide-react';
+import { useTranslations } from "next-intl";
 
 export const CreateNoteForm: React.FC = () => {
+  const t = useTranslations("create");
   const utils = api.useUtils();
   const [showForm, setShowForm] = useState(false);
   const [content, setContent] = useState('');
@@ -16,14 +18,14 @@ export const CreateNoteForm: React.FC = () => {
       void utils.note.invalidate();
     },
     onError: (error) => {
-      alert(`Failed to create note: ${error.message}`);
+      alert(t("notes.errors.createFailed", { message: error.message }));
     },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim()) {
-      alert('Please add some content to your note');
+      alert(t("notes.validation.contentRequired"));
       return;
     }
 
@@ -42,7 +44,7 @@ export const CreateNoteForm: React.FC = () => {
           <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#F8D45E]/20 rounded-xl flex items-center justify-center group-hover:bg-[#F8D45E]/30 transition-colors">
             <Plus size={20} className="text-[#F8D45E] sm:w-6 sm:h-6" />
           </div>
-          <span className="text-base sm:text-lg font-semibold text-[#FBF9F5]">Create New Note</span>
+          <span className="text-base sm:text-lg font-semibold text-[#FBF9F5]">{t("notes.actions.createNew")}</span>
         </button>
       ) : (
         <form onSubmit={handleSubmit} className="p-4 sm:p-6 md:p-8">
@@ -51,7 +53,7 @@ export const CreateNoteForm: React.FC = () => {
               <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#F8D45E]/20 rounded-lg flex items-center justify-center">
                 <FileEdit size={16} className="text-[#F8D45E] sm:w-5 sm:h-5" />
               </div>
-              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#FBF9F5]">Create New Note</h2>
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#FBF9F5]">{t("notes.title")}</h2>
             </div>
             <button
               type="button"
@@ -65,13 +67,13 @@ export const CreateNoteForm: React.FC = () => {
           <div className="space-y-4 sm:space-y-6">
             <div>
               <label htmlFor="content" className="block text-xs sm:text-sm font-semibold text-[#E4DEAA] mb-2">
-                Note Content <span className="text-[#F8D45E]">*</span>
+                {t("notes.fields.content")} <span className="text-[#F8D45E]">*</span>
               </label>
               <textarea
                 id="content"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="Write your note here..."
+                placeholder={t("notes.placeholders.content")}
                 rows={8}
                 className="w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F8D45E] focus:border-transparent transition-all text-[#FBF9F5] placeholder:text-[#59677C] resize-none"
                 disabled={createNote.isPending}
@@ -87,12 +89,12 @@ export const CreateNoteForm: React.FC = () => {
                 {createNote.isPending ? (
                   <>
                     <Loader2 className="animate-spin" size={18} />
-                    Creating...
+                    {t("notes.actions.creating")}
                   </>
                 ) : (
                   <>
                     <FileEdit size={18} />
-                    Create Note
+                    {t("notes.actions.create")}
                   </>
                 )}
               </button>
@@ -102,7 +104,7 @@ export const CreateNoteForm: React.FC = () => {
                 disabled={createNote.isPending}
                 className="px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base border-2 border-white/10 text-[#E4DEAA] font-semibold rounded-lg hover:bg-white/5 transition-all"
               >
-                Cancel
+                {t("notes.actions.cancel")}
               </button>
             </div>
           </div>

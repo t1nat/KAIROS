@@ -14,12 +14,36 @@ export const projectRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      
-      const [membership] = await ctx.db
-        .select()
-        .from(organizationMembers)
-        .where(eq(organizationMembers.userId, ctx.session.user.id))
-        .limit(1);
+      let activeOrganizationId: number | null = null;
+
+      try {
+        const [user] = await ctx.db
+          .select({ activeOrganizationId: users.activeOrganizationId })
+          .from(users)
+          .where(eq(users.id, ctx.session.user.id))
+          .limit(1);
+
+        activeOrganizationId = user?.activeOrganizationId ?? null;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        if (!message.includes("active_organization_id")) {
+          throw err;
+        }
+        activeOrganizationId = null;
+      }
+
+      const [membership] = activeOrganizationId
+        ? await ctx.db
+            .select()
+            .from(organizationMembers)
+            .where(
+              and(
+                eq(organizationMembers.userId, ctx.session.user.id),
+                eq(organizationMembers.organizationId, activeOrganizationId),
+              ),
+            )
+            .limit(1)
+        : [undefined];
 
       console.log("Creating project - User ID:", ctx.session.user.id);
       console.log("User's organization membership:", membership);
@@ -48,14 +72,38 @@ export const projectRouter = createTRPCRouter({
   getMyProjects: protectedProcedure.query(async ({ ctx }) => {
     console.log("Fetching projects for user:", ctx.session.user.id);
 
-    
-    const [membership] = await ctx.db
-      .select()
-      .from(organizationMembers)
-      .where(eq(organizationMembers.userId, ctx.session.user.id))
-      .limit(1);
+    let activeOrganizationId: number | null = null;
 
-    console.log("User organization membership:", membership);
+    try {
+      const [user] = await ctx.db
+        .select({ activeOrganizationId: users.activeOrganizationId })
+        .from(users)
+        .where(eq(users.id, ctx.session.user.id))
+        .limit(1);
+
+      activeOrganizationId = user?.activeOrganizationId ?? null;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (!message.includes("active_organization_id")) {
+        throw err;
+      }
+      activeOrganizationId = null;
+    }
+
+    const [membership] = activeOrganizationId
+      ? await ctx.db
+          .select()
+          .from(organizationMembers)
+          .where(
+            and(
+              eq(organizationMembers.userId, ctx.session.user.id),
+              eq(organizationMembers.organizationId, activeOrganizationId),
+            ),
+          )
+          .limit(1)
+      : [undefined];
+
+    console.log("User active organization membership:", membership);
 
     let projectsList;
 

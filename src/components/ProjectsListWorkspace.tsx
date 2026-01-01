@@ -4,6 +4,7 @@ import { useState } from "react";
 import { api } from "~/trpc/react";
 import { Folder, ChevronDown, ChevronUp, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 interface ProjectWithStats {
   id: number;
@@ -31,6 +32,7 @@ function hasTasks(value: unknown): value is { tasks: Array<{ status: string }> }
 }
 
 export function ProjectsListWorkspace() {
+  const t = useTranslations("create");
   const [showProjects, setShowProjects] = useState(false);
   const [animateCharts, setAnimateCharts] = useState(false);
   const router = useRouter();
@@ -98,7 +100,7 @@ export function ProjectsListWorkspace() {
             <h3 className="text-xl sm:text-2xl font-bold text-fg-primary mb-1 sm:mb-2 flex items-center gap-2 sm:gap-3">
               Project Analytics
             </h3>
-            <p className="text-xs sm:text-sm text-fg-secondary">Real-time progress across all your projects</p>
+            <p className="text-xs sm:text-sm text-fg-secondary">{t("projectsList.subtitle")}</p>
           </div>
         </div>
         
@@ -117,8 +119,10 @@ export function ProjectsListWorkspace() {
               <span className="text-xl sm:text-2xl font-bold">{overallCompletion}%</span>
             </div>
             <div className="mt-3 sm:mt-4 text-center">
-              <p className="text-[10px] sm:text-xs text-fg-tertiary uppercase tracking-wider font-semibold">Overall Progress</p>
-              <p className="text-[9px] sm:text-[10px] text-fg-tertiary mt-1">{totalCompletedTasks} of {totalAllTasks} tasks</p>
+              <p className="text-[10px] sm:text-xs text-fg-tertiary uppercase tracking-wider font-semibold">{t("projectsList.overallProgress")}</p>
+              <p className="text-[9px] sm:text-[10px] text-fg-tertiary mt-1">
+                {t("projectsList.tasksOfTasks", { completed: totalCompletedTasks, total: totalAllTasks })}
+              </p>
             </div>
           </div>
 
@@ -129,7 +133,7 @@ export function ProjectsListWorkspace() {
               </div>
               <div className="absolute -inset-2 bg-gradient-to-br from-accent-primary/20 to-accent-secondary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity -z-10" />
             </div>
-            <p className="text-[10px] sm:text-xs text-fg-tertiary mt-2 sm:mt-3 uppercase tracking-wider font-semibold text-center">Active Projects</p>
+            <p className="text-[10px] sm:text-xs text-fg-tertiary mt-2 sm:mt-3 uppercase tracking-wider font-semibold text-center">{t("projectsList.activeProjects")}</p>
           </div>
 
           <div className="flex flex-col items-center justify-center p-4 sm:p-6 group cursor-default hover:bg-bg-secondary/40 rounded-xl sm:rounded-2xl transition-all">
@@ -139,7 +143,7 @@ export function ProjectsListWorkspace() {
               </div>
               <div className="absolute -inset-2 bg-fg-primary/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity -z-10" />
             </div>
-            <p className="text-[10px] sm:text-xs text-fg-tertiary mt-2 sm:mt-3 uppercase tracking-wider font-semibold text-center">Total Tasks</p>
+            <p className="text-[10px] sm:text-xs text-fg-tertiary mt-2 sm:mt-3 uppercase tracking-wider font-semibold text-center">{t("stats.totalTasks")}</p>
           </div>
 
           <div className="flex flex-col items-center justify-center p-4 sm:p-6 group cursor-default hover:bg-bg-secondary/40 rounded-xl sm:rounded-2xl transition-all">
@@ -149,7 +153,7 @@ export function ProjectsListWorkspace() {
               </div>
               <div className="absolute -inset-2 bg-success/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity -z-10" />
             </div>
-            <p className="text-[10px] sm:text-xs text-fg-tertiary mt-2 sm:mt-3 uppercase tracking-wider font-semibold text-center">Completed</p>
+            <p className="text-[10px] sm:text-xs text-fg-tertiary mt-2 sm:mt-3 uppercase tracking-wider font-semibold text-center">{t("stats.completed")}</p>
           </div>
         </div>
       </div>
@@ -163,7 +167,7 @@ export function ProjectsListWorkspace() {
         >
           <Folder size={16} className="text-accent-primary group-hover:scale-110 transition-transform sm:w-[18px] sm:h-[18px]" />
           <span className="text-xs sm:text-sm font-semibold text-fg-primary">
-            {showProjects ? "Hide" : "View"} All Projects
+            {showProjects ? t("projectsList.hideAll") : t("projectsList.viewAll")}
           </span>
           <span className="text-[10px] sm:text-xs text-fg-tertiary bg-bg-tertiary/50 px-1.5 sm:px-2 py-0.5 rounded-full">
             {totalProjects}
@@ -225,23 +229,23 @@ export function ProjectsListWorkspace() {
                       <div className="flex items-center gap-1 sm:gap-1.5 text-success bg-success/10 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg">
                         <CheckCircle2 size={12} className="sm:w-[14px] sm:h-[14px]" />
                         <span className="font-semibold">{project.completedTasks}</span>
-                        <span className="text-success/70 hidden xs:inline">done</span>
+                        <span className="text-success/70 hidden xs:inline">{t("projectsList.done")}</span>
                       </div>
                       <div className="flex items-center gap-1 sm:gap-1.5 text-warning bg-warning/10 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg">
                         <Clock size={12} className="sm:w-[14px] sm:h-[14px]" />
                         <span className="font-semibold">{project.inProgressTasks}</span>
-                        <span className="text-warning/70 hidden xs:inline">active</span>
+                        <span className="text-warning/70 hidden xs:inline">{t("projectsList.active")}</span>
                       </div>
                       <div className="flex items-center gap-1 sm:gap-1.5 text-fg-tertiary bg-bg-tertiary/30 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg">
                         <AlertCircle size={12} className="sm:w-[14px] sm:h-[14px]" />
                         <span className="font-semibold">{project.pendingTasks}</span>
-                        <span className="text-fg-tertiary hidden xs:inline">pending</span>
+                        <span className="text-fg-tertiary hidden xs:inline">{t("projectsList.pending")}</span>
                       </div>
                     </div>
                   ) : (
                     <div className="inline-flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-fg-tertiary bg-bg-tertiary/30 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg">
                       <AlertCircle size={10} className="sm:w-3 sm:h-3" />
-                      <span className="italic">No tasks yet</span>
+                      <span className="italic">{t("projectsList.noTasksYet")}</span>
                     </div>
                   )}
                 </div>

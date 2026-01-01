@@ -7,8 +7,8 @@ import { getLocale, getMessages } from 'next-intl/server';
 
 import { TRPCReactProvider } from "~/trpc/react";
 import { auth } from "~/server/auth";
-import NextAuthSessionProvider from "./sessionProvider";
-import { ThemeProvider } from "./_components/ThemeProvider";
+import NextAuthSessionProvider from "~/components/SessionProvider";
+import { ThemeProvider } from "~/components/ThemeProvider";
 
 export const metadata: Metadata = {
   title: "KAIROS",

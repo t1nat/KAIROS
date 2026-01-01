@@ -82,7 +82,161 @@
   },
   "create": {
     "title": "Espacio de trabajo",
-    "subtitle": "Gestiona tus proyectos y notas"
+    "subtitle": "Gestiona tus proyectos y notas",
+    "headline": "Tu espacio de trabajo, en foco.",
+    "tagline": "Crea proyectos, toma notas y mantén el rumbo, sin ruido.",
+    "cta": "Empieza creando un proyecto o una nota.",
+    "quickStart": "Inicio rápido",
+    "quickStartDesc": "Crea un proyecto y añade notas mientras avanzas.",
+    "errors": {
+      "generic": "Error: {message}"
+    },
+    "actions": {
+      "refresh": "Actualizar",
+      "addTask": "Añadir tarea"
+    },
+    "common": {
+      "description": "Descripción",
+      "optional": "opcional"
+    },
+    "stats": {
+      "totalTasks": "Tareas totales",
+      "completed": "Completadas"
+    },
+    "team": {
+      "title": "Miembros del equipo",
+      "projectOwner": "Propietario del proyecto",
+      "unknownUser": "Desconocido",
+      "canView": "Puede ver",
+      "canEdit": "Puede editar",
+      "viewOnly": "Solo ver",
+      "addMember": "Añadir miembro del equipo",
+      "emailPlaceholder": "nombre@empresa.com",
+      "add": "Añadir",
+      "adding": "Añadiendo...",
+      "empty": "Aún no hay miembros del equipo",
+      "view": "Ver",
+      "edit": "Editar",
+      "remove": "Eliminar",
+      "search": {
+        "noUser": "No se encontró un usuario con ese correo.",
+        "error": "Error al buscar. Inténtalo de nuevo.",
+        "invalidEmail": "Introduce un correo válido.",
+        "wait": "Espera, por favor..."
+      }
+    },
+    "projects": {
+      "otherProjects": "Otros proyectos",
+      "selectProject": "Selecciona un proyecto",
+      "selectProjectDesc": "Elige un proyecto para ver tareas, gestionar colaboradores y seguir el progreso."
+    },
+    "projectForm": {
+      "title": "Nuevo proyecto",
+      "projectName": "Nombre del proyecto",
+      "projectNamePlaceholder": "p. ej. Rediseño del sitio web",
+      "descriptionPlaceholder": "¿De qué trata este proyecto?",
+      "create": "Crear proyecto",
+      "creating": "Creando...",
+      "validation": {
+        "projectTitleRequired": "El título del proyecto es obligatorio."
+      }
+    },
+    "taskForm": {
+      "taskName": "Nombre de la tarea",
+      "taskNamePlaceholder": "p. ej. Borrador del cronograma",
+      "descriptionPlaceholder": "Añade detalles (opcional)",
+      "assignTo": "Asignar a",
+      "unassigned": "Sin asignar",
+      "priority": "Prioridad",
+      "priorityLow": "Baja",
+      "priorityMedium": "Media",
+      "priorityHigh": "Alta",
+      "priorityUrgent": "Urgente",
+      "dueDate": "Fecha de vencimiento",
+      "add": "Añadir tarea",
+      "adding": "Añadiendo...",
+      "validation": {
+        "taskTitleRequired": "El título de la tarea es obligatorio."
+      }
+    },
+    "timeline": {
+      "emptyTitle": "Aún no hay tareas",
+      "emptyDesc": "Crea tareas para que aparezcan en tu línea de tiempo.",
+      "title": "Línea de tiempo del proyecto",
+      "progressLine": "{count, plural, =0 {Sin tareas} one {# tarea} other {# tareas}}",
+      "completedLine": "{completed} de {total} completadas",
+      "markComplete": "Marcar tarea como completada",
+      "markIncomplete": "Marcar tarea como incompleta",
+      "done": "Hecha",
+      "overdue": "Vencida",
+      "createdBy": "Creada por:",
+      "lastModified": "Última modificación:",
+      "completedBy": "Completada por:"
+    },
+    "projectsList": {
+      "subtitle": "Progreso en tiempo real de todos tus proyectos",
+      "overallProgress": "Progreso general",
+      "tasksOfTasks": "{completed} de {total} tareas",
+      "activeProjects": "Proyectos activos",
+      "viewAll": "Ver todos los proyectos",
+      "hideAll": "Ocultar todos los proyectos",
+      "done": "hechas",
+      "active": "activas",
+      "pending": "pendientes",
+      "noTasksYet": "Aún no hay tareas"
+    },
+    "notes": {
+      "title": "Tus notas",
+      "actions": {
+        "createNew": "Crear nueva nota",
+        "create": "Crear nota",
+        "creating": "Creando...",
+        "cancel": "Cancelar"
+      },
+      "fields": {
+        "content": "Contenido de la nota"
+      },
+      "placeholders": {
+        "content": "Escribe tu nota aquí..."
+      },
+      "validation": {
+        "contentRequired": "Añade contenido a tu nota."
+      },
+      "errors": {
+        "createFailed": "No se pudo crear la nota: {message}"
+      },
+      "empty": "Aún no hay notas. ¡Crea tu primera nota!",
+      "encrypted": "Cifrado ({count})",
+      "encryptedNote": "🔒 Nota cifrada",
+      "deleteConfirm": "¿Eliminar esta nota? Esto no se puede deshacer.",
+      "allLocked": "Todas las notas están bloqueadas",
+      "allLockedHint": "Revisa la carpeta cifrada",
+      "password": {
+        "sectionTitle": "Protegida con contraseña",
+        "protected": "Protegida con contraseña",
+        "protectedDesc": "Introduce tu contraseña para ver esta nota",
+        "placeholder": "Introduce la contraseña",
+        "enter": "Introduce una contraseña",
+        "incorrect": "Contraseña incorrecta",
+        "verifyFailed": "La verificación falló",
+        "unlock": "Desbloquear nota",
+        "unlocking": "Desbloqueando..."
+      },
+      "edit": {
+        "title": "Editar nota",
+        "save": "Guardar",
+        "saving": "Guardando..."
+      },
+      "reset": {
+        "cta": "¿Restablecer?",
+        "title": "Restablecer contraseña",
+        "desc": "Te enviaremos un correo con un enlace para restablecer la contraseña de esta nota.",
+        "expiry": "El enlace caducará en 1 hora.",
+        "send": "Enviar correo",
+        "sending": "Enviando...",
+        "success": "✅ Correo de restablecimiento enviado. Revisa tu bandeja de entrada."
+      }
+    }
   },
   "publish": {
     "title": "Eventos",
@@ -104,7 +258,23 @@
     "close": "Cerrar",
     "loading": "Cargando...",
     "search": "Buscar",
+    "copy": "Copiar",
+    "copied": "Copiado",
     "lightMode": "Cambiar a modo claro",
     "darkMode": "Cambiar a modo oscuro"
+  },
+  "org": {
+    "accessCode": "Código de la org",
+    "yourOrgs": "Organizaciones",
+    "switchOrg": "Cambiar organización",
+    "viewAll": "Ver todas",
+    "setActive": "Activar",
+    "active": "Activa",
+    "noOrgs": "Aún no formas parte de ninguna organización.",
+    "activeOrgHint": "Elige una organización activa para trabajar dentro de ella.",
+    "roleLabel": "Rol",
+    "roleAdmin": "Admin",
+    "roleWorker": "Miembro",
+    "roleMentor": "Mentor"
   }
 }

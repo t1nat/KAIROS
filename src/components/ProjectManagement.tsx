@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Trash2, FolderPlus, CheckCircle2 } from "lucide-react";
 import Image from "next/image";
 import { api } from "~/trpc/react";
+import { useTranslations } from "next-intl";
 
 interface User {
   id: string;
@@ -24,6 +25,7 @@ interface ProjectFormProps {
 }
 
 export function CreateProjectForm({ onSubmit, currentUser, isExpanded, onToggle }: ProjectFormProps) {
+  const t = useTranslations("create");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,7 +35,7 @@ export function CreateProjectForm({ onSubmit, currentUser, isExpanded, onToggle 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
-      alert("Project title is required");
+      alert(t("projectForm.validation.projectTitleRequired"));
       return;
     }
 
@@ -48,16 +50,16 @@ export function CreateProjectForm({ onSubmit, currentUser, isExpanded, onToggle 
   };
 
   return (
-    <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
+    <div className="surface-card overflow-hidden">
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-6 py-4 hover:bg-white/5 transition-colors"
+        className="w-full flex items-center justify-between px-6 py-4 hover:bg-bg-elevated transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-[#A343EC]/20 rounded-lg flex items-center justify-center">
-            <FolderPlus size={18} className="text-[#A343EC]" />
+          <div className="w-8 h-8 bg-accent-primary/10 border border-accent-primary/20 rounded-lg flex items-center justify-center">
+            <FolderPlus size={18} className="text-accent-primary" />
           </div>
-          <span className="text-sm font-semibold text-[#FBF9F5]">New Project</span>
+          <span className="text-sm font-semibold text-fg-primary">{t("projectForm.title")}</span>
         </div>
       </button>
 
@@ -65,30 +67,30 @@ export function CreateProjectForm({ onSubmit, currentUser, isExpanded, onToggle 
         <form onSubmit={handleSubmit} className="px-6 pb-6 border-t border-white/10 pt-6">
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-[#E4DEEA] mb-2 uppercase tracking-wide">
-                Project Name
+              <label className="block text-xs font-semibold text-fg-secondary mb-2 uppercase tracking-wide">
+                {t("projectForm.projectName")}
               </label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Enter project name"
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent text-[#FBF9F5] placeholder:text-[#59677C] transition-all"
+                placeholder={t("projectForm.projectNamePlaceholder")}
+                className="w-full px-4 py-3 bg-bg-surface/60 border border-border-light/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary/50 text-fg-primary placeholder:text-fg-tertiary transition-all"
                 disabled={isSubmitting}
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#E4DEEA] mb-2 uppercase tracking-wide">
-                Description <span className="text-[#59677C] font-normal">(optional)</span>
+              <label className="block text-xs font-semibold text-fg-secondary mb-2 uppercase tracking-wide">
+                {t("common.description")} <span className="text-fg-tertiary font-normal">({t("common.optional")})</span>
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Add a description for your project"
+                placeholder={t("projectForm.descriptionPlaceholder")}
                 rows={3}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent text-[#FBF9F5] placeholder:text-[#59677C] transition-all resize-none"
+                className="w-full px-4 py-3 bg-bg-surface/60 border border-border-light/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary/50 text-fg-primary placeholder:text-fg-tertiary transition-all resize-none"
                 disabled={isSubmitting}
               />
             </div>
@@ -96,9 +98,9 @@ export function CreateProjectForm({ onSubmit, currentUser, isExpanded, onToggle 
             <button
               type="submit"
               disabled={isSubmitting || !title.trim()}
-              className="w-full px-6 py-3 border-2 border-[#A343EC] text-[#A343EC] font-semibold rounded-lg hover:bg-[#A343EC] hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-6 py-3 border border-accent-primary/60 text-accent-primary font-semibold rounded-lg hover:bg-accent-primary hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? "Creating..." : "Create Project"}
+              {isSubmitting ? t("projectForm.creating") : t("projectForm.create")}
             </button>
           </div>
         </form>
@@ -120,6 +122,7 @@ interface TaskFormProps {
 }
 
 export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskFormProps) {
+  const t = useTranslations("create");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [assignedToId, setAssignedToId] = useState<string>("");
@@ -132,7 +135,7 @@ export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskForm
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
-      alert("Task title is required");
+      alert(t("taskForm.validation.taskTitleRequired"));
       return;
     }
 
@@ -156,55 +159,55 @@ export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskForm
   };
 
   const priorityColors = {
-    low: "border-[#80C49B] text-[#80C49B] hover:bg-[#80C49B] hover:text-white",
-    medium: "border-[#F8D45E] text-[#F8D45E] hover:bg-[#F8D45E] hover:text-[#181F25]",
-    high: "border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white",
-    urgent: "border-red-500 text-red-500 hover:bg-red-500 hover:text-white",
+    low: "border-success/60 text-success hover:bg-success hover:text-white",
+    medium: "border-warning/60 text-warning hover:bg-warning hover:text-bg-primary",
+    high: "border-orange-500/60 text-orange-400 hover:bg-orange-500 hover:text-white",
+    urgent: "border-error/60 text-error hover:bg-error hover:text-white",
   };
 
   return (
     <form onSubmit={handleSubmit} className="pt-6 space-y-4">
       <div>
-        <label className="block text-xs font-semibold text-[#E4DEEA] mb-2 uppercase tracking-wide">
-          Task Name
+        <label className="block text-xs font-semibold text-fg-secondary mb-2 uppercase tracking-wide">
+          {t("taskForm.taskName")}
         </label>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Enter task name"
-          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent text-[#FBF9F5] placeholder:text-[#59677C] transition-all"
+          placeholder={t("taskForm.taskNamePlaceholder")}
+          className="w-full px-4 py-3 bg-bg-surface/60 border border-border-light/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary/50 text-fg-primary placeholder:text-fg-tertiary transition-all"
           disabled={isSubmitting}
           required
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-[#E4DEEA] mb-2 uppercase tracking-wide">
-          Description <span className="text-[#59677C] font-normal">(optional)</span>
+        <label className="block text-xs font-semibold text-fg-secondary mb-2 uppercase tracking-wide">
+          {t("common.description")} <span className="text-fg-tertiary font-normal">({t("common.optional")})</span>
         </label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Add details about this task"
+          placeholder={t("taskForm.descriptionPlaceholder")}
           rows={2}
-          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent text-[#FBF9F5] placeholder:text-[#59677C] transition-all resize-none"
+          className="w-full px-4 py-3 bg-bg-surface/60 border border-border-light/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary/50 text-fg-primary placeholder:text-fg-tertiary transition-all resize-none"
           disabled={isSubmitting}
         />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-semibold text-[#E4DEEA] mb-2 uppercase tracking-wide">
-            Assign To
+          <label className="block text-xs font-semibold text-fg-secondary mb-2 uppercase tracking-wide">
+            {t("taskForm.assignTo")}
           </label>
           <select
             value={assignedToId}
             onChange={(e) => setAssignedToId(e.target.value)}
-            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent text-[#FBF9F5] transition-all"
+            className="w-full px-4 py-3 bg-bg-surface/60 border border-border-light/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary/50 text-fg-primary transition-all"
             disabled={isSubmitting}
           >
-            <option value="">Unassigned</option>
+            <option value="">{t("taskForm.unassigned")}</option>
             {availableUsers.map((user) => (
               <option key={user.id} value={user.id} className="bg-[#181F25]">
                 {user.name ?? user.email}
@@ -214,32 +217,32 @@ export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskForm
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-[#E4DEEA] mb-2 uppercase tracking-wide">
-            Priority
+          <label className="block text-xs font-semibold text-fg-secondary mb-2 uppercase tracking-wide">
+            {t("taskForm.priority")}
           </label>
           <select
             value={priority}
             onChange={(e) => setPriority(e.target.value as typeof priority)}
-            className={`w-full px-4 py-3 bg-white/5 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] transition-all ${priorityColors[priority]}`}
+            className={`w-full px-4 py-3 bg-bg-surface/60 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 transition-all ${priorityColors[priority]}`}
             disabled={isSubmitting}
           >
-            <option value="low" className="bg-[#181F25]">Low</option>
-            <option value="medium" className="bg-[#181F25]">Medium</option>
-            <option value="high" className="bg-[#181F25]">High</option>
-            <option value="urgent" className="bg-[#181F25]">Urgent</option>
+            <option value="low" className="bg-[#181F25]">{t("taskForm.priorityLow")}</option>
+            <option value="medium" className="bg-[#181F25]">{t("taskForm.priorityMedium")}</option>
+            <option value="high" className="bg-[#181F25]">{t("taskForm.priorityHigh")}</option>
+            <option value="urgent" className="bg-[#181F25]">{t("taskForm.priorityUrgent")}</option>
           </select>
         </div>
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-[#E4DEEA] mb-2 uppercase tracking-wide">
-          Due Date <span className="text-[#59677C] font-normal">(optional)</span>
+        <label className="block text-xs font-semibold text-fg-secondary mb-2 uppercase tracking-wide">
+          {t("taskForm.dueDate")} <span className="text-fg-tertiary font-normal">({t("common.optional")})</span>
         </label>
         <input
           type="datetime-local"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
-          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent text-[#FBF9F5] transition-all"
+          className="w-full px-4 py-3 bg-bg-surface/60 border border-border-light/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary/50 text-fg-primary transition-all"
           disabled={isSubmitting}
         />
       </div>
@@ -247,9 +250,9 @@ export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskForm
       <button
         type="submit"
         disabled={isSubmitting || !title.trim()}
-        className="w-full px-6 py-3 border-2 border-[#A343EC] text-[#A343EC] font-semibold rounded-lg hover:bg-[#A343EC] hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full px-6 py-3 border border-accent-primary/60 text-accent-primary font-semibold rounded-lg hover:bg-accent-primary hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {isSubmitting ? "Adding..." : "Add Task"}
+        {isSubmitting ? t("taskForm.adding") : t("taskForm.add")}
       </button>
     </form>
   );
@@ -275,6 +278,7 @@ export function CollaboratorManager({
   onUpdatePermission,
   isOwner,
 }: CollaboratorManagerProps) {
+  const t = useTranslations("create");
   const [email, setEmail] = useState("");
   const [permission, setPermission] = useState<"read" | "write">("read");
   const [isAdding, setIsAdding] = useState(false);
@@ -314,28 +318,28 @@ export function CollaboratorManager({
             setSearchError("");
           } else {
             setSearchedUser(null);
-            setSearchError("No user found with this email. They need to sign up first!");
+            setSearchError(t("team.search.noUser"));
           }
         }).catch((error) => {
           console.error("Search error:", error);
           setSearchedUser(null);
-          setSearchError("Error searching for user");
+          setSearchError(t("team.search.error"));
         });
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [email, searchUser]);
+  }, [email, searchUser, t]);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!isValidEmail(email)) {
-      setSearchError("Please enter a valid email address");
+      setSearchError(t("team.search.invalidEmail"));
       return;
     }
 
     if (!searchedUser) {
-      setSearchError("Please wait for user search to complete");
+      setSearchError(t("team.search.wait"));
       return;
     }
 
@@ -362,48 +366,48 @@ export function CollaboratorManager({
       {isOwner && (
         <form onSubmit={handleAdd} className="space-y-3">
           <div>
-            <label className="block text-xs font-semibold text-[#E4DEEA] mb-2 uppercase tracking-wide">
-              Add Team Member
+            <label className="block text-xs font-semibold text-fg-secondary mb-2 uppercase tracking-wide">
+              {t("team.addMember")}
             </label>
             <div className="relative">
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="colleague@example.com"
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent text-[#FBF9F5] placeholder:text-[#59677C] transition-all"
+                placeholder={t("team.emailPlaceholder")}
+                className="w-full px-4 py-3 bg-bg-surface/60 border border-border-light/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary/50 text-fg-primary placeholder:text-fg-tertiary transition-all"
                 disabled={isAdding}
               />
               {isSearching && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <div className="w-4 h-4 border-2 border-[#A343EC] border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-accent-primary border-t-transparent rounded-full animate-spin" />
                 </div>
               )}
             </div>
           </div>
 
           {searchedUser && (
-            <div className="flex items-center gap-3 p-3 bg-[#80C49B]/10 border border-[#80C49B]/30 rounded-lg animate-in fade-in slide-in-from-top-1">
+            <div className="flex items-center gap-3 p-3 bg-success/10 border border-success/30 rounded-lg animate-in fade-in slide-in-from-top-1">
               {searchedUser.image ? (
                 <Image
                   src={searchedUser.image}
                   alt={searchedUser.name ?? "User"}
                   width={40}
                   height={40}
-                  className="rounded-full object-cover ring-2 ring-[#80C49B]/30"
+                  className="rounded-full object-cover ring-2 ring-success/30"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#A343EC] to-[#9448F2] flex items-center justify-center text-white font-semibold">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center text-white font-semibold">
                   {searchedUser.name?.[0]?.toUpperCase() ?? searchedUser.email[0]?.toUpperCase()}
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-[#FBF9F5] truncate">
-                  {searchedUser.name ?? "User"}
+                <p className="text-sm font-semibold text-fg-primary truncate">
+                  {searchedUser.name ?? t("team.unknownUser")}
                 </p>
-                <p className="text-xs text-[#E4DEAA] truncate">{searchedUser.email}</p>
+                <p className="text-xs text-fg-secondary truncate">{searchedUser.email}</p>
               </div>
-              <CheckCircle2 size={20} className="text-[#80C49B] flex-shrink-0" />
+              <CheckCircle2 size={20} className="text-success flex-shrink-0" />
             </div>
           )}
 
@@ -417,19 +421,19 @@ export function CollaboratorManager({
             <select
               value={permission}
               onChange={(e) => setPermission(e.target.value as "read" | "write")}
-              className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A343EC] focus:border-transparent text-[#FBF9F5] transition-all"
+              className="flex-1 px-4 py-3 bg-bg-surface/60 border border-border-light/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary/50 text-fg-primary transition-all"
               disabled={isAdding}
             >
-              <option value="read" className="bg-[#181F25]">Can View</option>
-              <option value="write" className="bg-[#181F25]">Can Edit</option>
+              <option value="read" className="bg-[#181F25]">{t("team.canView")}</option>
+              <option value="write" className="bg-[#181F25]">{t("team.canEdit")}</option>
             </select>
 
             <button
               type="submit"
               disabled={isAdding || !searchedUser || isSearching}
-              className="px-6 py-3 border-2 border-[#80C49B] text-[#80C49B] font-semibold rounded-lg hover:bg-[#80C49B] hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-3 border border-success/60 text-success font-semibold rounded-lg hover:bg-success hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isAdding ? "..." : "Add"}
+              {isAdding ? t("team.adding") : t("team.add")}
             </button>
           </div>
         </form>
@@ -437,12 +441,12 @@ export function CollaboratorManager({
 
       <div className="space-y-2">
         {currentCollaborators.length === 0 ? (
-          <p className="text-center py-6 text-sm text-[#59677C]">No team members yet</p>
+          <p className="text-center py-6 text-sm text-fg-tertiary">{t("team.empty")}</p>
         ) : (
           currentCollaborators.map(({ user, permission: userPermission }) => (
             <div
               key={user.id}
-              className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-all"
+              className="flex items-center justify-between p-4 bg-bg-surface/50 rounded-lg border border-border-light/30 hover:bg-bg-elevated transition-all"
             >
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 {user.image ? (
@@ -454,16 +458,16 @@ export function CollaboratorManager({
                     className="rounded-full object-cover ring-2 ring-white/10"
                   />
                 ) : (
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#A343EC] to-[#9448F2] flex items-center justify-center text-white font-semibold text-sm">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center text-white font-semibold text-sm">
                     {user.name?.[0] ?? user.email[0]?.toUpperCase() ?? "?"}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-[#FBF9F5] truncate">
+                  <p className="text-sm font-semibold text-fg-primary truncate">
                     {user.name ?? user.email}
                   </p>
                   {user.name && (
-                    <p className="text-xs text-[#E4DEEA] truncate">{user.email}</p>
+                    <p className="text-xs text-fg-secondary truncate">{user.email}</p>
                   )}
                 </div>
               </div>
@@ -474,22 +478,22 @@ export function CollaboratorManager({
                     <select
                       value={userPermission}
                       onChange={(e) => onUpdatePermission(user.id, e.target.value as "read" | "write")}
-                      className="px-3 py-2 text-xs border border-white/10 bg-white/5 rounded-lg text-[#FBF9F5] hover:bg-white/10 transition-all"
+                      className="px-3 py-2 text-xs border border-border-light/30 bg-bg-surface/50 rounded-lg text-fg-primary hover:bg-bg-elevated transition-all"
                     >
-                      <option value="read" className="bg-[#181F25]">View</option>
-                      <option value="write" className="bg-[#181F25]">Edit</option>
+                      <option value="read" className="bg-[#181F25]">{t("team.view")}</option>
+                      <option value="write" className="bg-[#181F25]">{t("team.edit")}</option>
                     </select>
                     <button
                       onClick={() => onRemoveCollaborator(user.id)}
                       className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                      title="Remove"
+                      title={t("team.remove")}
                     >
                       <Trash2 size={16} />
                     </button>
                   </>
                 ) : (
-                  <span className="px-3 py-2 text-xs font-medium bg-white/5 text-[#E4DEAA] rounded-lg border border-white/10">
-                    {userPermission === "read" ? "View" : "Edit"}
+                  <span className="px-3 py-2 text-xs font-medium bg-bg-surface/50 text-fg-secondary rounded-lg border border-border-light/30">
+                    {userPermission === "read" ? t("team.view") : t("team.edit")}
                   </span>
                 )}
               </div>

@@ -82,7 +82,161 @@
   },
   "create": {
     "title": "Workspace",
-    "subtitle": "Manage your projects and notes"
+    "subtitle": "Manage your projects and notes",
+    "headline": "Your workspace, in focus.",
+    "tagline": "Create projects, capture notes, and stay on track—without the noise.",
+    "cta": "Start by creating a project or a note.",
+    "quickStart": "Quick start",
+    "quickStartDesc": "Create a project, then add notes as you go.",
+    "errors": {
+      "generic": "Error: {message}"
+    },
+    "actions": {
+      "refresh": "Refresh",
+      "addTask": "Add Task"
+    },
+    "common": {
+      "description": "Description",
+      "optional": "optional"
+    },
+    "stats": {
+      "totalTasks": "Total Tasks",
+      "completed": "Completed"
+    },
+    "team": {
+      "title": "Team Members",
+      "projectOwner": "Project Owner",
+      "unknownUser": "Unknown",
+      "canView": "Can View",
+      "canEdit": "Can Edit",
+      "viewOnly": "View Only",
+      "addMember": "Add Team Member",
+      "emailPlaceholder": "name@company.com",
+      "add": "Add",
+      "adding": "Adding...",
+      "empty": "No team members yet",
+      "view": "View",
+      "edit": "Edit",
+      "remove": "Remove",
+      "search": {
+        "noUser": "No user found with that email.",
+        "error": "Error searching. Please try again.",
+        "invalidEmail": "Please enter a valid email address.",
+        "wait": "Please wait..."
+      }
+    },
+    "projects": {
+      "otherProjects": "Other Projects",
+      "selectProject": "Select a Project",
+      "selectProjectDesc": "Pick a project to see tasks, manage collaborators, and track progress."
+    },
+    "projectForm": {
+      "title": "New Project",
+      "projectName": "Project Name",
+      "projectNamePlaceholder": "e.g. Website Redesign",
+      "descriptionPlaceholder": "What’s this project about?",
+      "create": "Create Project",
+      "creating": "Creating...",
+      "validation": {
+        "projectTitleRequired": "Project title is required."
+      }
+    },
+    "taskForm": {
+      "taskName": "Task Name",
+      "taskNamePlaceholder": "e.g. Draft timeline",
+      "descriptionPlaceholder": "Add details (optional)",
+      "assignTo": "Assign To",
+      "unassigned": "Unassigned",
+      "priority": "Priority",
+      "priorityLow": "Low",
+      "priorityMedium": "Medium",
+      "priorityHigh": "High",
+      "priorityUrgent": "Urgent",
+      "dueDate": "Due Date",
+      "add": "Add Task",
+      "adding": "Adding...",
+      "validation": {
+        "taskTitleRequired": "Task title is required."
+      }
+    },
+    "timeline": {
+      "emptyTitle": "No Tasks Yet",
+      "emptyDesc": "Create tasks to see them appear on your timeline.",
+      "title": "Project Timeline",
+      "progressLine": "{count, plural, =0 {No tasks} one {# task} other {# tasks}}",
+      "completedLine": "{completed} of {total} completed",
+      "markComplete": "Mark task as complete",
+      "markIncomplete": "Mark task as incomplete",
+      "done": "Done",
+      "overdue": "Overdue",
+      "createdBy": "Created by:",
+      "lastModified": "Last modified:",
+      "completedBy": "Completed by:"
+    },
+    "projectsList": {
+      "subtitle": "Real-time progress across all your projects",
+      "overallProgress": "Overall Progress",
+      "tasksOfTasks": "{completed} of {total} tasks",
+      "activeProjects": "Active Projects",
+      "viewAll": "View All Projects",
+      "hideAll": "Hide All Projects",
+      "done": "done",
+      "active": "active",
+      "pending": "pending",
+      "noTasksYet": "No tasks yet"
+    },
+    "notes": {
+      "title": "Your Notes",
+      "actions": {
+        "createNew": "Create New Note",
+        "create": "Create Note",
+        "creating": "Creating...",
+        "cancel": "Cancel"
+      },
+      "fields": {
+        "content": "Note Content"
+      },
+      "placeholders": {
+        "content": "Write your note here..."
+      },
+      "validation": {
+        "contentRequired": "Please add some content to your note."
+      },
+      "errors": {
+        "createFailed": "Failed to create note: {message}"
+      },
+      "empty": "No notes yet. Create your first note!",
+      "encrypted": "Encrypted ({count})",
+      "encryptedNote": "🔒 Encrypted Note",
+      "deleteConfirm": "Delete this note? This cannot be undone.",
+      "allLocked": "All notes are locked",
+      "allLockedHint": "Check the encrypted folder",
+      "password": {
+        "sectionTitle": "Password Protected",
+        "protected": "Password Protected",
+        "protectedDesc": "Enter your password to view this note",
+        "placeholder": "Enter password",
+        "enter": "Please enter a password",
+        "incorrect": "Incorrect password",
+        "verifyFailed": "Verification failed",
+        "unlock": "Unlock Note",
+        "unlocking": "Unlocking..."
+      },
+      "edit": {
+        "title": "Edit Note",
+        "save": "Save",
+        "saving": "Saving..."
+      },
+      "reset": {
+        "cta": "Reset?",
+        "title": "Reset Password",
+        "desc": "We will send you an email with a link to reset the password for this note.",
+        "expiry": "The reset link will expire in 1 hour.",
+        "send": "Send Email",
+        "sending": "Sending...",
+        "success": "✅ Password reset email sent! Check your inbox."
+      }
+    }
   },
   "publish": {
     "title": "Events",
@@ -104,7 +258,23 @@
     "close": "Close",
     "loading": "Loading...",
     "search": "Search",
+    "copy": "Copy",
+    "copied": "Copied",
     "lightMode": "Switch to light mode",
     "darkMode": "Switch to dark mode"
+  },
+  "org": {
+    "accessCode": "Org code",
+    "yourOrgs": "Organizations",
+    "switchOrg": "Switch organization",
+    "viewAll": "View all",
+    "setActive": "Set active",
+    "active": "Active",
+    "noOrgs": "You are not part of any organization yet.",
+    "activeOrgHint": "Pick an active organization to work inside it.",
+    "roleLabel": "Role",
+    "roleAdmin": "Admin",
+    "roleWorker": "Member",
+    "roleMentor": "Mentor"
   }
 }

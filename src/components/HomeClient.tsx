@@ -1,20 +1,23 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
-import { UserDisplay } from "./_components/UserDisplay";
-import { SignInModal } from "./_components/SignInModal";
-import { RoleSelectionModal } from "./_components/RoleSelectionModal";
-import { ThemeToggle } from "./_components/ThemeToggle";
-import MagicBento from "./_components/MagicBento";
+import { UserDisplay } from "~/components/UserDisplay";
+import { SignInModal } from "~/components/SignInModal";
+import { RoleSelectionModal } from "~/components/RoleSelectionModal";
+import { ThemeToggle } from "~/components/ThemeToggle";
+import MagicBento from "~/components/MagicBento";
 import { api } from "~/trpc/react";
 import {
     Calendar,
-    CheckCircle2,
     ArrowRight,
+    Zap,
+    Lock,
+    Sparkles,
 } from "lucide-react";
 
-import ScrollReveal from "./_components/ScrollReveal";
+import ScrollReveal from "~/components/ScrollReveal";
 
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -66,10 +69,10 @@ export function HomeClient({ session }: {
 
     return (
         <main id="main-content" className="min-h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary relative overflow-hidden">
-            <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-30">
-                <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-gradient-to-br from-accent-primary/20 to-brand-indigo/20 rounded-full blur-3xl animate-fadeIn" />
-                <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-gradient-to-tl from-accent-secondary/20 to-brand-blue/20 rounded-full blur-3xl animate-fadeIn" style={{ animationDelay: '0.5s' }} />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-gradient-to-br from-brand-purple/10 to-transparent rounded-full blur-2xl" />
+            <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-40">
+                <div className="absolute top-0 left-0 w-[700px] h-[700px] bg-gradient-to-br from-accent-primary/30 via-brand-indigo/20 to-brand-purple/30 rounded-full blur-3xl animate-fadeIn animate-pulse" style={{ animationDuration: '8s' }} />
+                <div className="absolute bottom-0 right-0 w-[700px] h-[700px] bg-gradient-to-tl from-brand-cyan/20 via-brand-blue/20 to-accent-secondary/30 rounded-full blur-3xl animate-fadeIn" style={{ animationDelay: '0.5s', animationDuration: '10s' }} />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-br from-brand-teal/10 via-brand-purple/15 to-transparent rounded-full blur-2xl" />
             </div>
 
             <div className="relative z-10">
@@ -78,10 +81,13 @@ export function HomeClient({ session }: {
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-gradient-to-br from-accent-primary to-accent-secondary rounded-xl flex items-center justify-center shadow-md">
-                                    <img 
-                                        src="/logo_white.png" 
-                                        alt="Kairos Logo" 
+                                    <Image
+                                        src="/logo_white.png"
+                                        alt="Kairos Logo"
+                                        width={24}
+                                        height={24}
                                         className="w-6 h-6 object-contain"
+                                        priority
                                     />
                                 </div>
                                 <h1 className="text-2xl font-bold text-fg-primary font-display tracking-tight">KAIROS</h1>
@@ -205,36 +211,36 @@ export function HomeClient({ session }: {
                         <div className="surface-card p-8 md:p-10 mt-16">
                             <h4 className="text-2xl md:text-3xl font-bold text-fg-primary mb-8">Why Teams Choose Kairos</h4>
                             <div className="grid md:grid-cols-2 gap-6">
-                                <div className="flex items-start gap-4 p-4 rounded-xl bg-success/5 border border-success/20 hover:bg-success/10 transition-colors">
-                                    <div className="flex-shrink-0 w-10 h-10 bg-success/20 rounded-xl flex items-center justify-center mt-1">
-                                        <CheckCircle2 className="text-success" size={20} />
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-success/5 border border-success/20 hover:bg-success/10 transition-colors group">
+                                    <div className="flex-shrink-0 w-10 h-10 bg-success/20 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
+                                        <Calendar className="text-success" size={20} />
                                     </div>
                                     <div>
                                         <h5 className="font-semibold text-fg-primary mb-2">Interactive Timeline</h5>
                                         <p className="text-sm text-fg-secondary">Visualize the flow. Manage tasks and track progress at a glance.</p>
                                     </div>
                                 </div>
-                                <div className="flex items-start gap-4 p-4 rounded-xl bg-info/5 border border-info/20 hover:bg-info/10 transition-colors">
-                                    <div className="flex-shrink-0 w-10 h-10 bg-info/20 rounded-xl flex items-center justify-center mt-1">
-                                        <CheckCircle2 className="text-info" size={20} />
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-success/5 border border-success/20 hover:bg-success/10 transition-colors group">
+                                    <div className="flex-shrink-0 w-10 h-10 bg-success/20 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
+                                        <Zap className="text-success" size={20} />
                                     </div>
                                     <div>
                                         <h5 className="font-semibold text-fg-primary mb-2">Event Publishing</h5>
                                         <p className="text-sm text-fg-secondary">Go live. Turn internal project plans into public events in seconds.</p>
                                     </div>
                                 </div>
-                                <div className="flex items-start gap-4 p-4 rounded-xl bg-warning/5 border border-warning/20 hover:bg-warning/10 transition-colors">
-                                    <div className="flex-shrink-0 w-10 h-10 bg-warning/20 rounded-xl flex items-center justify-center mt-1">
-                                        <CheckCircle2 className="text-warning" size={20} />
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-warning/5 border border-warning/20 hover:bg-warning/10 transition-colors group">
+                                    <div className="flex-shrink-0 w-10 h-10 bg-warning/20 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
+                                        <Lock className="text-warning" size={20} />
                                     </div>
                                     <div>
                                         <h5 className="font-semibold text-fg-primary mb-2">Secure Team Access</h5>
                                         <p className="text-sm text-fg-secondary">Secure your organization with roles and access codes.</p>
                                     </div>
                                 </div>
-                                <div className="flex items-start gap-4 p-4 rounded-xl bg-accent-primary/5 border border-accent-primary/20 hover:bg-accent-primary/10 transition-colors">
-                                    <div className="flex-shrink-0 w-10 h-10 bg-accent-primary/20 rounded-xl flex items-center justify-center mt-1">
-                                        <CheckCircle2 className="text-accent-primary" size={20} />
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-accent-primary/5 border border-accent-primary/20 hover:bg-accent-primary/10 transition-colors group">
+                                    <div className="flex-shrink-0 w-10 h-10 bg-accent-primary/20 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
+                                        <Sparkles className="text-accent-primary" size={20} />
                                     </div>
                                     <div>
                                         <h5 className="font-semibold text-fg-primary mb-2">Unified Workspace</h5>
@@ -248,22 +254,25 @@ export function HomeClient({ session }: {
 
                 {!session && (
                     <section className="py-20 px-6 relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-accent-primary/10 via-brand-indigo/10 to-accent-secondary/10"></div>
+                        <div className="absolute inset-0 bg-gradient-to-r from-accent-primary/10 via-brand-indigo/10 to-brand-cyan/10"></div>
                         <div className="max-w-4xl mx-auto text-center relative z-10">
-                            <div className="surface-card p-12">
-                                <h3 className="text-4xl md:text-5xl font-bold text-fg-primary mb-4">
-                                    Ready to Transform Your Events?
-                                </h3>
-                                <p className="text-xl text-fg-secondary mb-8">
-                                    Join teams worldwide coordinating seamless events with Kairos.
-                                </p>
-                                <button
-                                    onClick={() => setIsModalOpen(true)}
-                                    className="inline-flex items-center gap-2 px-10 py-5 bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-accent transition-all hover:scale-[1.02] text-lg group"
-                                >
-                                    Start Planning Today
-                                    <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                                </button>
+                            <div className="surface-card p-12 hover:shadow-2xl hover:shadow-accent-primary/20 transition-all duration-500 group relative overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-br from-accent-primary/5 via-transparent to-accent-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                                <div className="relative">
+                                    <h3 className="text-4xl md:text-5xl font-bold text-fg-primary mb-4">
+                                        Ready to Transform Your Events?
+                                    </h3>
+                                    <p className="text-xl text-fg-secondary mb-8">
+                                        Join teams worldwide coordinating seamless events with Kairos.
+                                    </p>
+                                    <button
+                                        onClick={() => setIsModalOpen(true)}
+                                        className="inline-flex items-center gap-2 px-10 py-5 bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-accent transition-all hover:scale-[1.02] text-lg group"
+                                    >
+                                        Start Planning Today
+                                        <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </section>
@@ -272,7 +281,7 @@ export function HomeClient({ session }: {
                 <footer className="py-12 px-6">
                     <div className="max-w-7xl mx-auto text-center">
                         <div className="flex items-center justify-center gap-3 mb-4">
-                            <span className="text-xl font-bold text-fg-primary font-uncial">Kairos</span>
+                            <span className="text-xl font-bold text-fg-primary font-display tracking-tight">Kairos</span>
                         </div>
                         <p className="text-fg-secondary">
                             © 2025 Kairos.

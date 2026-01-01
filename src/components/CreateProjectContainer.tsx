@@ -6,6 +6,7 @@ import { CreateProjectForm, CreateTaskForm, CollaboratorManager } from "./Projec
 import { InteractiveTimeline } from "./InteractiveTimeline";
 import { ChevronDown, ChevronUp, RefreshCw, CheckCircle2, ArrowLeft, Folder } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 interface CreateProjectContainerProps {
   userId: string;
@@ -59,12 +60,14 @@ interface Task {
 }
 
 export function CreateProjectContainer({ userId }: CreateProjectContainerProps) {
+  const t = useTranslations("create");
   const searchParams = useSearchParams();
   const projectIdFromUrl = searchParams.get("projectId");
   
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
     projectIdFromUrl ? parseInt(projectIdFromUrl) : null
   );
+  const [isCreateProjectExpanded, setIsCreateProjectExpanded] = useState(true);
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [showCollaborators, setShowCollaborators] = useState(false);
   const [showOtherProjects, setShowOtherProjects] = useState(false);
@@ -97,7 +100,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
       void utils.project.getMyProjects.invalidate();
       if (data) setSelectedProjectId(data.id);
     },
-    onError: (error) => alert(`Error: ${error.message}`),
+    onError: (error) => alert(t("errors.generic", { message: error.message })),
   });
 
   const createTask = api.task.create.useMutation({
@@ -105,7 +108,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
       void utils.project.getById.invalidate({ id: selectedProjectId! });
       setShowTaskForm(false);
     },
-    onError: (error) => alert(`Error: ${error.message}`),
+    onError: (error) => alert(t("errors.generic", { message: error.message })),
   });
 
   const updateTaskStatus = api.task.updateStatus.useMutation({
@@ -137,23 +140,23 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
       if (ctx?.previousProject && selectedProjectId) {
         utils.project.getById.setData({ id: selectedProjectId }, ctx.previousProject);
       }
-      alert(`Error: ${error.message}`);
+      alert(t("errors.generic", { message: error.message }));
     },
   });
 
   const addCollaborator = api.project.addCollaborator.useMutation({
     onSuccess: () => void utils.project.getById.invalidate({ id: selectedProjectId! }),
-    onError: (e) => alert(`Error: ${e.message}`),
+    onError: (e) => alert(t("errors.generic", { message: e.message })),
   });
 
   const removeCollaborator = api.project.removeCollaborator.useMutation({
     onSuccess: () => void utils.project.getById.invalidate({ id: selectedProjectId! }),
-    onError: (e) => alert(`Error: ${e.message}`),
+    onError: (e) => alert(t("errors.generic", { message: e.message })),
   });
 
   const updateCollaboratorPermission = api.project.updateCollaboratorPermission.useMutation({
     onSuccess: () => void utils.project.getById.invalidate({ id: selectedProjectId! }),
-    onError: (e) => alert(`Error: ${e.message}`),
+    onError: (e) => alert(t("errors.generic", { message: e.message })),
   });
 
   const handleCreateProject = async (data: CreateProjectInput) => createProject.mutate(data);
@@ -191,8 +194,8 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
     ? [
         {
           id: projectDetails.createdById,
-          name: "Project Owner",
-          email: "owner@project.com",
+          name: t("team.projectOwner"),
+          email: "",
           image: null,
         },
         ...(projectDetails.collaborators?.map((c) => ({
@@ -212,57 +215,60 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
             <CreateProjectForm
               onSubmit={handleCreateProject}
               currentUser={{ id: userId, name: null, email: "", image: null }}
-              isExpanded={true}
-              onToggle={() => console.warn("CreateProjectForm onToggle not implemented")}
+              isExpanded={isCreateProjectExpanded}
+              onToggle={() => setIsCreateProjectExpanded((s) => !s)}
             />
           </div>
         )}
 
         {selectedProjectId && projectDetails && (
           <div className="space-y-3 animate-in fade-in slide-in-from-left-2 duration-300">
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-5">
+            <div className="surface-card p-5">
               <div className="flex items-start justify-between mb-4">
                 <button
                   onClick={() => setSelectedProjectId(null)}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors group"
+                  className="p-2 hover:bg-bg-elevated rounded-lg transition-colors group"
                 >
-                  <ArrowLeft size={20} className="text-[#E4DEAA] group-hover:text-[#A343EC]" />
+                  <ArrowLeft size={20} className="text-fg-secondary group-hover:text-accent-primary" />
                 </button>
 
                 <button
                   onClick={() => void refetchProjectDetails()}
-                  className="p-2 text-[#E4DEAA] hover:text-[#A343EC] hover:bg-white/10 rounded-lg transition-all"
+                  className="p-2 text-fg-secondary hover:text-accent-primary hover:bg-bg-elevated rounded-lg transition-all"
+                  aria-label={t("actions.refresh")}
                 >
                   <RefreshCw size={18} />
                 </button>
               </div>
 
               <div className="flex items-start gap-3 mb-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#A343EC] to-[#9448F2] flex items-center justify-center flex-shrink-0 shadow-lg shadow-[#A343EC]/30">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center flex-shrink-0 shadow-lg shadow-accent-primary/20">
                   <Folder className="text-white" size={24} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-xl font-bold text-[#FBF9F5] mb-1 leading-tight">{projectDetails.title}</h2>
+                  <h2 className="text-xl font-bold text-fg-primary mb-1 leading-tight">{projectDetails.title}</h2>
                   {projectDetails.description && (
-                    <p className="text-sm text-[#E4DEAA]/80 leading-relaxed">{projectDetails.description}</p>
+                    <p className="text-sm text-fg-secondary leading-relaxed">{projectDetails.description}</p>
                   )}
                 </div>
               </div>
 
               {!isOwner && (
                 <div className="flex items-center gap-2 pt-3 border-t border-white/10">
-                  <span className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium ${
-                    hasWriteAccess 
-                      ? "text-[#80C49B] bg-[#80C49B]/10 border border-[#80C49B]/30" 
-                      : "text-[#E4DEAA] bg-white/5 border border-white/10"
-                  }`}>
+                  <span
+                    className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium border ${
+                      hasWriteAccess
+                        ? "text-success bg-success/10 border-success/30"
+                        : "text-fg-secondary bg-bg-surface/50 border-border-light/30"
+                    }`}
+                  >
                     {hasWriteAccess ? (
                       <>
                         <CheckCircle2 size={12} />
-                        Can Edit
+                        {t("team.canEdit")}
                       </>
                     ) : (
-                      "View Only"
+                      t("team.viewOnly")
                     )}
                   </span>
                 </div>
@@ -270,36 +276,36 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
             </div>
 
             {projectDetails.tasks && projectDetails.tasks.length > 0 && (
-              <div className="bg-gradient-to-br from-[#A343EC]/10 to-[#9448F2]/5 rounded-xl border border-[#A343EC]/20 p-4">
+              <div className="surface-card p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-[#A343EC]/20 flex items-center justify-center">
-                      <CheckCircle2 size={20} className="text-[#A343EC]" />
+                    <div className="w-10 h-10 rounded-lg bg-accent-primary/10 border border-accent-primary/20 flex items-center justify-center">
+                      <CheckCircle2 size={20} className="text-accent-primary" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-[#A343EC]">
+                      <p className="text-2xl font-bold text-accent-primary">
                         {projectDetails.tasks.filter((t) => t.status === "completed").length}
                       </p>
-                      <p className="text-xs text-[#E4DEAA]">Completed</p>
+                      <p className="text-xs text-fg-tertiary">{t("stats.completed")}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-[#FBF9F5]">
+                    <p className="text-2xl font-bold text-fg-primary">
                       {projectDetails.tasks.length}
                     </p>
-                    <p className="text-xs text-[#E4DEAA]">Total Tasks</p>
+                    <p className="text-xs text-fg-tertiary">{t("stats.totalTasks")}</p>
                   </div>
                 </div>
               </div>
             )}
 
             {hasWriteAccess && (
-              <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+              <div className="surface-card overflow-hidden">
                 <button
                   onClick={() => setShowTaskForm(!showTaskForm)}
-                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/10 transition-colors"
+                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-bg-elevated transition-colors"
                 >
-                  <span className="text-sm font-semibold text-[#FBF9F5]">Add Task</span>
+                  <span className="text-sm font-semibold text-fg-primary">{t("actions.addTask")}</span>
                   {showTaskForm ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
 
@@ -316,12 +322,12 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
             )}
 
             {isOwner && (
-              <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+              <div className="surface-card overflow-hidden">
                 <button
                   onClick={() => setShowCollaborators(!showCollaborators)}
-                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/10 transition-colors"
+                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-bg-elevated transition-colors"
                 >
-                  <span className="text-sm font-semibold text-[#FBF9F5]">Team Members</span>
+                  <span className="text-sm font-semibold text-fg-primary">{t("team.title")}</span>
                   {showCollaborators ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
 
@@ -354,26 +360,26 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
           <div className="relative">
             <button
               onClick={() => setShowOtherProjects((s) => !s)}
-              className="w-full flex items-center justify-between px-4 py-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-colors"
+              className="w-full flex items-center justify-between px-4 py-3 bg-bg-surface/60 hover:bg-bg-elevated rounded-xl border border-border-light/30 transition-colors"
             >
-              <span className="text-sm font-semibold text-[#FBF9F5]">Other Projects</span>
+              <span className="text-sm font-semibold text-fg-primary">{t("projects.otherProjects")}</span>
               {showOtherProjects ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
 
             {showOtherProjects && (
-              <div className="mt-2 bg-[#0F1115] border border-white/10 rounded-xl shadow-xl p-2 max-h-64 overflow-y-auto">
+              <div className="mt-2 bg-bg-elevated border border-border-light/30 rounded-xl shadow-xl p-2 max-h-64 overflow-y-auto">
                 {projects
                   .filter((p) => p.id !== selectedProjectId)
                   .map((project) => (
                     <button
                       key={project.id}
-                      className="w-full text-left text-sm p-3 rounded-lg hover:bg-white/10 text-[#FBF9F5] transition-colors flex items-center gap-3"
+                      className="w-full text-left text-sm p-3 rounded-lg hover:bg-bg-surface text-fg-primary transition-colors flex items-center gap-3"
                       onClick={() => {
                         setSelectedProjectId(project.id);
                         setShowOtherProjects(false);
                       }}
                     >
-                      <Folder size={16} className="text-[#A343EC] flex-shrink-0" />
+                      <Folder size={16} className="text-accent-primary flex-shrink-0" />
                       <span className="truncate">{project.title}</span>
                     </button>
                   ))}
@@ -396,13 +402,11 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
         {!selectedProjectId && (
           <div className="h-full flex items-center justify-center">
             <div className="text-center max-w-md px-8">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#A343EC] to-[#9448F2] flex items-center justify-center mx-auto mb-6 shadow-lg shadow-[#A343EC]/30">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center mx-auto mb-6 shadow-lg shadow-accent-primary/20">
                 <Folder className="text-white" size={36} />
               </div>
-              <h3 className="text-2xl font-bold text-[#FBF9F5] mb-3">Select a Project</h3>
-              <p className="text-[#E4DEAA] leading-relaxed">
-                Create a new project or select an existing one to view your interactive timeline
-              </p>
+              <h3 className="text-2xl font-bold text-fg-primary mb-3">{t("projects.selectProject")}</h3>
+              <p className="text-fg-secondary leading-relaxed">{t("projects.selectProjectDesc")}</p>
             </div>
           </div>
         )}

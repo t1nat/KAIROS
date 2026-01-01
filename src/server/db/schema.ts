@@ -22,7 +22,7 @@ export const permissionEnum = pgEnum("permission", ['read', 'write']);
 export const taskStatusEnum = pgEnum("task_status", ['pending', 'in_progress', 'completed', 'blocked']);
 export const taskPriorityEnum = pgEnum("task_priority", ['low', 'medium', 'high', 'urgent']);
 export const usageModeEnum = pgEnum("usage_mode", ["personal", "organization"]);
-export const orgRoleEnum = pgEnum("org_role", ["admin", "worker"]);
+export const orgRoleEnum = pgEnum("org_role", ["admin", "worker", "mentor"]);
 export const themeEnum = pgEnum("theme", ["light", "dark", "system"]);
 export const languageEnum = pgEnum("language", ["en", "bg", "es", "fr", "de", "it", "pt", "ja", "ko", "zh", "ar"]);
 export const dateFormatEnum = pgEnum("date_format", ["MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"]);
@@ -58,6 +58,7 @@ export const users = createTable("user", (d) => ({
       .$defaultFn(() => new Date()),
     image: d.varchar({ length: 255 }), 
     usageMode: usageModeEnum("usage_mode"),
+    activeOrganizationId: integer("active_organization_id"),
     password: varchar("password", { length: 255 }),
     passwordResetToken: varchar("password_reset_token", { length: 255 }),
     passwordResetExpires: timestamp("password_reset_expires", { mode: "date", withTimezone: true }),

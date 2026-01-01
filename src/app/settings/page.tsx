@@ -1,14 +1,14 @@
 import { auth } from "~/server/auth";
 import { redirect } from "next/navigation";
-import { SideNav } from "~/app/_components/SideNav";
-import { UserDisplay } from "~/app/_components/UserDisplay";
-import { SettingsNav } from "~/app/_components/SettingsNav";
-import { ProfileSettingsClient } from "~/app/_components/ProfileSettingsClient";
-import { AppearanceSettings } from "~/app/_components/AppearanceSettings";
-import { ThemeToggle } from "~/app/_components/ThemeToggle";
-import { LanguageSettingsClient } from "~/app/_components/LanguageSettingsClient";
-import { NotificationSettingsClient } from "~/app/_components/NotificationSettingsClient";
-import { SecuritySettingsClient } from "~/app/_components/SecuritySettingsClient";
+import { SideNav } from "~/components/SideNav";
+import { UserDisplay } from "~/components/UserDisplay";
+import { SettingsNav } from "~/components/SettingsNav";
+import { ProfileSettingsClient } from "~/components/ProfileSettingsClient";
+import { AppearanceSettings } from "~/components/AppearanceSettings";
+import { ThemeToggle } from "~/components/ThemeToggle";
+import { LanguageSettingsClient } from "~/components/LanguageSettingsClient";
+import { NotificationSettingsClient } from "~/components/NotificationSettingsClient";
+import { SecuritySettingsClient } from "~/components/SecuritySettingsClient";
 import { getTranslations } from "next-intl/server";
 
 type SearchParams = Record<string, string | string[] | undefined>;

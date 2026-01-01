@@ -12,6 +12,7 @@ const globalForDb = globalThis as unknown as {
 
 const conn = globalForDb.conn ?? postgres(env.DATABASE_URL, {
     max: 30, 
+  prepare: env.NODE_ENV === "production",
 });
 
 if (env.NODE_ENV !== "production") globalForDb.conn = conn;

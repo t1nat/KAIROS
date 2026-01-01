@@ -1,14 +1,17 @@
 import Link from "next/link";
 import { auth } from "~/server/auth";
-import { UserDisplay } from "~/app/_components/UserDisplay";
-import { SideNav } from "~/app/_components/SideNav";
-import { CreateNoteForm } from "~/app/_components/CreateNoteForm";
-import { CreateProjectContainer } from "~/app/_components/CreateProjectContainer";
-import { NotesList } from "~/app/_components/NotesList";
-import { NotificationSystem } from "~/app/_components/NotificationSystem";
-import { ProjectsListWorkspace } from "~/app/_components/ProjectsListWorkspace";
+import { UserDisplay } from "~/components/UserDisplay";
+import { SideNav } from "~/components/SideNav";
+import { CreateNoteForm } from "~/components/CreateNoteForm";
+import { CreateProjectContainer } from "~/components/CreateProjectContainer";
+import { NotesList } from "~/components/NotesList";
+import { NotificationSystem } from "~/components/NotificationSystem";
+import { ProjectsListWorkspace } from "~/components/ProjectsListWorkspace";
 import { LogIn, ArrowRight, FolderKanban, FileEdit } from "lucide-react";
-import { ThemeToggle } from "~/app/_components/ThemeToggle";
+import { ThemeToggle } from "~/components/ThemeToggle";
+import { OrgAccessCodeBadge } from "~/components/OrgAccessCodeBadge";
+import { OrgSwitcher } from "~/components/OrgSwitcher";
+import { getTranslations } from "next-intl/server";
 
 export default async function CreatePage({ 
     searchParams 
@@ -16,6 +19,9 @@ export default async function CreatePage({
     searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   const session = await auth();
+  const tCreate = await getTranslations("create");
+  const tAuth = await getTranslations("auth");
+  const tNav = await getTranslations("nav");
   const resolvedSearchParams = await searchParams;
   const action = resolvedSearchParams.action as string | undefined;
   
@@ -36,11 +42,11 @@ export default async function CreatePage({
           </div>
           
           <h1 className="text-4xl sm:text-5xl font-bold text-fg-primary">
-            Sign In Required
+            {tAuth("signIn")}
           </h1>
           
           <p className="text-lg text-fg-secondary">
-            Access your workspace and start creating
+            {tCreate("subtitle")}
           </p>
           
           <Link
@@ -48,7 +54,7 @@ export default async function CreatePage({
             className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-semibold rounded-xl hover:shadow-2xl hover:shadow-accent-primary/25 transition-transform transition-shadow hover:scale-[1.02] group"
           >
             <LogIn size={20} />
-            Sign in to continue
+            {tAuth("signIn")}
             <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
@@ -61,10 +67,10 @@ export default async function CreatePage({
       <SideNav />
 
       <div className="lg:ml-16 min-h-screen flex flex-col pt-16 lg:pt-0">
-        <header className="sticky top-0 z-30 glass-effect border-b border-border-light">
-          <div className="max-w-7xl mx-auto px-8 py-4 flex justify-between items-center">
+        <header className="sticky top-0 z-30 glass-effect border-b border-border-light/70">
+          <div className="max-w-7xl mx-auto px-6 md:px-8 py-4 flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${
                 shouldShowProjectManagement 
                   ? 'bg-accent-primary'
                   : shouldShowNoteForm
@@ -81,20 +87,31 @@ export default async function CreatePage({
               </div>
               <div>
                 <h1 className="text-xl font-bold text-fg-primary tracking-tight">
-                  {shouldShowProjectManagement ? 'Projects' : shouldShowNoteForm ? 'Notes' : 'Workspace'}
+                  {shouldShowProjectManagement
+                    ? tNav("projects")
+                    : shouldShowNoteForm
+                      ? tNav("notes")
+                      : tCreate("title")}
                 </h1>
               </div>
             </div>
             
             <div className="flex items-center gap-3">
               <ThemeToggle />
+              <OrgSwitcher />
+              <OrgAccessCodeBadge />
               <NotificationSystem />
               <UserDisplay />
             </div>
           </div>
         </header>
 
-        <main id="main-content" className="flex-1 w-full px-8 py-6 overflow-auto">
+        <main id="main-content" className="flex-1 w-full px-6 md:px-8 py-6 overflow-auto relative">
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="absolute -top-24 -right-24 w-[520px] h-[520px] rounded-full blur-3xl bg-gradient-to-br from-accent-primary/10 via-brand-indigo/10 to-brand-cyan/10" />
+            <div className="absolute -bottom-24 -left-24 w-[520px] h-[520px] rounded-full blur-3xl bg-gradient-to-tr from-brand-teal/10 via-accent-secondary/10 to-transparent" />
+          </div>
+
           {shouldShowProjectManagement ? (
             <div className="relative w-full h-full">
               <CreateProjectContainer userId={session.user.id} />
@@ -109,28 +126,43 @@ export default async function CreatePage({
                     </div>
                    </div>
           ) : (
-            <div className="flex flex-col items-center justify-start pt-16 pb-20 max-w-7xl mx-auto">
-              <div className="text-center max-w-lg mb-16">
-                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-accent-primary/20 to-accent-secondary/10 rounded-3xl mb-8 shadow-lg shadow-accent-primary/15">
-                  <FolderKanban className="text-accent-primary" size={36} />
+              <div className="relative max-w-7xl mx-auto pt-10 pb-20">
+                <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-8 items-start">
+                  <div className="relative">
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-primary/10 border border-accent-primary/20 text-xs font-semibold text-accent-primary">
+                      {tCreate("title")}
+                    </div>
+                    <h2 className="mt-4 text-3xl md:text-4xl font-bold text-fg-primary tracking-tight">
+                      {tCreate("headline")}
+                    </h2>
+                    <p className="mt-3 text-fg-secondary text-base md:text-lg leading-relaxed max-w-xl">
+                      {tCreate("tagline")}
+                    </p>
+                    <div className="mt-6 flex items-center gap-3">
+                      <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-bg-surface/70 border border-border-light/30 text-sm text-fg-secondary backdrop-blur">
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-accent-primary to-accent-secondary text-white font-bold shadow-sm">+</span>
+                        <span>{tCreate("cta")}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="surface-card p-6 md:p-7">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center shadow-md">
+                        <FolderKanban className="text-white" size={22} />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-fg-primary">{tCreate("quickStart")}</h3>
+                        <p className="text-sm text-fg-secondary">{tCreate("quickStartDesc")}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <h2 className="text-3xl font-bold text-fg-primary mb-4">
-                  Welcome to your workspace
-                </h2>
-                <p className="text-fg-secondary text-lg mb-8 leading-relaxed">
-                  Manage projects, track progress, and collaborate with your team
-                </p>
-                <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-bg-secondary/40 rounded-xl border border-border-light/20 text-sm text-fg-secondary">
-                  <span>Click the</span>
-                  <span className="inline-flex items-center justify-center w-7 h-7 bg-gradient-to-br from-accent-primary to-accent-secondary rounded-lg text-white font-bold shadow-lg shadow-accent-primary/25">+</span>
-                  <span>icon to create</span>
+
+                <div className="mt-10">
+                  <ProjectsListWorkspace />
                 </div>
               </div>
-              
-              <div className="w-full">
-                <ProjectsListWorkspace />
-              </div>
-            </div>
           )}
         </main>
       </div>

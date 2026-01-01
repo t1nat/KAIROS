@@ -7,17 +7,12 @@
     "projects": "Projekte",
     "notes": "Notizen",
     "quickActions": "Schnellaktionen",
-      "disableTwoFactor": "2FA deaktivieren",
-      "session": "Sitzung",
-      "sessionDesc": "Melden Sie sich von Ihrer aktuellen Sitzung ab",
-      "signOut": "Abmelden",
     "newProject": "Neues Projekt"
   },
   "home": {
     "title": "KAIROS",
     "subtitle": "Beherrsche deine Zeit, gestalte deine Zukunft",
-      "deleteAccount": "Konto löschen",
-      "deleteConfirm": "Dadurch werden Ihr Konto und Ihre Daten dauerhaft gelöscht. Fortfahren?",
+    "description": "Dein intelligenter Begleiter für Projektmanagement, Eventplanung und persönliche Organisation. Verwandle Chaos in Klarheit.",
     "getStarted": "Loslegen",
     "learnMore": "Mehr erfahren",
     "signIn": "Anmelden"
@@ -26,8 +21,6 @@
     "title": "Einstellungen",
     "subtitle": "Verwalten Sie Ihr Konto und Ihre Einstellungen",
     "profile": {
-      "expand": "Sprachliste erweitern",
-      "collapse": "Sprachliste reduzieren",
       "title": "Profileinstellungen",
       "subtitle": "Verwalten Sie Ihre persönlichen Informationen",
       "updateProfile": "Profil aktualisieren",
@@ -38,12 +31,12 @@
       "title": "Benachrichtigungseinstellungen",
       "subtitle": "Wählen Sie, welche Benachrichtigungen Sie erhalten",
       "email": "E-Mail-Benachrichtigungen",
-      "emailDesc": "Erhalten Sie E-Mail-Updates über Ihre Aktivitäten",
+      "emailDesc": "Erhalten Sie E-Mail-Updates zu Ihrer Aktivität",
       "projects": "Projekt-Updates",
       "projectsDesc": "Werden Sie benachrichtigt, wenn Projekte aktualisiert werden",
       "events": "Ereigniserinnerungen",
-      "eventsDesc": "Erhalten Sie In-App-Erinnerungen für bevorstehende Ereignisse",
-      "tasks": "Aufgabenerinnerungen",
+      "eventsDesc": "Erhalten Sie In-App-Erinnerungen an bevorstehende Ereignisse",
+      "tasks": "Erinnerungen an fällige Aufgaben",
       "tasksDesc": "Werden Sie benachrichtigt, wenn Aufgaben fällig sind",
       "marketing": "Marketing-E-Mails",
       "marketingDesc": "Erhalten Sie Neuigkeiten und Werbeinhalte",
@@ -52,17 +45,17 @@
     "security": {
       "title": "Sicherheitseinstellungen",
       "subtitle": "Verwalten Sie Ihre Sicherheitseinstellungen",
-      "password": "Passwort",
-      "changePassword": "Passwort ändern",
       "twoFactor": "Zwei-Faktor-Authentifizierung",
-      "twoFactorDesc": "Fügen Sie eine zusätzliche Sicherheitsebene zu Ihrem Konto hinzu",
+      "twoFactorDesc": "Fügen Sie Ihrem Konto eine zusätzliche Sicherheitsebene hinzu",
       "enableTwoFactor": "2FA aktivieren",
-      "sessions": "Aktive Sitzungen",
-      "sessionsDesc": "Verwalten Sie Geräte, auf denen Sie angemeldet sind",
-      "viewSessions": "Sitzungen anzeigen",
+      "disableTwoFactor": "2FA deaktivieren",
+      "session": "Sitzung",
+      "sessionDesc": "Melden Sie sich von Ihrer aktuellen Sitzung ab",
+      "signOut": "Abmelden",
       "dangerZone": "Gefahrenzone",
       "dangerZoneDesc": "Sobald Sie Ihr Konto löschen, gibt es kein Zurück mehr. Bitte seien Sie sicher.",
-      "deleteAccount": "Konto löschen"
+      "deleteAccount": "Konto löschen",
+      "deleteConfirm": "Dadurch werden Ihr Konto und Ihre Daten dauerhaft gelöscht. Fortfahren?"
     },
     "language": {
       "title": "Sprache und Region",
@@ -71,6 +64,8 @@
       "timezone": "Zeitzone",
       "dateFormat": "Datumsformat",
       "save": "Einstellungen speichern",
+      "expand": "Sprachliste erweitern",
+      "collapse": "Sprachliste reduzieren",
       "applying": "Sprachänderungen werden angewendet..."
     },
     "appearance": {
@@ -87,7 +82,161 @@
   },
   "create": {
     "title": "Arbeitsbereich",
-    "subtitle": "Verwalten Sie Ihre Projekte und Notizen"
+    "subtitle": "Verwalten Sie Ihre Projekte und Notizen",
+    "headline": "Dein Workspace, im Fokus.",
+    "tagline": "Erstelle Projekte, notiere Ideen und bleib auf Kurs — ohne Ablenkung.",
+    "cta": "Starte, indem du ein Projekt oder eine Notiz erstellst.",
+    "quickStart": "Schnellstart",
+    "quickStartDesc": "Erstelle ein Projekt und füge unterwegs Notizen hinzu.",
+    "errors": {
+      "generic": "Fehler: {message}"
+    },
+    "actions": {
+      "refresh": "Aktualisieren",
+      "addTask": "Aufgabe hinzufügen"
+    },
+    "common": {
+      "description": "Beschreibung",
+      "optional": "optional"
+    },
+    "stats": {
+      "totalTasks": "Aufgaben gesamt",
+      "completed": "Abgeschlossen"
+    },
+    "team": {
+      "title": "Teammitglieder",
+      "projectOwner": "Projektinhaber",
+      "unknownUser": "Unbekannt",
+      "canView": "Kann ansehen",
+      "canEdit": "Kann bearbeiten",
+      "viewOnly": "Nur ansehen",
+      "addMember": "Teammitglied hinzufügen",
+      "emailPlaceholder": "name@firma.de",
+      "add": "Hinzufügen",
+      "adding": "Wird hinzugefügt...",
+      "empty": "Noch keine Teammitglieder",
+      "view": "Ansehen",
+      "edit": "Bearbeiten",
+      "remove": "Entfernen",
+      "search": {
+        "noUser": "Kein Benutzer mit dieser E-Mail gefunden.",
+        "error": "Fehler bei der Suche. Bitte erneut versuchen.",
+        "invalidEmail": "Bitte eine gültige E-Mail-Adresse eingeben.",
+        "wait": "Bitte warten..."
+      }
+    },
+    "projects": {
+      "otherProjects": "Weitere Projekte",
+      "selectProject": "Projekt auswählen",
+      "selectProjectDesc": "Wähle ein Projekt, um Aufgaben zu sehen, Mitarbeitende zu verwalten und Fortschritt zu verfolgen."
+    },
+    "projectForm": {
+      "title": "Neues Projekt",
+      "projectName": "Projektname",
+      "projectNamePlaceholder": "z. B. Website-Relaunch",
+      "descriptionPlaceholder": "Worum geht es in diesem Projekt?",
+      "create": "Projekt erstellen",
+      "creating": "Wird erstellt...",
+      "validation": {
+        "projectTitleRequired": "Projektname ist erforderlich."
+      }
+    },
+    "taskForm": {
+      "taskName": "Aufgabenname",
+      "taskNamePlaceholder": "z. B. Zeitplan entwerfen",
+      "descriptionPlaceholder": "Details hinzufügen (optional)",
+      "assignTo": "Zuweisen an",
+      "unassigned": "Nicht zugewiesen",
+      "priority": "Priorität",
+      "priorityLow": "Niedrig",
+      "priorityMedium": "Mittel",
+      "priorityHigh": "Hoch",
+      "priorityUrgent": "Dringend",
+      "dueDate": "Fälligkeitsdatum",
+      "add": "Aufgabe hinzufügen",
+      "adding": "Wird hinzugefügt...",
+      "validation": {
+        "taskTitleRequired": "Aufgabenname ist erforderlich."
+      }
+    },
+    "timeline": {
+      "emptyTitle": "Noch keine Aufgaben",
+      "emptyDesc": "Erstelle Aufgaben, damit sie in deiner Timeline erscheinen.",
+      "title": "Projekt-Timeline",
+      "progressLine": "{count, plural, =0 {Keine Aufgaben} one {# Aufgabe} other {# Aufgaben}}",
+      "completedLine": "{completed} von {total} abgeschlossen",
+      "markComplete": "Aufgabe als erledigt markieren",
+      "markIncomplete": "Als nicht erledigt markieren",
+      "done": "Erledigt",
+      "overdue": "Überfällig",
+      "createdBy": "Erstellt von:",
+      "lastModified": "Zuletzt geändert:",
+      "completedBy": "Abgeschlossen von:"
+    },
+    "projectsList": {
+      "subtitle": "Echtzeit-Fortschritt über all deine Projekte",
+      "overallProgress": "Gesamtfortschritt",
+      "tasksOfTasks": "{completed} von {total} Aufgaben",
+      "activeProjects": "Aktive Projekte",
+      "viewAll": "Alle Projekte anzeigen",
+      "hideAll": "Alle Projekte ausblenden",
+      "done": "erledigt",
+      "active": "aktiv",
+      "pending": "ausstehend",
+      "noTasksYet": "Noch keine Aufgaben"
+    },
+    "notes": {
+      "title": "Deine Notizen",
+      "actions": {
+        "createNew": "Neue Notiz erstellen",
+        "create": "Notiz erstellen",
+        "creating": "Wird erstellt...",
+        "cancel": "Abbrechen"
+      },
+      "fields": {
+        "content": "Notizinhalt"
+      },
+      "placeholders": {
+        "content": "Schreibe deine Notiz hier..."
+      },
+      "validation": {
+        "contentRequired": "Bitte füge Inhalt zu deiner Notiz hinzu."
+      },
+      "errors": {
+        "createFailed": "Notiz konnte nicht erstellt werden: {message}"
+      },
+      "empty": "Noch keine Notizen. Erstelle deine erste Notiz!",
+      "encrypted": "Verschlüsselt ({count})",
+      "encryptedNote": "🔒 Verschlüsselte Notiz",
+      "deleteConfirm": "Diese Notiz löschen? Das kann nicht rückgängig gemacht werden.",
+      "allLocked": "Alle Notizen sind gesperrt",
+      "allLockedHint": "Sieh im verschlüsselten Ordner nach",
+      "password": {
+        "sectionTitle": "Passwortgeschützt",
+        "protected": "Passwortgeschützt",
+        "protectedDesc": "Gib dein Passwort ein, um diese Notiz zu sehen",
+        "placeholder": "Passwort eingeben",
+        "enter": "Bitte ein Passwort eingeben",
+        "incorrect": "Falsches Passwort",
+        "verifyFailed": "Überprüfung fehlgeschlagen",
+        "unlock": "Notiz entsperren",
+        "unlocking": "Wird entsperrt..."
+      },
+      "edit": {
+        "title": "Notiz bearbeiten",
+        "save": "Speichern",
+        "saving": "Wird gespeichert..."
+      },
+      "reset": {
+        "cta": "Zurücksetzen?",
+        "title": "Passwort zurücksetzen",
+        "desc": "Wir senden dir eine E-Mail mit einem Link, um das Passwort für diese Notiz zurückzusetzen.",
+        "expiry": "Der Link läuft in 1 Stunde ab.",
+        "send": "E-Mail senden",
+        "sending": "Wird gesendet...",
+        "success": "✅ E-Mail zum Zurücksetzen gesendet! Bitte Posteingang prüfen."
+      }
+    }
   },
   "publish": {
     "title": "Ereignisse",
@@ -109,7 +258,23 @@
     "close": "Schließen",
     "loading": "Laden...",
     "search": "Suchen",
+    "copy": "Kopieren",
+    "copied": "Kopiert",
     "lightMode": "Zum hellen Modus wechseln",
     "darkMode": "Zum dunklen Modus wechseln"
+  },
+  "org": {
+    "accessCode": "Org-Code",
+    "yourOrgs": "Organisationen",
+    "switchOrg": "Organisation wechseln",
+    "viewAll": "Alle anzeigen",
+    "setActive": "Aktiv setzen",
+    "active": "Aktiv",
+    "noOrgs": "Du bist noch in keiner Organisation.",
+    "activeOrgHint": "Wähle eine aktive Organisation, um darin zu arbeiten.",
+    "roleLabel": "Rolle",
+    "roleAdmin": "Admin",
+    "roleWorker": "Mitglied",
+    "roleMentor": "Mentor"
   }
 }

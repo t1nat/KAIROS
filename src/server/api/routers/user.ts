@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { users } from "~/server/db/schema";
+import { organizations, organizationMembers, users } from "~/server/db/schema";
 import { eq } from "drizzle-orm";
 
 export const userRouter = createTRPCRouter({
@@ -30,7 +30,7 @@ export const userRouter = createTRPCRouter({
   setPersonalMode: protectedProcedure
     .mutation(async ({ ctx }) => {
       await ctx.db.update(users)
-        .set({ usageMode: "personal" })
+        .set({ usageMode: "personal", activeOrganizationId: null })
         .where(eq(users.id, ctx.session.user.id));
 
       return { success: true };
@@ -39,64 +39,165 @@ export const userRouter = createTRPCRouter({
   
   getProfile: protectedProcedure
     .query(async ({ ctx }) => {
-      const user = await ctx.db.query.users.findFirst({
-        where: eq(users.id, ctx.session.user.id),
-        columns: {
-          id: true,
-          usageMode: true,
-          name: true,
-          email: true,
-          bio: true,       
-          image: true,     
-          createdAt: true, 
-        },
-        with: {
-          organizationMemberships: {
-            limit: 1,
-            with: {
-              organization: true,
-            },
-          },
-        },
-      });
+      let user:
+        | {
+            id: string;
+            usageMode: (typeof users.$inferSelect)["usageMode"];
+            activeOrganizationId: number | null;
+            name: string | null;
+            email: string;
+            bio: string | null;
+            image: string | null;
+            createdAt: Date;
+          }
+        | null = null;
 
-      
-      if (!user?.usageMode) {
+      try {
+        user =
+          (await ctx.db.query.users.findFirst({
+          where: eq(users.id, ctx.session.user.id),
+          columns: {
+            id: true,
+            usageMode: true,
+            activeOrganizationId: true,
+            name: true,
+            email: true,
+            bio: true,
+            image: true,
+            createdAt: true,
+          },
+        })) ?? null;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+
+        // Backwards-compat: DB may not have been migrated yet.
+        if (message.includes("active_organization_id")) {
+          const fallback = await ctx.db.query.users.findFirst({
+            where: eq(users.id, ctx.session.user.id),
+            columns: {
+              id: true,
+              usageMode: true,
+              name: true,
+              email: true,
+              bio: true,
+              image: true,
+              createdAt: true,
+            },
+          });
+
+          if (!fallback) {
+            user = null;
+          } else {
+            user = {
+              ...fallback,
+              activeOrganizationId: null,
+            };
+          }
+        } else {
+          throw err;
+        }
+      }
+
+      if (!user) {
         return null;
       }
+
+      const memberships = await ctx.db
+        .select({
+          organization: organizations,
+          role: organizationMembers.role,
+          joinedAt: organizationMembers.joinedAt,
+        })
+        .from(organizationMembers)
+        .innerJoin(
+          organizations,
+          eq(organizationMembers.organizationId, organizations.id),
+        )
+        .where(eq(organizationMembers.userId, ctx.session.user.id));
+
+      const activeMembership = user.activeOrganizationId
+        ? memberships.find((m) => m.organization.id === user.activeOrganizationId) ?? null
+        : memberships[0] ?? null;
 
       return {
         id: user.id,
         name: user.name,
         email: user.email,
-        bio: user.bio,           
-        image: user.image,       
-        createdAt: user.createdAt, 
+        bio: user.bio,
+        image: user.image,
+        createdAt: user.createdAt,
         usageMode: user.usageMode,
-        organization: user.organizationMemberships[0]?.organization ?? null,
-        role: user.organizationMemberships[0]?.role ?? null,
+        activeOrganizationId: user.activeOrganizationId,
+        organizations: memberships.map((m) => ({
+          id: m.organization.id,
+          name: m.organization.name,
+          accessCode: m.organization.accessCode,
+          role: m.role,
+          joinedAt: m.joinedAt,
+        })),
+        organization: activeMembership?.organization ?? null,
+        role: activeMembership?.role ?? null,
       };
     }),
 
 
   checkOnboardingStatus: protectedProcedure
     .query(async ({ ctx }) => {
-      const user = await ctx.db.query.users.findFirst({
-        where: eq(users.id, ctx.session.user.id),
-        columns: {
-          usageMode: true,
-        },
-        with: {
-          organizationMemberships: {
-            limit: 1,
+      let user:
+        | {
+            usageMode: (typeof users.$inferSelect)["usageMode"];
+            activeOrganizationId: number | null;
+            organizationMemberships: unknown[];
+          }
+        | null = null;
+
+      try {
+        user =
+          (await ctx.db.query.users.findFirst({
+          where: eq(users.id, ctx.session.user.id),
+          columns: {
+            usageMode: true,
+            activeOrganizationId: true,
           },
-        },
-      });
+          with: {
+            organizationMemberships: {
+              limit: 1,
+            },
+          },
+        })) ?? null;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        if (message.includes("active_organization_id")) {
+          const fallback = await ctx.db.query.users.findFirst({
+            where: eq(users.id, ctx.session.user.id),
+            columns: {
+              usageMode: true,
+            },
+            with: {
+              organizationMemberships: {
+                limit: 1,
+              },
+            },
+          });
+
+          if (!fallback) {
+            user = null;
+          } else {
+            user = {
+              ...fallback,
+              activeOrganizationId: null,
+            };
+          }
+        } else {
+          throw err;
+        }
+      }
 
       return {
         needsOnboarding: !user?.usageMode,
         usageMode: user?.usageMode,
         hasOrganization: (user?.organizationMemberships?.length ?? 0) > 0,
+        activeOrganizationId: user?.activeOrganizationId ?? null,
       };
     }),
 
