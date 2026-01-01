@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Trash2, FolderPlus, CheckCircle2 } from "lucide-react";
+import { Trash2, FolderPlus, CheckCircle2, Plus, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { api } from "~/trpc/react";
 import { useTranslations } from "next-intl";
 import { useToast } from "~/components/ToastProvider";
+
+type Translator = (key: string, values?: Record<string, unknown>) => string;
 
 interface User {
   id: string;
@@ -26,7 +28,8 @@ interface ProjectFormProps {
 }
 
 export function CreateProjectForm({ onSubmit, currentUser, isExpanded, onToggle }: ProjectFormProps) {
-  const t = useTranslations("create");
+  const useT = useTranslations as unknown as (namespace: string) => Translator;
+  const t = useT("create");
   const toast = useToast();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -97,12 +100,25 @@ export function CreateProjectForm({ onSubmit, currentUser, isExpanded, onToggle 
               />
             </div>
 
+            {/* ACCENT-FILLED BUTTON */}
             <button
               type="submit"
               disabled={isSubmitting || !title.trim()}
-              className="w-full px-6 py-3 bg-accent-primary text-white font-semibold rounded-lg hover:bg-accent-hover transition-all border border-accent-primary/30 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary w-full flex items-center justify-center gap-2"
             >
-              {isSubmitting ? t("projectForm.creating") : t("projectForm.create")}
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="animate-spin" size={18} />
+                    {t("projectForm.creating")}
+                  </>
+                ) : (
+                  <>
+                    <Plus size={18} />
+                    {t("projectForm.create")}
+                  </>
+                )}
+              </span>
             </button>
           </div>
         </form>
@@ -124,7 +140,8 @@ interface TaskFormProps {
 }
 
 export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskFormProps) {
-  const t = useTranslations("create");
+  const useT = useTranslations as unknown as (namespace: string) => Translator;
+  const t = useT("create");
   const toast = useToast();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -253,9 +270,21 @@ export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskForm
       <button
         type="submit"
         disabled={isSubmitting || !title.trim()}
-        className="w-full px-6 py-3 border border-accent-primary/60 text-accent-primary font-semibold rounded-lg hover:bg-accent-primary hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className="btn-primary w-full flex items-center justify-center gap-2"
       >
-        {isSubmitting ? t("taskForm.adding") : t("taskForm.add")}
+        <span className="relative z-10 flex items-center justify-center gap-2">
+          {isSubmitting ? (
+            <>
+              <Loader2 className="animate-spin" size={18} />
+              {t("taskForm.adding")}
+            </>
+          ) : (
+            <>
+              <Plus size={18} />
+              {t("taskForm.add")}
+            </>
+          )}
+        </span>
       </button>
     </form>
   );
@@ -281,7 +310,8 @@ export function CollaboratorManager({
   onUpdatePermission,
   isOwner,
 }: CollaboratorManagerProps) {
-  const t = useTranslations("create");
+  const useT = useTranslations as unknown as (namespace: string) => Translator;
+  const t = useT("create");
   const [email, setEmail] = useState("");
   const [permission, setPermission] = useState<"read" | "write">("read");
   const [isAdding, setIsAdding] = useState(false);
@@ -312,7 +342,6 @@ export function CollaboratorManager({
     setSearchedUser(null);
     setSearchError("");
 
-    // Only search if email is valid
     if (isValidEmail(email)) {
       const timer = setTimeout(() => {
         void searchUser().then((result) => {
@@ -415,7 +444,7 @@ export function CollaboratorManager({
           )}
 
           {searchError && (
-            <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-sm text-red-400 animate-in fade-in slide-in-from-top-1">
+            <div className="p-3 bg-error/10 border border-error/30 rounded-lg text-sm text-error animate-in fade-in slide-in-from-top-1">
               {searchError}
             </div>
           )}
@@ -434,7 +463,7 @@ export function CollaboratorManager({
             <button
               type="submit"
               disabled={isAdding || !searchedUser || isSearching}
-              className="px-6 py-3 border border-success/60 text-success font-semibold rounded-lg hover:bg-success hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-3 bg-success text-white font-semibold rounded-lg hover:bg-success/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-success/20"
             >
               {isAdding ? t("team.adding") : t("team.add")}
             </button>
@@ -488,7 +517,7 @@ export function CollaboratorManager({
                     </select>
                     <button
                       onClick={() => onRemoveCollaborator(user.id)}
-                      className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                      className="p-2 text-error hover:bg-error/10 rounded-lg transition-colors"
                       title={t("team.remove")}
                     >
                       <Trash2 size={16} />

@@ -67,8 +67,8 @@ export default async function CreatePage({
       <SideNav />
 
       <div className="lg:ml-16 min-h-screen flex flex-col pt-16 lg:pt-0">
-        <header className="sticky top-0 z-30 glass-effect border-b border-border-light/70">
-          <div className="max-w-7xl mx-auto px-6 md:px-8 py-4 flex justify-between items-center">
+        <header className="sticky top-16 lg:top-0 z-30 glass-effect border-b border-border-light/70">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-3 sm:py-4 flex flex-wrap justify-between items-center gap-3">
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${
                 shouldShowProjectManagement 
@@ -96,7 +96,7 @@ export default async function CreatePage({
               </div>
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
               <ThemeToggle />
               <OrgSwitcher />
               <OrgAccessCodeBadge />
@@ -106,7 +106,7 @@ export default async function CreatePage({
           </div>
         </header>
 
-        <main id="main-content" className="flex-1 w-full px-6 md:px-8 py-6 overflow-auto relative">
+        <main id="main-content" className="flex-1 w-full px-4 sm:px-6 md:px-8 py-5 sm:py-6 overflow-auto relative">
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
             <div className="absolute -top-24 -right-24 w-[520px] h-[520px] rounded-full blur-3xl bg-gradient-to-br from-accent-primary/10 via-brand-indigo/10 to-brand-cyan/10" />
             <div className="absolute -bottom-24 -left-24 w-[520px] h-[520px] rounded-full blur-3xl bg-gradient-to-tr from-brand-teal/10 via-accent-secondary/10 to-transparent" />
@@ -117,8 +117,8 @@ export default async function CreatePage({
               <CreateProjectContainer userId={session.user.id} />
             </div>
           ) : shouldShowNoteForm ?(
-                <div className="flex gap-6 w-full">
-                   <div className="w-96 flex-shrink-0">
+              <div className="flex flex-col lg:flex-row gap-6 w-full">
+                 <div className="w-full lg:w-96 lg:flex-shrink-0">
                        <CreateNoteForm />
                    </div>
                     <div className="flex-1">

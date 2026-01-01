@@ -9,6 +9,8 @@ import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useToast } from "~/components/ToastProvider";
 
+type Translator = (key: string, values?: Record<string, unknown>) => string;
+
 interface CreateProjectContainerProps {
   userId: string;
 }
@@ -61,7 +63,8 @@ interface Task {
 }
 
 export function CreateProjectContainer({ userId }: CreateProjectContainerProps) {
-  const t = useTranslations("create");
+  const useT = useTranslations as unknown as (namespace: string) => Translator;
+  const t = useT("create");
   const toast = useToast();
   const searchParams = useSearchParams();
   const projectIdFromUrl = searchParams.get("projectId");

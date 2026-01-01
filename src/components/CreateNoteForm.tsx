@@ -6,8 +6,11 @@ import { Plus, X, FileEdit, Loader2 } from 'lucide-react';
 import { useTranslations } from "next-intl";
 import { useToast } from "~/components/ToastProvider";
 
+type Translator = (key: string, values?: Record<string, unknown>) => string;
+
 export const CreateNoteForm: React.FC = () => {
-  const t = useTranslations("create");
+  const useT = useTranslations as unknown as (namespace: string) => Translator;
+  const t = useT("create");
   const toast = useToast();
   const utils = api.useUtils();
   const [showForm, setShowForm] = useState(false);

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
-import { useTheme } from "next-themes";
 import { UserDisplay } from "~/components/UserDisplay";
 import { SignInModal } from "~/components/SignInModal";
 import { RoleSelectionModal } from "~/components/RoleSelectionModal";
@@ -32,8 +31,6 @@ interface SessionData {
 export function HomeClient({ session }: {
     session: SessionData | null;
 }) {
-    const { resolvedTheme } = useTheme();
-    const [themeMounted, setThemeMounted] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [showRoleSelection, setShowRoleSelection] = useState(false);
     const [hasAnimated, setHasAnimated] = useState(false);
@@ -53,10 +50,6 @@ export function HomeClient({ session }: {
         setHasAnimated(true);
     }, []);
 
-    useEffect(() => {
-        setThemeMounted(true);
-    }, []);
-
 
     const handleRoleSelectionComplete = () => {
         setShowRoleSelection(false);
@@ -73,33 +66,31 @@ export function HomeClient({ session }: {
     };
 
     const showActionButtons = session && !showRoleSelection && userProfile !== undefined && userProfile !== null;
-    const isDarkTheme = themeMounted ? resolvedTheme === "dark" : false;
-    const logoSrc = isDarkTheme ? "/logo_white.png" : "/logo_purple.png";
 
     return (
         <main id="main-content" className="min-h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary relative overflow-hidden">
-            <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-70 dark:opacity-35">
-                <div className="absolute top-0 left-0 w-[700px] h-[700px] bg-gradient-to-br from-accent-primary/45 via-brand-indigo/25 to-brand-purple/45 dark:from-accent-primary/30 dark:via-brand-indigo/20 dark:to-brand-purple/30 rounded-full blur-3xl animate-fadeIn animate-pulse" style={{ animationDuration: '8s' }} />
-                <div className="absolute bottom-0 right-0 w-[700px] h-[700px] bg-gradient-to-tl from-brand-cyan/30 via-brand-blue/25 to-accent-secondary/45 dark:from-brand-cyan/20 dark:via-brand-blue/20 dark:to-accent-secondary/30 rounded-full blur-3xl animate-fadeIn" style={{ animationDelay: '0.5s', animationDuration: '10s' }} />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-br from-brand-teal/18 via-brand-purple/22 to-transparent dark:from-brand-teal/10 dark:via-brand-purple/15 rounded-full blur-2xl" />
+            <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-40">
+                <div className="absolute top-0 left-0 w-[420px] h-[420px] sm:w-[560px] sm:h-[560px] lg:w-[700px] lg:h-[700px] bg-gradient-to-br from-accent-primary/30 via-brand-indigo/20 to-brand-purple/30 rounded-full blur-3xl animate-fadeIn animate-pulse" style={{ animationDuration: '8s' }} />
+                <div className="absolute bottom-0 right-0 w-[420px] h-[420px] sm:w-[560px] sm:h-[560px] lg:w-[700px] lg:h-[700px] bg-gradient-to-tl from-brand-cyan/20 via-brand-blue/20 to-accent-secondary/30 rounded-full blur-3xl animate-fadeIn" style={{ animationDelay: '0.5s', animationDuration: '10s' }} />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] sm:w-[420px] sm:h-[420px] lg:w-[500px] lg:h-[500px] bg-gradient-to-br from-brand-teal/10 via-brand-purple/15 to-transparent rounded-full blur-2xl" />
             </div>
 
             <div className="relative z-10">
                 <header className="fixed top-0 left-0 right-0 z-50 glass-effect border-b border-border-light shadow-lg">
-                    <div className="max-w-7xl mx-auto px-6 py-4">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md border border-border-light/60 bg-bg-surface/80 dark:bg-gradient-to-br dark:from-accent-primary dark:to-accent-secondary dark:border-transparent">
+                                <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-accent-primary to-accent-secondary rounded-xl flex items-center justify-center shadow-md">
                                     <Image
-                                        src={logoSrc}
+                                        src="/logo_white.png"
                                         alt="Kairos Logo"
                                         width={24}
                                         height={24}
-                                        className="w-6 h-6 object-contain"
+                                        className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
                                         priority
                                     />
                                 </div>
-                                <h1 className="text-2xl font-bold text-fg-primary font-display tracking-tight">KAIROS</h1>
+                                <h1 className="text-xl sm:text-2xl font-bold text-fg-primary font-display tracking-tight">KAIROS</h1>
                             </div>
                             
                             
@@ -111,9 +102,9 @@ export function HomeClient({ session }: {
                     </div>
                 </header>
 
-                <section className="pt-32 pb-20 px-6 min-h-screen flex items-center">
+                <section className="pt-24 sm:pt-32 pb-14 sm:pb-20 px-4 sm:px-6 min-h-screen flex items-center">
                     <div className="max-w-7xl mx-auto w-full">
-                        <div className="flex flex-col lg:flex-row justify-between items-center gap-16 mb-8">
+                        <div className="flex flex-col lg:flex-row justify-between items-center gap-10 lg:gap-16 mb-8">
                            <div className="flex-1 text-center lg:text-left space-y-6">
                                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-accent-primary/10 border border-accent-primary/20 rounded-full text-sm font-semibold text-accent-primary animate-slideUp">
                                     <span className="relative flex h-2 w-2">
@@ -122,10 +113,10 @@ export function HomeClient({ session }: {
                                     </span>
                                     Event Planning & Coordination Platform
                                 </div>
-                                <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold text-fg-primary leading-tight tracking-tight font-display animate-slideUp" style={{ animationDelay: '0.1s' }}>
+                                <h2 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-fg-primary leading-tight tracking-tight font-display animate-slideUp" style={{ animationDelay: '0.1s' }}>
                                     KAIROS
                                 </h2>
-                                <p className="text-xl md:text-2xl text-fg-secondary leading-relaxed max-w-2xl mx-auto lg:mx-0 animate-slideUp" style={{ animationDelay: '0.2s' }}>
+                                <p className="text-lg sm:text-xl md:text-2xl text-fg-secondary leading-relaxed max-w-2xl mx-auto lg:mx-0 animate-slideUp" style={{ animationDelay: '0.2s' }}>
                                     The all-in-one platform for seamless event coordination, team collaboration, and project timelines.
                                 </p>
                                 <div className="flex flex-wrap gap-4 text-sm text-fg-tertiary animate-slideUp" style={{ animationDelay: '0.3s' }}>
@@ -145,17 +136,17 @@ export function HomeClient({ session }: {
                             </div>
                             <div className={`flex flex-col gap-4 w-full lg:w-auto lg:min-w-[420px] justify-center ${!hasAnimated ? 'animate-smooth-fade-in' : ''}`} style={{ animationDelay: !hasAnimated ? '0.4s' : '0s' }}>
                                 {showActionButtons && (
-                                    <div className="surface-card p-6 space-y-4">
+                                    <div className="surface-card p-5 sm:p-6 space-y-4">
                                         <Link 
                                             href="/create" 
-                                            className="flex items-center justify-center gap-2 px-8 py-4 font-semibold rounded-xl shadow-md hover:shadow-xl transition-all hover:scale-[1.02] text-lg group bg-gradient-to-r from-accent-primary to-accent-secondary text-slate-900 dark:text-white hover:opacity-90 border-transparent"
+                                            className="flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-accent transition-all hover:scale-[1.02] text-base sm:text-lg group"
                                         >
                                             Enter Project Space
                                             <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />
                                         </Link>
                                         <Link 
                                             href="/publish" 
-                                            className="flex items-center justify-center gap-2 px-8 py-4 bg-bg-surface border-2 border-border-medium text-fg-primary font-semibold rounded-xl hover:bg-bg-elevated hover:border-accent-primary/50 transition-all text-lg group"
+                                            className="flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 bg-bg-surface border-2 border-border-medium text-fg-primary font-semibold rounded-xl hover:bg-bg-elevated hover:border-accent-primary/50 transition-all text-base sm:text-lg group"
                                         >
                                             View Publications
                                             <Calendar size={22} className="group-hover:rotate-12 transition-transform" />
@@ -166,7 +157,7 @@ export function HomeClient({ session }: {
                                 {!session && (
                                     <button
                                         onClick={() => setIsModalOpen(true)}
-                                        className="animated-border-button relative flex items-center justify-center gap-2 px-10 py-5 bg-transparent text-fg-primary font-semibold rounded-2xl text-lg group"
+                                        className="animated-border-button relative flex items-center justify-center gap-2 px-8 sm:px-10 py-4 sm:py-5 bg-transparent text-fg-primary font-semibold rounded-2xl text-base sm:text-lg group"
                                         style={{
                                             boxSizing: 'border-box'
                                         }}
@@ -186,8 +177,8 @@ export function HomeClient({ session }: {
                     </div>
                 </section>
 
-                <section ref={aboutRef} className="py-20 px-6 pt-28">
-                    <div className="max-w-7xl mx-auto px-6 md:px-12">
+                <section ref={aboutRef} className="py-14 sm:py-20 px-4 sm:px-6 pt-20 sm:pt-28">
+                    <div className="max-w-7xl mx-auto">
                         <div className="text-left mb-16">
                             <ScrollReveal 
                                 containerClassName="text-left"
@@ -217,7 +208,7 @@ export function HomeClient({ session }: {
                             glowColor="139, 92, 246"
                         />
 
-                        <div className="surface-card p-8 md:p-10 mt-16">
+                        <div className="surface-card p-5 sm:p-8 md:p-10 mt-12 sm:mt-16">
                             <h4 className="text-2xl md:text-3xl font-bold text-fg-primary mb-8">Why Teams Choose Kairos</h4>
                             <div className="grid md:grid-cols-2 gap-6">
                                 <div className="flex items-start gap-4 p-4 rounded-xl bg-success/5 border border-success/20 hover:bg-success/10 transition-colors group">
@@ -262,21 +253,21 @@ export function HomeClient({ session }: {
                 </section>
 
                 {!session && (
-                    <section className="py-20 px-6 relative">
+                    <section className="py-14 sm:py-20 px-4 sm:px-6 relative">
                         <div className="absolute inset-0 bg-gradient-to-r from-accent-primary/10 via-brand-indigo/10 to-brand-cyan/10"></div>
                         <div className="max-w-4xl mx-auto text-center relative z-10">
-                            <div className="surface-card p-12 hover:shadow-2xl hover:shadow-accent-primary/20 transition-all duration-500 group relative overflow-hidden">
+                            <div className="surface-card p-6 sm:p-10 md:p-12 hover:shadow-2xl hover:shadow-accent-primary/20 transition-all duration-500 group relative overflow-hidden">
                                 <div className="absolute inset-0 bg-gradient-to-br from-accent-primary/5 via-transparent to-accent-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                                 <div className="relative">
-                                    <h3 className="text-4xl md:text-5xl font-bold text-fg-primary mb-4">
+                                    <h3 className="text-3xl sm:text-4xl md:text-5xl font-bold text-fg-primary mb-4">
                                         Ready to Transform Your Events?
                                     </h3>
-                                    <p className="text-xl text-fg-secondary mb-8">
+                                    <p className="text-lg sm:text-xl text-fg-secondary mb-8">
                                         Join teams worldwide coordinating seamless events with Kairos.
                                     </p>
                                     <button
                                         onClick={() => setIsModalOpen(true)}
-                                        className="inline-flex items-center gap-2 px-10 py-5 bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-accent transition-all hover:scale-[1.02] text-lg group"
+                                        className="inline-flex items-center gap-2 px-7 sm:px-10 py-4 sm:py-5 bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-accent transition-all hover:scale-[1.02] text-base sm:text-lg group"
                                     >
                                         Start Planning Today
                                         <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
@@ -287,7 +278,7 @@ export function HomeClient({ session }: {
                     </section>
                 )}
 
-                <footer className="py-12 px-6">
+                <footer className="py-12 px-4 sm:px-6">
                     <div className="max-w-7xl mx-auto text-center">
                         <div className="flex items-center justify-center gap-3 mb-4">
                             <span className="text-xl font-bold text-fg-primary font-display tracking-tight">Kairos</span>
