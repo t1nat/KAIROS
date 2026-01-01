@@ -7,7 +7,6 @@ import { useTheme } from "next-themes";
 import { UserDisplay } from "~/components/layout/UserDisplay";
 import { SignInModal } from "~/components/auth/SignInModal";
 import { RoleSelectionModal } from "~/components/auth/RoleSelectionModal";
-import { ThemeToggle } from "~/components/providers/ThemeToggle";
 import MagicBento from "~/components/homepage/MagicBento";
 import { api } from "~/trpc/react";
 import {
@@ -104,7 +103,6 @@ export function HomeClient({ session }: {
                             
                             
                             <div className="flex items-center gap-3">
-                                <ThemeToggle />
                                 {session && <UserDisplay />}
                             </div>
                         </div>
@@ -148,7 +146,7 @@ export function HomeClient({ session }: {
                                     <div className="surface-card p-5 sm:p-6 space-y-4">
                                         <Link 
                                             href="/create" 
-                                            className="flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 font-semibold rounded-xl shadow-md hover:shadow-xl transition-all hover:scale-[1.02] text-base sm:text-lg group bg-gradient-to-r from-accent-primary to-accent-secondary text-slate-900 dark:text-white hover:opacity-90 border-transparent"
+                                            className="flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 font-semibold rounded-xl shadow-md hover:shadow-xl transition-all hover:scale-[1.02] text-base sm:text-lg group bg-slate-900 dark:bg-bg-surface dark:border-2 dark:border-border-medium text-white dark:text-fg-primary hover:bg-slate-800 dark:hover:bg-bg-elevated dark:hover:border-accent-primary/50 border-transparent"
                                         >
                                             Enter Project Space
                                             <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />

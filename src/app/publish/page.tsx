@@ -4,7 +4,6 @@ import { SideNav } from "~/components/layout/SideNav";
 import { UserDisplay } from "~/components/layout/UserDisplay";
 import { Calendar } from "lucide-react";
 import { EventReminderService } from "~/components/events/EventReminderService";
-import { ThemeToggle } from "~/components/providers/ThemeToggle";
 
 export default function PublishPage() {
     return (
@@ -24,7 +23,6 @@ export default function PublishPage() {
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
-                            <ThemeToggle />
                             <UserDisplay />
                         </div>
                     </div>

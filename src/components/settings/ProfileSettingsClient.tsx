@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { User, Loader2, Upload, Camera } from "lucide-react";
 import { api } from "~/trpc/react";
 import Image from "next/image";
@@ -30,6 +30,16 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
   const { startUpload } = useUploadThing("imageUploader");
 
   const { data: userProfile } = api.user.getProfile.useQuery();
+  const { data: currentUser } = api.user.getCurrentUser.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+  });
+
+  useEffect(() => {
+    if (isUploading) return;
+    if (!currentUser?.image) return;
+    if (currentUser.image === imagePreview) return;
+    setImagePreview(currentUser.image);
+  }, [currentUser?.image, imagePreview, isUploading]);
 
   const updateProfile = api.settings.updateProfile.useMutation({
     onMutate: async (newData) => {
@@ -73,6 +83,18 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
     onSuccess: (data: { imageUrl: string }) => {
       setImagePreview(data.imageUrl);
       setIsUploading(false);
+
+      utils.user.getCurrentUser.setData(undefined, (old) => {
+        if (!old) return old;
+        return { ...old, image: data.imageUrl };
+      });
+      utils.user.getProfile.setData(undefined, (old) => {
+        if (!old) return old;
+        return { ...old, image: data.imageUrl };
+      });
+
+      void utils.user.getCurrentUser.invalidate();
+      void utils.user.getProfile.invalidate();
       toast.success("Profile picture updated");
     },
     onError: (error) => {
@@ -196,7 +218,7 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                className="flex items-center gap-2 px-6 py-2 bg-accent-primary text-white font-semibold rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-6 py-2 font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-fg-primary text-bg-primary hover:bg-fg-primary/90 dark:bg-bg-surface dark:text-fg-primary dark:hover:bg-bg-elevated border border-border-medium"
               >
                 <Upload size={18} />
                 {isUploading ? "Uploading..." : "Upload New Picture"}

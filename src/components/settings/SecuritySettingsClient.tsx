@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Shield } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { api } from "~/trpc/react";
 import { useToast } from "~/components/providers/ToastProvider";
+import { Toggle } from "~/components/layout/Toggle";
 
 type Translator = (key: string, values?: Record<string, unknown>) => string;
 
@@ -30,10 +31,6 @@ export function SecuritySettingsClient() {
 
   const isBusy =
     isLoading || updateSecurity.isPending || deleteAllData.isPending;
-
-  const twoFactorLabel = useMemo(() => {
-    return twoFactorEnabled ? t("disableTwoFactor") : t("enableTwoFactor");
-  }, [t, twoFactorEnabled]);
 
   const onToggle2fa = async () => {
     try {
@@ -78,25 +75,22 @@ export function SecuritySettingsClient() {
           <p className="text-sm text-fg-secondary mb-4">{t("twoFactorDesc")}</p>
           <div className="flex items-center justify-between gap-4 p-4 bg-bg-surface rounded-xl border border-border-light/20">
             <div>
-              <p className="font-semibold text-fg-primary">{twoFactorLabel}</p>
-              <p className="text-sm text-fg-secondary">
+              <p className="font-semibold text-fg-primary">
                 {twoFactorEnabled ? t("disableTwoFactor") : t("enableTwoFactor")}
+              </p>
+              <p className="text-sm text-fg-secondary">
+                {twoFactorEnabled
+                  ? "Two-factor authentication is currently enabled"
+                  : "Add an extra layer of security to your account"}
               </p>
             </div>
 
-            <label className={`relative inline-flex items-center ${isBusy ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
-              <input
-                type="checkbox"
-                checked={twoFactorEnabled}
-                onChange={() => void onToggle2fa()}
-                disabled={isBusy}
-                role="switch"
-                aria-checked={twoFactorEnabled}
-                className="peer sr-only"
-              />
-              <span className="relative inline-flex h-7 w-[46px] items-center rounded-full border border-border-light/25 bg-bg-tertiary/50 shadow-sm transition-colors peer-checked:bg-accent-primary peer-checked:border-accent-primary/40 peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-accent-primary/35 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-bg-primary" />
-              <span className="pointer-events-none absolute left-[3px] top-[3px] h-[22px] w-[22px] rounded-full bg-bg-surface shadow-md transition-transform peer-checked:translate-x-[18px]" />
-            </label>
+            <Toggle
+              checked={twoFactorEnabled}
+              onChange={() => void onToggle2fa()}
+              disabled={isBusy}
+              label="Two-factor authentication"
+            />
           </div>
 
           {updateSecurity.error ? (

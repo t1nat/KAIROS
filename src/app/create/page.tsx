@@ -8,7 +8,6 @@ import { NotesList } from "~/components/notes/NotesList";
 import { NotificationSystem } from "~/components/notifications/NotificationSystem";
 import { ProjectsListWorkspace } from "~/components/projects/ProjectsListWorkspace";
 import { LogIn, ArrowRight, FolderKanban, FileEdit } from "lucide-react";
-import { ThemeToggle } from "~/components/providers/ThemeToggle";
 import { OrgAccessCodeBadge } from "~/components/orgs/OrgAccessCodeBadge";
 import { OrgSwitcher } from "~/components/orgs/OrgSwitcher";
 import { getTranslations } from "next-intl/server";
@@ -97,7 +96,6 @@ export default async function CreatePage({
             </div>
             
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
-              <ThemeToggle />
               <OrgSwitcher />
               <OrgAccessCodeBadge />
               <NotificationSystem />

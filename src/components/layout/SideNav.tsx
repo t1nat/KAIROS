@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -18,7 +18,7 @@ export function SideNav() {
   const tCommon = useTranslations("common");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
-  const mobileNavId = useId();
+  const mobileNavId = "mobile-nav-menu";
 
   useEffect(() => {
     if (!isMobileMenuOpen) return;

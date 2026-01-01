@@ -5,7 +5,6 @@ import { UserDisplay } from "~/components/layout/UserDisplay";
 import { SettingsNav } from "~/components/layout/SettingsNav";
 import { ProfileSettingsClient } from "~/components/settings/ProfileSettingsClient";
 import { AppearanceSettings } from "~/components/settings/AppearanceSettings";
-import { ThemeToggle } from "~/components/providers/ThemeToggle";
 import { LanguageSettingsClient } from "~/components/settings/LanguageSettingsClient";
 import { NotificationSettingsClient } from "~/components/settings/NotificationSettingsClient";
 import { SecuritySettingsClient } from "~/components/settings/SecuritySettingsClient";
@@ -33,7 +32,7 @@ export default async function SettingsPage({
   const activeSection = typeof sectionParam === 'string' ? sectionParam : "profile";
 
   return (
-    <div className="min-h-screen bg-bg-primary">
+    <div className="min-h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary">
       <SideNav />
 
       <div className="lg:ml-16 pt-16 lg:pt-0 min-h-screen flex flex-col">
@@ -48,8 +47,7 @@ export default async function SettingsPage({
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <ThemeToggle />
-              <UserDisplay />
+              <UserDisplay user={session.user} />
             </div>
           </div>
         </header>

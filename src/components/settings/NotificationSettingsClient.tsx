@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Bell } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { api } from "~/trpc/react";
+import { ToggleRow } from "~/components/layout/Toggle";
 
 type Translator = (key: string, values?: Record<string, unknown>) => string;
 
@@ -13,37 +14,6 @@ type NotificationKey =
   | "eventRemindersNotifications"
   | "taskDueRemindersNotifications"
   | "marketingEmailsNotifications";
-
-function ToggleRow(props: {
-  title: string;
-  description: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4 p-4 bg-bg-surface rounded-xl border border-border-light/15">
-      <div className="flex-1">
-        <h3 className="font-semibold text-fg-primary">{props.title}</h3>
-        <p className="text-sm text-fg-secondary">{props.description}</p>
-      </div>
-
-      <label className={`relative inline-flex items-center ${props.disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
-        <input
-          type="checkbox"
-          checked={props.checked}
-          onChange={(e) => props.onChange(e.target.checked)}
-          disabled={props.disabled}
-          role="switch"
-          aria-checked={props.checked}
-          className="peer sr-only"
-        />
-        <span className="relative inline-flex h-7 w-[46px] items-center rounded-full border border-border-light/25 bg-bg-tertiary/50 shadow-sm transition-colors peer-checked:bg-accent-primary peer-checked:border-accent-primary/40 peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-accent-primary/35 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-bg-primary" />
-        <span className="pointer-events-none absolute left-[3px] top-[3px] h-[22px] w-[22px] rounded-full bg-bg-surface shadow-md transition-transform peer-checked:translate-x-[18px]" />
-      </label>
-    </div>
-  );
-}
 
 export function NotificationSettingsClient() {
   const useT = useTranslations as unknown as (namespace: string) => Translator;
@@ -113,35 +83,35 @@ export function NotificationSettingsClient() {
           title={t("email")}
           description={t("emailDesc")}
           checked={values.emailNotifications}
-          onChange={(checked) => onToggle("emailNotifications", checked)}
+          onChange={(checked: boolean) => onToggle("emailNotifications", checked)}
           disabled={isBusy}
         />
         <ToggleRow
           title={t("projects")}
           description={t("projectsDesc")}
           checked={values.projectUpdatesNotifications}
-          onChange={(checked) => onToggle("projectUpdatesNotifications", checked)}
+          onChange={(checked: boolean) => onToggle("projectUpdatesNotifications", checked)}
           disabled={isBusy}
         />
         <ToggleRow
           title={t("events")}
           description={t("eventsDesc")}
           checked={values.eventRemindersNotifications}
-          onChange={(checked) => onToggle("eventRemindersNotifications", checked)}
+          onChange={(checked: boolean) => onToggle("eventRemindersNotifications", checked)}
           disabled={isBusy}
         />
         <ToggleRow
           title={t("tasks")}
           description={t("tasksDesc")}
           checked={values.taskDueRemindersNotifications}
-          onChange={(checked) => onToggle("taskDueRemindersNotifications", checked)}
+          onChange={(checked: boolean) => onToggle("taskDueRemindersNotifications", checked)}
           disabled={isBusy}
         />
         <ToggleRow
           title={t("marketing")}
           description={t("marketingDesc")}
           checked={values.marketingEmailsNotifications}
-          onChange={(checked) => onToggle("marketingEmailsNotifications", checked)}
+          onChange={(checked: boolean) => onToggle("marketingEmailsNotifications", checked)}
           disabled={isBusy}
         />
       </div>
@@ -153,7 +123,7 @@ export function NotificationSettingsClient() {
           disabled={isBusy || !touched}
           className="px-8 py-3 bg-accent-primary text-white font-semibold rounded-xl hover:bg-accent-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {updateNotifications.isPending ? t("save") : t("save")}
+          {t("save")}
         </button>
         {updateNotifications.error ? (
           <p className="text-sm text-error">{updateNotifications.error.message}</p>
