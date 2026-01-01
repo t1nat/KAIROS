@@ -5,6 +5,8 @@ import { Bell } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { api } from "~/trpc/react";
 
+type Translator = (key: string, values?: Record<string, unknown>) => string;
+
 type NotificationKey =
   | "emailNotifications"
   | "projectUpdatesNotifications"
@@ -20,29 +22,32 @@ function ToggleRow(props: {
   disabled?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 p-4 bg-bg-surface rounded-xl border border-border-light/20">
+    <div className="flex items-center justify-between gap-4 p-4 bg-bg-surface rounded-xl border border-border-light/15">
       <div className="flex-1">
         <h3 className="font-semibold text-fg-primary">{props.title}</h3>
         <p className="text-sm text-fg-secondary">{props.description}</p>
       </div>
 
-      <label className="relative inline-block w-12 h-6 cursor-pointer">
+      <label className={`relative inline-flex items-center ${props.disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
         <input
           type="checkbox"
           checked={props.checked}
           onChange={(e) => props.onChange(e.target.checked)}
           disabled={props.disabled}
+          role="switch"
+          aria-checked={props.checked}
           className="peer sr-only"
         />
-        <div className="w-12 h-6 rounded-full bg-bg-secondary/70 peer-checked:bg-accent-primary/80 transition-colors" />
-        <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-6" />
+        <span className="relative inline-flex h-7 w-[46px] items-center rounded-full border border-border-light/25 bg-bg-tertiary/50 shadow-sm transition-colors peer-checked:bg-accent-primary peer-checked:border-accent-primary/40 peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-accent-primary/35 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-bg-primary" />
+        <span className="pointer-events-none absolute left-[3px] top-[3px] h-[22px] w-[22px] rounded-full bg-bg-surface shadow-md transition-transform peer-checked:translate-x-[18px]" />
       </label>
     </div>
   );
 }
 
 export function NotificationSettingsClient() {
-  const t = useTranslations("settings.notifications");
+  const useT = useTranslations as unknown as (namespace: string) => Translator;
+  const t = useT("settings.notifications");
 
   const { data, isLoading } = api.settings.get.useQuery();
   const utils = api.useUtils();
@@ -141,7 +146,7 @@ export function NotificationSettingsClient() {
         />
       </div>
 
-      <div className="mt-6 pt-6 border-t border-border-light/20 flex items-center gap-3">
+      <div className="mt-6 pt-6 border-t border-border-light/10 flex items-center gap-3">
         <button
           type="button"
           onClick={onSave}

@@ -205,7 +205,7 @@ export const userRouter = createTRPCRouter({
   uploadProfileImage: protectedProcedure
     .input(
       z.object({
-        image: z.string().min(1), 
+        image: z.string().url(),
         filename: z.string().optional(),
       })
     )

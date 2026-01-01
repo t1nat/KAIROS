@@ -15,6 +15,20 @@
       "when": 1767278685573,
       "tag": "0001_steep_firedrake",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1767225600000,
+      "tag": "0002_user_image_text",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1767283524678,
+      "tag": "0003_graceful_patriot",
+      "breakpoints": true
     }
   ]
 }

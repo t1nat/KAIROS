@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import { useUploadThing } from '~/lib/uploadthing';
 import Image from 'next/image';
 import { Plus, X, CalendarCheck, ImagePlus, Loader2, MapPin } from 'lucide-react';
+import { useToast } from "~/components/ToastProvider";
 
 const REGIONS = [
   { value: 'sofia', label: 'Sofia' },
@@ -23,6 +24,7 @@ const REGIONS = [
 export const CreateEventForm: React.FC = () => {
   const { data: session } = useSession();
   const utils = api.useUtils();
+  const toast = useToast();
   
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -59,7 +61,7 @@ export const CreateEventForm: React.FC = () => {
     },
     onError: (error) => {
       console.error('Error creating event:', error);
-      alert(`Failed to create event: ${error.message}`);
+      toast.error(error.message);
     },
   });
 
@@ -84,12 +86,12 @@ export const CreateEventForm: React.FC = () => {
     e.preventDefault();
     
     if (!session) {
-      alert('You must be logged in to create an event');
+      toast.error('You must be logged in to create an event');
       return;
     }
 
     if (!title.trim() || !description.trim() || !eventDate || !region) {
-      alert('Please fill in all required fields');
+      toast.info('Please fill in all required fields');
       return;
     }
 
@@ -112,7 +114,7 @@ export const CreateEventForm: React.FC = () => {
         sendReminders: enableRsvp ? sendReminders : false, // Only send reminders if RSVP is enabled
       });
     } catch (error) {
-      alert('Failed to upload image');
+      toast.error('Failed to upload image');
       console.error(error);
     } finally {
       setIsUploading(false);
@@ -147,17 +149,17 @@ export const CreateEventForm: React.FC = () => {
         </button>
       ) : (
         <form onSubmit={handleSubmit} className="p-4 sm:p-8">
-          <div className="flex items-center justify-between mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-white/10">
+          <div className="flex items-center justify-between mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-border-light/30">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#A343EC]/20 rounded-lg flex items-center justify-center">
-                <CalendarCheck size={16} className="sm:w-5 sm:h-5 text-[#A343EC]" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-accent-primary/15 rounded-lg flex items-center justify-center">
+                <CalendarCheck size={16} className="sm:w-5 sm:h-5 text-accent-primary" />
               </div>
-              <h2 className="text-lg sm:text-2xl font-bold text-[#FBF9F5]">Create New Event</h2>
+              <h2 className="text-lg sm:text-2xl font-bold text-fg-primary">Create New Event</h2>
             </div>
             <button
               type="button"
               onClick={() => setShowForm(false)}
-              className="p-2 text-[#E4DEEA] hover:text-[#FBF9F5] hover:bg-white/5 rounded-lg transition-colors"
+              className="p-2 text-fg-secondary hover:text-fg-primary hover:bg-bg-secondary/60 rounded-lg transition-colors"
             >
               <X size={18} className="sm:w-5 sm:h-5" />
             </button>
@@ -229,7 +231,7 @@ export const CreateEventForm: React.FC = () => {
                   <option key={r.value} value={r.value} className="bg-bg-primary text-fg-primary">
                     {r.label}
                   </option>
-                ))})
+                ))}
               </select>
             </div>
 
@@ -272,20 +274,20 @@ export const CreateEventForm: React.FC = () => {
                       <ImagePlus className="text-accent-primary" size={24} />
                     </div>
                     <span className="text-xs sm:text-sm font-semibold text-fg-secondary mb-1">Click to upload image</span>
-                    <span className="text-xs text-fg-tertiary">PNG, JPG up to 10MB</span>
+                    <span className="text-xs text-fg-tertiary">PNG, JPG up to 4MB</span>
                   </label>
                 </div>
               )}
             </div>
 
-            <div className="space-y-3 p-3 sm:p-4 bg-white/5 rounded-xl border border-white/10">
+            <div className="space-y-3 p-3 sm:p-4 bg-bg-surface/60 rounded-xl border border-border-light/30">
               <div className="flex items-center gap-2 sm:gap-3">
                 <input
                   type="checkbox"
                   id="enableRsvp"
                   checked={enableRsvp}
                   onChange={(e) => setEnableRsvp(e.target.checked)}
-                  className="w-4 h-4 sm:w-5 sm:h-5 rounded border-white/10 bg-white/5 text-[#A343EC] focus:ring-2 focus:ring-[#A343EC] cursor-pointer"
+                  className="w-4 h-4 sm:w-5 sm:h-5 rounded border-border-light/40 bg-bg-surface/60 text-accent-primary focus:ring-2 focus:ring-accent-primary/30 cursor-pointer"
                 />
                 <label htmlFor="enableRsvp" className="text-xs sm:text-sm font-medium text-fg-secondary cursor-pointer">
                   Enable RSVP for this event

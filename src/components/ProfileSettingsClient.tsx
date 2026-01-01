@@ -4,6 +4,8 @@ import { useState, useRef } from "react";
 import { User, Loader2, Upload, Camera } from "lucide-react";
 import { api } from "~/trpc/react";
 import Image from "next/image";
+import { useUploadThing } from "~/lib/uploadthing";
+import { useToast } from "~/components/ToastProvider";
 
 interface ProfileSettingsClientProps {
   user: {
@@ -17,12 +19,15 @@ interface ProfileSettingsClientProps {
 
 export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
   const utils = api.useUtils();
+  const toast = useToast();
   const [name, setName] = useState(user.name ?? "");
   const [bio, setBio] = useState(user.bio ?? "");
   const [imagePreview, setImagePreview] = useState(user.image ?? "");
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { startUpload } = useUploadThing("imageUploader");
 
   const { data: userProfile } = api.user.getProfile.useQuery();
 
@@ -55,7 +60,7 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
         utils.user.getCurrentUser.setData(undefined, context.previousUser);
       }
       
-      alert(`❌ Error: ${error.message}`);
+      toast.error(error.message);
     },
     
     onSettled: () => {
@@ -68,11 +73,11 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
     onSuccess: (data: { imageUrl: string }) => {
       setImagePreview(data.imageUrl);
       setIsUploading(false);
-      alert("✅ Profile picture updated successfully!");
+      toast.success("Profile picture updated");
     },
     onError: (error) => {
       setIsUploading(false);
-      alert("❌ Failed to upload image: " + error.message);
+      toast.error(error.message);
     },
   });
 
@@ -80,42 +85,46 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert("❌ File size must be less than 5MB");
+    // reset input so selecting the same file again triggers onChange
+    e.target.value = "";
+
+    const maxBytes = 4 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      toast.error("File size must be 4MB or less");
       return;
     }
 
     // Check file type
     if (!file.type.startsWith("image/")) {
-      alert("❌ Please upload an image file");
+      toast.error("Please upload an image file");
       return;
     }
 
     if (!uploadImageMutation) {
-      alert("❌ Upload feature not available");
+      toast.error("Upload feature not available");
       return;
     }
 
     setIsUploading(true);
 
+    // Local preview only (do NOT store base64 in DB)
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string);
-    };
+    reader.onloadend = () => setImagePreview(reader.result as string);
     reader.readAsDataURL(file);
 
-    // Convert to base64 and upload
-    const base64 = await new Promise<string>((resolve) => {
-      const r = new FileReader();
-      r.onloadend = () => resolve(r.result as string);
-      r.readAsDataURL(file);
-    });
-
-    uploadImageMutation.mutate({ 
-      image: base64,
-      filename: file.name 
-    });
+    try {
+      const uploadResult = await startUpload([file]);
+      const url = uploadResult?.[0]?.url;
+      if (!url) throw new Error("Upload failed");
+      uploadImageMutation.mutate({
+        image: url,
+        filename: file.name,
+      });
+    } catch (error) {
+      setIsUploading(false);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      toast.error(message);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -240,13 +249,13 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
           <textarea
             rows={4}
             value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            maxLength={1000}
+            onChange={(e) => setBio(e.target.value.slice(0, 100))}
+            maxLength={100}
             className="w-full px-4 py-3 rounded-xl bg-bg-surface border border-border-light/20 text-fg-primary placeholder:text-fg-tertiary focus:border-accent-primary/60 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 transition-all resize-none"
             placeholder="Tell us about yourself..."
           />
           <p className="text-xs text-fg-tertiary mt-1">
-            {bio.length}/1000 characters
+            {bio.length}/100 characters
           </p>
         </div>
 

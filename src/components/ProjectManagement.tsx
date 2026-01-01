@@ -5,6 +5,7 @@ import { Trash2, FolderPlus, CheckCircle2 } from "lucide-react";
 import Image from "next/image";
 import { api } from "~/trpc/react";
 import { useTranslations } from "next-intl";
+import { useToast } from "~/components/ToastProvider";
 
 interface User {
   id: string;
@@ -26,6 +27,7 @@ interface ProjectFormProps {
 
 export function CreateProjectForm({ onSubmit, currentUser, isExpanded, onToggle }: ProjectFormProps) {
   const t = useTranslations("create");
+  const toast = useToast();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,7 +37,7 @@ export function CreateProjectForm({ onSubmit, currentUser, isExpanded, onToggle 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
-      alert(t("projectForm.validation.projectTitleRequired"));
+      toast.info(t("projectForm.validation.projectTitleRequired"));
       return;
     }
 
@@ -64,7 +66,7 @@ export function CreateProjectForm({ onSubmit, currentUser, isExpanded, onToggle 
       </button>
 
       {isExpanded && (
-        <form onSubmit={handleSubmit} className="px-6 pb-6 border-t border-white/10 pt-6">
+        <form onSubmit={handleSubmit} className="px-6 pb-6 border-t border-border-light/30 pt-6">
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-fg-secondary mb-2 uppercase tracking-wide">
@@ -98,7 +100,7 @@ export function CreateProjectForm({ onSubmit, currentUser, isExpanded, onToggle 
             <button
               type="submit"
               disabled={isSubmitting || !title.trim()}
-              className="w-full px-6 py-3 border border-accent-primary/60 text-accent-primary font-semibold rounded-lg hover:bg-accent-primary hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-6 py-3 bg-accent-primary text-white font-semibold rounded-lg hover:bg-accent-hover transition-all border border-accent-primary/30 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? t("projectForm.creating") : t("projectForm.create")}
             </button>
@@ -123,6 +125,7 @@ interface TaskFormProps {
 
 export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskFormProps) {
   const t = useTranslations("create");
+  const toast = useToast();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [assignedToId, setAssignedToId] = useState<string>("");
@@ -135,7 +138,7 @@ export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskForm
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
-      alert(t("taskForm.validation.taskTitleRequired"));
+      toast.info(t("taskForm.validation.taskTitleRequired"));
       return;
     }
 

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { api } from "~/trpc/react";
 import { ChevronRight } from "lucide-react";
+import { useToast } from "~/components/ToastProvider";
 
 interface RoleSelectionModalProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface RoleSelectionModalProps {
 }
 
 export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalProps) {
+  const toast = useToast();
   const [step, setStep] = useState<"choose" | "admin-setup" | "worker-join">("choose");
   const [organizationName, setOrganizationName] = useState("");
   const [accessCode, setAccessCode] = useState("");
@@ -20,7 +22,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
       setGeneratedCode(data.accessCode);
     },
     onError: (error) => {
-      alert(`Error: ${error.message}`);
+      toast.error(error.message);
     },
   });
 
@@ -29,7 +31,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
       onComplete();
     },
     onError: (error) => {
-      alert(`Error: ${error.message}`);
+      toast.error(error.message);
     },
   });
 
@@ -38,13 +40,13 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
       onComplete();
     },
     onError: (error) => {
-      alert(`Error: ${error.message}`);
+      toast.error(error.message);
     },
   });
 
   const handleCreateOrganization = () => {
     if (!organizationName.trim()) {
-      alert("Please enter an organization name");
+      toast.info("Please enter an organization name");
       return;
     }
     createOrganization.mutate({ name: organizationName });
@@ -52,7 +54,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
 
   const handleJoinOrganization = () => {
     if (!accessCode.trim()) {
-      alert("Please enter the access code");
+      toast.info("Please enter the access code");
       return;
     }
     joinOrganization.mutate({ code: accessCode });
@@ -61,6 +63,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
   const handleCopyCode = async () => {
     try {
       await navigator.clipboard.writeText(generatedCode);
+      toast.success("Access code copied");
    } catch {
     const textArea = document.createElement("textarea");
     textArea.value = generatedCode;
@@ -68,6 +71,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
     textArea.select();
     document.execCommand("copy");
     document.body.removeChild(textArea);
+    toast.success("Access code copied");
   }
   };
 

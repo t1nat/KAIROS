@@ -64,7 +64,62 @@
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
-    --shadow-accent: 0 10px 25px -5px rgb(139 92 246 / 0.3);
+    --shadow-accent: 0 10px 25px -5px rgb(var(--accent-primary) / 0.3);
+  }
+
+  /* Accent (theme) variants (reuse existing theme tokens) */
+  :root[data-accent="purple"] {
+    --accent-primary: var(--brand-purple);
+    --accent-secondary: var(--brand-indigo);
+    --accent-tertiary: var(--brand-blue);
+    --accent-hover: var(--brand-indigo);
+    --accent-glow: var(--brand-purple);
+    --event-active: var(--brand-purple);
+  }
+
+  :root[data-accent="indigo"] {
+    --accent-primary: var(--brand-indigo);
+    --accent-secondary: var(--brand-blue);
+    --accent-tertiary: var(--brand-cyan);
+    --accent-hover: var(--brand-blue);
+    --accent-glow: var(--brand-indigo);
+    --event-active: var(--brand-indigo);
+  }
+
+  :root[data-accent="blue"] {
+    --accent-primary: var(--brand-blue);
+    --accent-secondary: var(--brand-cyan);
+    --accent-tertiary: var(--brand-teal);
+    --accent-hover: var(--brand-cyan);
+    --accent-glow: var(--brand-blue);
+    --event-active: var(--brand-blue);
+  }
+
+  :root[data-accent="cyan"] {
+    --accent-primary: var(--brand-cyan);
+    --accent-secondary: var(--brand-teal);
+    --accent-tertiary: var(--brand-blue);
+    --accent-hover: var(--brand-teal);
+    --accent-glow: var(--brand-cyan);
+    --event-active: var(--brand-cyan);
+  }
+
+  :root[data-accent="teal"] {
+    --accent-primary: var(--brand-teal);
+    --accent-secondary: var(--brand-cyan);
+    --accent-tertiary: var(--brand-blue);
+    --accent-hover: var(--brand-cyan);
+    --accent-glow: var(--brand-teal);
+    --event-active: var(--brand-teal);
+  }
+
+  :root[data-accent="green"] {
+    --accent-primary: var(--success);
+    --accent-secondary: var(--brand-teal);
+    --accent-tertiary: var(--brand-cyan);
+    --accent-hover: var(--brand-teal);
+    --accent-glow: var(--success);
+    --event-active: var(--success);
   }
 
 /* Dark Mode - Professional Event Planning Theme */
@@ -125,7 +180,7 @@
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.5);
     --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.7);
-    --shadow-accent: 0 10px 25px -5px rgb(168 85 247 / 0.4);
+    --shadow-accent: 0 10px 25px -5px rgb(var(--accent-primary) / 0.4);
   }
 
  
@@ -150,7 +205,7 @@
   .surface-elevated {
     background-color: rgb(var(--bg-elevated));
     box-shadow: var(--shadow-lg);
-    border: 1px solid rgb(var(--border-light));
+    border: 1px solid rgb(var(--border-light) / 0.7);
   }
 
   .surface-card {
@@ -160,7 +215,7 @@
       rgb(var(--bg-secondary)) 100%
     );
     box-shadow: var(--shadow-md);
-    border: 1px solid rgb(var(--border-light));
+    border: 1px solid rgb(var(--border-light) / 0.7);
     border-radius: 1rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }

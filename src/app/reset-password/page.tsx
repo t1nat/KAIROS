@@ -59,18 +59,18 @@ function ResetPasswordForm() {
 
   if (!noteId || !token) {
     return (
-      <div className="min-h-screen bg-[#FCFBF9] flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-lg border border-[#DDE3E9] p-8 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="text-red-500" size={32} />
+      <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4">
+        <div className="surface-card p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-error/15 rounded-full flex items-center justify-center mx-auto mb-4 border border-error/25">
+            <AlertCircle className="text-error" size={32} />
           </div>
-          <h1 className="text-2xl font-bold text-[#222B32] mb-2">Invalid Reset Link</h1>
-          <p className="text-[#59677C] mb-6">
+          <h1 className="text-2xl font-bold text-fg-primary mb-2">Invalid Reset Link</h1>
+          <p className="text-fg-secondary mb-6">
             This password reset link is invalid or has expired.
           </p>
           <Link
             href="/create?action=new_note"
-            className="inline-block px-6 py-3 bg-gradient-to-r from-[#9448F2] to-[#80C49B] text-white font-semibold rounded-lg hover:shadow-lg transition-all"
+            className="inline-block px-6 py-3 bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-accent transition-all"
           >
             Go to Notes
           </Link>
@@ -81,16 +81,16 @@ function ResetPasswordForm() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-[#FCFBF9] flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-lg border border-[#DDE3E9] p-8 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-[#80C49B]/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="text-[#80C49B]" size={32} />
+      <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4">
+        <div className="surface-card p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-success/15 rounded-full flex items-center justify-center mx-auto mb-4 border border-success/25">
+            <CheckCircle className="text-success" size={32} />
           </div>
-          <h1 className="text-2xl font-bold text-[#222B32] mb-2">Password Reset Successful!</h1>
-          <p className="text-[#59677C] mb-6">
+          <h1 className="text-2xl font-bold text-fg-primary mb-2">Password Reset Successful!</h1>
+          <p className="text-fg-secondary mb-6">
             Your note password has been updated. You can now access your note with the new password.
           </p>
-          <p className="text-sm text-[#59677C]">
+          <p className="text-sm text-fg-tertiary">
             Redirecting you to your notes...
           </p>
         </div>
@@ -99,30 +99,30 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FCFBF9] flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-lg border border-[#DDE3E9] p-8 max-w-md w-full">
+    <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4">
+      <div className="surface-card p-8 max-w-md w-full">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 bg-gradient-to-br from-[#9448F2] to-[#80C49B] rounded-xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-gradient-to-br from-accent-primary to-accent-secondary rounded-xl flex items-center justify-center shadow-sm">
             <Lock className="text-white" size={24} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-[#222B32]">Reset Note Password</h1>
-            <p className="text-sm text-[#59677C]">Create a new password for your encrypted note</p>
+            <h1 className="text-2xl font-bold text-fg-primary">Reset Note Password</h1>
+            <p className="text-sm text-fg-secondary">Create a new password for your encrypted note</p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="bg-error/10 border border-error/25 rounded-lg p-4">
               <div className="flex items-start gap-2">
-                <AlertCircle size={18} className="text-red-500 mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-red-700">{error}</p>
+                <AlertCircle size={18} className="text-error mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-fg-primary">{error}</p>
               </div>
             </div>
           )}
 
           <div>
-            <label htmlFor="new-password" className="block text-sm font-semibold text-[#222B32] mb-2">
+            <label htmlFor="new-password" className="block text-sm font-semibold text-fg-primary mb-2">
               New Password
             </label>
             <div className="relative">
@@ -132,13 +132,14 @@ function ResetPasswordForm() {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Enter new password"
-                className="w-full p-3 pr-12 border border-[#DDE3E9] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9448F2] focus:border-transparent"
+                className="w-full p-3 pr-12 bg-bg-surface/60 border border-border-light/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary/50 text-fg-primary placeholder:text-fg-tertiary"
                 disabled={resetPassword.isPending}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#59677C] hover:text-[#222B32]"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-tertiary hover:text-fg-primary"
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -146,7 +147,7 @@ function ResetPasswordForm() {
           </div>
 
           <div>
-            <label htmlFor="confirm-password" className="block text-sm font-semibold text-[#222B32] mb-2">
+            <label htmlFor="confirm-password" className="block text-sm font-semibold text-fg-primary mb-2">
               Confirm New Password
             </label>
             <div className="relative">
@@ -156,22 +157,23 @@ function ResetPasswordForm() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm new password"
-                className="w-full p-3 pr-12 border border-[#DDE3E9] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9448F2] focus:border-transparent"
+                className="w-full p-3 pr-12 bg-bg-surface/60 border border-border-light/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary/50 text-fg-primary placeholder:text-fg-tertiary"
                 disabled={resetPassword.isPending}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#59677C] hover:text-[#222B32]"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-tertiary hover:text-fg-primary"
+                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
               >
                 {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
           </div>
 
-          <div className="bg-[#9448F2]/5 border border-[#9448F2]/20 rounded-lg p-4">
-            <p className="text-sm text-[#59677C]">
-              💡 <strong className="text-[#222B32]">Tip:</strong> Choose a strong password that you will remember. 
+          <div className="bg-accent-primary/5 border border-accent-primary/20 rounded-lg p-4">
+            <p className="text-sm text-fg-secondary">
+              💡 <strong className="text-fg-primary">Tip:</strong> Choose a strong password that you will remember. 
               You will need this password to access your encrypted note.
             </p>
           </div>
@@ -179,17 +181,17 @@ function ResetPasswordForm() {
           <button
             type="submit"
             disabled={resetPassword.isPending || !newPassword || !confirmPassword}
-            className="w-full px-6 py-3 bg-gradient-to-r from-[#9448F2] to-[#80C49B] text-white font-semibold rounded-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full px-6 py-3 bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-semibold rounded-lg hover:shadow-xl hover:shadow-accent transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             <Lock size={18} />
             {resetPassword.isPending ? "Resetting Password..." : "Reset Password"}
           </button>
         </form>
 
-        <div className="mt-6 pt-6 border-t border-[#DDE3E9] text-center">
+        <div className="mt-6 pt-6 border-t border-border-light/40 text-center">
           <Link
             href="/create?action=new_note"
-            className="text-sm text-[#9448F2] hover:text-[#80C49B] font-medium transition-colors"
+            className="text-sm text-accent-primary hover:text-accent-hover font-medium transition-colors"
           >
             ← Back to Notes
           </Link>
@@ -202,8 +204,8 @@ function ResetPasswordForm() {
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#FCFBF9] flex items-center justify-center">
-        <div className="text-[#59677C]">Loading...</div>
+      <div className="min-h-screen bg-bg-primary flex items-center justify-center">
+        <div className="text-fg-secondary">Loading...</div>
       </div>
     }>
       <ResetPasswordForm />

@@ -186,7 +186,7 @@ export function InteractiveTimeline({
           />
           {animatedPercentage > 0 && animatedPercentage < 100 && (
             <div 
-              className="absolute top-0 left-0 h-full bg-[#A343EC]/30 blur-lg"
+              className="absolute top-0 left-0 h-full bg-accent-primary/25 blur-lg"
               style={{ width: `${animatedPercentage}%` }}
             />
           )}
@@ -196,7 +196,7 @@ export function InteractiveTimeline({
       <div className="relative flex-1 pb-8">
         <div className="absolute top-[52px] left-0 right-0 h-[3px] bg-gradient-to-r from-accent-primary/15 via-accent-primary/30 to-accent-primary/15" />
         
-        <div className="relative flex items-start gap-6 md:gap-8 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-[#A343EC]/30 scrollbar-track-white/5 scroll-smooth snap-x snap-mandatory">
+        <div className="relative flex items-start gap-6 md:gap-8 overflow-x-auto pb-4 scrollbar-thin scroll-smooth snap-x snap-mandatory">
           {sortedTasks.map((task, index) => {
             const isCompleted = task.status === "completed";
             const isHovered = hoveredTaskId === task.id;
@@ -285,8 +285,8 @@ export function InteractiveTimeline({
                     )}
                   </div>
 
-                  <h4 className={`font-bold text-[#FBF9F5] mb-2 leading-snug transition-all duration-300 ${
-                    isCompleted ? "line-through text-[#FBF9F5]/60" : ""
+                  <h4 className={`font-bold text-fg-primary mb-2 leading-snug transition-all duration-300 ${
+                    isCompleted ? "line-through text-fg-tertiary" : ""
                   }`}>
                     {task.title}
                   </h4>
@@ -331,7 +331,7 @@ export function InteractiveTimeline({
                   </div>
 
                   {(isHovered || isExpanded) && (
-                    <div className="mt-4 pt-4 border-t border-white/10 space-y-2 animate-fadeIn">
+                    <div className="mt-4 pt-4 border-t border-border-light/20 space-y-2 animate-fadeIn">
                       {task.createdBy && (
                         <div className="flex items-center gap-2 text-xs text-fg-secondary">
                           <User size={12} className="text-accent-primary" />
@@ -468,17 +468,17 @@ export function InteractiveTimeline({
         }
 
         .scrollbar-thin::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.05);
+          background: rgb(var(--border-light) / 0.18);
           border-radius: 3px;
         }
 
         .scrollbar-thin::-webkit-scrollbar-thumb {
-          background: rgba(163, 67, 236, 0.3);
+          background: rgb(var(--accent-primary) / 0.35);
           border-radius: 3px;
         }
 
         .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-          background: rgba(163, 67, 236, 0.5);
+          background: rgb(var(--accent-primary) / 0.55);
         }
       `}</style>
     </div>

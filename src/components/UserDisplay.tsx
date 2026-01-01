@@ -5,8 +5,10 @@ import { ChevronDown, LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 export function UserDisplay() {
+  const tSettings = useTranslations("settings");
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -35,10 +37,10 @@ export function UserDisplay() {
     return (
       <div className="flex items-center gap-3 animate-pulse">
         <div className="hidden sm:flex flex-col items-end gap-1">
-          <div className="h-4 bg-white/10 rounded w-24" />
-          <div className="h-3 bg-white/10 rounded w-32" />
+          <div className="h-4 bg-bg-tertiary/60 rounded w-24" />
+          <div className="h-3 bg-bg-tertiary/60 rounded w-32" />
         </div>
-        <div className="w-8 h-8 bg-white/10 rounded-full" />
+        <div className="w-8 h-8 bg-bg-tertiary/60 rounded-full" />
       </div>
     );
   }
@@ -79,7 +81,11 @@ export function UserDisplay() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-3 w-64 bg-bg-primary/95 rounded-2xl border border-border-light/20 shadow-2xl overflow-hidden z-50 backdrop-blur-xl" role="menu" aria-label="User menu">
+        <div
+          className="absolute right-0 mt-3 w-64 bg-bg-primary/95 rounded-2xl border border-border-light/20 shadow-2xl overflow-hidden z-50 backdrop-blur-xl"
+          role="menu"
+          aria-label={tSettings("title")}
+        >
           <div className="p-4 border-b border-border-light/20 bg-bg-secondary/40">
             <div className="flex items-center gap-3">
               {user.image ? (
@@ -131,7 +137,7 @@ export function UserDisplay() {
                   d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" 
                 />
               </svg>
-              Profile Settings
+              {tSettings("profile.title")}
             </a>
             
             <button
@@ -140,7 +146,7 @@ export function UserDisplay() {
               role="menuitem"
             >
               <LogOut size={16} />
-              Sign Out
+              {tSettings("security.signOut")}
             </button>
           </div>
         </div>

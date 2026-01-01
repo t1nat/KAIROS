@@ -97,7 +97,7 @@ export function SideNav() {
                 );
               })}
               
-              <div className="mt-6 pt-6 border-t border-white/10">
+              <div className="mt-6 pt-6 border-t border-border-light/20">
                 <p className="text-xs font-semibold text-fg-secondary uppercase tracking-wider mb-3 px-4">
                   {t("quickActions")}
                 </p>

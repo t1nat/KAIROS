@@ -3,10 +3,24 @@
 import { useState, useEffect } from "react";
 import { Palette, Sun, Moon, Monitor, Check } from "lucide-react";
 import { useTheme } from "next-themes";
+import { api } from "~/trpc/react";
+import { useToast } from "~/components/ToastProvider";
 
 export function AppearanceSettings() {
   const { theme, setTheme, systemTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const toast = useToast();
+  const utils = api.useUtils();
+
+  const { data } = api.settings.get.useQuery(undefined, {
+    retry: false,
+  });
+
+  const updateAppearance = api.settings.updateAppearance.useMutation({
+    onSuccess: async () => {
+      await utils.settings.get.invalidate();
+    },
+  });
 
   useEffect(() => {
     setMounted(true);
@@ -34,6 +48,41 @@ export function AppearanceSettings() {
   }
 
   const currentTheme = theme === 'system' ? systemTheme : theme;
+
+  const currentAccent = data?.accentColor ?? "indigo";
+
+  const accentOptions = [
+    { id: "purple", name: "Purple", swatchVar: "--brand-purple" },
+    { id: "indigo", name: "Indigo", swatchVar: "--brand-indigo" },
+    { id: "blue", name: "Blue", swatchVar: "--brand-blue" },
+    { id: "cyan", name: "Cyan", swatchVar: "--brand-cyan" },
+    { id: "teal", name: "Teal", swatchVar: "--brand-teal" },
+    { id: "green", name: "Green", swatchVar: "--success" },
+  ] as const;
+
+  const isBusy = updateAppearance.isPending;
+
+  const onSelectTheme = async (nextTheme: "light" | "dark" | "system") => {
+    setTheme(nextTheme);
+    try {
+      await updateAppearance.mutateAsync({ theme: nextTheme });
+      toast.success("Appearance updated");
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Failed to update appearance";
+      toast.error(message);
+    }
+  };
+
+  const onSelectAccent = async (accent: string) => {
+    document.documentElement.dataset.accent = accent;
+    try {
+      await updateAppearance.mutateAsync({ accentColor: accent });
+      toast.success("Accent updated");
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Failed to update accent";
+      toast.error(message);
+    }
+  };
 
   const themes = [
     {
@@ -82,12 +131,13 @@ export function AppearanceSettings() {
               return (
                 <button
                   key={themeOption.id}
-                  onClick={() => setTheme(themeOption.id)}
+                  onClick={() => onSelectTheme(themeOption.id as "light" | "dark" | "system")}
+                  disabled={isBusy}
                   className={`relative flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${
                     isActive
                       ? 'border-accent-primary bg-accent-primary/10'
                       : 'border-border-light/20 hover:border-border-medium/50 bg-bg-surface hover:bg-bg-elevated'
-                  }`}
+                  } ${isBusy ? 'opacity-70 cursor-not-allowed' : ''}`}
                 >
                   <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${themeOption.preview} flex items-center justify-center shadow-lg`}>
                     <Icon className={isActive ? "text-accent-primary" : "text-fg-secondary"} size={24} />
@@ -114,6 +164,35 @@ export function AppearanceSettings() {
         </div>
 
         <div className="pt-6 border-t border-border-light/20">
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-fg-secondary mb-4">Accent</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {accentOptions.map((opt) => {
+                const isActive = currentAccent === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    disabled={isBusy}
+                    onClick={() => onSelectAccent(opt.id)}
+                    className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+                      isActive
+                        ? 'border-accent-primary bg-accent-primary/10'
+                        : 'border-border-light/20 bg-bg-surface hover:bg-bg-elevated hover:border-border-medium/50'
+                    } ${isBusy ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  >
+                    <span
+                      className="h-4 w-4 rounded-full"
+                      style={{ backgroundColor: `rgb(var(${opt.swatchVar}))` }}
+                      aria-hidden
+                    />
+                    <span className="text-sm font-semibold text-fg-primary">{opt.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="p-4 bg-bg-surface rounded-xl border border-border-light/20">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 bg-accent-primary/15 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">

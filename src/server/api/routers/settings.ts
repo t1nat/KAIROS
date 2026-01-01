@@ -53,7 +53,7 @@ export const settingsRouter = createTRPCRouter({
   updateProfile: protectedProcedure
     .input(z.object({
       name: z.string().min(1).max(255).optional(),
-      bio: z.string().max(1000).optional().nullable(),
+      bio: z.string().max(100).optional().nullable(),
     }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db.update(users)

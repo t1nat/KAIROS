@@ -253,7 +253,7 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-[#E4DEEA] flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-fg-secondary flex items-center gap-2">
               <TrendingUp size={16} />
               Response Breakdown
             </h3>
@@ -261,31 +261,31 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 size={16} className="text-green-400" />
-                  <span className="text-[#E4DEEA] font-medium">Going</span>
+                  <CheckCircle2 size={16} className="text-success" />
+                  <span className="text-fg-secondary font-medium">Going</span>
                 </div>
-                <span className="text-[#FBF9F5] font-semibold">{event.rsvpCounts.going}</span>
+                <span className="text-fg-primary font-semibold">{event.rsvpCounts.going}</span>
               </div>
-              <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+              <div className="h-2 bg-bg-surface/60 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-green-500 transition-all duration-500"
+                  className="h-full bg-success transition-all duration-500"
                   style={{ width: `${goingPercentage}%` }}
                 />
               </div>
-              <p className="text-xs text-[#59677C] text-right">{goingPercentage.toFixed(1)}%</p>
+              <p className="text-xs text-fg-tertiary text-right">{goingPercentage.toFixed(1)}%</p>
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
-                  <HelpCircle size={16} className="text-yellow-400" />
-                  <span className="text-[#E4DEAA] font-medium">Maybe</span>
+                  <HelpCircle size={16} className="text-warning" />
+                  <span className="text-fg-secondary font-medium">Maybe</span>
                 </div>
-                <span className="text-[#FBF9F5] font-semibold">{event.rsvpCounts.maybe}</span>
+                <span className="text-fg-primary font-semibold">{event.rsvpCounts.maybe}</span>
               </div>
-              <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+              <div className="h-2 bg-bg-surface/60 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-yellow-500 transition-all duration-500"
+                  className="h-full bg-warning transition-all duration-500"
                   style={{ width: `${maybePercentage}%` }}
                 />
               </div>

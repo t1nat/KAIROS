@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { api } from "~/trpc/react";
 import { Lock, Trash2, Eye, EyeOff, Mail, AlertCircle, FileText, ChevronDown, RefreshCw, FolderLock } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useToast } from "~/components/ToastProvider";
 
 export function NotesList() {
   const t = useTranslations("create");
+  const toast = useToast();
   const [selectedNoteId, setSelectedNoteId] = useState<number | null>(null);
   const [showLockedNotes, setShowLockedNotes] = useState(false);
   const [showPasswords, setShowPasswords] = useState<Record<number, boolean>>({});
@@ -14,6 +16,8 @@ export function NotesList() {
   const [unlockedNotes, setUnlockedNotes] = useState<Record<number, { unlocked: boolean; content: string }>>({});
   const [passwordErrors, setPasswordErrors] = useState<Record<number, string>>({});
   const [showResetModal, setShowResetModal] = useState<number | null>(null);
+  const [pendingDeleteNoteId, setPendingDeleteNoteId] = useState<number | null>(null);
+  const pendingDeleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [editingContent, setEditingContent] = useState<Record<number, string>>({});
 
@@ -64,13 +68,30 @@ export function NotesList() {
 
   const requestPasswordReset = api.note.requestPasswordReset.useMutation({
     onSuccess: () => {
-      alert(t("notes.reset.success"));
+      toast.success(t("notes.reset.success"));
       setShowResetModal(null);
     },
     onError: (error) => {
-      alert(t("errors.generic", { message: error.message }));
+      toast.error(t("errors.generic", { message: error.message }));
     },
   });
+
+  const requestDeleteNote = (noteId: number) => {
+    if (pendingDeleteNoteId === noteId) {
+      if (pendingDeleteTimerRef.current) {
+        clearTimeout(pendingDeleteTimerRef.current);
+        pendingDeleteTimerRef.current = null;
+      }
+      setPendingDeleteNoteId(null);
+      deleteNote.mutate({ id: noteId });
+      return;
+    }
+
+    setPendingDeleteNoteId(noteId);
+    if (pendingDeleteTimerRef.current) clearTimeout(pendingDeleteTimerRef.current);
+    pendingDeleteTimerRef.current = setTimeout(() => setPendingDeleteNoteId(null), 4000);
+    toast.info(t("notes.deleteConfirm"));
+  };
 
   const handlePasswordSubmit = (noteId: number, password: string) => {
     if (password.length === 0) {
@@ -169,9 +190,7 @@ export function NotesList() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (confirm(t("notes.deleteConfirm"))) {
-                              deleteNote.mutate({ id: note.id });
-                            }
+                            requestDeleteNote(note.id);
                           }}
                           className="text-error/70 hover:text-error transition-colors p-1"
                         >
@@ -328,9 +347,7 @@ export function NotesList() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                if (confirm(t("notes.deleteConfirm"))) {
-                                  deleteNote.mutate({ id: note.id });
-                                }
+                                requestDeleteNote(note.id);
                               }}
                               className="text-error/70 hover:text-error transition-colors p-1"
                             >

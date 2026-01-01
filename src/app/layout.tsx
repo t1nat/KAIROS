@@ -9,6 +9,8 @@ import { TRPCReactProvider } from "~/trpc/react";
 import { auth } from "~/server/auth";
 import NextAuthSessionProvider from "~/components/SessionProvider";
 import { ThemeProvider } from "~/components/ThemeProvider";
+import { ToastProvider } from "~/components/ToastProvider";
+import { UserPreferencesProvider } from "~/components/UserPreferencesProvider";
 
 export const metadata: Metadata = {
   title: "KAIROS",
@@ -72,7 +74,9 @@ export default async function RootLayout({
           <TRPCReactProvider>
             <NextAuthSessionProvider session={session}>
               <ThemeProvider>
-                {children}
+                <ToastProvider>
+                  <UserPreferencesProvider>{children}</UserPreferencesProvider>
+                </ToastProvider>
               </ThemeProvider>
             </NextAuthSessionProvider>
           </TRPCReactProvider>

@@ -7,6 +7,7 @@ import { InteractiveTimeline } from "./InteractiveTimeline";
 import { ChevronDown, ChevronUp, RefreshCw, CheckCircle2, ArrowLeft, Folder } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useToast } from "~/components/ToastProvider";
 
 interface CreateProjectContainerProps {
   userId: string;
@@ -61,6 +62,7 @@ interface Task {
 
 export function CreateProjectContainer({ userId }: CreateProjectContainerProps) {
   const t = useTranslations("create");
+  const toast = useToast();
   const searchParams = useSearchParams();
   const projectIdFromUrl = searchParams.get("projectId");
   
@@ -100,7 +102,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
       void utils.project.getMyProjects.invalidate();
       if (data) setSelectedProjectId(data.id);
     },
-    onError: (error) => alert(t("errors.generic", { message: error.message })),
+    onError: (error) => toast.error(t("errors.generic", { message: error.message })),
   });
 
   const createTask = api.task.create.useMutation({
@@ -108,7 +110,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
       void utils.project.getById.invalidate({ id: selectedProjectId! });
       setShowTaskForm(false);
     },
-    onError: (error) => alert(t("errors.generic", { message: error.message })),
+    onError: (error) => toast.error(t("errors.generic", { message: error.message })),
   });
 
   const updateTaskStatus = api.task.updateStatus.useMutation({
@@ -140,23 +142,23 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
       if (ctx?.previousProject && selectedProjectId) {
         utils.project.getById.setData({ id: selectedProjectId }, ctx.previousProject);
       }
-      alert(t("errors.generic", { message: error.message }));
+      toast.error(t("errors.generic", { message: error.message }));
     },
   });
 
   const addCollaborator = api.project.addCollaborator.useMutation({
     onSuccess: () => void utils.project.getById.invalidate({ id: selectedProjectId! }),
-    onError: (e) => alert(t("errors.generic", { message: e.message })),
+    onError: (e) => toast.error(t("errors.generic", { message: e.message })),
   });
 
   const removeCollaborator = api.project.removeCollaborator.useMutation({
     onSuccess: () => void utils.project.getById.invalidate({ id: selectedProjectId! }),
-    onError: (e) => alert(t("errors.generic", { message: e.message })),
+    onError: (e) => toast.error(t("errors.generic", { message: e.message })),
   });
 
   const updateCollaboratorPermission = api.project.updateCollaboratorPermission.useMutation({
     onSuccess: () => void utils.project.getById.invalidate({ id: selectedProjectId! }),
-    onError: (e) => alert(t("errors.generic", { message: e.message })),
+    onError: (e) => toast.error(t("errors.generic", { message: e.message })),
   });
 
   const handleCreateProject = async (data: CreateProjectInput) => createProject.mutate(data);
@@ -254,7 +256,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
               </div>
 
               {!isOwner && (
-                <div className="flex items-center gap-2 pt-3 border-t border-white/10">
+                <div className="flex items-center gap-2 pt-3 border-t border-border-light/20">
                   <span
                     className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium border ${
                       hasWriteAccess
@@ -310,7 +312,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                 </button>
 
                 {showTaskForm && (
-                  <div className="px-4 pb-4 border-t border-white/10">
+                  <div className="px-4 pb-4 border-t border-border-light/20">
                     <CreateTaskForm
                       projectId={selectedProjectId}
                       availableUsers={availableUsers}
@@ -332,7 +334,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                 </button>
 
                 {showCollaborators && (
-                  <div className="px-4 pb-4 border-t border-white/10">
+                  <div className="px-4 pb-4 border-t border-border-light/20">
                     <CollaboratorManager
                       projectId={selectedProjectId}
                       currentCollaborators={(projectDetails.collaborators?.map((c) => ({
@@ -360,20 +362,20 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
           <div className="relative">
             <button
               onClick={() => setShowOtherProjects((s) => !s)}
-              className="w-full flex items-center justify-between px-4 py-3 bg-bg-surface/60 hover:bg-bg-elevated rounded-xl border border-border-light/30 transition-colors"
+              className="w-full flex items-center justify-between px-4 py-3 bg-bg-surface/60 hover:bg-bg-elevated rounded-xl border border-border-light/20 hover:border-accent-primary/30 transition-colors"
             >
               <span className="text-sm font-semibold text-fg-primary">{t("projects.otherProjects")}</span>
               {showOtherProjects ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
 
             {showOtherProjects && (
-              <div className="mt-2 bg-bg-elevated border border-border-light/30 rounded-xl shadow-xl p-2 max-h-64 overflow-y-auto">
+              <div className="mt-2 bg-bg-elevated border border-border-light/20 rounded-xl shadow-xl p-2 max-h-64 overflow-y-auto">
                 {projects
                   .filter((p) => p.id !== selectedProjectId)
                   .map((project) => (
                     <button
                       key={project.id}
-                      className="w-full text-left text-sm p-3 rounded-lg hover:bg-bg-surface text-fg-primary transition-colors flex items-center gap-3"
+                      className="w-full text-left text-sm p-3 rounded-lg hover:bg-bg-surface hover:text-accent-primary text-fg-primary transition-colors flex items-center gap-3"
                       onClick={() => {
                         setSelectedProjectId(project.id);
                         setShowOtherProjects(false);

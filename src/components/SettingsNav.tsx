@@ -4,12 +4,16 @@ import Link from "next/link";
 import { User, Bell, Shield, Globe, Palette } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+type Translator = (key: string, values?: Record<string, unknown>) => string;
+
 interface SettingsNavProps {
   activeSection: string;
+  variant?: "card" | "embedded";
 }
 
-export function SettingsNav({ activeSection }: SettingsNavProps) {
-  const t = useTranslations("settings.nav");
+export function SettingsNav({ activeSection, variant = "card" }: SettingsNavProps) {
+  const useT = useTranslations as unknown as (namespace: string) => Translator;
+  const t = useT("settings.nav");
   
   const sections = [
     { id: "profile", label: t("profile"), icon: User },
@@ -20,7 +24,14 @@ export function SettingsNav({ activeSection }: SettingsNavProps) {
   ];
 
   return (
-    <nav className="bg-bg-secondary/40 backdrop-blur-sm rounded-2xl border border-border-light/20 p-2" aria-label="Settings">
+    <nav
+      className={
+        variant === "embedded"
+          ? "p-2"
+          : "bg-bg-secondary/40 backdrop-blur-sm rounded-2xl border border-border-light/20 p-2"
+      }
+      aria-label="Settings"
+    >
       <div className="space-y-1">
         {sections.map((section) => {
           const Icon = section.icon;
@@ -31,10 +42,10 @@ export function SettingsNav({ activeSection }: SettingsNavProps) {
               key={section.id}
               href={`/settings?section=${section.id}`}
               aria-current={isActive ? "page" : undefined}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors ${
                 isActive
-                  ? "bg-accent-primary text-white"
-                  : "text-fg-secondary hover:bg-bg-secondary/60"
+                  ? "bg-gradient-to-r from-accent-primary to-accent-secondary text-white border-accent-primary/30 shadow-sm shadow-accent"
+                  : "text-fg-secondary border-transparent hover:bg-bg-secondary/60"
               }`}
             >
               <Icon size={20} />

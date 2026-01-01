@@ -163,7 +163,7 @@ export function ProjectsListWorkspace() {
         
         <button
           onClick={() => setShowProjects((s) => !s)}
-          className="group flex items-center gap-2 sm:gap-3 mx-auto px-4 sm:px-6 py-2.5 sm:py-3 rounded-full bg-bg-surface hover:bg-bg-elevated border border-border-light/20 hover:border-accent-primary/40 transition-all"
+          className="group flex items-center gap-2 sm:gap-3 mx-auto px-4 sm:px-6 py-2.5 sm:py-3 rounded-full bg-accent-primary/10 hover:bg-accent-primary/15 border border-accent-primary/25 hover:border-accent-primary/40 transition-all"
         >
           <Folder size={16} className="text-accent-primary group-hover:scale-110 transition-transform sm:w-[18px] sm:h-[18px]" />
           <span className="text-xs sm:text-sm font-semibold text-fg-primary">

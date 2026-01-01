@@ -37,7 +37,7 @@ export default async function SettingsPage({
       <SideNav />
 
       <div className="lg:ml-16 pt-16 lg:pt-0 min-h-screen flex flex-col">
-        <header className="sticky top-0 z-30 glass-effect border-b border-border-light">
+        <header className="sticky top-0 z-30 glass-effect border-b border-border-light/60">
           <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
             <div className="flex items-center gap-3">
               <div>
@@ -55,14 +55,14 @@ export default async function SettingsPage({
         </header>
 
         <main id="main-content" className="flex-1 max-w-7xl mx-auto px-6 py-8 w-full">
-          <div className="flex gap-6 h-full">
+          <div className="flex gap-6 items-start">
             <aside className="w-64 flex-shrink-0">
-              <div className="sticky top-24">
-                <SettingsNav activeSection={activeSection} />
+              <div className="sticky top-24 bg-bg-secondary/30 backdrop-blur-sm rounded-2xl border border-border-light/10">
+                <SettingsNav activeSection={activeSection} variant="embedded" />
               </div>
             </aside>
 
-            <div className="flex-1">
+            <div className="flex-1 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 duration-300">
               {activeSection === "profile" && <ProfileSettingsClient user={session.user} />}
               {activeSection === "notifications" && <NotificationSettingsClient />}
               {activeSection === "security" && <SecuritySettingsClient />}
