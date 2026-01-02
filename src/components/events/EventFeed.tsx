@@ -23,6 +23,7 @@ import {
 import { api } from "~/trpc/react";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
+import { RegionMapPicker, type RegionOption } from "~/components/events/RegionMapPicker";
 
 const REGIONS = [
   { value: '', label: 'All Regions' }, 
@@ -37,6 +38,19 @@ const REGIONS = [
   { value: 'dobrich', label: 'Dobrich' },
   { value: 'shumen', label: 'Shumen' },
 ] as const;
+
+const REGION_MAP: RegionOption[] = [
+  { value: "sofia", label: "Sofia", lat: 42.6977, lng: 23.3219 },
+  { value: "plovdiv", label: "Plovdiv", lat: 42.1354, lng: 24.7453 },
+  { value: "varna", label: "Varna", lat: 43.2141, lng: 27.9147 },
+  { value: "burgas", label: "Burgas", lat: 42.5048, lng: 27.4626 },
+  { value: "ruse", label: "Ruse", lat: 43.8356, lng: 25.9657 },
+  { value: "stara_zagora", label: "Stara Zagora", lat: 42.4258, lng: 25.6345 },
+  { value: "pleven", label: "Pleven", lat: 43.4170, lng: 24.6067 },
+  { value: "sliven", label: "Sliven", lat: 42.6810, lng: 26.3220 },
+  { value: "dobrich", label: "Dobrich", lat: 43.5726, lng: 27.8273 },
+  { value: "shumen", label: "Shumen", lat: 43.2706, lng: 26.9229 },
+];
 
 interface Author {
   id?: string | null; 
@@ -615,25 +629,25 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
           </div>
         )}
 
-        <div className="px-2 sm:px-4 py-3 border-t border-border-light flex items-center gap-4 sm:gap-6">
+        <div className="px-2 sm:px-4 py-3 border-t border-border-light flex items-center gap-2 sm:gap-3">
           <button
             onClick={handleLike}
             disabled={toggleLike.isPending}
-            className={`flex items-center gap-1.5 sm:gap-2 transition-all ${
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full transition-all hover:bg-bg-secondary ${
               event.hasLiked
                 ? "text-event-critical"
                 : "text-fg-secondary hover:text-event-critical"
             }`}
           >
             <Heart
-              size={18}
-              className={`sm:w-5 sm:h-5 ${event.hasLiked ? "fill-current" : ""}`}
+              size={16}
+              className={`sm:w-[18px] sm:h-[18px] ${event.hasLiked ? "fill-current" : ""}`}
             />
             <span className="text-xs sm:text-sm font-medium">{event.likeCount}</span>
           </button>
 
-          <button className="flex items-center gap-1.5 sm:gap-2 text-fg-secondary hover:text-accent-primary transition-colors">
-            <MessageCircle size={18} className="sm:w-5 sm:h-5" />
+          <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-fg-secondary hover:text-accent-primary hover:bg-bg-secondary transition-colors">
+            <MessageCircle size={16} className="sm:w-[18px] sm:h-[18px]" />
             <span className="text-xs sm:text-sm font-medium">{event.commentCount}</span>
           </button>
         </div>
@@ -720,7 +734,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                   <button
                     onClick={handleAddComment}
                     disabled={addComment.isPending || !commentText.trim()}
-                    className="px-3 sm:px-4 py-2 bg-accent-primary text-white rounded-lg hover:bg-accent-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    className="w-9 h-9 sm:w-10 sm:h-10 inline-flex items-center justify-center bg-accent-primary text-white rounded-full hover:bg-accent-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                     {addComment.isPending ? (
                       <Loader2 className="animate-spin" size={18} />
                     ) : (
@@ -780,21 +794,31 @@ export const EventFeed: React.FC = () => {
   return (
     <div>
       <div className="mb-6">
-        <div className="surface-card rounded-xl p-3 sm:p-4">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <MapPin className="text-accent-primary" size={18} />
-            <select
-              value={selectedRegion}
-              onChange={(e) => setSelectedRegion(e.target.value)}
-              className="flex-1 px-3 sm:px-4 py-2 bg-bg-secondary border border-border-light rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all text-sm sm:text-base text-fg-primary appearance-none cursor-pointer">
-              {REGIONS.map((region) => (
-                <option key={region.value} value={region.value} className="bg-bg-primary text-fg-primary">
-                  {region.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+        <RegionMapPicker
+          value={selectedRegion}
+          onChange={setSelectedRegion}
+          regions={REGION_MAP}
+          allowAll
+          allLabel="All"
+          fallback={
+            <div className="surface-card rounded-xl p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <MapPin className="text-accent-primary" size={18} />
+                <select
+                  value={selectedRegion}
+                  onChange={(e) => setSelectedRegion(e.target.value)}
+                  className="flex-1 px-3 sm:px-4 py-2 bg-bg-secondary border border-border-light rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all text-sm sm:text-base text-fg-primary appearance-none cursor-pointer"
+                >
+                  {REGIONS.map((region) => (
+                    <option key={region.value} value={region.value}>
+                      {region.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          }
+        />
       </div>
 
       {!filteredEvents || filteredEvents.length === 0 ? (

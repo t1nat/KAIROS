@@ -10,6 +10,61 @@
     "quickActions": "Schnellaktionen",
     "newProject": "Neues Projekt"
   },
+  "progress": {
+    "title": "Fortschritt",
+    "loading": "Fortschritt wird geladen…",
+    "empty": "Noch keine Projekte.",
+    "scope": {
+      "organization": "Organisation",
+      "personal": "Persönlich"
+    },
+    "stats": {
+      "projects": "Projekte",
+      "tasks": "Aufgaben",
+      "completed": "Abgeschlossen",
+      "topContributor": "Top-Mitwirkender",
+      "completions": "{count} Fertigstellungen"
+    },
+    "overall": {
+      "title": "Projektanalyse",
+      "subtitle": "Fortschritt über alle Projekte"
+    },
+    "contributors": {
+      "title": "Anteil nach Beitragenden",
+      "subtitle": "Basierend auf Aufgabenabschlüssen"
+    },
+    "perProject": {
+      "title": "Anteil nach Projekten",
+      "subtitle": "Abgeschlossen nach Projekt",
+      "otherProjects": "Andere Projekte"
+    },
+    "labels": {
+      "remaining": "Übrig",
+      "other": "Sonstiges",
+      "done": "Erledigt",
+      "completed": "Abgeschlossen",
+      "created": "Erstellt",
+      "updated": "Aktualisiert",
+      "status": "Status",
+      "deleted": "Gelöscht",
+      "activity": "Aktivität"
+    },
+    "projectsList": {
+      "title": "Projekte"
+    },
+    "project": {
+      "untitled": "Unbenanntes Projekt"
+    },
+    "user": {
+      "someone": "Jemand"
+    },
+    "projectDetails": {
+      "back": "Zurück",
+      "lastUpdate": "Letztes Update",
+      "taskCompletion": "Aufgabenerledigung",
+      "activityCategories": "Aktivitätskategorien"
+    }
+  },
   "home": {
     "title": "KAIROS",
     "subtitle": "Beherrsche deine Zeit, gestalte deine Zukunft",

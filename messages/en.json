@@ -10,6 +10,61 @@
     "quickActions": "Quick Actions",
     "newProject": "New Project"
   },
+  "progress": {
+    "title": "Progress",
+    "loading": "Loading progress…",
+    "empty": "No projects yet.",
+    "scope": {
+      "organization": "Organization",
+      "personal": "Personal"
+    },
+    "stats": {
+      "projects": "Projects",
+      "tasks": "Tasks",
+      "completed": "Completed",
+      "topContributor": "Top contributor",
+      "completions": "{count} completions"
+    },
+    "overall": {
+      "title": "Project Analytics",
+      "subtitle": "Progress across all projects"
+    },
+    "contributors": {
+      "title": "Contributor share",
+      "subtitle": "Based on task completions"
+    },
+    "perProject": {
+      "title": "Per-project share",
+      "subtitle": "Completed by project",
+      "otherProjects": "Other projects"
+    },
+    "labels": {
+      "remaining": "Remaining",
+      "other": "Other",
+      "done": "Done",
+      "completed": "Completed",
+      "created": "Created",
+      "updated": "Updated",
+      "status": "Status",
+      "deleted": "Deleted",
+      "activity": "Activity"
+    },
+    "projectsList": {
+      "title": "Projects"
+    },
+    "project": {
+      "untitled": "Untitled project"
+    },
+    "user": {
+      "someone": "Someone"
+    },
+    "projectDetails": {
+      "back": "Back",
+      "lastUpdate": "Last update",
+      "taskCompletion": "Task completion",
+      "activityCategories": "Activity categories"
+    }
+  },
   "home": {
     "title": "KAIROS",
     "subtitle": "Master Your Time, Shape Your Future",

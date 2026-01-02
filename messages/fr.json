@@ -10,6 +10,61 @@
     "quickActions": "Actions rapides",
     "newProject": "Nouveau projet"
   },
+  "progress": {
+    "title": "Progrès",
+    "loading": "Chargement de la progression…",
+    "empty": "Aucun projet pour le moment.",
+    "scope": {
+      "organization": "Organisation",
+      "personal": "Personnel"
+    },
+    "stats": {
+      "projects": "Projets",
+      "tasks": "Tâches",
+      "completed": "Terminées",
+      "topContributor": "Meilleur contributeur",
+      "completions": "{count} tâches terminées"
+    },
+    "overall": {
+      "title": "Analyse des projets",
+      "subtitle": "Progression sur l’ensemble des projets"
+    },
+    "contributors": {
+      "title": "Répartition des contributeurs",
+      "subtitle": "Basé sur les tâches terminées"
+    },
+    "perProject": {
+      "title": "Répartition par projet",
+      "subtitle": "Terminées par projet",
+      "otherProjects": "Autres projets"
+    },
+    "labels": {
+      "remaining": "Restant",
+      "other": "Autre",
+      "done": "Fait",
+      "completed": "Terminées",
+      "created": "Créées",
+      "updated": "Mises à jour",
+      "status": "Statut",
+      "deleted": "Supprimées",
+      "activity": "Activité"
+    },
+    "projectsList": {
+      "title": "Projets"
+    },
+    "project": {
+      "untitled": "Projet sans titre"
+    },
+    "user": {
+      "someone": "Quelqu’un"
+    },
+    "projectDetails": {
+      "back": "Retour",
+      "lastUpdate": "Dernière mise à jour",
+      "taskCompletion": "Achèvement des tâches",
+      "activityCategories": "Catégories d’activité"
+    }
+  },
   "home": {
     "title": "KAIROS",
     "subtitle": "Maîtrisez votre temps, façonnez votre avenir",

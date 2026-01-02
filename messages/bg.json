@@ -6,8 +6,64 @@
     "settings": "Настройки",
     "projects": "Проекти",
     "notes": "Бележки",
+    "progress": "Прогрес",
     "quickActions": "Бързи действия",
     "newProject": "Нов проект"
+  },
+  "progress": {
+    "title": "Прогрес",
+    "loading": "Зареждане на прогрес…",
+    "empty": "Все още няма проекти.",
+    "scope": {
+      "organization": "Организация",
+      "personal": "Лично"
+    },
+    "stats": {
+      "projects": "Проекти",
+      "tasks": "Задачи",
+      "completed": "Завършени",
+      "topContributor": "Най-активен",
+      "completions": "{count} завършвания"
+    },
+    "overall": {
+      "title": "Анализ на проектите",
+      "subtitle": "Прогрес във всички проекти"
+    },
+    "contributors": {
+      "title": "Дял по участници",
+      "subtitle": "На база завършени задачи"
+    },
+    "perProject": {
+      "title": "Дял по проекти",
+      "subtitle": "Завършени по проект",
+      "otherProjects": "Други проекти"
+    },
+    "labels": {
+      "remaining": "Оставащи",
+      "other": "Други",
+      "done": "Готово",
+      "completed": "Завършени",
+      "created": "Създадени",
+      "updated": "Обновени",
+      "status": "Статус",
+      "deleted": "Изтрити",
+      "activity": "Активност"
+    },
+    "projectsList": {
+      "title": "Проекти"
+    },
+    "project": {
+      "untitled": "Проект без име"
+    },
+    "user": {
+      "someone": "Някой"
+    },
+    "projectDetails": {
+      "back": "Назад",
+      "lastUpdate": "Последна промяна",
+      "taskCompletion": "Завършване на задачи",
+      "activityCategories": "Категории активност"
+    }
   },
   "home": {
     "title": "KAIROS",

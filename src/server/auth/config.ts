@@ -84,17 +84,33 @@ export const authConfig = {
   }),
   
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
+        // Keep these in the token so session.strategy="jwt" can reflect updates.
+        token.name = user.name;
+        token.email = user.email;
+        token.image = user.image;
       }
+
+      // Allow `useSession().update(...)` to refresh token fields (e.g., image) on demand.
+      if (trigger === "update" && session?.user) {
+        if (typeof session.user.name === "string") token.name = session.user.name;
+        if (typeof session.user.email === "string") token.email = session.user.email;
+        if (typeof session.user.image === "string") token.image = session.user.image;
+      }
+
       return token;
     },
     
     async session({ session, token }) {
-      if (token && session.user) {
-        session.user.id = token.id as string;
+      if (session.user) {
+        if (typeof token.id === "string") session.user.id = token.id;
+        if (typeof token.name === "string") session.user.name = token.name;
+        if (typeof token.email === "string") session.user.email = token.email;
+        if (typeof token.image === "string") session.user.image = token.image;
       }
+
       return session;
     },
   },

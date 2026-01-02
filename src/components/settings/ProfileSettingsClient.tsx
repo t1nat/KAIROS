@@ -6,6 +6,7 @@ import { api } from "~/trpc/react";
 import Image from "next/image";
 import { useUploadThing } from "~/lib/uploadthing";
 import { useToast } from "~/components/providers/ToastProvider";
+import { useSession } from "next-auth/react";
 
 interface ProfileSettingsClientProps {
   user: {
@@ -20,6 +21,7 @@ interface ProfileSettingsClientProps {
 export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
   const utils = api.useUtils();
   const toast = useToast();
+  const { update: updateSession } = useSession();
   const [name, setName] = useState(user.name ?? "");
   const [bio, setBio] = useState(user.bio ?? "");
   const [imagePreview, setImagePreview] = useState(user.image ?? "");
@@ -95,6 +97,13 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
 
       void utils.user.getCurrentUser.invalidate();
       void utils.user.getProfile.invalidate();
+
+      // Refresh event feed/comment avatars that come from cached queries.
+      void utils.event.getPublicEvents.invalidate();
+
+      // Make sure NextAuth's session (used across the app) reflects the new image.
+      // Without this, places like the event comment composer can keep showing the old avatar.
+      void updateSession?.({ user: { image: data.imageUrl } });
       toast.success("Profile picture updated");
     },
     onError: (error) => {

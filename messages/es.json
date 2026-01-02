@@ -10,6 +10,61 @@
     "quickActions": "Acciones rápidas",
     "newProject": "Nuevo proyecto"
   },
+  "progress": {
+    "title": "Progreso",
+    "loading": "Cargando progreso…",
+    "empty": "Aún no hay proyectos.",
+    "scope": {
+      "organization": "Organización",
+      "personal": "Personal"
+    },
+    "stats": {
+      "projects": "Proyectos",
+      "tasks": "Tareas",
+      "completed": "Completadas",
+      "topContributor": "Principal contribuyente",
+      "completions": "{count} finalizaciones"
+    },
+    "overall": {
+      "title": "Analítica del proyecto",
+      "subtitle": "Progreso en todos los proyectos"
+    },
+    "contributors": {
+      "title": "Distribución por contribuyente",
+      "subtitle": "Basado en tareas completadas"
+    },
+    "perProject": {
+      "title": "Distribución por proyecto",
+      "subtitle": "Completadas por proyecto",
+      "otherProjects": "Otros proyectos"
+    },
+    "labels": {
+      "remaining": "Restantes",
+      "other": "Otros",
+      "done": "Hecho",
+      "completed": "Completadas",
+      "created": "Creadas",
+      "updated": "Actualizadas",
+      "status": "Estado",
+      "deleted": "Eliminadas",
+      "activity": "Actividad"
+    },
+    "projectsList": {
+      "title": "Proyectos"
+    },
+    "project": {
+      "untitled": "Proyecto sin título"
+    },
+    "user": {
+      "someone": "Alguien"
+    },
+    "projectDetails": {
+      "back": "Volver",
+      "lastUpdate": "Última actualización",
+      "taskCompletion": "Finalización de tareas",
+      "activityCategories": "Categorías de actividad"
+    }
+  },
   "home": {
     "title": "KAIROS",
     "subtitle": "Domina tu Tiempo, Moldea tu Futuro",

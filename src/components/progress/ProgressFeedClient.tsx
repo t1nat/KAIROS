@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "~/trpc/react";
 import Image from "next/image";
 import { ArrowLeft, Folder } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 
 type TaskStatus = "pending" | "in_progress" | "completed" | "blocked";
 
@@ -82,29 +83,67 @@ const typedApi = api as unknown as {
   };
 };
 
-type DonutSegment = {
+type PieSegment = {
   key: string;
   label: string;
   value: number;
   strokeColor: string;
 };
 
-function ExcelProgressDonut(props: {
-  title: string;
-  subtitle: string;
-  percent: number;
-  completed: number;
-  total: number;
-  segments: DonutSegment[];
+const PIE_COLORS = [
+  "rgb(var(--accent-primary) / 1)",
+  "rgb(var(--brand-blue) / 1)",
+  "rgb(var(--brand-indigo) / 1)",
+  "rgb(var(--brand-cyan) / 1)",
+  "rgb(var(--brand-teal) / 1)",
+  "rgb(var(--accent-secondary) / 1)",
+  "rgb(var(--accent-tertiary) / 1)",
+  "rgb(var(--success) / 1)",
+  "rgb(var(--warning) / 1)",
+  "rgb(var(--info) / 1)",
+  "rgb(var(--error) / 1)",
+];
+
+const PIE_COLOR_OTHER = "rgb(var(--fg-tertiary) / 0.75)";
+const PIE_COLOR_REMAINING = "rgb(var(--fg-quaternary) / 0.55)";
+const PIE_COLOR_SUCCESS = "rgb(var(--success) / 1)";
+const PIE_COLOR_WARNING = "rgb(var(--warning) / 1)";
+const PIE_COLOR_INFO = "rgb(var(--info) / 1)";
+const PIE_COLOR_ERROR = "rgb(var(--error) / 1)";
+
+function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
+  const angleRad = ((angleDeg - 90) * Math.PI) / 180;
+  return {
+    x: cx + r * Math.cos(angleRad),
+    y: cy + r * Math.sin(angleRad),
+  };
+}
+
+function describePieSlice(cx: number, cy: number, r: number, startAngle: number, endAngle: number) {
+  if (endAngle - startAngle >= 359.99) {
+    return `M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx - 0.001} ${cy - r} Z`;
+  }
+  const start = polarToCartesian(cx, cy, r, endAngle);
+  const end = polarToCartesian(cx, cy, r, startAngle);
+  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+  return [
+    `M ${cx} ${cy}`,
+    `L ${start.x} ${start.y}`,
+    `A ${r} ${r} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`,
+    "Z",
+  ].join(" ");
+}
+
+function PieChart(props: { 
+  segments: PieSegment[]; 
+  title: string; 
+  subtitle?: string;
 }) {
-  const radius = 15.91549430918954;
-  const clampedPercent = Math.max(0, Math.min(100, props.percent));
-
-  const animationFrameRef = useRef<number | null>(null);
-  const [fillProgress, setFillProgress] = useState(0);
-
   const total = props.segments.reduce((s, seg) => s + seg.value, 0);
   const safeTotal = total <= 0 ? 1 : total;
+
+  const animationFrameRef = useRef<number | null>(null);
+  const [animProgress, setAnimProgress] = useState(0);
 
   const segmentsKey = useMemo(
     () => props.segments.map((s) => `${s.key}:${s.value}`).join("|"),
@@ -113,7 +152,7 @@ function ExcelProgressDonut(props: {
 
   useEffect(() => {
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-    setFillProgress(0);
+    setAnimProgress(0);
 
     const duration = 800;
     const startTime = Date.now();
@@ -122,7 +161,7 @@ function ExcelProgressDonut(props: {
       const elapsed = Date.now() - startTime;
       const t = Math.min(elapsed / duration, 1);
       const easeOutCubic = 1 - Math.pow(1 - t, 3);
-      setFillProgress(easeOutCubic);
+      setAnimProgress(easeOutCubic);
       if (t < 1) animationFrameRef.current = requestAnimationFrame(animate);
     };
 
@@ -132,77 +171,81 @@ function ExcelProgressDonut(props: {
     };
   }, [segmentsKey]);
 
-  let offset = 0;
-  const normalized = props.segments
+  let angle = 0;
+  const slices = props.segments
     .filter((s) => s.value > 0)
     .map((s) => {
-      const percent = (s.value / safeTotal) * 100;
-      const startOffset = offset;
-      offset += percent;
-      return { ...s, percent, startOffset };
+      const sliceAngle = (s.value / safeTotal) * 360 * animProgress;
+      const startAngle = angle;
+      const endAngle = angle + sliceAngle;
+      angle = endAngle;
+      return {
+        ...s,
+        startAngle,
+        endAngle,
+        percent: (s.value / safeTotal) * 100,
+      };
     });
 
   return (
-    <div className="rounded-xl border border-border-light/20 bg-bg-surface/50 p-5">
-      <div className="flex flex-col items-center text-center gap-1">
-        <h3 className="text-lg font-semibold text-fg-primary">{props.title}</h3>
-        <p className="text-sm text-fg-secondary">{props.subtitle}</p>
+    <div className="flex flex-col p-4 rounded-xl border border-border-light/10">
+      <div className="mb-2">
+        <p className="text-sm font-medium text-fg-primary">{props.title}</p>
+        {props.subtitle && <p className="text-xs text-fg-tertiary">{props.subtitle}</p>}
       </div>
 
-      <div className="mt-5 flex items-center justify-center">
-        <div className="relative w-44 h-44">
-          <svg viewBox="0 0 42 42" className="w-44 h-44" aria-label={props.title}>
-            <g transform="rotate(-90 21 21)">
-              <circle
-                cx="21"
-                cy="21"
-                r={radius}
-                fill="none"
-                style={{ stroke: "rgb(var(--border-light))", opacity: 0.25 }}
-                strokeWidth="4"
-                pathLength={100}
+      <div className="flex items-center gap-4">
+        <div className="relative w-32 h-32 flex-shrink-0">
+          <svg viewBox="0 0 100 100" className="w-32 h-32" aria-label={props.title} role="img">
+            <circle cx="50" cy="50" r="46" fill="rgb(var(--bg-tertiary) / 0.6)" />
+            {slices.map((s) => (
+              <path
+                key={s.key}
+                d={describePieSlice(50, 50, 46, s.startAngle, s.endAngle)}
+                fill={s.strokeColor}
+                stroke="rgb(var(--border-medium) / 0.35)"
+                strokeWidth="0.5"
               />
-
-              {normalized.map((seg) => (
-                <circle
-                  key={seg.key}
-                  cx="21"
-                  cy="21"
-                  r={radius}
-                  fill="none"
-                  style={{ stroke: seg.strokeColor }}
-                  strokeWidth="4"
-                  pathLength={100}
-                  strokeDasharray={`${seg.percent * fillProgress} ${100 - seg.percent * fillProgress}`}
-                  strokeDashoffset={-(seg.startOffset * fillProgress)}
-                />
-              ))}
-            </g>
+            ))}
           </svg>
-
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <p className="text-5xl font-semibold text-fg-primary">{Math.round(clampedPercent)}%</p>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <p className="text-lg font-semibold text-fg-primary">{total}</p>
           </div>
         </div>
-      </div>
 
-      <div className="mt-5 text-center">
-        <p className="text-sm font-semibold tracking-wide text-fg-primary">OVERALL PROGRESS</p>
-        <p className="text-sm text-fg-secondary">
-          {props.completed} of {props.total} tasks
-        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {props.segments
+            .filter((s) => s.value > 0)
+            .map((s) => (
+              <span
+                key={s.key}
+                className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs text-fg-secondary"
+              >
+                <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: s.strokeColor }} />
+                <span className="text-fg-primary">{s.label}</span>
+                <span className="text-fg-tertiary">{s.value}</span>
+              </span>
+            ))}
+        </div>
       </div>
     </div>
   );
 }
 
-function DonutChart(props: { segments: DonutSegment[]; title: string }) {
-  const radius = 15.91549430918954;
+function LargePieChart(props: {
+  title: string;
+  subtitle: string;
+  percent: number;
+  completed: number;
+  total: number;
+  segments: PieSegment[];
+}) {
   const total = props.segments.reduce((s, seg) => s + seg.value, 0);
   const safeTotal = total <= 0 ? 1 : total;
+  const clampedPercent = Math.max(0, Math.min(100, props.percent));
 
   const animationFrameRef = useRef<number | null>(null);
-  const [fillProgress, setFillProgress] = useState(0);
+  const [animProgress, setAnimProgress] = useState(0);
 
   const segmentsKey = useMemo(
     () => props.segments.map((s) => `${s.key}:${s.value}`).join("|"),
@@ -211,16 +254,16 @@ function DonutChart(props: { segments: DonutSegment[]; title: string }) {
 
   useEffect(() => {
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-    setFillProgress(0);
+    setAnimProgress(0);
 
-    const duration = 700;
+    const duration = 800;
     const startTime = Date.now();
 
     const animate = () => {
       const elapsed = Date.now() - startTime;
       const t = Math.min(elapsed / duration, 1);
       const easeOutCubic = 1 - Math.pow(1 - t, 3);
-      setFillProgress(easeOutCubic);
+      setAnimProgress(easeOutCubic);
       if (t < 1) animationFrameRef.current = requestAnimationFrame(animate);
     };
 
@@ -230,84 +273,69 @@ function DonutChart(props: { segments: DonutSegment[]; title: string }) {
     };
   }, [segmentsKey]);
 
-  let offset = 0;
-  const normalized = props.segments
+  let angle = 0;
+  const slices = props.segments
     .filter((s) => s.value > 0)
     .map((s) => {
-      const percent = (s.value / safeTotal) * 100;
-      const startOffset = offset;
-      offset += percent;
-      return { ...s, percent, startOffset };
+      const sliceAngle = (s.value / safeTotal) * 360 * animProgress;
+      const startAngle = angle;
+      const endAngle = angle + sliceAngle;
+      angle = endAngle;
+      return {
+        ...s,
+        startAngle,
+        endAngle,
+        percent: (s.value / safeTotal) * 100,
+      };
     });
 
   return (
-    <div className="rounded-xl border border-border-light/20 bg-bg-surface/50 p-4">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-semibold text-fg-primary">{props.title}</p>
-          <p className="text-xs text-fg-tertiary">{total} total</p>
+    <div className="flex flex-col items-center p-4 rounded-xl border border-border-light/10">
+      <div className="text-center mb-3">
+        <h3 className="text-base font-semibold text-fg-primary">{props.title}</h3>
+        <p className="text-xs text-fg-tertiary">{props.subtitle}</p>
+      </div>
+
+      <div className="relative w-52 h-52">
+        <svg viewBox="0 0 100 100" className="w-52 h-52" aria-label={props.title}>
+          <circle cx="50" cy="50" r="46" fill="rgb(var(--bg-tertiary) / 0.6)" />
+          {slices.map((s) => (
+            <path
+              key={s.key}
+              d={describePieSlice(50, 50, 46, s.startAngle, s.endAngle)}
+              fill={s.strokeColor}
+              stroke="rgb(var(--border-medium) / 0.35)"
+              strokeWidth="0.5"
+            />
+          ))}
+        </svg>
+
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <p className="text-4xl font-bold text-fg-primary">{Math.round(clampedPercent)}%</p>
+          <p className="text-xs text-fg-tertiary">{props.completed}/{props.total}</p>
         </div>
       </div>
 
-      <div className="mt-3 flex items-center gap-4">
-        <div className="relative w-20 h-20 flex-shrink-0">
-          <svg viewBox="0 0 42 42" className="w-20 h-20" aria-label={props.title}>
-            <g transform="rotate(-90 21 21)">
-              <circle
-                cx="21"
-                cy="21"
-                r={radius}
-                fill="none"
-                style={{ stroke: "rgb(var(--border-light))", opacity: 0.3 }}
-                strokeWidth="6"
-                pathLength={100}
-              />
-
-              {normalized.map((seg) => (
-                <circle
-                  key={seg.key}
-                  cx="21"
-                  cy="21"
-                  r={radius}
-                  fill="none"
-                  style={{ stroke: seg.strokeColor }}
-                  strokeWidth="6"
-                  pathLength={100}
-                  strokeDasharray={`${seg.percent * fillProgress} ${100 - seg.percent * fillProgress}`}
-                  strokeDashoffset={-(seg.startOffset * fillProgress)}
-                />
-              ))}
-            </g>
-          </svg>
-
-          <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-sm font-semibold text-fg-primary">{total}</p>
-          </div>
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap gap-2">
-            {props.segments
-              .filter((s) => s.value > 0)
-              .map((s) => (
-                <span
-                  key={s.key}
-                  className="inline-flex items-center gap-2 rounded-full border border-border-light/20 bg-bg-surface/60 px-3 py-1 text-xs text-fg-secondary"
-                >
-                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.strokeColor }} />
-                  <span className="text-fg-primary">{s.label}</span>
-                  <span className="text-fg-tertiary">{s.value}</span>
-                </span>
-              ))}
-          </div>
-        </div>
+      <div className="mt-3 flex flex-wrap justify-center gap-x-3 gap-y-1">
+        {props.segments
+          .filter((s) => s.value > 0)
+          .map((s) => (
+            <span
+              key={s.key}
+              className="inline-flex items-center gap-1.5 text-xs text-fg-secondary"
+            >
+              <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: s.strokeColor }} />
+              <span className="text-fg-primary">{s.label}</span>
+              <span className="text-fg-tertiary">{s.value}</span>
+            </span>
+          ))}
       </div>
     </div>
   );
 }
 
-function getProjectDisplayName(project: ProjectCard): string {
-  return project.title || "Untitled project";
+function getProjectDisplayName(project: ProjectCard, untitledProjectLabel: string): string {
+  return project.title || untitledProjectLabel;
 }
 
 function getProjectPhoto(project: ProjectCard): string | null {
@@ -319,6 +347,9 @@ function getProjectOwnerLabel(project: ProjectCard): string {
 }
 
 export function ProgressFeedClient() {
+  const t = useTranslations("progress");
+  const locale = useLocale();
+
   const { data: projects, isLoading: isLoadingProjects, error: projectsError } =
     typedApi.project.getMyProjects.useQuery(undefined, {
       staleTime: 1000 * 30,
@@ -337,27 +368,27 @@ export function ProgressFeedClient() {
 
   if (isLoadingProjects || isLoadingActivity) {
     return (
-      <div className="surface-card p-6">
-        <p className="text-sm text-fg-secondary">Loading progress…</p>
+      <div className="p-6">
+        <p className="text-sm text-fg-secondary">{t("loading")}</p>
       </div>
     );
   }
 
   if (errorMessage) {
     return (
-      <div className="surface-card p-6">
+      <div className="p-6">
         <p className="text-sm text-error">{errorMessage}</p>
       </div>
     );
   }
 
-
-  const scopeLabel = activity?.scope === "organization" ? "Organization" : "Personal";
+  const scopeLabel =
+    activity?.scope === "organization" ? t("scope.organization") : t("scope.personal");
 
   if (!projects || projects.length === 0) {
     return (
-      <div className="surface-card p-6">
-        <p className="text-sm text-fg-secondary">No projects yet.</p>
+      <div className="p-6">
+        <p className="text-sm text-fg-secondary">{t("empty")}</p>
       </div>
     );
   }
@@ -371,19 +402,8 @@ export function ProgressFeedClient() {
     const overallPercent = totalTasksAll > 0 ? (completedTasksAll / totalTasksAll) * 100 : 0;
 
     const projectsSorted = [...projects].sort((a, b) => (b.tasks?.length ?? 0) - (a.tasks?.length ?? 0));
-    const palette: string[] = [
-      "rgb(var(--accent-primary) / 1)",
-      "rgb(var(--brand-purple) / 1)",
-      "rgb(var(--brand-indigo) / 1)",
-      "rgb(var(--brand-blue) / 1)",
-      "rgb(var(--success) / 1)",
-      "rgb(var(--warning) / 1)",
-      "rgb(var(--info) / 1)",
-      "rgb(var(--error) / 1)",
-      "rgb(var(--accent-secondary) / 1)",
-    ];
 
-    const completedByProjectSegments: DonutSegment[] = [];
+    const completedByProjectSegments: PieSegment[] = [];
     let completedTotalFromSegments = 0;
     let paletteIndex = 0;
     for (const project of projectsSorted) {
@@ -393,20 +413,40 @@ export function ProgressFeedClient() {
       completedTotalFromSegments += projectCompleted;
       completedByProjectSegments.push({
         key: String(project.id),
-        label: getProjectDisplayName(project),
+        label: getProjectDisplayName(project, t("project.untitled")),
         value: projectCompleted,
-        strokeColor: palette[paletteIndex % palette.length] ?? "rgb(var(--accent-primary) / 1)",
+        strokeColor: PIE_COLORS[paletteIndex % PIE_COLORS.length]!,
       });
       paletteIndex += 1;
     }
 
     const remainingAll = Math.max(0, totalTasksAll - completedTotalFromSegments);
-    const overallSegments: DonutSegment[] = [
+    const overallSegments: PieSegment[] = [
       ...completedByProjectSegments,
-      { key: "remaining", label: "Remaining", value: remainingAll, strokeColor: "rgb(var(--bg-secondary) / 1)" },
+      { key: "remaining", label: t("labels.remaining"), value: remainingAll, strokeColor: PIE_COLOR_REMAINING },
     ];
 
-    const activityRows = activity?.rows ?? [];
+    const completedByProjectSorted = [...completedByProjectSegments].sort((a, b) => b.value - a.value);
+    const perProjectTop = completedByProjectSorted.slice(0, 6);
+    const perProjectOtherTotal = completedByProjectSorted.slice(6).reduce((s, seg) => s + seg.value, 0);
+    const perProjectPieSegments: PieSegment[] = [
+      ...perProjectTop,
+      ...(perProjectOtherTotal > 0
+        ? [{
+            key: "other_projects",
+            label: t("perProject.otherProjects"),
+            value: perProjectOtherTotal,
+            strokeColor: PIE_COLOR_OTHER,
+          }]
+        : []),
+      {
+        key: "remaining",
+        label: t("labels.remaining"),
+        value: Math.max(0, totalTasksAll - completedTasksAll),
+        strokeColor: PIE_COLOR_REMAINING,
+      },
+    ].filter((s) => s.value > 0);
+
     const completionRows = activityRows.filter(
       (r) => r.action === "status_changed" && r.newValue === "completed"
     );
@@ -414,7 +454,7 @@ export function ProgressFeedClient() {
 
     const globalContributorCounts = new Map<string, number>();
     for (const entry of rowsForContributorShare) {
-      const displayName = entry.user?.name ?? entry.user?.email ?? "Someone";
+      const displayName = entry.user?.name ?? entry.user?.email ?? t("user.someone");
       globalContributorCounts.set(
         displayName,
         (globalContributorCounts.get(displayName) ?? 0) + 1
@@ -424,87 +464,116 @@ export function ProgressFeedClient() {
     const globalTop = globalSorted.slice(0, 5);
     const globalOtherTotal = globalSorted.slice(5).reduce((s, [, v]) => s + v, 0);
 
-    const contributorPalette: string[] = [
-      "rgb(var(--accent-primary) / 1)",
-      "rgb(var(--success) / 1)",
-      "rgb(var(--warning) / 1)",
-      "rgb(var(--info) / 1)",
-      "rgb(var(--error) / 1)",
-    ];
+    const topContributor = globalSorted[0] ?? null;
+    const topContributorLabel = topContributor?.[0] ?? "—";
+    const topContributorCount = topContributor?.[1] ?? 0;
 
-    const contributorShareSegments: DonutSegment[] = [
+    const contributorShareSegments: PieSegment[] = [
       ...globalTop.map(([name, value], idx) => ({
         key: name,
         label: name,
         value,
-        strokeColor: contributorPalette[idx] ?? "rgb(var(--bg-secondary) / 1)",
+        strokeColor: PIE_COLORS[idx % PIE_COLORS.length]!,
       })),
       ...(globalOtherTotal > 0
-        ? [{ key: "other", label: "Other", value: globalOtherTotal, strokeColor: "rgb(var(--bg-secondary) / 1)" }]
+        ? [{ key: "other", label: t("labels.other"), value: globalOtherTotal, strokeColor: PIE_COLOR_OTHER }]
         : []),
     ];
 
     return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-fg-primary">Progress</h2>
+      <div className="min-h-screen p-4 lg:p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-fg-primary">{t("title")}</h2>
           <p className="text-xs text-fg-tertiary">{scopeLabel}</p>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-          <ExcelProgressDonut
-            title="Project Analytics"
-            subtitle="Real-time progress across all your projects"
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="p-3 rounded-lg border border-border-light/10">
+            <p className="text-xs text-fg-tertiary">{t("stats.projects")}</p>
+            <p className="text-2xl font-bold text-fg-primary">{projects.length}</p>
+          </div>
+          <div className="p-3 rounded-lg border border-border-light/10">
+            <p className="text-xs text-fg-tertiary">{t("stats.tasks")}</p>
+            <p className="text-2xl font-bold text-fg-primary">{totalTasksAll}</p>
+          </div>
+          <div className="p-3 rounded-lg border border-border-light/10">
+            <p className="text-xs text-fg-tertiary">{t("stats.completed")}</p>
+            <p className="text-2xl font-bold text-success">{completedTasksAll}</p>
+          </div>
+          <div className="p-3 rounded-lg border border-border-light/10">
+            <p className="text-xs text-fg-tertiary">{t("stats.topContributor")}</p>
+            <p className="text-sm font-medium text-fg-primary truncate">{topContributorLabel}</p>
+            <p className="text-xs text-fg-tertiary">{t("stats.completions", { count: topContributorCount })}</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <LargePieChart
+            title={t("overall.title")}
+            subtitle={t("overall.subtitle")}
             percent={overallPercent}
             completed={completedTasksAll}
             total={totalTasksAll}
             segments={overallSegments}
           />
 
-          <DonutChart title="Contributor share (overall)" segments={contributorShareSegments} />
+          <PieChart
+            title={t("contributors.title")}
+            subtitle={t("contributors.subtitle")}
+            segments={contributorShareSegments}
+          />
+
+          <PieChart
+            title={t("perProject.title")}
+            subtitle={t("perProject.subtitle")}
+            segments={perProjectPieSegments}
+          />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {projects.map((project) => {
-            const title = getProjectDisplayName(project);
-            const photo = getProjectPhoto(project);
-            const ownerLabel = getProjectOwnerLabel(project);
+        <div>
+          <p className="text-sm font-medium text-fg-primary mb-3">{t("projectsList.title")}</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+            {projects.map((project) => {
+              const title = getProjectDisplayName(project, t("project.untitled"));
+              const photo = getProjectPhoto(project);
+              const ownerLabel = getProjectOwnerLabel(project);
 
-            return (
-              <button
-                key={project.id}
-                type="button"
-                onClick={() => setSelectedProjectId(project.id)}
-                className="text-left rounded-xl border border-border-light/20 bg-bg-surface/50 hover:bg-bg-elevated transition-colors px-4 py-4"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-bg-secondary overflow-hidden flex items-center justify-center flex-shrink-0">
-                    {photo ? (
-                      <Image
-                        src={photo}
-                        alt={title}
-                        width={40}
-                        height={40}
-                        className="w-10 h-10 object-cover"
-                      />
-                    ) : (
-                      <Folder className="text-fg-secondary" size={18} />
-                    )}
+              return (
+                <button
+                  key={project.id}
+                  type="button"
+                  onClick={() => setSelectedProjectId(project.id)}
+                  className="text-left p-3 rounded-lg border border-border-light/10 hover:border-border-light/20 hover:bg-bg-elevated/30 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-bg-secondary/50 overflow-hidden flex items-center justify-center flex-shrink-0">
+                      {photo ? (
+                        <Image
+                          src={photo}
+                          alt={title}
+                          width={32}
+                          height={32}
+                          className="w-8 h-8 object-cover"
+                        />
+                      ) : (
+                        <Folder className="text-fg-tertiary" size={14} />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-fg-primary truncate">{title}</p>
+                      {ownerLabel && <p className="text-[10px] text-fg-tertiary truncate">{ownerLabel}</p>}
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-fg-primary truncate">{title}</p>
-                    {ownerLabel ? <p className="text-xs text-fg-tertiary truncate">{ownerLabel}</p> : null}
-                  </div>
-                </div>
-              </button>
-            );
-          })}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
     );
   }
 
-  const projectTitle = getProjectDisplayName(selectedProject);
+  const projectTitle = getProjectDisplayName(selectedProject, t("project.untitled"));
   const projectPhoto = getProjectPhoto(selectedProject);
 
   const projectTasks = selectedProject.tasks ?? [];
@@ -524,13 +593,18 @@ export function ProgressFeedClient() {
     other: 0,
   };
 
+  const completionRows = projectActivity.filter(
+    (r) => r.action === "status_changed" && r.newValue === "completed"
+  );
+  const rowsForContributorShare = completionRows.length > 0 ? completionRows : projectActivity;
+
   const contributorCounts = new Map<string, number>();
 
-  for (const entry of projectActivity) {
+  for (const entry of rowsForContributorShare) {
     const category = getCategory(entry);
     categoryCounts[category] += 1;
 
-    const displayName = entry.user?.name ?? entry.user?.email ?? "Someone";
+    const displayName = entry.user?.name ?? entry.user?.email ?? t("user.someone");
     contributorCounts.set(displayName, (contributorCounts.get(displayName) ?? 0) + 1);
   }
 
@@ -538,101 +612,92 @@ export function ProgressFeedClient() {
   const topContributors = contributorsSorted.slice(0, 5);
   const otherContribTotal = contributorsSorted.slice(5).reduce((s, [, v]) => s + v, 0);
 
-  const contributorPalette: string[] = [
-    "rgb(var(--accent-primary) / 1)",
-    "rgb(var(--success) / 1)",
-    "rgb(var(--warning) / 1)",
-    "rgb(var(--info) / 1)",
-    "rgb(var(--error) / 1)",
+  const completionSegments: PieSegment[] = [
+    { key: "done", label: t("labels.done"), value: completedTasks, strokeColor: PIE_COLOR_SUCCESS },
+    { key: "remaining", label: t("labels.remaining"), value: remainingTasks, strokeColor: PIE_COLOR_REMAINING },
   ];
 
-  const completionSegments: DonutSegment[] = [
-    { key: "done", label: "Done", value: completedTasks, strokeColor: "rgb(var(--success) / 1)" },
-    { key: "remaining", label: "Remaining", value: remainingTasks, strokeColor: "rgb(var(--bg-secondary) / 1)" },
+  const activitySegments: PieSegment[] = [
+    { key: "completed", label: t("labels.completed"), value: categoryCounts.completed, strokeColor: PIE_COLOR_SUCCESS },
+    { key: "created", label: t("labels.created"), value: categoryCounts.created, strokeColor: PIE_COLORS[0]! },
+    { key: "updated", label: t("labels.updated"), value: categoryCounts.updated, strokeColor: PIE_COLOR_WARNING },
+    { key: "status", label: t("labels.status"), value: categoryCounts.status, strokeColor: PIE_COLOR_INFO },
+    { key: "deleted", label: t("labels.deleted"), value: categoryCounts.deleted, strokeColor: PIE_COLOR_ERROR },
+    { key: "other", label: t("labels.other"), value: categoryCounts.other, strokeColor: PIE_COLOR_OTHER },
   ];
 
-  const activitySegments: DonutSegment[] = [
-    { key: "completed", label: "Completed", value: categoryCounts.completed, strokeColor: "rgb(var(--success) / 1)" },
-    { key: "created", label: "Created", value: categoryCounts.created, strokeColor: "rgb(var(--accent-primary) / 1)" },
-    { key: "updated", label: "Updated", value: categoryCounts.updated, strokeColor: "rgb(var(--warning) / 1)" },
-    { key: "status", label: "Status", value: categoryCounts.status, strokeColor: "rgb(var(--info) / 1)" },
-    { key: "deleted", label: "Deleted", value: categoryCounts.deleted, strokeColor: "rgb(var(--error) / 1)" },
-    { key: "other", label: "Other", value: categoryCounts.other, strokeColor: "rgb(var(--bg-secondary) / 1)" },
-  ];
-
-  const contributorSegments: DonutSegment[] = [
+  const contributorSegments: PieSegment[] = [
     ...topContributors.map(([name, value], idx) => ({
       key: name,
       label: name,
       value,
-      strokeColor: contributorPalette[idx] ?? "rgb(var(--bg-secondary) / 1)",
+      strokeColor: PIE_COLORS[idx % PIE_COLORS.length]!,
     })),
     ...(otherContribTotal > 0
-      ? [{ key: "other", label: "Other", value: otherContribTotal, strokeColor: "rgb(var(--bg-secondary) / 1)" }]
+      ? [{ key: "other", label: t("labels.other"), value: otherContribTotal, strokeColor: PIE_COLOR_OTHER }]
       : []),
   ];
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <button
-            type="button"
-            onClick={() => setSelectedProjectId(null)}
-            className="p-2 rounded-lg hover:bg-bg-elevated transition-colors"
-            aria-label="Back"
-          >
-            <ArrowLeft size={18} className="text-fg-secondary" />
-          </button>
+    <div className="min-h-screen p-4 lg:p-6">
+      <div className="flex items-center gap-3 mb-6">
+        <button
+          type="button"
+          onClick={() => setSelectedProjectId(null)}
+          className="p-2 rounded-lg hover:bg-bg-elevated/50 transition-colors"
+            aria-label={t("projectDetails.back")}
+        >
+          <ArrowLeft size={18} className="text-fg-secondary" />
+        </button>
 
-          <div className="w-10 h-10 rounded-xl bg-bg-secondary overflow-hidden flex items-center justify-center flex-shrink-0">
-            {projectPhoto ? (
-              <Image
-                src={projectPhoto}
-                alt={projectTitle}
-                width={40}
-                height={40}
-                className="w-10 h-10 object-cover"
-              />
-            ) : (
-              <Folder className="text-fg-secondary" size={18} />
-            )}
-          </div>
+        <div className="w-9 h-9 rounded-lg bg-bg-secondary/50 overflow-hidden flex items-center justify-center flex-shrink-0">
+          {projectPhoto ? (
+            <Image
+              src={projectPhoto}
+              alt={projectTitle}
+              width={36}
+              height={36}
+              className="w-9 h-9 object-cover"
+            />
+          ) : (
+            <Folder className="text-fg-tertiary" size={16} />
+          )}
+        </div>
 
-          <div className="min-w-0">
-            <h2 className="text-lg font-semibold text-fg-primary truncate">{projectTitle}</h2>
-            <p className="text-xs text-fg-tertiary">{scopeLabel}</p>
-          </div>
+        <div className="min-w-0">
+          <h2 className="text-lg font-semibold text-fg-primary truncate">{projectTitle}</h2>
+          <p className="text-xs text-fg-tertiary">{scopeLabel}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-xl border border-border-light/20 bg-bg-surface/50 p-4">
-          <p className="text-xs text-fg-tertiary">Tasks</p>
-          <p className="text-lg font-semibold text-fg-primary">{totalTasks}</p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="p-3 rounded-lg border border-border-light/10">
+          <p className="text-xs text-fg-tertiary">{t("stats.tasks")}</p>
+          <p className="text-2xl font-bold text-fg-primary">{totalTasks}</p>
         </div>
-        <div className="rounded-xl border border-border-light/20 bg-bg-surface/50 p-4">
-          <p className="text-xs text-fg-tertiary">Completed</p>
-          <p className="text-lg font-semibold text-success">{completedTasks}</p>
+        <div className="p-3 rounded-lg border border-border-light/10">
+          <p className="text-xs text-fg-tertiary">{t("stats.completed")}</p>
+          <p className="text-2xl font-bold text-success">{completedTasks}</p>
         </div>
-        <div className="rounded-xl border border-border-light/20 bg-bg-surface/50 p-4">
-          <p className="text-xs text-fg-tertiary">Activity</p>
-          <p className="text-lg font-semibold text-fg-primary">{projectActivity.length}</p>
+        <div className="p-3 rounded-lg border border-border-light/10">
+          <p className="text-xs text-fg-tertiary">{t("labels.activity")}</p>
+          <p className="text-2xl font-bold text-fg-primary">{projectActivity.length}</p>
         </div>
-        <div className="rounded-xl border border-border-light/20 bg-bg-surface/50 p-4">
-          <p className="text-xs text-fg-tertiary">Last update</p>
-          <p className="text-sm font-medium text-fg-primary truncate">
-            {lastActivityAt ? new Date(lastActivityAt).toLocaleDateString() : "—"}
+        <div className="p-3 rounded-lg border border-border-light/10">
+          <p className="text-xs text-fg-tertiary">{t("projectDetails.lastUpdate")}</p>
+          <p className="text-sm font-medium text-fg-primary">
+            {lastActivityAt
+              ? new Intl.DateTimeFormat(locale).format(new Date(lastActivityAt))
+              : "—"}
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <DonutChart title="Task completion" segments={completionSegments} />
-        <DonutChart title="Activity categories" segments={activitySegments} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <PieChart title={t("projectDetails.taskCompletion")} segments={completionSegments} />
+        <PieChart title={t("projectDetails.activityCategories")} segments={activitySegments} />
+        <PieChart title={t("contributors.title")} subtitle={t("contributors.subtitle")} segments={contributorSegments} />
       </div>
-
-      <DonutChart title="Contributor share" segments={contributorSegments} />
     </div>
   );
 }

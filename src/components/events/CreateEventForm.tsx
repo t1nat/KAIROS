@@ -7,6 +7,7 @@ import { useUploadThing } from '~/lib/uploadthing';
 import Image from 'next/image';
 import { Plus, X, CalendarCheck, ImagePlus, Loader2, MapPin } from 'lucide-react';
 import { useToast } from "~/components/providers/ToastProvider";
+import { RegionMapPicker, type RegionOption } from "~/components/events/RegionMapPicker";
 
 const REGIONS = [
   { value: 'sofia', label: 'Sofia' },
@@ -21,6 +22,19 @@ const REGIONS = [
   { value: 'shumen', label: 'Shumen' },
 ] as const;
 
+const REGION_MAP: RegionOption[] = [
+  { value: "sofia", label: "Sofia", lat: 42.6977, lng: 23.3219 },
+  { value: "plovdiv", label: "Plovdiv", lat: 42.1354, lng: 24.7453 },
+  { value: "varna", label: "Varna", lat: 43.2141, lng: 27.9147 },
+  { value: "burgas", label: "Burgas", lat: 42.5048, lng: 27.4626 },
+  { value: "ruse", label: "Ruse", lat: 43.8356, lng: 25.9657 },
+  { value: "stara_zagora", label: "Stara Zagora", lat: 42.4258, lng: 25.6345 },
+  { value: "pleven", label: "Pleven", lat: 43.4170, lng: 24.6067 },
+  { value: "sliven", label: "Sliven", lat: 42.6810, lng: 26.3220 },
+  { value: "dobrich", label: "Dobrich", lat: 43.5726, lng: 27.8273 },
+  { value: "shumen", label: "Shumen", lat: 43.2706, lng: 26.9229 },
+];
+
 export const CreateEventForm: React.FC = () => {
   const { data: session } = useSession();
   const utils = api.useUtils();
@@ -32,7 +46,7 @@ export const CreateEventForm: React.FC = () => {
   const [region, setRegion] = useState<string>('sofia');
   const [enableRsvp, setEnableRsvp] = useState(false);
   const [sendReminders, setSendReminders] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(true);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -219,20 +233,27 @@ export const CreateEventForm: React.FC = () => {
                 <MapPin className="inline mr-1" size={14} />
                 Region <span className="text-accent-primary">*</span>
               </label>
-              <select
-                id="region"
+              <RegionMapPicker
                 value={region}
-                onChange={(e) => setRegion(e.target.value)}
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-bg-secondary border border-border-light rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all text-sm sm:text-base text-fg-primary appearance-none cursor-pointer"
-                disabled={createEvent.isPending || isUploading}
-                required
-              >
-                {REGIONS.map((r) => (
-                  <option key={r.value} value={r.value} className="bg-bg-primary text-fg-primary">
-                    {r.label}
-                  </option>
-                ))}
-              </select>
+                onChange={setRegion}
+                regions={REGION_MAP}
+                fallback={
+                  <select
+                    id="region"
+                    value={region}
+                    onChange={(e) => setRegion(e.target.value)}
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-bg-secondary border border-border-light rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all text-sm sm:text-base text-fg-primary appearance-none cursor-pointer"
+                    disabled={createEvent.isPending || isUploading}
+                    required
+                  >
+                    {REGIONS.map((r) => (
+                      <option key={r.value} value={r.value}>
+                        {r.label}
+                      </option>
+                    ))}
+                  </select>
+                }
+              />
             </div>
 
             <div>
@@ -314,7 +335,7 @@ export const CreateEventForm: React.FC = () => {
               <button
                 type="submit"
                 disabled={createEvent.isPending || isUploading || !title.trim() || !description.trim() || !eventDate || !region}
-                className="btn-primary flex-1 flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base"
+                className="btn-primary flex-1 flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 text-sm"
               >
                 {isUploading || createEvent.isPending ? (
                   <>
