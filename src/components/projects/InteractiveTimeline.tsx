@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { Check, Clock, User, CheckCircle2 } from "lucide-react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
+import { easeCubicOut, interpolateNumber, timer } from "d3";
 
 interface Task {
   id: number;
@@ -56,8 +57,8 @@ export function InteractiveTimeline({
   const [animatedPercentage, setAnimatedPercentage] = useState(0);
   const [hoveredTaskId, setHoveredTaskId] = useState<number | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<number | null>(null);
-  
-  const animationFrameRef = useRef<number | null>(null);
+
+  const timerRef = useRef<ReturnType<typeof timer> | null>(null);
   const animatedPercentageRef = useRef(0);
     
   useEffect(() => {
@@ -68,35 +69,24 @@ export function InteractiveTimeline({
     const targetPercentage = optimisticTasks.length === 0 
       ? 0 
       : (optimisticTasks.filter(t => t.status === "completed").length / optimisticTasks.length) * 100;
-    
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
+
+    if (timerRef.current) timerRef.current.stop();
 
     const startPercentage = animatedPercentageRef.current;
-    const difference = targetPercentage - startPercentage;
     const duration = 800;
-    const startTime = Date.now();
 
-    const animate = () => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const easeOutCubic = 1 - Math.pow(1 - progress, 3);
-      const current = startPercentage + (difference * easeOutCubic);
+    const interp = interpolateNumber(startPercentage, targetPercentage);
+
+    timerRef.current = timer((elapsed: number) => {
+      const t = Math.min(elapsed / duration, 1);
+      const current = interp(easeCubicOut(t));
       animatedPercentageRef.current = current;
       setAnimatedPercentage(current);
-
-      if (progress < 1) {
-        animationFrameRef.current = requestAnimationFrame(animate);
-      }
-    };
-
-    animationFrameRef.current = requestAnimationFrame(animate);
+      if (t >= 1) timerRef.current?.stop();
+    });
 
     return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
+      if (timerRef.current) timerRef.current.stop();
     };
   }, [optimisticTasks]);
 

@@ -5,6 +5,9 @@ import { api } from "~/trpc/react";
 import { Folder, ChevronDown, ChevronUp, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { Doughnut } from "react-chartjs-2";
+import { ensureChartJsRegistered } from "~/components/charts/chartjs";
+import { useResolvedThemeColors } from "~/components/charts/theme-colors";
 
 interface ProjectWithStats {
   id: number;
@@ -32,6 +35,9 @@ function hasTasks(value: unknown): value is { tasks: Array<{ status: string }> }
 }
 
 export function ProjectsListWorkspace() {
+  ensureChartJsRegistered();
+  const colors = useResolvedThemeColors();
+
   const t = useTranslations("create");
   const [showProjects, setShowProjects] = useState(false);
   const [animateCharts, setAnimateCharts] = useState(false);
@@ -92,6 +98,42 @@ export function ProjectsListWorkspace() {
     return "shadow-success/30";
   };
 
+  const buildRingData = (completed: number, total: number) => {
+    const done = animateCharts ? completed : 0;
+    const remaining = Math.max(0, total - done);
+    return {
+      labels: [t("stats.completed"), t("projectsList.pending")],
+      datasets: [
+        {
+          data: [done, remaining],
+          backgroundColor: [colors.success, colors.remaining],
+          borderColor: colors.border,
+          borderWidth: 1,
+        },
+      ],
+    };
+  };
+
+  const ringOptions = {
+    cutout: "72%",
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        enabled: true,
+        backgroundColor: colors.bgOverlay,
+        titleColor: colors.fgPrimary,
+        bodyColor: colors.fgPrimary,
+        callbacks: {
+          label: (ctx: { label?: string; parsed?: number }) => {
+            const label = ctx.label ?? "";
+            const value = typeof ctx.parsed === "number" ? ctx.parsed : 0;
+            return `${label}: ${value}`;
+          },
+        },
+      },
+    },
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-6">
       <div className="mb-8 sm:mb-12">
@@ -106,17 +148,15 @@ export function ProjectsListWorkspace() {
         
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
           <div className="col-span-2 sm:col-span-1 lg:col-span-1 flex flex-col items-center justify-center p-4 sm:p-6 group cursor-default">
-            <div
-              className={`radial-progress ${getProgressColor(overallCompletion)} drop-shadow-2xl ${getProgressGlow(overallCompletion)} transition-all duration-[2000ms] ease-out`}
-              style={{
-                "--value": animateCharts ? overallCompletion : 0, 
-                "--size": "6rem",
-                "--thickness": "4px",
-              } as React.CSSProperties}
-              role="progressbar"
-              aria-valuenow={overallCompletion}
-            >
-              <span className="text-xl sm:text-2xl font-bold">{overallCompletion}%</span>
+            <div className={`relative w-24 h-24 sm:w-28 sm:h-28 drop-shadow-2xl ${getProgressGlow(overallCompletion)}`}>
+              <Doughnut
+                data={buildRingData(totalCompletedTasks, totalAllTasks)}
+                options={ringOptions}
+                aria-label={t("projectsList.overallProgress")}
+              />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className={`text-xl sm:text-2xl font-bold ${getProgressColor(overallCompletion)}`}>{overallCompletion}%</span>
+              </div>
             </div>
             <div className="mt-3 sm:mt-4 text-center">
               <p className="text-[10px] sm:text-xs text-fg-tertiary uppercase tracking-wider font-semibold">{t("projectsList.overallProgress")}</p>
@@ -194,18 +234,16 @@ export function ProjectsListWorkspace() {
               <div className="flex items-start gap-3 sm:gap-5">
                 <div className="flex-shrink-0">
                   {project.totalTasks > 0 ? (
-                    <div
-                      className={`radial-progress ${getProgressColor(project.completionPercentage)} drop-shadow-lg ${getProgressGlow(project.completionPercentage)} transition-all duration-1000 ease-out`}
-                      style={{
-                        "--value": animateCharts ? project.completionPercentage : 0,
-                        "--size": "4.5rem",
-                        "--thickness": "4px",
-                      } as React.CSSProperties}
-                      role="progressbar"
-                      aria-valuenow={project.completionPercentage}
-                    >
-                      <span className="text-sm sm:text-base font-bold">{project.completionPercentage}%</span>
-                    </div>
+                      <div className={`relative w-[4.5rem] h-[4.5rem] drop-shadow-lg ${getProgressGlow(project.completionPercentage)}`}>
+                        <Doughnut
+                          data={buildRingData(project.completedTasks, project.totalTasks)}
+                          options={ringOptions}
+                          aria-label={project.title}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className={`text-sm sm:text-base font-bold ${getProgressColor(project.completionPercentage)}`}>{project.completionPercentage}%</span>
+                        </div>
+                      </div>
                   ) : (
                     <div className="w-[4.5rem] h-[4.5rem] rounded-full bg-bg-tertiary/30 border-2 border-dashed border-border-light/30 flex items-center justify-center transition-all">
                       <AlertCircle size={24} className="text-fg-tertiary sm:w-7 sm:h-7" />

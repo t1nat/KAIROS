@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { api } from "~/trpc/react";
 import Image from "next/image";
 import { ArrowLeft, Folder } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { Doughnut } from "react-chartjs-2";
+import { ensureChartJsRegistered } from "~/components/charts/chartjs";
+import { useResolvedThemeColors } from "~/components/charts/theme-colors";
 
 type TaskStatus = "pending" | "in_progress" | "completed" | "blocked";
 
@@ -90,102 +93,54 @@ type PieSegment = {
   strokeColor: string;
 };
 
-const PIE_COLORS = [
-  "rgb(var(--accent-primary) / 1)",
-  "rgb(var(--brand-blue) / 1)",
-  "rgb(var(--brand-indigo) / 1)",
-  "rgb(var(--brand-cyan) / 1)",
-  "rgb(var(--brand-teal) / 1)",
-  "rgb(var(--accent-secondary) / 1)",
-  "rgb(var(--accent-tertiary) / 1)",
-  "rgb(var(--success) / 1)",
-  "rgb(var(--warning) / 1)",
-  "rgb(var(--info) / 1)",
-  "rgb(var(--error) / 1)",
-];
-
-const PIE_COLOR_OTHER = "rgb(var(--fg-tertiary) / 0.75)";
-const PIE_COLOR_REMAINING = "rgb(var(--fg-quaternary) / 0.55)";
-const PIE_COLOR_SUCCESS = "rgb(var(--success) / 1)";
-const PIE_COLOR_WARNING = "rgb(var(--warning) / 1)";
-const PIE_COLOR_INFO = "rgb(var(--info) / 1)";
-const PIE_COLOR_ERROR = "rgb(var(--error) / 1)";
-
-function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
-  const angleRad = ((angleDeg - 90) * Math.PI) / 180;
-  return {
-    x: cx + r * Math.cos(angleRad),
-    y: cy + r * Math.sin(angleRad),
-  };
-}
-
-function describePieSlice(cx: number, cy: number, r: number, startAngle: number, endAngle: number) {
-  if (endAngle - startAngle >= 359.99) {
-    return `M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx - 0.001} ${cy - r} Z`;
-  }
-  const start = polarToCartesian(cx, cy, r, endAngle);
-  const end = polarToCartesian(cx, cy, r, startAngle);
-  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-  return [
-    `M ${cx} ${cy}`,
-    `L ${start.x} ${start.y}`,
-    `A ${r} ${r} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`,
-    "Z",
-  ].join(" ");
-}
-
-function PieChart(props: { 
-  segments: PieSegment[]; 
-  title: string; 
+function PieChart(props: {
+  segments: PieSegment[];
+  title: string;
   subtitle?: string;
 }) {
+  ensureChartJsRegistered();
+  const colors = useResolvedThemeColors();
+
   const total = props.segments.reduce((s, seg) => s + seg.value, 0);
-  const safeTotal = total <= 0 ? 1 : total;
+  const chartSegments = props.segments.filter((s) => s.value > 0);
 
-  const animationFrameRef = useRef<number | null>(null);
-  const [animProgress, setAnimProgress] = useState(0);
-
-  const segmentsKey = useMemo(
-    () => props.segments.map((s) => `${s.key}:${s.value}`).join("|"),
-    [props.segments]
+  const data = useMemo(
+    () => ({
+      labels: chartSegments.map((s) => s.label),
+      datasets: [
+        {
+          data: chartSegments.map((s) => s.value),
+          backgroundColor: chartSegments.map((s) => s.strokeColor),
+          borderColor: colors.border,
+          borderWidth: 1,
+        },
+      ],
+    }),
+    [chartSegments, colors.border]
   );
 
-  useEffect(() => {
-    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-    setAnimProgress(0);
-
-    const duration = 800;
-    const startTime = Date.now();
-
-    const animate = () => {
-      const elapsed = Date.now() - startTime;
-      const t = Math.min(elapsed / duration, 1);
-      const easeOutCubic = 1 - Math.pow(1 - t, 3);
-      setAnimProgress(easeOutCubic);
-      if (t < 1) animationFrameRef.current = requestAnimationFrame(animate);
-    };
-
-    animationFrameRef.current = requestAnimationFrame(animate);
-    return () => {
-      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-    };
-  }, [segmentsKey]);
-
-  let angle = 0;
-  const slices = props.segments
-    .filter((s) => s.value > 0)
-    .map((s) => {
-      const sliceAngle = (s.value / safeTotal) * 360 * animProgress;
-      const startAngle = angle;
-      const endAngle = angle + sliceAngle;
-      angle = endAngle;
-      return {
-        ...s,
-        startAngle,
-        endAngle,
-        percent: (s.value / safeTotal) * 100,
-      };
-    });
+  const options = useMemo(
+    () => ({
+      cutout: "70%",
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: true,
+          backgroundColor: colors.bgOverlay,
+          titleColor: colors.fgPrimary,
+          bodyColor: colors.fgPrimary,
+          callbacks: {
+            label: (ctx: { label?: string; parsed?: number }) => {
+              const label = ctx.label ?? "";
+              const value = typeof ctx.parsed === "number" ? ctx.parsed : 0;
+              return `${label}: ${value}`;
+            },
+          },
+        },
+      },
+    }),
+    [colors.bgOverlay, colors.fgPrimary]
+  );
 
   return (
     <div className="flex flex-col p-4 rounded-xl border border-border-light/10">
@@ -196,36 +151,23 @@ function PieChart(props: {
 
       <div className="flex items-center gap-4">
         <div className="relative w-32 h-32 flex-shrink-0">
-          <svg viewBox="0 0 100 100" className="w-32 h-32" aria-label={props.title} role="img">
-            <circle cx="50" cy="50" r="46" fill="rgb(var(--bg-tertiary) / 0.6)" />
-            {slices.map((s) => (
-              <path
-                key={s.key}
-                d={describePieSlice(50, 50, 46, s.startAngle, s.endAngle)}
-                fill={s.strokeColor}
-                stroke="rgb(var(--border-medium) / 0.35)"
-                strokeWidth="0.5"
-              />
-            ))}
-          </svg>
+          <Doughnut data={data} options={options} aria-label={props.title} role="img" />
           <div className="absolute inset-0 flex items-center justify-center">
             <p className="text-lg font-semibold text-fg-primary">{total}</p>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-1.5">
-          {props.segments
-            .filter((s) => s.value > 0)
-            .map((s) => (
-              <span
-                key={s.key}
-                className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs text-fg-secondary"
-              >
-                <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: s.strokeColor }} />
-                <span className="text-fg-primary">{s.label}</span>
-                <span className="text-fg-tertiary">{s.value}</span>
-              </span>
-            ))}
+          {chartSegments.map((s) => (
+            <span
+              key={s.key}
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs text-fg-secondary"
+            >
+              <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: s.strokeColor }} />
+              <span className="text-fg-primary">{s.label}</span>
+              <span className="text-fg-tertiary">{s.value}</span>
+            </span>
+          ))}
         </div>
       </div>
     </div>
@@ -240,54 +182,49 @@ function LargePieChart(props: {
   total: number;
   segments: PieSegment[];
 }) {
-  const total = props.segments.reduce((s, seg) => s + seg.value, 0);
-  const safeTotal = total <= 0 ? 1 : total;
+  ensureChartJsRegistered();
+  const colors = useResolvedThemeColors();
+
+  const chartSegments = props.segments.filter((s) => s.value > 0);
   const clampedPercent = Math.max(0, Math.min(100, props.percent));
 
-  const animationFrameRef = useRef<number | null>(null);
-  const [animProgress, setAnimProgress] = useState(0);
-
-  const segmentsKey = useMemo(
-    () => props.segments.map((s) => `${s.key}:${s.value}`).join("|"),
-    [props.segments]
+  const data = useMemo(
+    () => ({
+      labels: chartSegments.map((s) => s.label),
+      datasets: [
+        {
+          data: chartSegments.map((s) => s.value),
+          backgroundColor: chartSegments.map((s) => s.strokeColor),
+          borderColor: colors.border,
+          borderWidth: 1,
+        },
+      ],
+    }),
+    [chartSegments, colors.border]
   );
 
-  useEffect(() => {
-    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-    setAnimProgress(0);
-
-    const duration = 800;
-    const startTime = Date.now();
-
-    const animate = () => {
-      const elapsed = Date.now() - startTime;
-      const t = Math.min(elapsed / duration, 1);
-      const easeOutCubic = 1 - Math.pow(1 - t, 3);
-      setAnimProgress(easeOutCubic);
-      if (t < 1) animationFrameRef.current = requestAnimationFrame(animate);
-    };
-
-    animationFrameRef.current = requestAnimationFrame(animate);
-    return () => {
-      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-    };
-  }, [segmentsKey]);
-
-  let angle = 0;
-  const slices = props.segments
-    .filter((s) => s.value > 0)
-    .map((s) => {
-      const sliceAngle = (s.value / safeTotal) * 360 * animProgress;
-      const startAngle = angle;
-      const endAngle = angle + sliceAngle;
-      angle = endAngle;
-      return {
-        ...s,
-        startAngle,
-        endAngle,
-        percent: (s.value / safeTotal) * 100,
-      };
-    });
+  const options = useMemo(
+    () => ({
+      cutout: "68%",
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: true,
+          backgroundColor: colors.bgOverlay,
+          titleColor: colors.fgPrimary,
+          bodyColor: colors.fgPrimary,
+          callbacks: {
+            label: (ctx: { label?: string; parsed?: number }) => {
+              const label = ctx.label ?? "";
+              const value = typeof ctx.parsed === "number" ? ctx.parsed : 0;
+              return `${label}: ${value}`;
+            },
+          },
+        },
+      },
+    }),
+    [colors.bgOverlay, colors.fgPrimary]
+  );
 
   return (
     <div className="flex flex-col items-center p-4 rounded-xl border border-border-light/10">
@@ -297,18 +234,7 @@ function LargePieChart(props: {
       </div>
 
       <div className="relative w-52 h-52">
-        <svg viewBox="0 0 100 100" className="w-52 h-52" aria-label={props.title}>
-          <circle cx="50" cy="50" r="46" fill="rgb(var(--bg-tertiary) / 0.6)" />
-          {slices.map((s) => (
-            <path
-              key={s.key}
-              d={describePieSlice(50, 50, 46, s.startAngle, s.endAngle)}
-              fill={s.strokeColor}
-              stroke="rgb(var(--border-medium) / 0.35)"
-              strokeWidth="0.5"
-            />
-          ))}
-        </svg>
+        <Doughnut data={data} options={options} aria-label={props.title} />
 
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <p className="text-4xl font-bold text-fg-primary">{Math.round(clampedPercent)}%</p>
@@ -317,9 +243,7 @@ function LargePieChart(props: {
       </div>
 
       <div className="mt-3 flex flex-wrap justify-center gap-x-3 gap-y-1">
-        {props.segments
-          .filter((s) => s.value > 0)
-          .map((s) => (
+        {chartSegments.map((s) => (
             <span
               key={s.key}
               className="inline-flex items-center gap-1.5 text-xs text-fg-secondary"
@@ -328,7 +252,7 @@ function LargePieChart(props: {
               <span className="text-fg-primary">{s.label}</span>
               <span className="text-fg-tertiary">{s.value}</span>
             </span>
-          ))}
+        ))}
       </div>
     </div>
   );
@@ -349,6 +273,7 @@ function getProjectOwnerLabel(project: ProjectCard): string {
 export function ProgressFeedClient() {
   const t = useTranslations("progress");
   const locale = useLocale();
+  const colors = useResolvedThemeColors();
 
   const { data: projects, isLoading: isLoadingProjects, error: projectsError } =
     typedApi.project.getMyProjects.useQuery(undefined, {
@@ -415,7 +340,7 @@ export function ProgressFeedClient() {
         key: String(project.id),
         label: getProjectDisplayName(project, t("project.untitled")),
         value: projectCompleted,
-        strokeColor: PIE_COLORS[paletteIndex % PIE_COLORS.length]!,
+        strokeColor: colors.palette[paletteIndex % colors.palette.length] ?? colors.other,
       });
       paletteIndex += 1;
     }
@@ -423,7 +348,7 @@ export function ProgressFeedClient() {
     const remainingAll = Math.max(0, totalTasksAll - completedTotalFromSegments);
     const overallSegments: PieSegment[] = [
       ...completedByProjectSegments,
-      { key: "remaining", label: t("labels.remaining"), value: remainingAll, strokeColor: PIE_COLOR_REMAINING },
+      { key: "remaining", label: t("labels.remaining"), value: remainingAll, strokeColor: colors.remaining },
     ];
 
     const completedByProjectSorted = [...completedByProjectSegments].sort((a, b) => b.value - a.value);
@@ -436,14 +361,14 @@ export function ProgressFeedClient() {
             key: "other_projects",
             label: t("perProject.otherProjects"),
             value: perProjectOtherTotal,
-            strokeColor: PIE_COLOR_OTHER,
+            strokeColor: colors.other,
           }]
         : []),
       {
         key: "remaining",
         label: t("labels.remaining"),
         value: Math.max(0, totalTasksAll - completedTasksAll),
-        strokeColor: PIE_COLOR_REMAINING,
+        strokeColor: colors.remaining,
       },
     ].filter((s) => s.value > 0);
 
@@ -473,10 +398,10 @@ export function ProgressFeedClient() {
         key: name,
         label: name,
         value,
-        strokeColor: PIE_COLORS[idx % PIE_COLORS.length]!,
+        strokeColor: colors.palette[idx % colors.palette.length] ?? colors.other,
       })),
       ...(globalOtherTotal > 0
-        ? [{ key: "other", label: t("labels.other"), value: globalOtherTotal, strokeColor: PIE_COLOR_OTHER }]
+        ? [{ key: "other", label: t("labels.other"), value: globalOtherTotal, strokeColor: colors.other }]
         : []),
     ];
 
@@ -613,17 +538,17 @@ export function ProgressFeedClient() {
   const otherContribTotal = contributorsSorted.slice(5).reduce((s, [, v]) => s + v, 0);
 
   const completionSegments: PieSegment[] = [
-    { key: "done", label: t("labels.done"), value: completedTasks, strokeColor: PIE_COLOR_SUCCESS },
-    { key: "remaining", label: t("labels.remaining"), value: remainingTasks, strokeColor: PIE_COLOR_REMAINING },
+    { key: "done", label: t("labels.done"), value: completedTasks, strokeColor: colors.success },
+    { key: "remaining", label: t("labels.remaining"), value: remainingTasks, strokeColor: colors.remaining },
   ];
 
   const activitySegments: PieSegment[] = [
-    { key: "completed", label: t("labels.completed"), value: categoryCounts.completed, strokeColor: PIE_COLOR_SUCCESS },
-    { key: "created", label: t("labels.created"), value: categoryCounts.created, strokeColor: PIE_COLORS[0]! },
-    { key: "updated", label: t("labels.updated"), value: categoryCounts.updated, strokeColor: PIE_COLOR_WARNING },
-    { key: "status", label: t("labels.status"), value: categoryCounts.status, strokeColor: PIE_COLOR_INFO },
-    { key: "deleted", label: t("labels.deleted"), value: categoryCounts.deleted, strokeColor: PIE_COLOR_ERROR },
-    { key: "other", label: t("labels.other"), value: categoryCounts.other, strokeColor: PIE_COLOR_OTHER },
+    { key: "completed", label: t("labels.completed"), value: categoryCounts.completed, strokeColor: colors.success },
+    { key: "created", label: t("labels.created"), value: categoryCounts.created, strokeColor: colors.palette[0] ?? colors.other },
+    { key: "updated", label: t("labels.updated"), value: categoryCounts.updated, strokeColor: colors.warning },
+    { key: "status", label: t("labels.status"), value: categoryCounts.status, strokeColor: colors.info },
+    { key: "deleted", label: t("labels.deleted"), value: categoryCounts.deleted, strokeColor: colors.error },
+    { key: "other", label: t("labels.other"), value: categoryCounts.other, strokeColor: colors.other },
   ];
 
   const contributorSegments: PieSegment[] = [
@@ -631,10 +556,10 @@ export function ProgressFeedClient() {
       key: name,
       label: name,
       value,
-      strokeColor: PIE_COLORS[idx % PIE_COLORS.length]!,
+      strokeColor: colors.palette[idx % colors.palette.length] ?? colors.other,
     })),
     ...(otherContribTotal > 0
-      ? [{ key: "other", label: t("labels.other"), value: otherContribTotal, strokeColor: PIE_COLOR_OTHER }]
+      ? [{ key: "other", label: t("labels.other"), value: otherContribTotal, strokeColor: colors.other }]
       : []),
   ];
 

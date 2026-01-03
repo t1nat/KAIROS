@@ -1,5 +1,6 @@
 import { auth } from "~/server/auth";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { SideNav } from "~/components/layout/SideNav";
 import { UserDisplay } from "~/components/layout/UserDisplay";
 import { SettingsNav } from "~/components/layout/SettingsNav";
@@ -9,6 +10,7 @@ import { LanguageSettingsClient } from "~/components/settings/LanguageSettingsCl
 import { NotificationSettingsClient } from "~/components/settings/NotificationSettingsClient";
 import { SecuritySettingsClient } from "~/components/settings/SecuritySettingsClient";
 import { getTranslations } from "next-intl/server";
+import { Settings } from "lucide-react";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -35,8 +37,17 @@ export default async function SettingsPage({
     <div className="min-h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary">
       <SideNav />
 
+      <Link
+        href="/settings?section=profile"
+        aria-label={t("title")}
+        title={t("title")}
+        className="fixed bottom-4 left-4 z-40 w-11 h-11 rounded-xl glass-effect shadow-lg flex items-center justify-center text-fg-primary hover:text-accent-primary lg:hidden"
+      >
+        <Settings size={20} />
+      </Link>
+
       <div className="lg:ml-16 pt-16 lg:pt-0 min-h-screen flex flex-col">
-        <header className="sticky top-16 lg:top-0 z-30 glass-effect border-b border-border-light/60">
+        <header className="sticky top-16 lg:top-0 z-30 topbar-solid border-b border-border-light/30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex flex-wrap justify-between items-center gap-3">
             <div className="flex items-center gap-3">
               <div>

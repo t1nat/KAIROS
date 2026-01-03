@@ -84,7 +84,7 @@ export function HomeClient({ session }: {
             </div>
 
             <div className="relative z-10">
-                <header className="fixed top-0 left-0 right-0 z-50 glass-effect border-b border-border-light shadow-lg">
+                <header className="fixed top-0 left-0 right-0 z-50 topbar-solid border-b border-border-light/30 shadow-sm">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-3">
