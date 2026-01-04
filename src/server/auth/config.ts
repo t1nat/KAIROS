@@ -51,6 +51,10 @@ export const authConfig = {
           return null;
         }
 
+        if (!env.AUTH_SECRET) {
+          return null;
+        }
+
         const cookieHeader = request.headers.get("cookie");
         const cookieValue = getCookieFromHeader(cookieHeader, ACCOUNT_SWITCH_COOKIE);
         const accountsFromCookie = decodeAccountSwitchCookie(cookieValue, env.AUTH_SECRET);
