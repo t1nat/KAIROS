@@ -15,7 +15,7 @@ import { UserPreferencesProvider } from "~/components/providers/UserPreferencesP
 export const metadata: Metadata = {
   title: "KAIROS",
   description: "Coordinate events, manage projects, and collaborate with your team",
-  icons: [{ rel: "icon", url: "/logo_purple.png" }],
+  icons: [{ rel: "icon", url: "/logo_white.png" }],
 };
 
 const sans = Space_Grotesk({

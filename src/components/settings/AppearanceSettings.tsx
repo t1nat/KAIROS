@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Palette, Sun, Moon, Monitor, Check } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { api } from "~/trpc/react";
 import { useToast } from "~/components/providers/ToastProvider";
@@ -12,8 +13,14 @@ export function AppearanceSettings() {
   const toast = useToast();
   const utils = api.useUtils();
 
+  const { status } = useSession();
+  const enabled = status === "authenticated";
+
   const { data } = api.settings.get.useQuery(undefined, {
+    enabled,
     retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   const updateAppearance = api.settings.updateAppearance.useMutation({

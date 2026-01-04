@@ -9,6 +9,7 @@ import {
   FolderKanban, 
   FileEdit, 
   BarChart3,
+  Users,
   Settings,
   Menu,
   X,
@@ -18,6 +19,7 @@ import {
 export function SideNav() {
   const t = useTranslations("nav");
   const tCommon = useTranslations("common");
+  const tOrg = useTranslations("org");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -44,6 +46,8 @@ export function SideNav() {
     { href: "/create?action=new_note", icon: FileEdit, label: t("notes") },
     { href: "/progress", icon: BarChart3, label: t("progress") },
   ];
+
+  const profileItem = { href: "/orgs", icon: Users, label: tOrg("yourOrgs") };
 
   const settingsItem = { href: "/settings?section=profile", icon: Settings, label: t("settings") };
 
@@ -123,6 +127,16 @@ export function SideNav() {
                   </Link>
                 );
               })}
+
+              <Link
+                href={profileItem.href}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-colors font-medium text-fg-secondary hover:bg-bg-secondary/60 hover:text-fg-primary`}
+                title={profileItem.label}
+              >
+                <profileItem.icon size={20} />
+                <span>{profileItem.label}</span>
+              </Link>
 
               <Link
                 href={settingsItem.href}

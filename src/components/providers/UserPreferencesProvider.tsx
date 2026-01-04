@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
+import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { api } from "~/trpc/react";
 
@@ -10,9 +11,20 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
   const { setTheme } = useTheme();
   const applied = useRef(false);
 
+  const { data: session, status } = useSession();
+  const userId = session?.user?.id;
+  const enabled = status === "authenticated";
+
   const { data } = api.settings.get.useQuery(undefined, {
+    enabled,
     retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
+
+  useEffect(() => {
+    applied.current = false;
+  }, [userId]);
 
   useEffect(() => {
     const accent = data?.accentColor ?? DEFAULT_ACCENT;

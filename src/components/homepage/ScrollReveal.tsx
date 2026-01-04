@@ -4,121 +4,86 @@ import React, { useEffect, useRef, useMemo, type ReactNode, type RefObject } fro
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-
 gsap.registerPlugin(ScrollTrigger);
 
 interface ScrollRevealProps {
     children: ReactNode;
     scrollContainerRef?: RefObject<HTMLElement>;
-    enableBlur?: boolean;
     baseOpacity?: number;
-    baseRotation?: number;
-    blurStrength?: number;
+    as?: React.ElementType;
+    variant?: 'headline' | 'inherit';
     containerClassName?: string;
     textClassName?: string;
-    rotationEnd?: string;
     wordAnimationEnd?: string;
 }
 
 const ScrollReveal: React.FC<ScrollRevealProps> = ({
     children,
     scrollContainerRef,
-    enableBlur = true,
-    baseOpacity = 0.1,
-    baseRotation = 3,
-    blurStrength = 4,
+    baseOpacity = 0.15,
+    as: As = 'h2',
+    variant = 'headline',
     containerClassName = '',
     textClassName = '',
-    rotationEnd = 'bottom bottom',
-    wordAnimationEnd = 'bottom bottom'
+    wordAnimationEnd = 'center center'
 }) => {
-    const containerRef = useRef<HTMLHeadingElement>(null);
+    const textRef = useRef<HTMLSpanElement>(null);
 
     const splitText = useMemo(() => {
         if (typeof children !== 'string') {
             return children;
         }
 
-        return children.split(/\s+/).map((word, index) => {
-            if (!word) return null;
-            return (
-                <span className="inline-block word" key={index}>
-                    {word}{' '}
-                </span>
-            );
-        });
+        const words = children.split(/\s+/).filter(Boolean);
+
+        return words.map((word, index) => (
+            <React.Fragment key={index}>
+                <span className="inline-block word">{word}</span>
+                {index < words.length - 1 ? ' ' : null}
+            </React.Fragment>
+        ));
     }, [children]);
 
     useEffect(() => {
-        const el = containerRef.current;
+        const el = textRef.current;
         if (!el) return;
+
+        const directParent = el.parentElement;
+        const triggerEl =
+            directParent?.tagName === 'SPAN'
+            ? directParent.parentElement ?? directParent
+                : directParent ?? el;
 
         const scroller = scrollContainerRef?.current ?? undefined;
         const triggers: ScrollTrigger[] = [];
 
         const setupAnimations = () => {
-            const rotationTween = gsap.fromTo(
-                el,
-                { transformOrigin: '0% 50%', rotate: baseRotation },
-                {
-                    ease: 'none',
-                    rotate: 0,
-                    scrollTrigger: {
-                        trigger: el,
-                        scroller,
-                        start: 'top bottom',
-                        end: rotationEnd,
-                        scrub: true
-                    }
-                }
-            );
-            if (rotationTween.scrollTrigger) {
-                triggers.push(rotationTween.scrollTrigger as ScrollTrigger);
-            }
-
             const wordElements = el.querySelectorAll<HTMLElement>('.word');
             if (wordElements.length === 0) return;
 
-            const opacityTween = gsap.fromTo(
-                wordElements,
-                { opacity: baseOpacity, willChange: 'opacity' },
-                {
-                    ease: 'none',
-                    opacity: 1,
-                    stagger: 0.05,
-                    scrollTrigger: {
-                        trigger: el,
-                        scroller,
-                        start: 'top bottom-=20%',
-                        end: wordAnimationEnd,
-                        scrub: true
-                    }
-                }
-            );
-            if (opacityTween.scrollTrigger) {
-                triggers.push(opacityTween.scrollTrigger as ScrollTrigger);
-            }
+            // Set initial state
+            gsap.set(wordElements, { 
+                opacity: baseOpacity,
+                willChange: 'opacity'
+            });
 
-            if (enableBlur) {
-                const blurTween = gsap.fromTo(
-                    wordElements,
-                    { filter: `blur(${blurStrength}px)` },
-                    {
-                        ease: 'none',
-                        filter: 'blur(0px)',
-                        stagger: 0.05,
-                        scrollTrigger: {
-                            trigger: el,
-                            scroller,
-                            start: 'top bottom-=20%',
-                            end: wordAnimationEnd,
-                            scrub: true
-                        }
-                    }
-                );
-                if (blurTween.scrollTrigger) {
-                    triggers.push(blurTween.scrollTrigger as ScrollTrigger);
+            // Create a smooth fade-in animation that reveals words as you scroll
+            const opacityTween = gsap.to(wordElements, {
+                opacity: 1,
+                ease: 'none',
+                stagger: 0.03,
+                scrollTrigger: {
+                    trigger: triggerEl,
+                    scroller,
+                    start: 'top 85%',
+                    end: wordAnimationEnd,
+                    scrub: 0.5
                 }
+            });
+
+            const st = opacityTween.scrollTrigger;
+            if (st) {
+                triggers.push(st);
             }
 
             ScrollTrigger.refresh();
@@ -129,15 +94,22 @@ const ScrollReveal: React.FC<ScrollRevealProps> = ({
         return () => {
             triggers.forEach(trigger => trigger.kill());
         };
-    }, [scrollContainerRef, enableBlur, baseRotation, baseOpacity, rotationEnd, wordAnimationEnd, blurStrength]);
+    }, [scrollContainerRef, baseOpacity, wordAnimationEnd]);
 
     return (
-        <h2 ref={containerRef} className={`my-5 will-change-transform ${containerClassName}`}>
-            <span className={`inline-block text-[clamp(1.6rem,4vw,3rem)] leading-[1.5] font-semibold ${textClassName}`}>
+        <As className={`${containerClassName}`}>
+            <span
+                ref={textRef}
+                className={`inline-block ${
+                    variant === 'headline'
+                        ? 'text-[clamp(1.6rem,4vw,3rem)] leading-[1.4] font-semibold'
+                        : ''
+                } ${textClassName}`}
+            >
                 {splitText}
             </span>
-        </h2>
+        </As>
     );
 };
 
-export default ScrollReveal; 
+export default ScrollReveal;

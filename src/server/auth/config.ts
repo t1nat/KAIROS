@@ -5,6 +5,7 @@ import Credentials from "next-auth/providers/credentials";
 import { env } from "~/env"
 import { eq } from "drizzle-orm";
 import * as argon2 from "argon2";
+import { decodeAccountSwitchCookie, getCookieFromHeader, ACCOUNT_SWITCH_COOKIE } from "~/server/accountSwitch";
 
 import { db } from "~/server/db";
 import {
@@ -37,6 +38,42 @@ export const authConfig = {
     Google({
       clientId: env.AUTH_GOOGLE_ID,
       clientSecret: env.AUTH_GOOGLE_SECRET,
+    }),
+    Credentials({
+      id: "account-switch",
+      name: "account-switch",
+      credentials: {
+        userId: { label: "User ID", type: "text" },
+      },
+      async authorize(credentials, request) {
+        const userId = credentials?.userId;
+        if (typeof userId !== "string" || !userId) {
+          return null;
+        }
+
+        const cookieHeader = request.headers.get("cookie");
+        const cookieValue = getCookieFromHeader(cookieHeader, ACCOUNT_SWITCH_COOKIE);
+        const accountsFromCookie = decodeAccountSwitchCookie(cookieValue, env.AUTH_SECRET);
+        const allowed = accountsFromCookie.some((a) => a.userId === userId);
+        if (!allowed) {
+          return null;
+        }
+
+        const user = await db.query.users.findFirst({
+          where: eq(users.id, userId),
+        });
+
+        if (!user) {
+          return null;
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+        };
+      },
     }),
     Credentials({
       name: "credentials",
@@ -94,10 +131,16 @@ export const authConfig = {
       }
 
       // Allow `useSession().update(...)` to refresh token fields (e.g., image) on demand.
-      if (trigger === "update" && session?.user) {
-        if (typeof session.user.name === "string") token.name = session.user.name;
-        if (typeof session.user.email === "string") token.email = session.user.email;
-        if (typeof session.user.image === "string") token.image = session.user.image;
+      if (trigger === "update") {
+        const nextUser = (
+          session as
+            | { user?: { name?: unknown; email?: unknown; image?: unknown } }
+            | undefined
+        )?.user;
+
+        if (typeof nextUser?.name === "string") token.name = nextUser.name;
+        if (typeof nextUser?.email === "string") token.email = nextUser.email;
+        if (typeof nextUser?.image === "string") token.image = nextUser.image;
       }
 
       return token;

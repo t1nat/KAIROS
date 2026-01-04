@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Bell } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { api } from "~/trpc/react";
 import { ToggleRow } from "~/components/layout/Toggle";
@@ -19,7 +20,15 @@ export function NotificationSettingsClient() {
   const useT = useTranslations as unknown as (namespace: string) => Translator;
   const t = useT("settings.notifications");
 
-  const { data, isLoading } = api.settings.get.useQuery();
+  const { status } = useSession();
+  const enabled = status === "authenticated";
+
+  const { data, isLoading } = api.settings.get.useQuery(undefined, {
+    enabled,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
   const utils = api.useUtils();
 
   const settings = data;

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import { UserDisplay } from "~/components/layout/UserDisplay";
 import { SignInModal } from "~/components/auth/SignInModal";
@@ -31,12 +32,15 @@ interface SessionData {
 export function HomeClient({ session }: {
     session: SessionData | null;
 }) {
+    const router = useRouter();
+    const searchParams = useSearchParams();
     const { resolvedTheme } = useTheme();
     const [themeMounted, setThemeMounted] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [showRoleSelection, setShowRoleSelection] = useState(false);
     const [hasAnimated, setHasAnimated] = useState(false);
     const aboutRef = useRef<HTMLElement>(null);
+    const subtitleRef = useRef<HTMLParagraphElement>(null);
 
     const { data: userProfile, isLoading: isProfileLoading } = api.user.getProfile.useQuery(undefined, {
         enabled: !!session?.user,
@@ -56,6 +60,36 @@ export function HomeClient({ session }: {
         setThemeMounted(true);
     }, []);
 
+    useEffect(() => {
+        if (searchParams.get("switchAccount") === "1") {
+            setIsModalOpen(true);
+        }
+    }, [searchParams]);
+
+    // Animate the subtitle "Whether you're managing:" in sync with the cards
+    useEffect(() => {
+        if (!subtitleRef.current) return;
+
+        const ctx = gsap.context(() => {
+            gsap.fromTo(
+                subtitleRef.current,
+                { opacity: 0, y: 20 },
+                {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.6,
+                    ease: 'power2.out',
+                    scrollTrigger: {
+                        trigger: subtitleRef.current,
+                        start: 'top 85%',
+                        toggleActions: 'play none none none'
+                    }
+                }
+            );
+        });
+
+        return () => ctx.revert();
+    }, []);
 
     const handleRoleSelectionComplete = () => {
         setShowRoleSelection(false);
@@ -64,6 +98,11 @@ export function HomeClient({ session }: {
 
     const handleSignInClose = () => {
         setIsModalOpen(false);
+
+        if (searchParams.get("switchAccount") === "1") {
+            router.replace("/");
+        }
+
         if (session?.user && userProfile !== undefined && !userProfile) {
             setTimeout(() => {
                 setShowRoleSelection(true);
@@ -186,41 +225,39 @@ export function HomeClient({ session }: {
 
                 <section ref={aboutRef} className="py-14 sm:py-20 px-4 sm:px-6 pt-20 sm:pt-28">
                     <div className="max-w-7xl mx-auto">
-                        <div className="text-left mb-16">
+                        <div className="text-center mb-12">
                             <ScrollReveal 
-                                containerClassName="text-left"
+                                containerClassName="text-center max-w-4xl mx-auto"
                                 baseOpacity={0.1}
-                                baseRotation={1}
-                                blurStrength={2}
+                                wordAnimationEnd="center center"
                             >
-                                <h3 className="text-3xl md:text-4xl font-bold text-fg-primary mb-4 inline">
-                                    A focused workspace for planning and publishing events.
-                                </h3>
+                                A focused workspace for planning and publishing events.
                             </ScrollReveal>
-                            <p className="text-lg text-fg-secondary mt-4">
+                            <p 
+                                ref={subtitleRef}
+                                className="text-lg text-fg-secondary mt-6 opacity-0"
+                            >
                                 Whether you&apos;re managing:
                             </p>
                         </div>
 
-                        <div className="mt-10 flex justify-center">
-                            <div className="w-full max-w-5xl">
-                                <MagicBento 
-                                    textAutoHide={false}
-                                    enableStars={false}
-                                    enableSpotlight={true}
-                                    enableBorderGlow={true}
-                                    enableTilt={false}
-                                    enableMagnetism={false}
-                                    clickEffect={false}
-                                    spotlightRadius={300}
-                                    particleCount={0}
-                                    glowColor="139, 92, 246"
-                                />
-                            </div>
+                        <div className="mt-8">
+                            <MagicBento 
+                                textAutoHide={false}
+                                enableStars={false}
+                                enableSpotlight={true}
+                                enableBorderGlow={true}
+                                enableTilt={false}
+                                enableMagnetism={false}
+                                clickEffect={false}
+                                spotlightRadius={300}
+                                particleCount={0}
+                                glowColor="139, 92, 246"
+                            />
                         </div>
 
 
-                        <div className="surface-card p-5 sm:p-8 md:p-10 mt-12 sm:mt-16">
+                        <div className="surface-card p-5 sm:p-8 md:p-10 mt-12 sm:mt-16 w-full max-w-[1200px] mx-auto">
                             <h4 className="text-2xl md:text-3xl font-bold text-fg-primary mb-8">Why Teams Choose Kairos</h4>
                             <div className="grid md:grid-cols-2 gap-6">
                                 <div className="flex items-start gap-4 p-4 rounded-xl bg-success/5 border border-success/20 hover:bg-success/10 transition-colors group">
@@ -302,7 +339,11 @@ export function HomeClient({ session }: {
                 </footer>
             </div>
 
-            <SignInModal isOpen={isModalOpen} onClose={handleSignInClose} />
+            <SignInModal
+                isOpen={isModalOpen}
+                onClose={handleSignInClose}
+                initialEmail={searchParams.get("email") ?? undefined}
+            />
 
             <style jsx>{`
                 @keyframes hero-fade-in {

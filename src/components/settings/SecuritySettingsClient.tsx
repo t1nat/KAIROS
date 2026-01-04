@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Shield } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { api } from "~/trpc/react";
 import { useToast } from "~/components/providers/ToastProvider";
@@ -16,8 +16,17 @@ export function SecuritySettingsClient() {
   const toast = useToast();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const { data, isLoading } = api.settings.get.useQuery();
+  const { status } = useSession();
+  const enabled = status === "authenticated";
+
   const utils = api.useUtils();
+
+  const { data, isLoading } = api.settings.get.useQuery(undefined, {
+    enabled,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
 
   const updateSecurity = api.settings.updatePrivacy.useMutation({
     onSuccess: async () => {
@@ -43,6 +52,7 @@ export function SecuritySettingsClient() {
   };
 
   const onSignOut = async () => {
+    await utils.settings.get.cancel();
     await signOut({ callbackUrl: "/" });
   };
 
@@ -50,6 +60,7 @@ export function SecuritySettingsClient() {
     try {
       await deleteAllData.mutateAsync();
       toast.success("Account deleted");
+      await utils.settings.get.cancel();
       await signOut({ callbackUrl: "/" });
     } catch (e) {
       const message = e instanceof Error ? e.message : "Failed to delete account";

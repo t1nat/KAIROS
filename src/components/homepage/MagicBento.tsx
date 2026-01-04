@@ -1,6 +1,10 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { FolderKanban, Users, Shield } from 'lucide-react';
+import ScrollReveal from '~/components/homepage/ScrollReveal';
+
+gsap.registerPlugin(ScrollTrigger);
 
 export interface BentoCardProps {
   color?: string;
@@ -94,6 +98,7 @@ const ParticleCard: React.FC<{
   enableTilt?: boolean;
   clickEffect?: boolean;
   enableMagnetism?: boolean;
+  cardRef?: React.Ref<HTMLDivElement>;
 }> = ({
   children,
   className = '',
@@ -103,9 +108,10 @@ const ParticleCard: React.FC<{
   glowColor = DEFAULT_GLOW_COLOR,
   enableTilt = true,
   clickEffect = false,
-  enableMagnetism = false
+  enableMagnetism = false,
+  cardRef
 }) => {
-  const cardRef = useRef<HTMLDivElement>(null);
+  const internalCardRef = useRef<HTMLDivElement>(null);
   const particlesRef = useRef<HTMLDivElement[]>([]);
   const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
   const isHoveredRef = useRef(false);
@@ -113,10 +119,19 @@ const ParticleCard: React.FC<{
   const particlesInitialized = useRef(false);
   const magnetismAnimationRef = useRef<gsap.core.Tween | null>(null);
 
-  const initializeParticles = useCallback(() => {
-    if (particlesInitialized.current || !cardRef.current) return;
+  const setRefs = useCallback((el: HTMLDivElement | null) => {
+    internalCardRef.current = el;
+    if (typeof cardRef === 'function') {
+      cardRef(el);
+    } else if (cardRef && 'current' in cardRef) {
+      (cardRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+    }
+  }, [cardRef]);
 
-    const { width, height } = cardRef.current.getBoundingClientRect();
+  const initializeParticles = useCallback(() => {
+    if (particlesInitialized.current || !internalCardRef.current) return;
+
+    const { width, height } = internalCardRef.current.getBoundingClientRect();
     memoizedParticles.current = Array.from({ length: particleCount }, () =>
       createParticleElement(Math.random() * width, Math.random() * height, glowColor)
     );
@@ -147,7 +162,7 @@ const ParticleCard: React.FC<{
   }, []);
 
   const animateParticles = useCallback(() => {
-    if (!cardRef.current || !isHoveredRef.current) return;
+    if (!internalCardRef.current || !isHoveredRef.current) return;
 
     if (!particlesInitialized.current) {
       initializeParticles();
@@ -155,10 +170,10 @@ const ParticleCard: React.FC<{
 
     memoizedParticles.current.forEach((particle, index) => {
       const timeoutId = setTimeout(() => {
-        if (!isHoveredRef.current || !cardRef.current) return;
+        if (!isHoveredRef.current || !internalCardRef.current) return;
 
         const clone = particle.cloneNode(true) as HTMLDivElement;
-        cardRef.current.appendChild(clone);
+        internalCardRef.current.appendChild(clone);
         particlesRef.current.push(clone);
 
         gsap.fromTo(clone, 
@@ -190,9 +205,9 @@ const ParticleCard: React.FC<{
   }, [initializeParticles]);
 
   useEffect(() => {
-    if (disableAnimations || !cardRef.current) return;
+    if (disableAnimations || !internalCardRef.current) return;
 
-    const element = cardRef.current;
+    const element = internalCardRef.current;
 
     const handleMouseEnter = () => {
       isHoveredRef.current = true;
@@ -329,7 +344,7 @@ const ParticleCard: React.FC<{
 
   return (
     <div
-      ref={cardRef}
+      ref={setRefs}
       className={`${className} relative overflow-hidden`}
       style={{ ...style, position: 'relative', overflow: 'hidden' }}
     >
@@ -486,7 +501,7 @@ const BentoCardGrid: React.FC<{
   gridRef?: React.RefObject<HTMLDivElement | null>;
 }> = ({ children, gridRef }) => (
   <div
-    className="bento-section grid gap-6 max-w-6xl select-none relative"
+    className="bento-section w-full select-none relative"
     ref={gridRef}
   >
     {children}
@@ -507,7 +522,6 @@ const useMobileDetection = () => {
 
   return isMobile;
 };
-
 
 let isStylesInjected = false;
 
@@ -532,13 +546,40 @@ const GlobalBentoStyles: React.FC<{ glowColor: string }> = ({ glowColor }) => {
       
       .kairos-card-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 1.5rem;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.75rem;
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1.25rem;
+        box-sizing: border-box;
+      }
+
+      @media (min-width: 640px) {
+        .kairos-card-grid {
+          padding: 0 2rem;
+        }
+      }
+
+      @media (min-width: 768px) {
+        .kairos-card-grid {
+          padding: 0 2.5rem;
+        }
       }
       
-      @media (max-width: 768px) {
+      @media (max-width: 1024px) {
+        .kairos-card-grid {
+          grid-template-columns: repeat(2, 1fr);
+          max-width: 800px;
+        }
+      }
+      
+      @media (max-width: 767px) {
         .kairos-card-grid {
           grid-template-columns: 1fr;
+          max-width: 480px;
+          gap: 1rem;
+          padding: 0 1rem;
         }
       }
       
@@ -586,14 +627,12 @@ const GlobalBentoStyles: React.FC<{ glowColor: string }> = ({ glowColor }) => {
     isStylesInjected = true;
 
     return () => {
-      // WSETRYIOL;
+      // Keep styles injected
     };
   }, [glowColor]); 
 
   return null;
 };
-
-
 
 const MagicBento: React.FC<BentoProps> = ({
   textAutoHide: _textAutoHide = false,
@@ -609,6 +648,7 @@ const MagicBento: React.FC<BentoProps> = ({
   enableMagnetism = true
 }) => {
   const gridRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isMobile = useMobileDetection();
   const shouldDisableAnimations = disableAnimations || isMobile;
 
@@ -630,6 +670,71 @@ const MagicBento: React.FC<BentoProps> = ({
     }
   ];
 
+  // GSAP scroll animations for cards - simple fade in with stagger
+  useEffect(() => {
+    if (shouldDisableAnimations) return;
+
+    const ctx = gsap.context(() => {
+      // Set initial state
+      gsap.set(cardRefs.current, {
+        opacity: 0,
+        y: 40
+      });
+
+      // Animate cards with stagger when they come into view
+      cardRefs.current.forEach((card, index) => {
+        if (!card) return;
+
+        gsap.to(card, {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          ease: 'power3.out',
+          delay: index * 0.15,
+          scrollTrigger: {
+            trigger: card,
+            start: 'top 85%',
+            toggleActions: 'play none none none'
+          }
+        });
+      });
+    }, gridRef);
+
+    return () => ctx.revert();
+  }, [shouldDisableAnimations]);
+
+  const renderCardContent = (card: BentoCardProps, index: number) => (
+    <div className="flex flex-col gap-5 relative z-10">
+      <div
+        style={{
+          width: '48px',
+          height: '48px',
+          backgroundColor: iconTokens[index]?.bg,
+          border: `1px solid ${iconTokens[index]?.border}`,
+          borderRadius: '12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: iconTokens[index]?.fg
+        }}
+      >
+        {card.icon}
+      </div>
+      <div>
+        <h4 className="text-xl font-bold text-fg-primary mb-3">
+          <ScrollReveal as="span" variant="inherit" baseOpacity={0.15}>
+            {card.title ?? ''}
+          </ScrollReveal>
+        </h4>
+        <p className="text-fg-secondary leading-relaxed text-sm">
+          <ScrollReveal as="span" variant="inherit" baseOpacity={0.15}>
+            {card.description ?? ''}
+          </ScrollReveal>
+        </p>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <GlobalBentoStyles glowColor={glowColor} />
@@ -647,7 +752,7 @@ const MagicBento: React.FC<BentoProps> = ({
       <BentoCardGrid gridRef={gridRef}>
         <div className="kairos-card-grid">
           {cardData.map((card, index) => {
-            const baseClassName = `card flex flex-col justify-between relative min-h-[280px] w-full p-8 rounded-2xl border border-solid overflow-hidden transition-all duration-300 ease-in-out ${
+            const baseClassName = `card flex flex-col justify-between relative min-h-[240px] w-full p-7 rounded-2xl border border-solid overflow-hidden transition-all duration-300 ease-in-out ${
               enableBorderGlow ? 'card--border-glow' : ''
             }`;
 
@@ -674,63 +779,21 @@ const MagicBento: React.FC<BentoProps> = ({
                   enableTilt={enableTilt}
                   clickEffect={clickEffect}
                   enableMagnetism={enableMagnetism}
+                  cardRef={(el) => { cardRefs.current[index] = el; }}
                 >
-                  <div className="flex flex-col gap-6 relative z-10">
-                    <div
-                      style={{
-                        width: '48px',
-                        height: '48px',
-                        backgroundColor: iconTokens[index]?.bg,
-                        border: `1px solid ${iconTokens[index]?.border}`,
-                        borderRadius: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: iconTokens[index]?.fg
-                      }}
-                    >
-                      {card.icon}
-                    </div>
-                    <div>
-                      <h4 className="text-xl font-bold text-fg-primary mb-3">
-                        {card.title}
-                      </h4>
-                      <p className="text-fg-secondary leading-relaxed text-sm">
-                        {card.description}
-                      </p>
-                    </div>
-                  </div>
+                  {renderCardContent(card, index)}
                 </ParticleCard>
               );
             }
 
             return (
-              <div key={index} className={baseClassName} style={cardStyle}>
-                <div className="flex flex-col gap-6 relative z-10">
-                  <div
-                    style={{
-                      width: '48px',
-                      height: '48px',
-                      backgroundColor: iconTokens[index]?.bg,
-                      border: `1px solid ${iconTokens[index]?.border}`,
-                      borderRadius: '12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: iconTokens[index]?.fg
-                    }}
-                  >
-                    {card.icon}
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-bold text-fg-primary mb-3">
-                      {card.title}
-                    </h4>
-                    <p className="text-fg-secondary leading-relaxed text-sm">
-                      {card.description}
-                    </p>
-                  </div>
-                </div>
+              <div 
+                key={index} 
+                className={baseClassName} 
+                style={cardStyle}
+                ref={(el) => { cardRefs.current[index] = el; }}
+              >
+                {renderCardContent(card, index)}
               </div>
             );
           })}

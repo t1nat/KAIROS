@@ -2,12 +2,20 @@
 
 import { signIn } from "next-auth/react";
 import { X, Mail, Lock, User, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
 import Image from "next/image";
 
-export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+export function SignInModal({
+  isOpen,
+  onClose,
+  initialEmail,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  initialEmail?: string;
+}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -18,6 +26,12 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
   const router = useRouter();
 
   const signupMutation = api.auth.signup.useMutation();
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!initialEmail) return;
+    setEmail(initialEmail);
+  }, [isOpen, initialEmail]);
 
   if (!isOpen) return null;
 
@@ -96,7 +110,7 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
   };
 
   const resetForm = () => {
-    setEmail("");
+    setEmail(initialEmail ?? "");
     setPassword("");
     setName("");
     setError("");
@@ -166,15 +180,11 @@ export function SignInModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             <span>Continue with Google</span>
           </button>
 
-          <div className="relative py-2">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border-light/20"></div>
-            </div>
-            <div className="relative flex justify-center">
-              <span className="px-4 text-sm text-fg-tertiary bg-gradient-to-br from-bg-secondary to-bg-primary">
-                or {isSignUp ? "sign up" : "sign in"} with email
-              </span>
-            </div>
+          <div className="flex flex-col items-center gap-3 py-2">
+            <span className="text-sm text-fg-tertiary">
+              or {isSignUp ? "sign up" : "sign in"} with email
+            </span>
+            <div className="w-full border-t border-border-light/20"></div>
           </div>
 
           <form onSubmit={isSignUp ? handleSignUp : handleEmailSignIn} className="space-y-4">

@@ -1,25 +1,74 @@
 "use client";
 
 import { api } from "~/trpc/react";
-import { ChevronDown, LogOut } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { ChevronDown, LogIn, LogOut, Users } from "lucide-react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 
 type Translator = (key: string, values?: Record<string, unknown>) => string;
 
+type StoredAccount = {
+  userId: string;
+  email: string;
+  name?: string | null;
+  image?: string | null;
+  lastUsed: number;
+};
+
 export function UserDisplay() {
   const useT = useTranslations as unknown as (namespace: string) => Translator;
   const tSettings = useT("settings");
+  const tOrg = useT("org");
   const [isOpen, setIsOpen] = useState(false);
+  const [storedAccounts, setStoredAccounts] = useState<StoredAccount[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const { status } = useSession();
+  const enabled = status === "authenticated";
+
+  const utils = api.useUtils();
+
   const { data: user, isLoading } = api.user.getCurrentUser.useQuery(undefined, {
+    enabled,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
+
+  useEffect(() => {
+    if (!user?.email) return;
+
+    const refreshAccounts = async () => {
+      try {
+        await fetch("/api/account-switch/register", { method: "POST" });
+        const res = await fetch("/api/account-switch/list", { method: "GET" });
+        const data = (await res.json()) as unknown;
+        if (!data || typeof data !== "object") return;
+        const accounts = (data as { accounts?: unknown }).accounts;
+        if (!Array.isArray(accounts)) return;
+
+        const normalized = accounts
+          .filter((a): a is StoredAccount => {
+            if (!a || typeof a !== "object") return false;
+            const x = a as Partial<StoredAccount>;
+            return (
+              typeof x.userId === "string" &&
+              typeof x.email === "string" &&
+              typeof x.lastUsed === "number"
+            );
+          })
+          .sort((a, b) => b.lastUsed - a.lastUsed);
+
+        setStoredAccounts(normalized);
+      } catch {
+        // ignore
+      }
+    };
+
+    void refreshAccounts();
+  }, [user?.email]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -33,7 +82,39 @@ export function UserDisplay() {
   }, []);
 
   const handleSignOut = async () => {
+    await utils.settings.get.cancel();
+    await utils.user.getCurrentUser.cancel();
+    await utils.organization.getActive.cancel();
+    await utils.organization.listMine.cancel();
     await signOut({ callbackUrl: "/" });
+  };
+
+  const handleSwitchAccount = async () => {
+    await utils.settings.get.cancel();
+    await utils.user.getCurrentUser.cancel();
+    await utils.organization.getActive.cancel();
+    await utils.organization.listMine.cancel();
+    await signOut({ callbackUrl: "/?switchAccount=1" });
+  };
+
+  const handleSwitchToAccount = async (account: StoredAccount) => {
+    await utils.settings.get.cancel();
+    await utils.user.getCurrentUser.cancel();
+    await utils.organization.getActive.cancel();
+    await utils.organization.listMine.cancel();
+
+    const result = await signIn("account-switch", {
+      userId: account.userId,
+      redirect: false,
+    });
+
+    if (result?.error) {
+      const encoded = encodeURIComponent(account.email);
+      await signOut({ callbackUrl: `/?switchAccount=1&email=${encoded}` });
+      return;
+    }
+
+    window.location.href = "/";
   };
 
   if (isLoading) {
@@ -51,6 +132,8 @@ export function UserDisplay() {
   if (!user) {
     return null;
   }
+
+  const otherAccounts = storedAccounts.filter((a) => a.email && a.email !== user.email);
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -121,6 +204,63 @@ export function UserDisplay() {
           </div>
 
           <div className="p-2">
+            <a
+              href="/orgs"
+              className="flex items-center gap-3 px-3 py-2.5 text-sm text-fg-primary hover:bg-bg-secondary/60 rounded-xl transition-colors"
+              onClick={() => setIsOpen(false)}
+              role="menuitem"
+            >
+              <Users size={16} />
+              {tOrg("switchOrg")}
+            </a>
+
+            {otherAccounts.length === 0 ? (
+              <button
+                onClick={handleSwitchAccount}
+                className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-fg-primary hover:bg-bg-secondary/60 rounded-xl transition-colors"
+                role="menuitem"
+              >
+                <LogIn size={16} />
+                {tSettings("security.addAccount")}
+              </button>
+            ) : (
+              <div className="mt-1">
+                <div className="px-3 pt-2 pb-1 text-xs font-medium text-fg-tertiary">
+                  {tSettings("security.changeAccount")}
+                </div>
+                {otherAccounts.map((acct) => (
+                  <button
+                    key={acct.email}
+                    onClick={() => handleSwitchToAccount(acct)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-fg-primary hover:bg-bg-secondary/60 rounded-xl transition-colors"
+                    role="menuitem"
+                  >
+                    {acct.image ? (
+                      <Image
+                        src={acct.image}
+                        alt={acct.name ?? acct.email}
+                        width={20}
+                        height={20}
+                        className="w-5 h-5 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full bg-bg-tertiary/60" />
+                    )}
+                    <span className="truncate">{acct.name?.trim() ? acct.name : "Account"}</span>
+                  </button>
+                ))}
+
+                <button
+                  onClick={handleSwitchAccount}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-fg-primary hover:bg-bg-secondary/60 rounded-xl transition-colors"
+                  role="menuitem"
+                >
+                  <LogIn size={16} />
+                  {tSettings("security.addAccount")}
+                </button>
+              </div>
+            )}
+
             <a
               href="/settings"
               className="flex items-center gap-3 px-3 py-2.5 text-sm text-fg-primary hover:bg-bg-secondary/60 rounded-xl transition-colors"

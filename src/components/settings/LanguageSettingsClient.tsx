@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition, useRef } from "react";
 import { Check, ChevronDown, Globe } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { api } from "~/trpc/react";
 
@@ -52,7 +53,15 @@ export function LanguageSettingsClient() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const { data, isLoading } = api.settings.get.useQuery();
+  const { status } = useSession();
+  const enabled = status === "authenticated";
+
+  const { data, isLoading } = api.settings.get.useQuery(undefined, {
+    enabled,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
   const utils = api.useUtils();
 
   const updateLanguageRegion = api.settings.updateLanguageRegion.useMutation({
