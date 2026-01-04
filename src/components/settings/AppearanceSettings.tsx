@@ -56,15 +56,37 @@ export function AppearanceSettings() {
 
   const currentTheme = theme === 'system' ? systemTheme : theme;
 
-  const currentAccent = data?.accentColor ?? "indigo";
+  const normalizeAccent = (accent?: string | null) => {
+    switch (accent) {
+      case "purple":
+      case "pink":
+      case "caramel":
+      case "mint":
+      case "sky":
+      case "strawberry":
+        return accent;
+      case "indigo":
+        return "purple";
+      case "cyan":
+      case "teal":
+      case "green":
+        return "mint";
+      case "blue":
+        return "sky";
+      default:
+        return "purple";
+    }
+  };
+
+  const currentAccent = normalizeAccent(data?.accentColor);
 
   const accentOptions = [
     { id: "purple", name: "Purple", swatchVar: "--brand-purple" },
-    { id: "indigo", name: "Indigo", swatchVar: "--brand-indigo" },
-    { id: "blue", name: "Blue", swatchVar: "--brand-blue" },
-    { id: "cyan", name: "Cyan", swatchVar: "--brand-cyan" },
-    { id: "teal", name: "Teal", swatchVar: "--brand-teal" },
-    { id: "green", name: "Green", swatchVar: "--success" },
+    { id: "pink", name: "Pink", swatchVar: "--brand-pink" },
+    { id: "caramel", name: "Caramel", swatchVar: "--brand-caramel" },
+    { id: "mint", name: "Mint", swatchVar: "--brand-mint" },
+    { id: "sky", name: "Sky", swatchVar: "--brand-sky" },
+    { id: "strawberry", name: "Strawberry", swatchVar: "--brand-strawberry" },
   ] as const;
 
   const isBusy = updateAppearance.isPending;
@@ -80,7 +102,7 @@ export function AppearanceSettings() {
     }
   };
 
-  const onSelectAccent = async (accent: string) => {
+  const onSelectAccent = async (accent: (typeof accentOptions)[number]["id"]) => {
     document.documentElement.dataset.accent = accent;
     try {
       await updateAppearance.mutateAsync({ accentColor: accent });

@@ -137,7 +137,7 @@ export function InteractiveTimeline({
     return (
       <div className="flex-1 flex items-center justify-center min-h-[500px]">
         <div className="text-center max-w-md">
-          <div className="w-20 h-20 rounded-2xl bg-bg-surface/60 flex items-center justify-center mx-auto mb-6 border border-border-light/30">
+          <div className="w-20 h-20 rounded-2xl bg-bg-surface flex items-center justify-center mx-auto mb-6 border border-border-light/30">
             <Clock size={32} className="text-accent-primary/50" />
           </div>
           <h3 className="text-2xl font-bold text-fg-primary mb-3">{t("timeline.emptyTitle")}</h3>
@@ -171,7 +171,7 @@ export function InteractiveTimeline({
 
         <div className="relative w-full h-3 bg-bg-surface/60 rounded-full overflow-hidden border border-border-light/30">
           <div 
-            className="absolute top-0 left-0 h-full bg-gradient-to-r from-accent-primary to-accent-secondary rounded-full shadow-lg shadow-accent-primary/20 transition-shadow duration-300"
+            className="absolute top-0 left-0 h-full bg-accent-primary rounded-full shadow-lg shadow-accent-primary/20 transition-shadow duration-300"
             style={{ width: `${animatedPercentage}%` }}
           />
           {animatedPercentage > 0 && animatedPercentage < 100 && (
@@ -184,7 +184,12 @@ export function InteractiveTimeline({
       </div>
 
       <div className="relative flex-1 pb-8">
-        <div className="absolute top-[52px] left-0 right-0 h-[3px] bg-gradient-to-r from-accent-primary/15 via-accent-primary/30 to-accent-primary/15" />
+        <div className="absolute top-[52px] left-0 right-0 h-[3px] bg-border-light/40" />
+        <div
+          className="absolute top-[52px] left-0 h-[3px] bg-accent-primary"
+          style={{ width: `${animatedPercentage}%` }}
+          aria-hidden
+        />
         
         <div className="relative flex items-start gap-6 md:gap-8 overflow-x-auto pb-4 scrollbar-thin scroll-smooth snap-x snap-mandatory">
           {sortedTasks.map((task, index) => {
@@ -240,7 +245,7 @@ export function InteractiveTimeline({
                       setExpandedTaskId((prev) => (prev === task.id ? null : task.id));
                     }
                   }}
-                  className={`mt-24 bg-bg-surface/60 backdrop-blur-sm rounded-xl p-5 border transition-all duration-300 outline-none ${
+                  className={`mt-24 bg-bg-surface rounded-xl p-5 border transition-all duration-300 outline-none ${
                     isCompleted 
                       ? "border-accent-primary/30 opacity-70" 
                       : "border-border-light/30 hover:border-accent-primary/40 hover:bg-bg-elevated hover:shadow-lg hover:shadow-accent-primary/10"

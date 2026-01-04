@@ -1,0 +1,1 @@
+ALTER TABLE "user" ALTER COLUMN "accent_color" SET DEFAULT 'purple';

@@ -42,11 +42,7 @@ export const settingsRouter = createTRPCRouter({
         },
       });
 
-      if (!user) {
-        throw new Error("User not found");
-      }
-
-      return user;
+      return user ?? null;
     }),
 
 
@@ -124,7 +120,7 @@ export const settingsRouter = createTRPCRouter({
   updateAppearance: protectedProcedure
     .input(z.object({
       theme: z.enum(["light", "dark", "system"]).optional(),
-      accentColor: z.string().optional(),
+      accentColor: z.enum(["purple", "pink", "caramel", "mint", "sky", "strawberry"]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db.update(users)

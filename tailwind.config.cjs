@@ -32,8 +32,11 @@ module.exports = {
         },
         brand: {
           purple: "rgb(var(--brand-purple) / <alpha-value>)",
-          indigo: "rgb(var(--brand-indigo) / <alpha-value>)",
-          blue: "rgb(var(--brand-blue) / <alpha-value>)",
+          pink: "rgb(var(--brand-pink) / <alpha-value>)",
+          caramel: "rgb(var(--brand-caramel) / <alpha-value>)",
+          mint: "rgb(var(--brand-mint) / <alpha-value>)",
+          sky: "rgb(var(--brand-sky) / <alpha-value>)",
+          strawberry: "rgb(var(--brand-strawberry) / <alpha-value>)",
         },
         success: "rgb(var(--success) / <alpha-value>)",
         warning: "rgb(var(--warning) / <alpha-value>)",

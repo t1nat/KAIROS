@@ -76,7 +76,7 @@ export const users = createTable("user", (d) => ({
     dateFormat: dateFormatEnum("date_format").default("MM/DD/YYYY").notNull(),
     
     theme: themeEnum("theme").default("light").notNull(),
-    accentColor: varchar("accent_color", { length: 20 }).default("indigo").notNull(),
+    accentColor: varchar("accent_color", { length: 20 }).default("purple").notNull(),
     
     profileVisibility: boolean("profile_visibility").default(true).notNull(),
     showOnlineStatus: boolean("show_online_status").default(true).notNull(),

@@ -34,9 +34,36 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
     api.createClient({
       links: [
         loggerLink({
-          enabled: (op) =>
-            process.env.NODE_ENV === "development" ||
-            (op.direction === "down" && op.result instanceof Error),
+          enabled: () => process.env.NODE_ENV === "development",
+          logger: (op) => {
+            // Next.js dev overlay is triggered by console.error. tRPC's default logger
+            // uses console.error for errors, which can spam the overlay during auth
+            // transitions and cancellations. We instead:
+            // - ignore expected UNAUTHORIZED / abort / cancel noise
+            // - log real errors via console.warn
+
+            if (op.direction !== "down") return;
+            if (!(op.result instanceof Error)) return;
+
+            const err = op.result as unknown as {
+              name?: string;
+              message?: string;
+              data?: { code?: string };
+            };
+
+            const code = err?.data?.code;
+            const message = (err?.message ?? "").toLowerCase();
+            const name = (err?.name ?? "").toLowerCase();
+
+            if (code === "UNAUTHORIZED" || message.includes("unauthorized")) return;
+            if (name.includes("abort") || message.includes("abort") || message.includes("cancel")) return;
+
+            // Use warn to avoid Next.js console-error overlay spam.
+            console.warn(`tRPC ${op.type} ${op.path} failed`, {
+              input: op.input,
+              error: err,
+            });
+          },
         }),
         httpBatchStreamLink({
           transformer: SuperJSON,

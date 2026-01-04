@@ -13,6 +13,8 @@ import { ZodError } from "zod";
 
 import { auth } from "~/server/auth";
 import { db } from "~/server/db";
+import { users } from "~/server/db/schema";
+import { eq } from "drizzle-orm";
 
 /**
  * 1. CONTEXT
@@ -122,10 +124,45 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
  */
 export const protectedProcedure = t.procedure
   .use(timingMiddleware)
-  .use(({ ctx, next }) => {
+  .use(async ({ ctx, next }) => {
     if (!ctx.session?.user) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
+
+    // Ensure the authenticated user exists in the app DB.
+    // This prevents cascaded failures like `settings.get` / `user.getCurrentUser` throwing
+    // and foreign key errors in `organization.create`.
+    const userId = ctx.session.user.id;
+    const email = ctx.session.user.email;
+    const name = ctx.session.user.name;
+    const image = ctx.session.user.image;
+
+    if (typeof userId === "string") {
+      const exists = await ctx.db.query.users.findFirst({
+        where: eq(users.id, userId),
+        columns: { id: true },
+      });
+
+      if (!exists) {
+        if (typeof email !== "string" || email.length === 0) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Authenticated session is missing an email.",
+          });
+        }
+
+        await ctx.db
+          .insert(users)
+          .values({
+            id: userId,
+            email,
+            name: typeof name === "string" ? name : null,
+            image: typeof image === "string" ? image : null,
+          })
+          .onConflictDoNothing({ target: users.id });
+      }
+    }
+
     return next({
       ctx: {
         // infers the `session` as non-nullable

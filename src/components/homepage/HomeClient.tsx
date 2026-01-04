@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import { UserDisplay } from "~/components/layout/UserDisplay";
@@ -29,6 +29,99 @@ interface SessionData {
     user?: { name?: string | null; id?: string } | null;
 }
 
+// Hook to watch for theme/accent changes on document element
+function useThemeColorTick(): number {
+    const [tick, setTick] = useState(0);
+
+    useEffect(() => {
+        const el = document.documentElement;
+
+        const obs = new MutationObserver(() => setTick((t) => t + 1));
+        obs.observe(el, {
+            attributes: true,
+            attributeFilter: ["class", "data-accent", "style"],
+        });
+
+        return () => obs.disconnect();
+    }, []);
+
+    return tick;
+}
+
+// Parse RGB triplet from CSS variable value like "139 92 246"
+function parseRgbTriplet(raw: string): [number, number, number] | null {
+    const cleaned = raw.trim();
+    if (!cleaned) return null;
+
+    const parts = cleaned.split(/[\s,]+/).filter(Boolean);
+    if (parts.length < 3) return null;
+
+    const r = Number(parts[0]);
+    const g = Number(parts[1]);
+    const b = Number(parts[2]);
+    if (!Number.isFinite(r) || !Number.isFinite(g) || !Number.isFinite(b)) return null;
+
+    return [r, g, b];
+}
+
+// Get RGB triplet from CSS variable
+function getCssVarRgb(varName: string): [number, number, number] | null {
+    if (typeof document === "undefined") return null;
+    const value = getComputedStyle(document.documentElement).getPropertyValue(varName);
+    return parseRgbTriplet(value);
+}
+
+// Rotate hue of an RGB color
+function rotateHue(rgb: [number, number, number], degrees: number): [number, number, number] {
+    const r = rgb[0] / 255;
+    const g = rgb[1] / 255;
+    const b = rgb[2] / 255;
+
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const l = (max + min) / 2;
+    let h = 0;
+    let s = 0;
+
+    if (max !== min) {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+        if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+        else if (max === g) h = ((b - r) / d + 2) / 6;
+        else h = ((r - g) / d + 4) / 6;
+    }
+
+    h = (h + degrees / 360 + 1) % 1;
+
+    const hue2rgb = (p: number, q: number, t: number): number => {
+        let tt = t;
+        if (tt < 0) tt += 1;
+        if (tt > 1) tt -= 1;
+        if (tt < 1 / 6) return p + (q - p) * 6 * tt;
+        if (tt < 1 / 2) return q;
+        if (tt < 2 / 3) return p + (q - p) * (2 / 3 - tt) * 6;
+        return p;
+    };
+
+    if (s === 0) {
+        const gray = Math.round(l * 255);
+        return [gray, gray, gray];
+    }
+
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+
+    return [
+        Math.round(hue2rgb(p, q, h + 1 / 3) * 255),
+        Math.round(hue2rgb(p, q, h) * 255),
+        Math.round(hue2rgb(p, q, h - 1 / 3) * 255),
+    ];
+}
+
+// Default purple fallback
+const DEFAULT_PRIMARY: [number, number, number] = [139, 92, 246];
+
 export function HomeClient({ session }: {
     session: SessionData | null;
 }) {
@@ -41,6 +134,9 @@ export function HomeClient({ session }: {
     const [hasAnimated, setHasAnimated] = useState(false);
     const aboutRef = useRef<HTMLElement>(null);
     const subtitleRef = useRef<HTMLParagraphElement>(null);
+    
+    // Watch for accent color changes
+    const colorTick = useThemeColorTick();
 
     const { data: userProfile, isLoading: isProfileLoading } = api.user.getProfile.useQuery(undefined, {
         enabled: !!session?.user,
@@ -114,12 +210,138 @@ export function HomeClient({ session }: {
     const isDarkTheme = themeMounted ? resolvedTheme === "dark" : false;
     const logoSrc = isDarkTheme ? "/logo_white.png" : "/logo_purple.png";
 
+    // Generate circle gradients - using ANALOGOUS colors (close to accent)
+    const circleGradients = useMemo(() => {
+        // Read the primary accent color from CSS variables
+        const primary = getCssVarRgb("--accent-primary") ?? DEFAULT_PRIMARY;
+        
+        // Generate analogous colors - small hue shifts for harmonious palette
+        const analog1 = rotateHue(primary, 25);    // Slight shift right
+        const analog2 = rotateHue(primary, -25);   // Slight shift left
+        const analog3 = rotateHue(primary, 40);    // A bit more shift
+        const analog4 = rotateHue(primary, -15);   // Subtle shift
+        
+        const toRgb = (c: [number, number, number]) => `${c[0]}, ${c[1]}, ${c[2]}`;
+        
+        if (isDarkTheme) {
+            return {
+                circle1: `radial-gradient(circle at 40% 40%, rgba(${toRgb(primary)}, 0.22), rgba(${toRgb(analog1)}, 0.12), transparent 65%)`,
+                circle2: `radial-gradient(circle at 60% 60%, rgba(${toRgb(analog2)}, 0.18), rgba(${toRgb(analog3)}, 0.10), transparent 65%)`,
+                circle3: `radial-gradient(circle at 50% 50%, rgba(${toRgb(analog3)}, 0.14), rgba(${toRgb(primary)}, 0.08), transparent 55%)`,
+                circle4: `radial-gradient(circle at 50% 50%, rgba(${toRgb(analog4)}, 0.12), rgba(${toRgb(analog1)}, 0.06), transparent 60%)`,
+            };
+        } else {
+            return {
+                circle1: `radial-gradient(circle at 40% 40%, rgba(${toRgb(primary)}, 0.18), rgba(${toRgb(analog1)}, 0.10), transparent 65%)`,
+                circle2: `radial-gradient(circle at 60% 60%, rgba(${toRgb(analog2)}, 0.14), rgba(${toRgb(analog3)}, 0.08), transparent 65%)`,
+                circle3: `radial-gradient(circle at 50% 50%, rgba(${toRgb(analog3)}, 0.10), rgba(${toRgb(primary)}, 0.06), transparent 55%)`,
+                circle4: `radial-gradient(circle at 50% 50%, rgba(${toRgb(analog4)}, 0.10), rgba(${toRgb(analog1)}, 0.05), transparent 60%)`,
+            };
+        }
+    
+    }, [isDarkTheme, colorTick]);
+
     return (
         <main id="main-content" className="min-h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary relative overflow-hidden">
-            <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-70 dark:opacity-35">
-                <div className="absolute top-0 left-0 w-[420px] h-[420px] sm:w-[560px] sm:h-[560px] lg:w-[700px] lg:h-[700px] bg-gradient-to-br from-accent-primary/45 via-brand-indigo/25 to-brand-purple/45 dark:from-accent-primary/30 dark:via-brand-indigo/20 dark:to-brand-purple/30 rounded-full blur-3xl animate-fadeIn animate-pulse" style={{ animationDuration: '8s' }} />
-                <div className="absolute bottom-0 right-0 w-[420px] h-[420px] sm:w-[560px] sm:h-[560px] lg:w-[700px] lg:h-[700px] bg-gradient-to-tl from-brand-cyan/30 via-brand-blue/25 to-accent-secondary/45 dark:from-brand-cyan/20 dark:via-brand-blue/20 dark:to-accent-secondary/30 rounded-full blur-3xl animate-fadeIn" style={{ animationDelay: '0.5s', animationDuration: '10s' }} />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] sm:w-[420px] sm:h-[420px] lg:w-[500px] lg:h-[500px] bg-gradient-to-br from-brand-teal/18 via-brand-purple/22 to-transparent dark:from-brand-teal/10 dark:via-brand-purple/15 rounded-full blur-2xl" />
+            {/* Global styles for floating circle animations */}
+            <style jsx global>{`
+                @keyframes circle-drift-1 {
+                    0%, 100% { 
+                        transform: translate(0, 0) scale(1);
+                    }
+                    25% { 
+                        transform: translate(50px, -35px) scale(1.04);
+                    }
+                    50% { 
+                        transform: translate(25px, 45px) scale(0.96);
+                    }
+                    75% { 
+                        transform: translate(-40px, 15px) scale(1.02);
+                    }
+                }
+                @keyframes circle-drift-2 {
+                    0%, 100% { 
+                        transform: translate(0, 0) scale(1);
+                    }
+                    25% { 
+                        transform: translate(-45px, 35px) scale(0.97);
+                    }
+                    50% { 
+                        transform: translate(-20px, -45px) scale(1.03);
+                    }
+                    75% { 
+                        transform: translate(40px, -20px) scale(0.98);
+                    }
+                }
+                @keyframes circle-drift-3 {
+                    0%, 100% { 
+                        transform: translate(-50%, -50%) scale(1);
+                    }
+                    33% { 
+                        transform: translate(calc(-50% + 35px), calc(-50% - 30px)) scale(1.03);
+                    }
+                    66% { 
+                        transform: translate(calc(-50% - 30px), calc(-50% + 25px)) scale(0.97);
+                    }
+                }
+                @keyframes circle-drift-4 {
+                    0%, 100% { 
+                        transform: translate(0, 0) scale(1);
+                    }
+                    30% { 
+                        transform: translate(-35px, -40px) scale(1.03);
+                    }
+                    60% { 
+                        transform: translate(40px, 30px) scale(0.97);
+                    }
+                }
+                @keyframes gentle-fade-in {
+                    0% { 
+                        opacity: 0;
+                    }
+                    100% { 
+                        opacity: 1;
+                    }
+                }
+                .floating-circle-1 {
+                    animation: gentle-fade-in 1.2s ease-out forwards, circle-drift-1 10s ease-in-out infinite;
+                    animation-delay: 0s, 0s;
+                }
+                .floating-circle-2 {
+                    animation: gentle-fade-in 1.2s ease-out forwards, circle-drift-2 12s ease-in-out infinite;
+                    animation-delay: 0.15s, 0s;
+                }
+                .floating-circle-3 {
+                    animation: gentle-fade-in 1.2s ease-out forwards, circle-drift-3 8s ease-in-out infinite;
+                    animation-delay: 0.3s, 0s;
+                }
+                .floating-circle-4 {
+                    animation: gentle-fade-in 1.2s ease-out forwards, circle-drift-4 14s ease-in-out infinite;
+                    animation-delay: 0.2s, 0s;
+                }
+            `}</style>
+
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                {/* Primary accent - top left */}
+                <div 
+                    className="floating-circle-1 absolute -top-[150px] -left-[150px] w-[550px] h-[550px] sm:w-[700px] sm:h-[700px] lg:w-[850px] lg:h-[850px] rounded-full blur-3xl opacity-0"
+                    style={{ background: circleGradients.circle1 }}
+                />
+                {/* Analogous color - bottom right */}
+                <div 
+                    className="floating-circle-2 absolute -bottom-[150px] -right-[150px] w-[550px] h-[550px] sm:w-[700px] sm:h-[700px] lg:w-[850px] lg:h-[850px] rounded-full blur-3xl opacity-0"
+                    style={{ background: circleGradients.circle2 }}
+                />
+                {/* Accent blend - center */}
+                <div 
+                    className="floating-circle-3 absolute top-1/2 left-1/2 w-[450px] h-[450px] sm:w-[550px] sm:h-[550px] lg:w-[650px] lg:h-[650px] rounded-full blur-3xl opacity-0"
+                    style={{ background: circleGradients.circle3 }}
+                />
+                {/* Subtle analogous - top right */}
+                <div 
+                    className="floating-circle-4 absolute -top-[100px] -right-[100px] w-[400px] h-[400px] sm:w-[500px] sm:h-[500px] lg:w-[600px] lg:h-[600px] rounded-full blur-3xl opacity-0"
+                    style={{ background: circleGradients.circle4 }}
+                />
             </div>
 
             <div className="relative z-10">
@@ -303,7 +525,7 @@ export function HomeClient({ session }: {
 
                 {!session && (
                     <section className="py-14 sm:py-20 px-4 sm:px-6 relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-accent-primary/10 via-brand-indigo/10 to-brand-cyan/10"></div>
+                        <div className="absolute inset-0 bg-gradient-to-r from-accent-primary/10 via-accent-secondary/10 to-accent-tertiary/10"></div>
                         <div className="max-w-4xl mx-auto text-center relative z-10">
                             <div className="surface-card p-6 sm:p-10 md:p-12 hover:shadow-2xl hover:shadow-accent-primary/20 transition-all duration-500 group relative overflow-hidden">
                                 <div className="absolute inset-0 bg-gradient-to-br from-accent-primary/5 via-transparent to-accent-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -376,42 +598,6 @@ export function HomeClient({ session }: {
                 .animate-hero-fade-in-delayed {
                     animation: hero-fade-in 1.5s ease-out 0.3s forwards;
                     opacity: 0;
-                }
-                @keyframes fade-in {
-                    0% { 
-                        opacity: 0;
-                        transform: translateY(-10px);
-                    }
-                    100% { 
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-                .animate-fade-in {
-                    animation: fade-in 1s ease-out forwards;
-                }
-                @keyframes float-fast {
-                    0%, 100% { transform: translate(0, 0) rotate(0deg); }
-                    33% { transform: translate(30px, -30px) rotate(5deg); }
-                    66% { transform: translate(-20px, 20px) rotate(-5deg); }
-                }
-                @keyframes float-faster {
-                    0%, 100% { transform: translate(0, 0) rotate(0deg); }
-                    33% { transform: translate(-25px, 25px) rotate(-4deg); }
-                    66% { transform: translate(25px, -25px) rotate(4deg); }
-                }
-                @keyframes float-fastest {
-                    0%, 100% { transform: translate(0, 0) rotate(0deg); }
-                    50% { transform: translate(20px, -30px) rotate(3deg); }
-                }
-                .animate-float-fast {
-                    animation: float-fast 8s ease-in-out infinite;
-                }
-                .animate-float-faster {
-                    animation: float-faster 6s ease-in-out infinite;
-                }
-                .animate-float-fastest {
-                    animation: float-fastest 5s ease-in-out infinite;
                 }
                 @keyframes border-circulation {
                     0%, 100% { 

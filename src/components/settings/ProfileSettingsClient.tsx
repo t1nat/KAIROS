@@ -21,7 +21,8 @@ interface ProfileSettingsClientProps {
 export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
   const utils = api.useUtils();
   const toast = useToast();
-  const { update: updateSession } = useSession();
+  const { update: updateSession, status } = useSession();
+  const enabled = status === "authenticated";
   const [name, setName] = useState(user.name ?? "");
   const [bio, setBio] = useState(user.bio ?? "");
   const [imagePreview, setImagePreview] = useState(user.image ?? "");
@@ -31,8 +32,14 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
 
   const { startUpload } = useUploadThing("imageUploader");
 
-  const { data: userProfile } = api.user.getProfile.useQuery();
+  const { data: userProfile } = api.user.getProfile.useQuery(undefined, {
+    enabled,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
   const { data: currentUser } = api.user.getCurrentUser.useQuery(undefined, {
+    enabled,
+    retry: false,
     refetchOnWindowFocus: false,
   });
 
