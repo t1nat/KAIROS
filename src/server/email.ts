@@ -1,32 +1,20 @@
 import { Resend } from 'resend';
 
-if (!process.env.RESEND_API_KEY) {
-  throw new Error('RESEND_API_KEY is not set in environment variables');
-}
-
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-interface PasswordResetEmailParams {
+export interface PasswordResetEmailParams {
   email: string;
   userName: string;
   noteId: number;
   resetToken: string;
 }
 
-export async function sendPasswordResetEmail({
-  email,
-  userName,
-  noteId,
-  resetToken,
-}: PasswordResetEmailParams): Promise<{ id: string } | null> {
-  const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?noteId=${noteId}&token=${resetToken}`;
+type PasswordResetTemplateInput = {
+  userName: string;
+  resetUrl: string;
+};
 
-  try {
-    const { data, error } = await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL ?? 'Kairos <onboarding@resend.dev>',
-      to: [email],
-      subject: '🔐 Reset Your Note Password - Kairos',
-      html: `
+const PasswordResetEmailTemplate = {
+  subject: '🔐 Reset Your Note Password - Kairos',
+  renderHtml: ({ userName, resetUrl }: PasswordResetTemplateInput) => `
         <!DOCTYPE html>
         <html>
           <head>
@@ -94,7 +82,7 @@ export async function sendPasswordResetEmail({
           </body>
         </html>
       `,
-      text: `
+  renderText: ({ userName, resetUrl }: PasswordResetTemplateInput) => `
 Hi ${userName},
 
 We received a request to reset the password for one of your encrypted notes.
@@ -109,17 +97,73 @@ If you didn't request this reset, you can safely ignore this email.
 Best regards,
 The Kairos Team
       `,
-    });
+} as const;
 
-    if (error) {
-      console.error('❌ Resend Error:', error);
-      throw new Error(`Failed to send email: ${error.message}`);
+type EmailServiceOptions = {
+  appUrl: string;
+  fromEmail: string;
+};
+
+export class EmailService {
+  constructor(
+    private readonly resend: Resend,
+    private readonly options: EmailServiceOptions
+  ) {}
+
+  async sendPasswordResetEmail({
+    email,
+    userName,
+    noteId,
+    resetToken,
+  }: PasswordResetEmailParams): Promise<{ id: string } | null> {
+    const resetUrl = `${this.options.appUrl}/reset-password?noteId=${noteId}&token=${resetToken}`;
+
+    try {
+      const { data, error } = await this.resend.emails.send({
+        from: this.options.fromEmail,
+        to: [email],
+        subject: PasswordResetEmailTemplate.subject,
+        html: PasswordResetEmailTemplate.renderHtml({ userName, resetUrl }),
+        text: PasswordResetEmailTemplate.renderText({ userName, resetUrl }),
+      });
+
+      if (error) {
+        console.error('❌ Resend Error:', error);
+        throw new Error(`Failed to send email: ${error.message}`);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('❌ Email Service Error:', error);
+      throw error;
     }
-
-    console.log('✅ Email sent successfully:', data);
-    return data;
-  } catch (error) {
-    console.error('❌ Email Service Error:', error);
-    throw error;
   }
+}
+
+let cachedEmailService: EmailService | null = null;
+
+export function getEmailService(): EmailService {
+  if (cachedEmailService) return cachedEmailService;
+
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    throw new Error('RESEND_API_KEY is not set in environment variables');
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (!appUrl) {
+    throw new Error('NEXT_PUBLIC_APP_URL is not set in environment variables');
+  }
+
+  cachedEmailService = new EmailService(new Resend(apiKey), {
+    appUrl,
+    fromEmail: process.env.RESEND_FROM_EMAIL ?? 'Kairos <onboarding@resend.dev>',
+  });
+  return cachedEmailService;
+}
+
+export async function sendPasswordResetEmail(
+  params: PasswordResetEmailParams
+): Promise<{ id: string } | null> {
+  return getEmailService().sendPasswordResetEmail(params);
 }

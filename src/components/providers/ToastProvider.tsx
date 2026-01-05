@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useEffect,
   useCallback,
   useContext,
   useMemo,
@@ -26,6 +27,36 @@ type ToastApi = {
 
 const ToastContext = createContext<ToastApi | null>(null);
 
+class ToastManager {
+  private readonly timers = new Map<string, ReturnType<typeof setTimeout>>();
+
+  constructor(
+    private readonly setToasts: React.Dispatch<React.SetStateAction<Toast[]>>,
+    private readonly ttlMs: number
+  ) {}
+
+  dispose() {
+    for (const t of this.timers.values()) clearTimeout(t);
+    this.timers.clear();
+  }
+
+  remove = (id: string) => {
+    const t = this.timers.get(id);
+    if (t) {
+      clearTimeout(t);
+      this.timers.delete(id);
+    }
+    this.setToasts((prev) => prev.filter((x) => x.id !== id));
+  };
+
+  push = (kind: ToastKind, message: string) => {
+    const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    this.setToasts((prev) => [...prev, { id, kind, message }]);
+    const t = setTimeout(() => this.remove(id), this.ttlMs);
+    this.timers.set(id, t);
+  };
+}
+
 function toastClasses(kind: ToastKind) {
   switch (kind) {
     case "success":
@@ -40,25 +71,21 @@ function toastClasses(kind: ToastKind) {
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
 
-  const remove = useCallback((id: string) => {
-    const t = timers.current.get(id);
-    if (t) {
-      clearTimeout(t);
-      timers.current.delete(id);
-    }
-    setToasts((prev) => prev.filter((x) => x.id !== id));
+  const managerRef = useRef<ToastManager | null>(null);
+  if (!managerRef.current) {
+    managerRef.current = new ToastManager(setToasts, 3000);
+  }
+
+  useEffect(() => {
+    const manager = managerRef.current;
+    return () => manager?.dispose();
   }, []);
 
+  const remove = useCallback((id: string) => managerRef.current?.remove(id), []);
   const push = useCallback(
-    (kind: ToastKind, message: string) => {
-      const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-      setToasts((prev) => [...prev, { id, kind, message }]);
-      const t = setTimeout(() => remove(id), 3000);
-      timers.current.set(id, t);
-    },
-    [remove]
+    (kind: ToastKind, message: string) => managerRef.current?.push(kind, message),
+    []
   );
 
   const api = useMemo<ToastApi>(
@@ -78,6 +105,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div
             key={t.id}
             className={`max-w-sm rounded-xl border px-4 py-3 shadow-lg backdrop-blur-sm ${toastClasses(t.kind)}`}
+            onClick={() => remove(t.id)}
           >
             <p className="text-sm font-medium text-fg-primary">{t.message}</p>
           </div>
