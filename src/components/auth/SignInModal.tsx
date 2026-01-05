@@ -125,11 +125,11 @@ export function SignInModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div 
-        className="absolute inset-0 bg-black/80 backdrop-blur-md"
+        className="absolute inset-0 bg-black dark:bg-black/80 backdrop-blur-md"
         onClick={onClose}
       />
       
-      <div className="relative bg-gradient-to-br from-bg-secondary to-bg-primary rounded-3xl shadow-2xl w-full max-w-md border border-accent-primary/20 overflow-hidden">
+      <div className="relative bg-bg-surface dark:bg-gradient-to-br dark:from-bg-secondary dark:to-bg-primary rounded-3xl shadow-2xl w-full max-w-md border border-accent-primary/20 overflow-hidden">
         
         <div className="absolute inset-0 bg-gradient-to-br from-accent-primary/10 to-transparent pointer-events-none" />
         
