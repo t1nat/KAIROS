@@ -129,7 +129,7 @@ export function SignInModal({
         onClick={onClose}
       />
       
-      <div className="relative bg-bg-surface dark:bg-gradient-to-br dark:from-bg-secondary dark:to-bg-primary rounded-3xl shadow-2xl w-full max-w-md border border-accent-primary/20 overflow-hidden">
+      <div className="relative bg-white dark:bg-gradient-to-br dark:from-bg-secondary dark:to-bg-primary rounded-3xl shadow-2xl w-full max-w-md border border-accent-primary/20 overflow-hidden">
         
         <div className="absolute inset-0 bg-gradient-to-br from-accent-primary/10 to-transparent pointer-events-none" />
         
@@ -143,11 +143,19 @@ export function SignInModal({
         <div className="relative p-8 pb-6 text-center border-b border-border-light/20">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Image
+              src="/logo_purple.png"
+              alt="Kairos Logo"
+              width={64}
+              height={64}
+              className="w-16 h-16 object-contain dark:hidden"
+              priority
+            />
+            <Image
               src="/logo_white.png"
               alt="Kairos Logo"
               width={64}
               height={64}
-              className="w-16 h-16 object-contain"
+              className="hidden w-16 h-16 object-contain dark:block"
               priority
             />
           </div>

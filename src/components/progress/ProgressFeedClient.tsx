@@ -103,6 +103,7 @@ function PieChart(props: {
 
   const total = props.segments.reduce((s, seg) => s + seg.value, 0);
   const chartSegments = props.segments.filter((s) => s.value > 0);
+  const chartTotal = chartSegments.reduce((s, seg) => s + seg.value, 0);
 
   const data = useMemo(
     () => ({
@@ -133,13 +134,14 @@ function PieChart(props: {
             label: (ctx: { label?: string; parsed?: number }) => {
               const label = ctx.label ?? "";
               const value = typeof ctx.parsed === "number" ? ctx.parsed : 0;
-              return `${label}: ${value}`;
+              const pct = chartTotal > 0 ? Math.round((value / chartTotal) * 100) : 0;
+              return `${label}: ${value} (${pct}%)`;
             },
           },
         },
       },
     }),
-    [colors.bgOverlay, colors.fgPrimary]
+    [colors.bgOverlay, colors.fgPrimary, chartTotal]
   );
 
   return (
@@ -186,6 +188,7 @@ function LargePieChart(props: {
   const colors = useResolvedThemeColors();
 
   const chartSegments = props.segments.filter((s) => s.value > 0);
+  const chartTotal = chartSegments.reduce((s, seg) => s + seg.value, 0);
   const clampedPercent = Math.max(0, Math.min(100, props.percent));
 
   const data = useMemo(
@@ -217,13 +220,14 @@ function LargePieChart(props: {
             label: (ctx: { label?: string; parsed?: number }) => {
               const label = ctx.label ?? "";
               const value = typeof ctx.parsed === "number" ? ctx.parsed : 0;
-              return `${label}: ${value}`;
+              const pct = chartTotal > 0 ? Math.round((value / chartTotal) * 100) : 0;
+              return `${label}: ${value} (${pct}%)`;
             },
           },
         },
       },
     }),
-    [colors.bgOverlay, colors.fgPrimary]
+    [colors.bgOverlay, colors.fgPrimary, chartTotal]
   );
 
   return (

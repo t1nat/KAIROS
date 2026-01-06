@@ -551,20 +551,8 @@ const GlobalBentoStyles: React.FC<{ glowColor: string }> = ({ glowColor }) => {
         width: 100%;
         max-width: 1200px;
         margin: 0 auto;
-        padding: 0 1.25rem;
+        padding: 0;
         box-sizing: border-box;
-      }
-
-      @media (min-width: 640px) {
-        .kairos-card-grid {
-          padding: 0 2rem;
-        }
-      }
-
-      @media (min-width: 768px) {
-        .kairos-card-grid {
-          padding: 0 2.5rem;
-        }
       }
       
       @media (max-width: 1024px) {
@@ -579,7 +567,6 @@ const GlobalBentoStyles: React.FC<{ glowColor: string }> = ({ glowColor }) => {
           grid-template-columns: 1fr;
           max-width: 480px;
           gap: 1rem;
-          padding: 0 1rem;
         }
       }
       

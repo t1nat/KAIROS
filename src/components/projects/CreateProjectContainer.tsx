@@ -267,7 +267,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                   onClick={() => setSelectedProjectId(null)}
                   className="p-2 hover:bg-bg-elevated rounded-lg transition-colors group"
                 >
-                  <ArrowLeft size={20} className="text-fg-secondary group-hover:text-accent-primary" />
+                  <ArrowLeft size={20} className="text-fg-primary group-hover:text-accent-primary" />
                 </button>
 
                 <div className="flex items-center gap-2">
@@ -288,7 +288,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
 
                   <button
                     onClick={() => void refetchProjectDetails()}
-                    className="p-2 text-fg-secondary hover:text-accent-primary hover:bg-bg-elevated rounded-lg transition-all"
+                    className="p-2 text-fg-primary hover:text-accent-primary hover:bg-bg-elevated rounded-lg transition-all"
                     aria-label={t("actions.refresh")}
                   >
                     <RefreshCw size={18} />
@@ -361,7 +361,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                   className="w-full flex items-center justify-between px-4 py-3 hover:bg-bg-elevated transition-colors"
                 >
                   <span className="text-sm font-semibold text-fg-primary">{t("actions.addTask")}</span>
-                  {showTaskForm ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    {showTaskForm ? <ChevronUp size={16} className="text-fg-primary" /> : <ChevronDown size={16} className="text-fg-primary" />}
                 </button>
 
                 {showTaskForm && (
@@ -383,7 +383,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                   className="w-full flex items-center justify-between px-4 py-3 hover:bg-bg-elevated transition-colors"
                 >
                   <span className="text-sm font-semibold text-fg-primary">{t("team.title")}</span>
-                  {showCollaborators ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  {showCollaborators ? <ChevronUp size={16} className="text-fg-primary" /> : <ChevronDown size={16} className="text-fg-primary" />}
                 </button>
 
                 {showCollaborators && (
@@ -418,7 +418,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
               className="w-full flex items-center justify-between px-4 py-3 bg-bg-surface/60 hover:bg-bg-elevated rounded-xl border border-border-light/20 hover:border-accent-primary/30 transition-colors"
             >
               <span className="text-sm font-semibold text-fg-primary">{t("projects.otherProjects")}</span>
-              {showOtherProjects ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              {showOtherProjects ? <ChevronUp size={16} className="text-fg-primary" /> : <ChevronDown size={16} className="text-fg-primary" />}
             </button>
 
             {showOtherProjects && (

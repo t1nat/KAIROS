@@ -20,6 +20,15 @@ interface ProjectWithStats {
   completionPercentage: number;
 }
 
+function toFiniteNumberArray(value: unknown): number[] {
+  if (!Array.isArray(value)) return [];
+  const out: number[] = [];
+  for (const item of value as unknown[]) {
+    if (typeof item === "number" && Number.isFinite(item)) out.push(item);
+  }
+  return out;
+}
+
 function hasTasks(value: unknown): value is { tasks: Array<{ status: string }> } {
   if (value == null || typeof value !== "object") return false;
 
@@ -79,6 +88,8 @@ export function ProjectsListWorkspace() {
   const totalProjects = projectsWithStats.length;
   const totalAllTasks = projectsWithStats.reduce((sum, p) => sum + p.totalTasks, 0);
   const totalCompletedTasks = projectsWithStats.reduce((sum, p) => sum + p.completedTasks, 0);
+  const totalInProgressTasks = projectsWithStats.reduce((sum, p) => sum + p.inProgressTasks, 0);
+  const totalPendingTasks = projectsWithStats.reduce((sum, p) => sum + p.pendingTasks, 0);
   const overallCompletion = totalAllTasks > 0 ? Math.round((totalCompletedTasks / totalAllTasks) * 100) : 0;
   const fullyCompletedProjects = projectsWithStats.filter((p) => p.completionPercentage === 100 && p.totalTasks > 0).length;
 
@@ -98,15 +109,16 @@ export function ProjectsListWorkspace() {
     return "shadow-success/30";
   };
 
-  const buildRingData = (completed: number, total: number) => {
+  const buildRingData = (completed: number, inProgress: number, pending: number) => {
     const done = animateCharts ? completed : 0;
-    const remaining = Math.max(0, total - done);
+    const active = animateCharts ? inProgress : 0;
+    const waiting = Math.max(0, pending);
     return {
-      labels: [t("stats.completed"), t("projectsList.pending")],
+      labels: [t("stats.completed"), t("projectsList.active"), t("projectsList.pending")],
       datasets: [
         {
-          data: [done, remaining],
-          backgroundColor: [colors.success, colors.remaining],
+          data: [done, active, waiting],
+          backgroundColor: [colors.success, colors.warning, colors.remaining],
           borderColor: colors.border,
           borderWidth: 1,
         },
@@ -124,10 +136,13 @@ export function ProjectsListWorkspace() {
         titleColor: colors.fgPrimary,
         bodyColor: colors.fgPrimary,
         callbacks: {
-          label: (ctx: { label?: string; parsed?: number }) => {
+          label: (ctx: { label?: string; parsed?: number; dataset?: { data?: unknown } }) => {
             const label = ctx.label ?? "";
             const value = typeof ctx.parsed === "number" ? ctx.parsed : 0;
-            return `${label}: ${value}`;
+            const data = toFiniteNumberArray(ctx.dataset?.data);
+            const total = data.reduce((s, v) => s + v, 0);
+            const pct = total > 0 ? Math.round((value / total) * 100) : 0;
+            return `${label}: ${value} (${pct}%)`;
           },
         },
       },
@@ -150,7 +165,7 @@ export function ProjectsListWorkspace() {
           <div className="col-span-2 sm:col-span-1 lg:col-span-1 flex flex-col items-center justify-center p-4 sm:p-6 group cursor-default">
             <div className={`relative w-24 h-24 sm:w-28 sm:h-28 drop-shadow-2xl ${getProgressGlow(overallCompletion)}`}>
               <Doughnut
-                data={buildRingData(totalCompletedTasks, totalAllTasks)}
+                data={buildRingData(totalCompletedTasks, totalInProgressTasks, totalPendingTasks)}
                 options={ringOptions}
                 aria-label={t("projectsList.overallProgress")}
               />
@@ -236,7 +251,7 @@ export function ProjectsListWorkspace() {
                   {project.totalTasks > 0 ? (
                       <div className={`relative w-[4.5rem] h-[4.5rem] drop-shadow-lg ${getProgressGlow(project.completionPercentage)}`}>
                         <Doughnut
-                          data={buildRingData(project.completedTasks, project.totalTasks)}
+                          data={buildRingData(project.completedTasks, project.inProgressTasks, project.pendingTasks)}
                           options={ringOptions}
                           aria-label={project.title}
                         />

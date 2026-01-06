@@ -132,6 +132,7 @@ export function HomeClient({ session }: {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [showRoleSelection, setShowRoleSelection] = useState(false);
     const [hasAnimated, setHasAnimated] = useState(false);
+    const [isClient, setIsClient] = useState(false);
     const aboutRef = useRef<HTMLElement>(null);
     const subtitleRef = useRef<HTMLParagraphElement>(null);
     
@@ -154,6 +155,7 @@ export function HomeClient({ session }: {
 
     useEffect(() => {
         setThemeMounted(true);
+        setIsClient(true);
     }, []);
 
     useEffect(() => {
@@ -211,7 +213,18 @@ export function HomeClient({ session }: {
     const logoSrc = isDarkTheme ? "/logo_white.png" : "/logo_purple.png";
 
     // Generate circle gradients - using ANALOGOUS colors (close to accent)
+    // Only compute after client hydration to avoid mismatch
     const circleGradients = useMemo(() => {
+        if (!isClient) {
+            // Return empty strings during SSR to avoid hydration mismatch
+            return {
+                circle1: '',
+                circle2: '',
+                circle3: '',
+                circle4: '',
+            };
+        }
+
         // Read the primary accent color from CSS variables
         const primary = getCssVarRgb("--accent-primary") ?? DEFAULT_PRIMARY;
         
@@ -239,7 +252,7 @@ export function HomeClient({ session }: {
             };
         }
     
-    }, [isDarkTheme, colorTick]);
+    }, [isDarkTheme, colorTick, isClient]);
 
     return (
         <main id="main-content" className="min-h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary relative overflow-hidden">
@@ -325,22 +338,22 @@ export function HomeClient({ session }: {
                 {/* Primary accent - top left */}
                 <div 
                     className="floating-circle-1 absolute -top-[150px] -left-[150px] w-[550px] h-[550px] sm:w-[700px] sm:h-[700px] lg:w-[850px] lg:h-[850px] rounded-full blur-3xl opacity-0"
-                    style={{ background: circleGradients.circle1 }}
+                    style={isClient ? { background: circleGradients.circle1 } : undefined}
                 />
                 {/* Analogous color - bottom right */}
                 <div 
                     className="floating-circle-2 absolute -bottom-[150px] -right-[150px] w-[550px] h-[550px] sm:w-[700px] sm:h-[700px] lg:w-[850px] lg:h-[850px] rounded-full blur-3xl opacity-0"
-                    style={{ background: circleGradients.circle2 }}
+                    style={isClient ? { background: circleGradients.circle2 } : undefined}
                 />
                 {/* Accent blend - center */}
                 <div 
                     className="floating-circle-3 absolute top-1/2 left-1/2 w-[450px] h-[450px] sm:w-[550px] sm:h-[550px] lg:w-[650px] lg:h-[650px] rounded-full blur-3xl opacity-0"
-                    style={{ background: circleGradients.circle3 }}
+                    style={isClient ? { background: circleGradients.circle3 } : undefined}
                 />
                 {/* Subtle analogous - top right */}
                 <div 
                     className="floating-circle-4 absolute -top-[100px] -right-[100px] w-[400px] h-[400px] sm:w-[500px] sm:h-[500px] lg:w-[600px] lg:h-[600px] rounded-full blur-3xl opacity-0"
-                    style={{ background: circleGradients.circle4 }}
+                    style={isClient ? { background: circleGradients.circle4 } : undefined}
                 />
             </div>
 
@@ -425,12 +438,10 @@ export function HomeClient({ session }: {
                                 {!session && (
                                     <button
                                         onClick={() => setIsModalOpen(true)}
-                                        className="animated-border-button relative flex items-center justify-center gap-2 px-8 sm:px-10 py-4 sm:py-5 bg-transparent text-fg-primary font-semibold rounded-2xl text-base sm:text-lg group"
-                                        style={{
-                                            boxSizing: 'border-box'
-                                        }}
+                                        className="relative flex items-center justify-center gap-2 px-8 sm:px-10 py-4 sm:py-5 bg-bg-surface border-2 border-accent-primary text-accent-primary font-semibold rounded-xl shadow-lg hover:shadow-xl hover:shadow-accent-primary/40 hover:bg-accent-primary hover:text-white transition-all hover:scale-[1.02] text-base sm:text-lg group"
                                     >
-                                        <span className="relative z-10">Log In / Sign Up</span>
+                                        Log In / Sign Up
+                                        <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                                     </button>
                                 )}
 
@@ -598,49 +609,6 @@ export function HomeClient({ session }: {
                 .animate-hero-fade-in-delayed {
                     animation: hero-fade-in 1.5s ease-out 0.3s forwards;
                     opacity: 0;
-                }
-                @keyframes border-circulation {
-                    0%, 100% { 
-                        background-position: 0% 50%; 
-                    }
-                    50% { 
-                        background-position: 100% 50%; 
-                    }
-                }
-                .animated-border-button {
-                    position: relative;
-                    isolation: isolate;
-                }
-                .animated-border-button::before {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    border-radius: inherit;
-                    padding: 2px;
-                    background: linear-gradient(
-                        90deg,
-                        rgba(163, 67, 236, 0.8),
-                        rgba(125, 211, 180, 0.8),
-                        rgba(228, 222, 170, 0.8),
-                        rgba(163, 67, 236, 0.8)
-                    );
-                    background-size: 200% 200%;
-                    -webkit-mask: 
-                        linear-gradient(#fff 0 0) content-box, 
-                        linear-gradient(#fff 0 0);
-                    -webkit-mask-composite: xor;
-                    mask: 
-                        linear-gradient(#fff 0 0) content-box, 
-                        linear-gradient(#fff 0 0);
-                    mask-composite: exclude;
-                    animation: border-circulation 3s linear infinite;
-                    z-index: -1;
-                }
-                .animated-border-button:hover {
-                    background: rgba(163, 67, 236, 0.1);
-                }
-                .animated-border-button:hover::before {
-                    animation-duration: 1.5s;
                 }
             `}</style>
         </main>

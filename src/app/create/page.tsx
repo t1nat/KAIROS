@@ -143,18 +143,6 @@ export default async function CreatePage({
                       </div>
                     </div>
                   </div>
-
-                  <div className="surface-card p-6 md:p-7">
-                    <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center shadow-md">
-                        <FolderKanban className="text-white" size={22} />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-fg-primary">{tCreate("quickStart")}</h3>
-                        <p className="text-sm text-fg-secondary">{tCreate("quickStartDesc")}</p>
-                      </div>
-                    </div>
-                  </div>
                 </div>
 
                 <div className="mt-10">

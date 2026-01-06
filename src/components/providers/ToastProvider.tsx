@@ -73,9 +73,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const managerRef = useRef<ToastManager | null>(null);
-  if (!managerRef.current) {
-    managerRef.current = new ToastManager(setToasts, 3000);
-  }
+  managerRef.current ??= new ToastManager(setToasts, 3000);
 
   useEffect(() => {
     const manager = managerRef.current;

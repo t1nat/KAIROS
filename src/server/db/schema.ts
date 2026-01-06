@@ -75,7 +75,7 @@ export const users = createTable("user", (d) => ({
     timezone: varchar("timezone", { length: 100 }).default("UTC").notNull(),
     dateFormat: dateFormatEnum("date_format").default("MM/DD/YYYY").notNull(),
     
-    theme: themeEnum("theme").default("light").notNull(),
+    theme: themeEnum("theme").default("dark").notNull(),
     accentColor: varchar("accent_color", { length: 20 }).default("purple").notNull(),
     
     profileVisibility: boolean("profile_visibility").default(true).notNull(),

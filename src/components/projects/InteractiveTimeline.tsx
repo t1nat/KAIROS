@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { Check, Clock, User, CheckCircle2 } from "lucide-react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
-import { easeCubicOut, interpolateNumber, timer } from "d3";
+import { interpolateNumber, timer } from "d3";
 
 interface Task {
   id: number;
@@ -73,13 +73,13 @@ export function InteractiveTimeline({
     if (timerRef.current) timerRef.current.stop();
 
     const startPercentage = animatedPercentageRef.current;
-    const duration = 800;
+    const duration = 400;
 
     const interp = interpolateNumber(startPercentage, targetPercentage);
 
     timerRef.current = timer((elapsed: number) => {
       const t = Math.min(elapsed / duration, 1);
-      const current = interp(easeCubicOut(t));
+      const current = interp(t); // Linear interpolation - constant speed
       animatedPercentageRef.current = current;
       setAnimatedPercentage(current);
       if (t >= 1) timerRef.current?.stop();
@@ -138,7 +138,7 @@ export function InteractiveTimeline({
       <div className="flex-1 flex items-center justify-center min-h-[500px]">
         <div className="text-center max-w-md">
           <div className="w-20 h-20 rounded-2xl bg-bg-surface flex items-center justify-center mx-auto mb-6 border border-border-light/30">
-            <Clock size={32} className="text-accent-primary/50" />
+            <Clock size={32} className="text-fg-primary" />
           </div>
           <h3 className="text-2xl font-bold text-fg-primary mb-3">{t("timeline.emptyTitle")}</h3>
           <p className="text-fg-secondary mb-6">{t("timeline.emptyDesc")}</p>
@@ -160,7 +160,7 @@ export function InteractiveTimeline({
             </p>
           </div>
           <div className="text-right">
-            <div className="text-4xl font-bold text-accent-primary mb-1">
+            <div className="text-4xl font-bold text-success mb-1">
               {Math.round(animatedPercentage)}%
             </div>
             <div className="text-xs text-fg-secondary font-medium">
@@ -170,24 +170,25 @@ export function InteractiveTimeline({
         </div>
 
         <div className="relative w-full h-3 bg-bg-surface/60 rounded-full overflow-hidden border border-border-light/30">
-          <div 
-            className="absolute top-0 left-0 h-full bg-accent-primary rounded-full shadow-lg shadow-accent-primary/20 transition-shadow duration-300"
-            style={{ width: `${animatedPercentage}%` }}
+          <div
+            className="absolute top-0 left-0 h-full rounded-full transition-[width,opacity] duration-300"
+            style={{
+              width: `${animatedPercentage}%`,
+              opacity: animatedPercentage <= 0 ? 0 : 1,
+              background: "rgb(var(--success) / 0.85)",
+            }}
           />
-          {animatedPercentage > 0 && animatedPercentage < 100 && (
-            <div 
-              className="absolute top-0 left-0 h-full bg-accent-primary/25 blur-lg"
-              style={{ width: `${animatedPercentage}%` }}
-            />
-          )}
         </div>
       </div>
 
       <div className="relative flex-1 pb-8">
-        <div className="absolute top-[52px] left-0 right-0 h-[3px] bg-border-light/40" />
         <div
-          className="absolute top-[52px] left-0 h-[3px] bg-accent-primary"
-          style={{ width: `${animatedPercentage}%` }}
+          className="absolute top-[52px] left-0 h-[3px] transition-[width,opacity] duration-300"
+          style={{
+            width: `${animatedPercentage}%`,
+            opacity: animatedPercentage <= 0 ? 0 : 1,
+            background: "rgb(var(--success) / 0.85)",
+          }}
           aria-hidden
         />
         
@@ -211,8 +212,8 @@ export function InteractiveTimeline({
               >
                 <div className={`absolute left-1/2 -translate-x-1/2 w-[2px] h-12 transition-all duration-300 ${
                   isCompleted 
-                    ? "bg-gradient-to-b from-accent-primary to-transparent" 
-                    : "bg-gradient-to-b from-accent-primary/30 to-transparent"
+                    ? "bg-gradient-to-b from-success to-transparent" 
+                    : "bg-gradient-to-b from-border-light/70 to-transparent"
                 }`} />
 
                 <div className="absolute left-1/2 -translate-x-1/2 top-[42px] z-10">
@@ -222,15 +223,15 @@ export function InteractiveTimeline({
                       handleCheckboxToggle(task);
                     }}
                     disabled={isReadOnly || task.id < 0}
-                    className={`w-8 h-8 rounded-full border-3 flex items-center justify-center transition-all duration-300 ${
+                    className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success/30 ${
                       isCompleted
-                        ? "bg-accent-primary border-accent-primary shadow-lg shadow-accent-primary/30 scale-110"
-                        : "bg-bg-primary border-accent-primary/40 hover:border-accent-primary hover:scale-110"
+                        ? "bg-success border-success"
+                        : "bg-bg-primary border-border-medium/70 hover:border-success"
                     } ${isReadOnly || task.id < 0 ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
                     aria-label={isCompleted ? t("timeline.markIncomplete") : t("timeline.markComplete")}
                   >
                     {isCompleted && (
-                      <Check size={16} className="text-white animate-scaleIn" />
+                      <Check size={16} className="text-white" />
                     )}
                   </button>
                 </div>
@@ -245,11 +246,11 @@ export function InteractiveTimeline({
                       setExpandedTaskId((prev) => (prev === task.id ? null : task.id));
                     }
                   }}
-                  className={`mt-24 bg-bg-surface rounded-xl p-5 border transition-all duration-300 outline-none ${
+                  className={`mt-24 bg-bg-surface rounded-xl p-5 border transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/20 ${
                     isCompleted 
-                      ? "border-accent-primary/30 opacity-70" 
-                      : "border-border-light/30 hover:border-accent-primary/40 hover:bg-bg-elevated hover:shadow-lg hover:shadow-accent-primary/10"
-                  } ${(isHovered || isExpanded) ? "scale-[1.03]" : ""}`}
+                      ? "border-success/30 bg-success/5" 
+                      : "border-border-light/30 hover:border-border-medium/50 hover:bg-bg-elevated"
+                  }`}
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
@@ -273,15 +274,15 @@ export function InteractiveTimeline({
                     </div>
                     
                     {isCompleted && (
-                      <div className="flex items-center gap-1.5 text-accent-primary">
+                      <div className="flex items-center gap-1.5 text-success">
                         <CheckCircle2 size={14} />
                         <span className="text-xs font-semibold">{t("timeline.done")}</span>
                       </div>
                     )}
                   </div>
 
-                  <h4 className={`font-bold text-fg-primary mb-2 leading-snug transition-all duration-300 ${
-                    isCompleted ? "line-through text-fg-tertiary" : ""
+                  <h4 className={`font-bold text-fg-primary mb-2 leading-snug ${
+                    isCompleted ? "line-through text-fg-secondary" : ""
                   }`}>
                     {task.title}
                   </h4>
