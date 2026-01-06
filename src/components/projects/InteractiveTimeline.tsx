@@ -170,24 +170,48 @@ export function InteractiveTimeline({
         </div>
 
         <div className="relative w-full h-3 bg-bg-surface/60 rounded-full overflow-hidden border border-border-light/30">
-          <div
-            className="absolute top-0 left-0 h-full rounded-full transition-[width,opacity] duration-300"
-            style={{
+          <div 
+            className="absolute top-0 left-0 h-full rounded-full shadow-lg transition-all duration-300"
+            style={{ 
               width: `${animatedPercentage}%`,
-              opacity: animatedPercentage <= 0 ? 0 : 1,
-              background: "rgb(var(--success) / 0.85)",
+              background: animatedPercentage === 0 
+                ? 'transparent'
+                : animatedPercentage < 25
+                ? 'linear-gradient(90deg, rgb(var(--accent-primary) / 0.6), rgb(var(--accent-primary) / 0.8))'
+                : animatedPercentage < 50
+                ? 'linear-gradient(90deg, rgb(var(--accent-primary) / 0.7), rgb(var(--accent-secondary) / 0.8))'
+                : animatedPercentage < 75
+                ? 'linear-gradient(90deg, rgb(var(--accent-secondary) / 0.8), rgb(var(--accent-tertiary) / 0.85))'
+                : animatedPercentage < 100
+                ? 'linear-gradient(90deg, rgb(var(--accent-tertiary) / 0.85), rgba(34, 197, 94, 0.8))'
+                : 'linear-gradient(90deg, rgba(34, 197, 94, 0.9), rgba(22, 163, 74, 0.9))',
+              boxShadow: animatedPercentage === 0
+                ? 'none'
+                : animatedPercentage < 100
+                ? '0 4px 12px rgb(var(--accent-primary) / 0.3)'
+                : '0 4px 12px rgba(34, 197, 94, 0.3)'
             }}
           />
         </div>
       </div>
 
       <div className="relative flex-1 pb-8">
+        {/* Removed the background line: <div className="absolute top-[52px] left-0 right-0 h-[3px] bg-border-light/40" /> */}
         <div
-          className="absolute top-[52px] left-0 h-[3px] transition-[width,opacity] duration-300"
-          style={{
+          className="absolute top-[52px] left-0 h-[3px] transition-all duration-300"
+          style={{ 
             width: `${animatedPercentage}%`,
-            opacity: animatedPercentage <= 0 ? 0 : 1,
-            background: "rgb(var(--success) / 0.85)",
+            background: animatedPercentage === 0 
+              ? 'transparent'
+              : animatedPercentage < 25
+              ? 'linear-gradient(90deg, rgb(var(--accent-primary) / 0.6), rgb(var(--accent-primary) / 0.8))'
+              : animatedPercentage < 50
+              ? 'linear-gradient(90deg, rgb(var(--accent-primary) / 0.7), rgb(var(--accent-secondary) / 0.8))'
+              : animatedPercentage < 75
+              ? 'linear-gradient(90deg, rgb(var(--accent-secondary) / 0.8), rgb(var(--accent-tertiary) / 0.85))'
+              : animatedPercentage < 100
+              ? 'linear-gradient(90deg, rgb(var(--accent-tertiary) / 0.85), rgba(34, 197, 94, 0.8))'
+              : 'linear-gradient(90deg, rgba(34, 197, 94, 0.9), rgba(22, 163, 74, 0.9))'
           }}
           aria-hidden
         />
@@ -223,15 +247,15 @@ export function InteractiveTimeline({
                       handleCheckboxToggle(task);
                     }}
                     disabled={isReadOnly || task.id < 0}
-                    className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success/30 ${
+                    className={`w-8 h-8 rounded-full border-3 flex items-center justify-center transition-all duration-300 ${
                       isCompleted
-                        ? "bg-success border-success"
-                        : "bg-bg-primary border-border-medium/70 hover:border-success"
+                        ? "bg-success border-success shadow-lg shadow-success/30 scale-110"
+                        : "bg-bg-primary border-border-medium/70 hover:border-success hover:scale-110"
                     } ${isReadOnly || task.id < 0 ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
                     aria-label={isCompleted ? t("timeline.markIncomplete") : t("timeline.markComplete")}
                   >
                     {isCompleted && (
-                      <Check size={16} className="text-white" />
+                      <Check size={16} className="text-white animate-scaleIn" />
                     )}
                   </button>
                 </div>
@@ -246,11 +270,11 @@ export function InteractiveTimeline({
                       setExpandedTaskId((prev) => (prev === task.id ? null : task.id));
                     }
                   }}
-                  className={`mt-24 bg-bg-surface rounded-xl p-5 border transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/20 ${
+                  className={`mt-24 bg-bg-surface rounded-xl p-5 border transition-all duration-300 outline-none ${
                     isCompleted 
                       ? "border-success/30 bg-success/5" 
-                      : "border-border-light/30 hover:border-border-medium/50 hover:bg-bg-elevated"
-                  }`}
+                      : "border-border-light/30 hover:border-accent-primary/40 hover:bg-bg-elevated hover:shadow-lg hover:shadow-accent-primary/10"
+                  } ${(isHovered || isExpanded) ? "scale-[1.03]" : ""}`}
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
@@ -281,8 +305,8 @@ export function InteractiveTimeline({
                     )}
                   </div>
 
-                  <h4 className={`font-bold text-fg-primary mb-2 leading-snug ${
-                    isCompleted ? "line-through text-fg-secondary" : ""
+                  <h4 className={`font-bold text-fg-primary mb-2 leading-snug transition-all duration-300 ${
+                    isCompleted ? "line-through text-fg-tertiary" : ""
                   }`}>
                     {task.title}
                   </h4>
