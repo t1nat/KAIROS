@@ -23,6 +23,7 @@ export const taskStatusEnum = pgEnum("task_status", ['pending', 'in_progress', '
 export const taskPriorityEnum = pgEnum("task_priority", ['low', 'medium', 'high', 'urgent']);
 export const usageModeEnum = pgEnum("usage_mode", ["personal", "organization"]);
 export const orgRoleEnum = pgEnum("org_role", ["admin", "worker", "mentor"]);
+export const projectStatusEnum = pgEnum("project_status", ["active", "archived"]);
 export const themeEnum = pgEnum("theme", ["light", "dark", "system"]);
 export const languageEnum = pgEnum("language", ["en", "bg", "es", "fr", "de", "it", "pt", "ja", "ko", "zh", "ar"]);
 export const dateFormatEnum = pgEnum("date_format", ["MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"]);
@@ -154,6 +155,8 @@ export const organizationMembers = createTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     role: orgRoleEnum("role").notNull(),
+    canAddMembers: boolean("can_add_members").default(false).notNull(),
+    canAssignTasks: boolean("can_assign_tasks").default(false).notNull(),
     joinedAt: timestamp("joined_at")
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -170,6 +173,8 @@ export const projects = createTable(
     id: serial("id").primaryKey(),
     title: varchar("title", { length: 256 }).notNull(),
     description: text("description"),
+    imageUrl: varchar("image_url", { length: 512 }),
+    status: projectStatusEnum("status").notNull().default("active"),
     createdById: d
       .varchar({ length: 255 })
       .notNull()

@@ -9,8 +9,8 @@ class ChartJsRegistry {
     ChartJS.register(ArcElement, Tooltip, Legend);
 
     ChartJS.defaults.animation = {
-      duration: 900,
-      easing: "easeOutQuart",
+      duration: 800,
+      easing: "easeInOutQuart",
     };
     ChartJS.defaults.responsive = true;
     ChartJS.defaults.maintainAspectRatio = false;

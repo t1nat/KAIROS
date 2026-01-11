@@ -1,12 +1,9 @@
 @import "tailwindcss";
 
-/* Ensure native form controls (e.g. <select> dropdown menus) follow the active theme.
-   This avoids white-on-white option lists in dark mode on some browsers/OSes. */
 :root {
   color-scheme: light;
 }
 
-/* Light Mode (Default) - Professional Event Planning Theme */
 :root {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";

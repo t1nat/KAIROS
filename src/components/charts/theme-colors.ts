@@ -147,26 +147,26 @@ export function useResolvedThemeColors() {
     const generatePalette = (): string[] => {
       if (!accentPrimaryTriplet) {
         return [
-          "rgba(156, 163, 205, 0.75)",
-          "rgba(147, 160, 195, 0.7)",
-          "rgba(160, 155, 190, 0.7)",
-          "rgba(140, 170, 190, 0.65)",
-          "rgba(155, 175, 180, 0.65)",
-          "rgba(165, 155, 175, 0.6)",
+          "rgba(156, 163, 205, 0.85)",
+          "rgba(147, 160, 195, 0.8)",
+          "rgba(160, 155, 190, 0.8)",
+          "rgba(140, 170, 190, 0.75)",
+          "rgba(155, 175, 180, 0.75)",
+          "rgba(165, 155, 175, 0.7)",
         ];
       }
 
-      const primaryPastel = soften(accentPrimaryTriplet, 0.55, 0.35);
+      const primaryBright = soften(accentPrimaryTriplet, 0.35, 0.25);
       const secondarySource = accentSecondaryTriplet ?? rotateHue(accentPrimaryTriplet, 40);
-      const secondaryPastel = soften(secondarySource, 0.55, 0.35);
+      const secondaryBright = soften(secondarySource, 0.35, 0.25);
 
       const hueShifts = [0, 20, -20, 40, -40, 60];
 
       return hueShifts.map((shift, index) => {
-        const mix = mixTriplets(primaryPastel, secondaryPastel, index % 2 === 0 ? 0.35 : 0.65);
+        const mix = mixTriplets(primaryBright, secondaryBright, index % 2 === 0 ? 0.35 : 0.65);
         const rotated = rotateHue(mix, shift);
-        const lightened = lighten(rotated, 0.08 + index * 0.01);
-        const alpha = 0.76 - index * 0.02;
+        const lightened = lighten(rotated, 0.05 + index * 0.01);
+        const alpha = 0.85 - index * 0.02;
         return rgbaFromTriplet(lightened, alpha);
       });
     };
@@ -178,20 +178,20 @@ export function useResolvedThemeColors() {
     const infoTriplet: RgbTriplet = resolveCssVarToTriplet("--info") ?? [96, 165, 250];
     const errorTriplet: RgbTriplet = resolveCssVarToTriplet("--error") ?? [248, 113, 113];
 
-    const softSuccess = soften(successTriplet, 0.4, 0.3);
-    const softWarning = soften(warningTriplet, 0.4, 0.25);
-    const softInfo = soften(infoTriplet, 0.35, 0.3);
-    const softError = soften(errorTriplet, 0.45, 0.3);
+    const brightSuccess = soften(successTriplet, 0.25, 0.2);
+    const brightWarning = soften(warningTriplet, 0.25, 0.15);
+    const brightInfo = soften(infoTriplet, 0.2, 0.2);
+    const brightError = soften(errorTriplet, 0.3, 0.2);
 
     return {
       palette,
-      other: "rgba(165, 170, 185, 0.5)",
-      remaining: "rgba(190, 195, 205, 0.4)",
-      border: "rgba(170, 175, 190, 0.25)",
-      success: rgbaFromTriplet(softSuccess, 0.7),
-      warning: rgbaFromTriplet(softWarning, 0.65),
-      info: rgbaFromTriplet(softInfo, 0.65),
-      error: rgbaFromTriplet(softError, 0.6),
+      other: "rgba(165, 170, 185, 0.6)",
+      remaining: "rgba(190, 195, 205, 0.5)",
+      border: "rgba(170, 175, 190, 0.3)",
+      success: rgbaFromTriplet(brightSuccess, 0.8),
+      warning: rgbaFromTriplet(brightWarning, 0.75),
+      info: rgbaFromTriplet(brightInfo, 0.75),
+      error: rgbaFromTriplet(brightError, 0.7),
       fgPrimary: resolveCssVarToRgba("--fg-primary", 1) ?? "rgba(15, 23, 42, 1)",
       bgOverlay: resolveCssVarToRgba("--bg-overlay", 0.96) ?? "rgba(255, 255, 255, 0.96)",
     };

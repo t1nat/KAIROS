@@ -243,11 +243,7 @@ export function InteractiveTimeline({
                 onMouseEnter={() => setHoveredTaskId(task.id)}
                 onMouseLeave={() => setHoveredTaskId(null)}
               >
-                <div className={`absolute left-1/2 -translate-x-1/2 w-[2px] h-12 transition-all duration-300 ${
-                  isCompleted 
-                    ? "bg-gradient-to-b from-success to-transparent" 
-                    : "bg-gradient-to-b from-border-light/70 to-transparent"
-                }`} />
+                {/* Removed the thin connecting line that appeared under timeline */}
 
                 <div className="absolute left-1/2 -translate-x-1/2 top-[42px] z-10">
                   <button

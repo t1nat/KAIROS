@@ -542,4 +542,52 @@ export const projectRouter = createTRPCRouter({
 
       return { success: true };
     }),
+
+  archiveProject: protectedProcedure
+    .input(z.object({ projectId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const [project] = await ctx.db
+        .select()
+        .from(projects)
+        .where(eq(projects.id, input.projectId));
+
+      if (!project) {
+        throw new Error("Project not found");
+      }
+
+      if (project.createdById !== ctx.session.user.id) {
+        throw new Error("Only the project owner can archive this project");
+      }
+
+      await ctx.db
+        .update(projects)
+        .set({ status: "archived" })
+        .where(eq(projects.id, input.projectId));
+
+      return { success: true };
+    }),
+
+  reopenProject: protectedProcedure
+    .input(z.object({ projectId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const [project] = await ctx.db
+        .select()
+        .from(projects)
+        .where(eq(projects.id, input.projectId));
+
+      if (!project) {
+        throw new Error("Project not found");
+      }
+
+      if (project.createdById !== ctx.session.user.id) {
+        throw new Error("Only the project owner can reopen this project");
+      }
+
+      await ctx.db
+        .update(projects)
+        .set({ status: "active" })
+        .where(eq(projects.id, input.projectId));
+
+      return { success: true };
+    }),
 });

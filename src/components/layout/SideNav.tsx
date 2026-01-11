@@ -43,7 +43,7 @@ export function SideNav() {
 
   const mainNavItems = [
     { href: "/", icon: Home, label: t("home") },
-    { href: "/create?action=new_project", icon: FolderKanban, label: t("projects") },
+    { href: "/projects", icon: FolderKanban, label: t("projects") },
     { href: "/create?action=new_note", icon: FileEdit, label: t("notes") },
     { href: "/progress", icon: BarChart3, label: t("progress") },
     { href: "/chat", icon: MessageCircle, label: "Chat" },
@@ -194,7 +194,7 @@ export function SideNav() {
               >
                 <item.icon size={20} />
                 
-                <span className="absolute left-full ml-4 px-3 py-1.5 bg-bg-primary text-fg-primary text-sm rounded-lg border border-border-light/20 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
+                <span className="absolute left-full ml-4 px-3 py-1.5 bg-bg-primary text-fg-primary text-sm rounded-lg border border-border-light/20 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
                   {item.label}
                 </span>
               </Link>
@@ -214,7 +214,7 @@ export function SideNav() {
             title={settingsItem.label}
           >
             <settingsItem.icon size={20} />
-            <span className="absolute left-full ml-4 px-3 py-1.5 bg-bg-primary text-fg-primary text-sm rounded-lg border border-border-light/20 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
+            <span className="absolute left-full ml-4 px-3 py-1.5 bg-bg-primary text-fg-primary text-sm rounded-lg border border-border-light/20 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
               {settingsItem.label}
             </span>
           </Link>

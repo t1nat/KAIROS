@@ -47,15 +47,32 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
 
   const updateAppearance = api.settings.updateAppearance.useMutation();
 
+  // Apply accent color immediately on mount from data attribute to prevent flash
+  useEffect(() => {
+    const savedAccent = document.documentElement.dataset.accent;
+    if (savedAccent && savedAccent !== "purple") {
+      // Accent already set from SSR or previous visit
+      return;
+    }
+  }, []);
+
   useEffect(() => {
     applied.current = false;
     migratedAccent.current = false;
   }, [userId]);
 
   useEffect(() => {
-    const raw = data?.accentColor ?? DEFAULT_ACCENT;
+    if (!data?.accentColor) return;
+    const raw = data.accentColor;
     const accent = normalizeAccent(raw);
+    
+    // Apply immediately and persist
     document.documentElement.dataset.accent = accent;
+    
+    // Store in sessionStorage for faster next load
+    try {
+      sessionStorage.setItem('user-accent', accent);
+    } catch {}
 
     if (!enabled) return;
     if (migratedAccent.current) return;
@@ -63,7 +80,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
       migratedAccent.current = true;
       updateAppearance.mutate({ accentColor: accent });
     }
-  }, [data?.accentColor]);
+  }, [data?.accentColor, enabled, updateAppearance]);
 
   useEffect(() => {
     if (applied.current) return;

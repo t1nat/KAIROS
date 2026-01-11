@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
 import Image from "next/image";
 import { ArrowLeft, Folder } from "lucide-react";
@@ -14,6 +15,7 @@ type TaskStatus = "pending" | "in_progress" | "completed" | "blocked";
 type ProjectCard = {
   id: number;
   title: string;
+  imageUrl?: string | null;
   createdById: string;
   createdByUser?: {
     id: string;
@@ -91,12 +93,14 @@ type PieSegment = {
   label: string;
   value: number;
   strokeColor: string;
+  projectId?: number;
 };
 
 function PieChart(props: {
   segments: PieSegment[];
   title: string;
   subtitle?: string;
+  onSegmentClick?: (projectId: number) => void;
 }) {
   ensureChartJsRegistered();
   const colors = useResolvedThemeColors();
@@ -122,7 +126,7 @@ function PieChart(props: {
 
   const options = useMemo(
     () => ({
-      cutout: "70%",
+      cutout: "0%",
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -130,22 +134,50 @@ function PieChart(props: {
           backgroundColor: colors.bgOverlay,
           titleColor: colors.fgPrimary,
           bodyColor: colors.fgPrimary,
+          borderColor: colors.border,
+          borderWidth: 1,
+          padding: 12,
+          displayColors: true,
+          boxWidth: 12,
+          boxHeight: 12,
+          usePointStyle: true,
           callbacks: {
-            label: (ctx: { label?: string; parsed?: number }) => {
+            title: (items: any[]) => {
+              return items[0]?.label ?? "";
+            },
+            label: (ctx: any) => {
               const label = ctx.label ?? "";
-              const value = typeof ctx.parsed === "number" ? ctx.parsed : 0;
+              const value = ctx.parsed ?? 0;
               const pct = chartTotal > 0 ? Math.round((value / chartTotal) * 100) : 0;
-              return `${label}: ${value} (${pct}%)`;
+              return `Value: ${value} (${pct}%)`;
             },
           },
         },
       },
+      interaction: {
+        mode: 'nearest' as const,
+        intersect: true,
+      },
+      onHover: (event: any, activeElements: any[]) => {
+        const target = event.native?.target as HTMLElement | null;
+        if (target) {
+          target.style.cursor = activeElements.length > 0 ? "pointer" : "default";
+        }
+      },
+      onClick: (_event: any, activeElements: any[]) => {
+        if (activeElements.length > 0 && props.onSegmentClick) {
+          const index = activeElements[0]?.index;
+          if (typeof index === "number" && chartSegments[index]?.projectId) {
+            props.onSegmentClick(chartSegments[index]!.projectId!);
+          }
+        }
+      },
     }),
-    [colors.bgOverlay, colors.fgPrimary, chartTotal]
+    [colors.bgOverlay, colors.fgPrimary, colors.border, chartTotal, chartSegments, props]
   );
 
   return (
-    <div className="flex flex-col p-4 rounded-xl border border-border-light/10">
+    <div className="flex flex-col p-2">
       <div className="mb-2">
         <p className="text-sm font-medium text-fg-primary">{props.title}</p>
         {props.subtitle && <p className="text-xs text-fg-tertiary">{props.subtitle}</p>}
@@ -154,9 +186,6 @@ function PieChart(props: {
       <div className="flex items-center gap-4">
         <div className="relative w-32 h-32 flex-shrink-0">
           <Doughnut data={data} options={options} aria-label={props.title} role="img" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-lg font-semibold text-fg-primary">{total}</p>
-          </div>
         </div>
 
         <div className="flex flex-wrap gap-1.5">
@@ -208,7 +237,7 @@ function LargePieChart(props: {
 
   const options = useMemo(
     () => ({
-      cutout: "68%",
+      cutout: "0%",
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -216,22 +245,54 @@ function LargePieChart(props: {
           backgroundColor: colors.bgOverlay,
           titleColor: colors.fgPrimary,
           bodyColor: colors.fgPrimary,
+          borderColor: colors.border,
+          borderWidth: 1,
+          padding: 16,
+          displayColors: true,
+          boxWidth: 14,
+          boxHeight: 14,
+          usePointStyle: true,
+          titleFont: {
+            size: 14,
+            weight: 'bold' as const,
+          },
+          bodyFont: {
+            size: 13,
+          },
           callbacks: {
-            label: (ctx: { label?: string; parsed?: number }) => {
+            title: (items: any[]) => {
+              return items[0]?.label ?? "";
+            },
+            label: (ctx: any) => {
               const label = ctx.label ?? "";
-              const value = typeof ctx.parsed === "number" ? ctx.parsed : 0;
+              const value = ctx.parsed ?? 0;
               const pct = chartTotal > 0 ? Math.round((value / chartTotal) * 100) : 0;
-              return `${label}: ${value} (${pct}%)`;
+              return `Tasks: ${value} (${pct}%)`;
+            },
+            afterLabel: (ctx: any) => {
+              const completed = props.completed;
+              const total = props.total;
+              return `Overall: ${completed}/${total}`;
             },
           },
         },
       },
+      interaction: {
+        mode: 'nearest' as const,
+        intersect: true,
+      },
+      onHover: (event: any, activeElements: any[]) => {
+        const target = event.native?.target as HTMLElement | null;
+        if (target) {
+          target.style.cursor = activeElements.length > 0 ? "pointer" : "default";
+        }
+      },
     }),
-    [colors.bgOverlay, colors.fgPrimary, chartTotal]
+    [colors.bgOverlay, colors.fgPrimary, colors.border, chartTotal, props.completed, props.total]
   );
 
   return (
-    <div className="flex flex-col items-center p-4 rounded-xl border border-border-light/10">
+    <div className="flex flex-col items-center p-2">
       <div className="text-center mb-3">
         <h3 className="text-base font-semibold text-fg-primary">{props.title}</h3>
         <p className="text-xs text-fg-tertiary">{props.subtitle}</p>
@@ -239,11 +300,11 @@ function LargePieChart(props: {
 
       <div className="relative w-52 h-52">
         <Doughnut data={data} options={options} aria-label={props.title} />
+      </div>
 
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <p className="text-4xl font-bold text-fg-primary">{Math.round(clampedPercent)}%</p>
-          <p className="text-xs text-fg-tertiary">{props.completed}/{props.total}</p>
-        </div>
+      <div className="mt-3 text-center">
+        <p className="text-3xl font-bold text-fg-primary">{Math.round(clampedPercent)}%</p>
+        <p className="text-xs text-fg-tertiary">{props.completed}/{props.total}</p>
       </div>
 
       <div className="mt-3 flex flex-wrap justify-center gap-x-3 gap-y-1">
@@ -267,7 +328,7 @@ function getProjectDisplayName(project: ProjectCard, untitledProjectLabel: strin
 }
 
 function getProjectPhoto(project: ProjectCard): string | null {
-  return project.createdByUser?.image ?? null;
+  return project.imageUrl ?? project.createdByUser?.image ?? null;
 }
 
 function getProjectOwnerLabel(project: ProjectCard): string {
@@ -278,6 +339,7 @@ export function ProgressFeedClient() {
   const t = useTranslations("progress");
   const locale = useLocale();
   const colors = useResolvedThemeColors();
+  const router = useRouter();
 
   const { data: projects, isLoading: isLoadingProjects, error: projectsError } =
     typedApi.project.getMyProjects.useQuery(undefined, {
@@ -359,7 +421,10 @@ export function ProgressFeedClient() {
     const perProjectTop = completedByProjectSorted.slice(0, 6);
     const perProjectOtherTotal = completedByProjectSorted.slice(6).reduce((s, seg) => s + seg.value, 0);
     const perProjectPieSegments: PieSegment[] = [
-      ...perProjectTop,
+      ...perProjectTop.map(seg => ({
+        ...seg,
+        projectId: projects.find(p => getProjectDisplayName(p, t("project.untitled")) === seg.label)?.id,
+      })),
       ...(perProjectOtherTotal > 0
         ? [{
             key: "other_projects",
@@ -419,8 +484,8 @@ export function ProgressFeedClient() {
 
     const statusSegments: PieSegment[] = [
       { key: "completed", label: "Completed", value: statusCounts.completed, strokeColor: colors.success },
-      { key: "in_progress", label: "In Progress", value: statusCounts.in_progress, strokeColor: colors.info },
-      { key: "pending", label: "Pending", value: statusCounts.pending, strokeColor: colors.warning },
+      { key: "in_progress", label: "In Progress", value: statusCounts.in_progress, strokeColor: colors.palette[0] ?? colors.info },
+      { key: "pending", label: "Pending", value: statusCounts.pending, strokeColor: colors.palette[2] ?? colors.warning },
       { key: "blocked", label: "Blocked", value: statusCounts.blocked, strokeColor: colors.error },
     ].filter((s) => s.value > 0);
 
@@ -454,26 +519,6 @@ export function ProgressFeedClient() {
           <p className="text-xs text-fg-tertiary">{scopeLabel}</p>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="p-3 rounded-lg border border-border-light/10">
-            <p className="text-xs text-fg-tertiary">{t("stats.projects")}</p>
-            <p className="text-2xl font-bold text-fg-primary">{projects.length}</p>
-          </div>
-          <div className="p-3 rounded-lg border border-border-light/10">
-            <p className="text-xs text-fg-tertiary">{t("stats.tasks")}</p>
-            <p className="text-2xl font-bold text-fg-primary">{totalTasksAll}</p>
-          </div>
-          <div className="p-3 rounded-lg border border-border-light/10">
-            <p className="text-xs text-fg-tertiary">{t("stats.completed")}</p>
-            <p className="text-2xl font-bold text-success">{completedTasksAll}</p>
-          </div>
-          <div className="p-3 rounded-lg border border-border-light/10">
-            <p className="text-xs text-fg-tertiary">{t("stats.topContributor")}</p>
-            <p className="text-sm font-medium text-fg-primary truncate">{topContributorLabel}</p>
-            <p className="text-xs text-fg-tertiary">{t("stats.completions", { count: topContributorCount })}</p>
-          </div>
-        </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <LargePieChart
             title={t("overall.title")}
@@ -494,6 +539,9 @@ export function ProgressFeedClient() {
             title={t("perProject.title")}
             subtitle={t("perProject.subtitle")}
             segments={perProjectPieSegments}
+            onSegmentClick={(projectId) => {
+              router.push(`/publish?project=${projectId}`);
+            }}
           />
         </div>
 

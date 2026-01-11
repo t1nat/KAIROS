@@ -135,6 +135,7 @@ export function HomeClient({ session }: {
     const [isClient, setIsClient] = useState(false);
     const aboutRef = useRef<HTMLElement>(null);
     const subtitleRef = useRef<HTMLParagraphElement>(null);
+    const projectSpaceButtonRef = useRef<HTMLAnchorElement>(null);
     
     // Watch for accent color changes
     const colorTick = useThemeColorTick();
@@ -204,6 +205,14 @@ export function HomeClient({ session }: {
         if (session?.user && userProfile !== undefined && !userProfile) {
             setTimeout(() => {
                 setShowRoleSelection(true);
+            }, 300);
+        } else if (session?.user) {
+            // Auto-scroll to project space button after successful login
+            setTimeout(() => {
+                projectSpaceButtonRef.current?.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
             }, 300);
         }
     };
@@ -385,8 +394,8 @@ export function HomeClient({ session }: {
 
                 <section className="pt-24 sm:pt-32 pb-14 sm:pb-20 px-4 sm:px-6 min-h-screen flex items-center">
                     <div className="max-w-7xl mx-auto w-full">
-                        <div className="flex flex-col lg:flex-row justify-between items-center gap-10 lg:gap-16 mb-8">
-                           <div className="flex-1 text-center lg:text-left space-y-6">
+                        <div className="flex flex-col items-center justify-center gap-8 text-center">
+                           <div className="space-y-6 max-w-4xl">
                                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-accent-primary/10 border border-accent-primary/20 rounded-full text-sm font-semibold text-accent-primary animate-slideUp">
                                     <span className="relative flex h-2 w-2">
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-primary opacity-75"></span>
@@ -397,10 +406,10 @@ export function HomeClient({ session }: {
                                 <h2 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-fg-primary leading-tight tracking-tight font-display animate-slideUp" style={{ animationDelay: '0.1s' }}>
                                     KAIROS
                                 </h2>
-                                <p className="text-lg sm:text-xl md:text-2xl text-fg-secondary leading-relaxed max-w-2xl mx-auto lg:mx-0 animate-slideUp" style={{ animationDelay: '0.2s' }}>
+                                <p className="text-lg sm:text-xl md:text-2xl text-fg-secondary leading-relaxed animate-slideUp" style={{ animationDelay: '0.2s' }}>
                                     The all-in-one platform for seamless event coordination, team collaboration, and project timelines.
                                 </p>
-                                <div className="flex flex-wrap gap-4 text-sm text-fg-tertiary animate-slideUp" style={{ animationDelay: '0.3s' }}>
+                                <div className="flex flex-wrap gap-4 text-sm text-fg-tertiary justify-center animate-slideUp" style={{ animationDelay: '0.3s' }}>
                                     <div className="flex items-center gap-2">
                                         <div className="w-1.5 h-1.5 bg-event-active rounded-full"></div>
                                         Live RSVP Tracking
@@ -415,19 +424,20 @@ export function HomeClient({ session }: {
                                     </div>
                                 </div>
                             </div>
-                            <div className={`flex flex-col gap-4 w-full lg:w-auto lg:min-w-[420px] justify-center ${!hasAnimated ? 'animate-smooth-fade-in' : ''}`} style={{ animationDelay: !hasAnimated ? '0.4s' : '0s' }}>
+                            <div className={`flex flex-col gap-4 w-full max-w-md justify-center ${!hasAnimated ? 'animate-smooth-fade-in' : ''}`} style={{ animationDelay: !hasAnimated ? '0.4s' : '0s' }}>
                                 {showActionButtons && (
-                                    <div className="surface-card p-5 sm:p-6 space-y-4">
+                                    <div className="space-y-4">
                                         <Link 
+                                            ref={projectSpaceButtonRef}
                                             href="/create" 
-                                            className="flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 font-semibold rounded-xl shadow-md hover:shadow-xl transition-all hover:scale-[1.02] text-base sm:text-lg group bg-slate-900 dark:bg-bg-surface dark:border-2 dark:border-border-medium text-white dark:text-fg-primary hover:bg-slate-800 dark:hover:bg-bg-elevated dark:hover:border-accent-primary/50 border-transparent"
+                                            className="flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 font-semibold rounded-xl transition-all hover:scale-[1.02] text-base sm:text-lg group border-2 border-accent-primary text-accent-primary hover:bg-accent-primary/5"
                                         >
                                             Enter Project Space
                                             <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />
                                         </Link>
                                         <Link 
                                             href="/publish" 
-                                            className="flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 bg-bg-surface border-2 border-border-medium text-fg-primary font-semibold rounded-xl hover:bg-bg-elevated hover:border-accent-primary/50 transition-all text-base sm:text-lg group"
+                                            className="flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 border-2 border-border-medium text-fg-primary font-semibold rounded-xl hover:bg-bg-elevated/50 hover:border-accent-primary/30 transition-all text-base sm:text-lg group"
                                         >
                                             View Publications
                                             <Calendar size={22} className="group-hover:rotate-12 transition-transform" />
@@ -438,7 +448,7 @@ export function HomeClient({ session }: {
                                 {!session && (
                                     <button
                                         onClick={() => setIsModalOpen(true)}
-                                        className="relative flex items-center justify-center gap-2 px-8 sm:px-10 py-4 sm:py-5 bg-bg-surface border-2 border-accent-primary text-accent-primary font-semibold rounded-xl shadow-lg hover:shadow-xl hover:shadow-accent-primary/40 hover:bg-accent-primary hover:text-white transition-all hover:scale-[1.02] text-base sm:text-lg group"
+                                        className="flex items-center justify-center gap-2 px-8 sm:px-10 py-4 sm:py-5 border-2 border-accent-primary text-accent-primary font-semibold rounded-xl hover:bg-accent-primary hover:text-white transition-all hover:scale-[1.02] text-base sm:text-lg group"
                                     >
                                         Log In / Sign Up
                                         <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
@@ -490,11 +500,11 @@ export function HomeClient({ session }: {
                         </div>
 
 
-                        <div className="surface-card p-5 sm:p-8 md:p-10 mt-12 sm:mt-16 w-full max-w-[1200px] mx-auto">
+                        <div className="mt-12 sm:mt-16 w-full max-w-[1200px] mx-auto">
                             <h4 className="text-2xl md:text-3xl font-bold text-fg-primary mb-8">Why Teams Choose Kairos</h4>
                             <div className="grid md:grid-cols-2 gap-6">
-                                <div className="flex items-start gap-4 p-4 rounded-xl bg-success/5 border border-success/20 hover:bg-success/10 transition-colors group">
-                                    <div className="flex-shrink-0 w-10 h-10 bg-success/20 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-success/5 border border-success/10 hover:bg-success/8 transition-colors group">
+                                    <div className="flex-shrink-0 w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
                                         <Calendar className="text-success" size={20} />
                                     </div>
                                     <div>
@@ -502,8 +512,8 @@ export function HomeClient({ session }: {
                                         <p className="text-sm text-fg-secondary">Visualize the flow. Manage tasks and track progress at a glance.</p>
                                     </div>
                                 </div>
-                                <div className="flex items-start gap-4 p-4 rounded-xl bg-success/5 border border-success/20 hover:bg-success/10 transition-colors group">
-                                    <div className="flex-shrink-0 w-10 h-10 bg-success/20 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-success/5 border border-success/10 hover:bg-success/8 transition-colors group">
+                                    <div className="flex-shrink-0 w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
                                         <Zap className="text-success" size={20} />
                                     </div>
                                     <div>
@@ -511,8 +521,8 @@ export function HomeClient({ session }: {
                                         <p className="text-sm text-fg-secondary">Go live. Turn internal project plans into public events in seconds.</p>
                                     </div>
                                 </div>
-                                <div className="flex items-start gap-4 p-4 rounded-xl bg-warning/5 border border-warning/20 hover:bg-warning/10 transition-colors group">
-                                    <div className="flex-shrink-0 w-10 h-10 bg-warning/20 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-warning/5 border border-warning/10 hover:bg-warning/8 transition-colors group">
+                                    <div className="flex-shrink-0 w-10 h-10 bg-warning/10 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
                                         <Lock className="text-warning" size={20} />
                                     </div>
                                     <div>
@@ -520,8 +530,8 @@ export function HomeClient({ session }: {
                                         <p className="text-sm text-fg-secondary">Secure your organization with roles and access codes.</p>
                                     </div>
                                 </div>
-                                <div className="flex items-start gap-4 p-4 rounded-xl bg-accent-primary/5 border border-accent-primary/20 hover:bg-accent-primary/10 transition-colors group">
-                                    <div className="flex-shrink-0 w-10 h-10 bg-accent-primary/20 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-accent-primary/5 border border-accent-primary/10 hover:bg-accent-primary/8 transition-colors group">
+                                    <div className="flex-shrink-0 w-10 h-10 bg-accent-primary/10 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
                                         <Sparkles className="text-accent-primary" size={20} />
                                     </div>
                                     <div>

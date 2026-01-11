@@ -193,6 +193,8 @@ export const organizationRouter = createTRPCRouter({
           organizationId: organization.id,
           userId: ctx.session.user.id,
           role: "admin",
+          canAddMembers: true,
+          canAssignTasks: true,
         });
 
         
@@ -252,6 +254,8 @@ export const organizationRouter = createTRPCRouter({
           organizationId: organization.id,
           userId: ctx.session.user.id,
           role: input.role ?? "worker",
+          canAddMembers: false,
+          canAssignTasks: false,
         });
 
         
@@ -440,6 +444,43 @@ export const organizationRouter = createTRPCRouter({
             .where(eq(users.id, ctx.session.user.id));
         }
       }
+
+      return { success: true };
+    }),
+
+  updateMemberPermissions: protectedProcedure
+    .input(
+      z.object({
+        organizationId: z.number(),
+        userId: z.string(),
+        canAddMembers: z.boolean(),
+        canAssignTasks: z.boolean(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Check if the current user is the org owner
+      const [org] = await ctx.db
+        .select()
+        .from(organizations)
+        .where(eq(organizations.id, input.organizationId));
+
+      if (!org || org.createdById !== ctx.session.user.id) {
+        throw new Error("Only the organization owner can update member permissions");
+      }
+
+      // Update the member's permissions
+      await ctx.db
+        .update(organizationMembers)
+        .set({
+          canAddMembers: input.canAddMembers,
+          canAssignTasks: input.canAssignTasks,
+        })
+        .where(
+          and(
+            eq(organizationMembers.organizationId, input.organizationId),
+            eq(organizationMembers.userId, input.userId)
+          )
+        );
 
       return { success: true };
     }),

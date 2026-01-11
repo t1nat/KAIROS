@@ -1,7 +1,7 @@
 
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { tasks, projects, projectCollaborators, taskActivityLog, organizationMembers, users } from "~/server/db/schema";
+import { tasks, projects, projectCollaborators, taskActivityLog, organizationMembers, users, organizations } from "~/server/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 
 export const taskRouter = createTRPCRouter({
@@ -32,6 +32,7 @@ export const taskRouter = createTRPCRouter({
       
      
       let isOrgMember = false;
+      let canAssignTasks = false;
       if (project.organizationId) {
         const [membership] = await ctx.db
           .select()
@@ -43,6 +44,18 @@ export const taskRouter = createTRPCRouter({
             )
           );
         isOrgMember = !!membership;
+        canAssignTasks = membership?.canAssignTasks ?? false;
+        
+        // Check if user is org owner
+        const [org] = await ctx.db
+          .select()
+          .from(organizations)
+          .where(eq(organizations.id, project.organizationId));
+        const isOrgOwner = org?.createdById === ctx.session.user.id;
+        
+        if (!isOwner && !isOrgOwner && !canAssignTasks) {
+          throw new Error("Only the organization owner or authorized members can create tasks");
+        }
       }
 
       if (!isOwner && !isOrgMember) {

@@ -115,11 +115,11 @@ export default async function CreatePage({
               <CreateProjectContainer userId={session.user.id} />
             </div>
           ) : shouldShowNoteForm ?(
-              <div className="flex flex-col lg:flex-row gap-6 w-full">
-                 <div className="w-full lg:w-96 lg:flex-shrink-0">
+              <div className="flex flex-col lg:flex-row gap-4 w-full h-[calc(100vh-140px)]">
+                 <div className="w-full lg:w-[400px] lg:flex-shrink-0 flex flex-col bg-bg-surface/30 rounded-xl p-4 border border-border-light/20">
                        <CreateNoteForm />
                    </div>
-                    <div className="flex-1">
+                    <div className="flex-1 bg-bg-surface/30 rounded-xl p-4 border border-border-light/20 overflow-hidden">
                           <NotesList />
                     </div>
                    </div>

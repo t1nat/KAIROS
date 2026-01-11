@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { api } from "~/trpc/react";
-import { Lock, Trash2, Eye, EyeOff, Mail, AlertCircle, FileText, ChevronDown, RefreshCw, FolderLock } from "lucide-react";
+import { Lock, Trash2, Eye, EyeOff, Mail, AlertCircle, ChevronDown, RefreshCw, FolderLock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useToast } from "~/components/providers/ToastProvider";
 
@@ -121,346 +121,242 @@ export function NotesList() {
   const unlockedNotesArray = notes?.filter(n => !n.passwordHash) ?? [];
   const lockedNotesArray = notes?.filter(n => n.passwordHash) ?? [];
 
-  if (!notes || notes.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-accent-primary/10 rounded-full mb-4">
-          <Lock className="text-accent-primary" size={24} />
-        </div>
-        <p className="text-fg-secondary">{t("notes.empty")}</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="relative h-[calc(100vh-200px)] w-full">
-      
-      {/* --- ENCRYPTED FOLDER (Positioned Top Right, aligned with New Note button) --- */}
-      <div className="absolute -top-14 right-0 z-50">
-        {lockedNotesArray.length > 0 && (
-          <button
-            onClick={() => setShowLockedNotes((s) => !s)}
-            className="flex items-center gap-2 bg-bg-surface hover:bg-bg-elevated border border-border-light/50 rounded-lg px-4 py-2.5 text-fg-secondary hover:text-accent-primary transition-all text-sm font-medium shadow-sm"
-          >
-            <FolderLock size={16} />
-            <span>{t("notes.encrypted", { count: lockedNotesArray.length })}</span>
-            <ChevronDown 
-              size={14} 
-              className={`transition-transform duration-200 ${showLockedNotes ? 'rotate-180' : ''}`}
-            />
-          </button>
-        )}
-      </div>
-
-      {/* --- SINGLE COLUMN LAYOUT --- */}
-      <div className="flex flex-col h-full max-w-3xl mx-auto">
-        <h3 className="text-fg-tertiary text-xs font-bold uppercase tracking-widest mb-4 pl-1">{t("notes.title")}</h3>
+    <div className="flex flex-col h-full">
+      {/* Notes List - Right Side */}
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-fg-tertiary">
+            {t("notes.title")}
+          </h3>
+          {lockedNotesArray.length > 0 && (
+            <button
+              onClick={() => setShowLockedNotes((s) => !s)}
+              className="flex items-center gap-1.5 text-xs text-fg-tertiary hover:text-accent-primary transition-colors"
+            >
+              <FolderLock size={14} />
+              <span>{lockedNotesArray.length}</span>
+              <ChevronDown 
+                size={12} 
+                className={`transition-transform ${showLockedNotes ? 'rotate-180' : ''}`}
+              />
+            </button>
+          )}
+        </div>
         
-        <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-3">
+        <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
           {unlockedNotesArray.length > 0 ? (
              unlockedNotesArray.map((note) => {
               const isSelected = selectedNoteId === note.id;
-              const isLocked = note.passwordHash && !unlockedNotes[note.id]?.unlocked;
-              const showPassword = showPasswords[note.id] ?? false;
-              const passwordInput = passwordInputs[note.id] ?? '';
-              const passwordError = passwordErrors[note.id];
               const unlockedContent = unlockedNotes[note.id]?.content;
+              const displayContent = unlockedContent ?? note.content;
+              const firstLine = displayContent.split('\\n')[0]?.trim() ?? displayContent.substring(0, 50);
 
               return (
-                <div key={note.id} className="space-y-3">
-                  <div className={`w-full p-4 rounded-xl border transition-all group ${
-                    isSelected 
-                      ? 'bg-accent-primary/10 border-accent-primary/40 shadow-accent' 
-                      : 'bg-bg-surface border-border-light/30 hover:bg-bg-elevated hover:border-border-light/60'
-                  }`}>
-                    <div className="flex items-center justify-between mb-2">
+                <div key={note.id} className="space-y-2">
+                  <button
+                    onClick={() => setSelectedNoteId(isSelected ? null : note.id)}
+                    className={`w-full text-left p-3 rounded-lg border transition-all ${
+                      isSelected 
+                        ? 'bg-accent-primary/10 border-accent-primary/30' 
+                        : 'bg-bg-surface/50 border-border-light/20 hover:bg-bg-surface hover:border-border-light/40'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <h4 className={`text-sm font-semibold line-clamp-1 flex-1 ${
+                        isSelected ? 'text-accent-primary' : 'text-fg-primary'
+                      }`}>
+                        {firstLine}
+                      </h4>
                       <button
-                        onClick={() => setSelectedNoteId(isSelected ? null : note.id)}
-                        className="flex-1 text-left"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          requestDeleteNote(note.id);
+                        }}
+                        className="p-1 text-fg-quaternary hover:text-error transition-colors rounded"
                       >
-                        <span className={`text-xs font-medium ${isSelected ? 'text-accent-primary' : 'text-fg-tertiary'}`}>
-                          {new Date(note.createdAt).toLocaleDateString()}
-                        </span>
+                        <Trash2 size={14} />
                       </button>
-                      <div className="flex items-center gap-2">
-                        {note.passwordHash && (
-                          <Lock size={12} className="text-error" />
-                        )}
-                        <FileText size={14} className={isSelected ? 'text-accent-primary' : 'text-fg-quaternary group-hover:text-fg-tertiary'} />
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            requestDeleteNote(note.id);
-                          }}
-                          className="text-error/70 hover:text-error transition-colors p-1"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
                     </div>
-                    <button
-                      onClick={() => setSelectedNoteId(isSelected ? null : note.id)}
-                      className="w-full text-left"
-                    >
-                      <p className={`text-sm line-clamp-3 font-medium ${isSelected ? 'text-fg-primary' : 'text-fg-secondary'}`}>
-                        {note.content.substring(0, 100)}...
-                      </p>
-                    </button>
-                  </div>
+                    <p className="text-xs text-fg-tertiary">
+                      {new Date(note.createdAt).toLocaleDateString()}
+                    </p>
+                  </button>
 
                   {/* EXPANDED CONTENT */}
                   {isSelected && (
-                    <div className="animate-in fade-in slide-in-from-top-2 duration-200 space-y-3">
-                      {isLocked ? (
-                        <>
-                          {/* Password Input Card */}
-                          <div className="card-base p-6">
-                            <div className="flex items-center gap-2 mb-1">
-                               <Lock className="text-error" size={20} />
-                               <h3 className="text-lg font-bold text-fg-primary">{t("notes.password.protected")}</h3>
-                            </div>
-                             <p className="text-fg-secondary text-sm mb-5">{t("notes.password.protectedDesc")}</p>
-                            
-                            <div className="space-y-4">
-                              <div className="relative group">
-                                <input
-                                  type={showPassword ? "text" : "password"}
-                                  value={passwordInput}
-                                  onChange={(e) => {
-                                    setPasswordInputs(prev => ({ ...prev, [note.id]: e.target.value }));
-                                    if (passwordError) setPasswordErrors(prev => ({ ...prev, [note.id]: '' }));
-                                  }}
-                                  onKeyDown={(e) => e.key === 'Enter' && handlePasswordSubmit(note.id, passwordInput)}
-                                  placeholder={t("notes.password.placeholder")}
-                                  className="w-full bg-bg-elevated border border-border-light/40 text-fg-primary text-sm placeholder:text-fg-quaternary rounded-lg px-4 py-3 pr-10 outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/30 transition-all"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => togglePasswordVisibility(note.id)}
-                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-tertiary hover:text-fg-primary transition-colors"
-                                >
-                                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                </button>
-                              </div>
-
-                              {passwordError && (
-                                <div className="text-error text-xs flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
-                                   <AlertCircle size={12} />
-                                   {passwordError}
-                                  <button onClick={() => handleResetRequest(note.id)} className="underline ml-1 hover:text-error/80">{t("notes.reset.cta")}</button>
-                                </div>
-                              )}
-
-                              <button
-                                onClick={() => handlePasswordSubmit(note.id, passwordInput)}
-                                disabled={!passwordInput || verifyPassword.isPending}
-                                className="w-full bg-accent-primary hover:bg-accent-hover text-white text-sm font-bold py-3 rounded-lg transition-all shadow-md disabled:opacity-50"
-                              >
-                                {verifyPassword.isPending ? t("notes.password.unlocking") : t("notes.password.unlock")}
-                              </button>
-                            </div>
-                          </div>
-                        </>
-                      ) : (
-                        /* UNLOCKED CONTENT - EDITABLE */
-                        <div className="card-base p-6">
-                          <div className="flex items-center justify-between mb-4 pb-4 border-b border-border-light/50">
-                            <div className="flex items-center gap-2">
-                              <FileText size={18} className="text-accent-primary" />
-                              <h4 className="text-fg-primary font-semibold">{t("notes.edit.title")}</h4>
-                            </div>
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => {
-                                  const content = editingContent[note.id] ?? (unlockedContent ?? note.content);
-                                  updateNote.mutate({ id: note.id, content });
-                                }}
-                                disabled={updateNote.isPending}
-                                className="text-success hover:text-success/80 transition-colors px-3 py-1 text-sm font-medium disabled:opacity-50"
-                              >
-                                {updateNote.isPending ? t("notes.edit.saving") : t("notes.edit.save")}
-                              </button>
-                              <button
-                                onClick={() => void refetch()}
-                                className="text-fg-tertiary hover:text-fg-primary transition-colors p-1"
-                              >
-                                <RefreshCw size={16} />
-                              </button>
-                            </div>
-                          </div>
-                          <textarea
-                            value={editingContent[note.id] ?? (unlockedContent ?? note.content)}
-                            onChange={(e) => setEditingContent(prev => ({ ...prev, [note.id]: e.target.value }))}
-                            className="w-full min-h-[300px] bg-bg-secondary border border-border-light/40 text-fg-primary rounded-lg p-4 outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/30 transition-all resize-y font-mono text-sm leading-relaxed placeholder:text-fg-quaternary"
-                            placeholder={t("notes.placeholders.content")}
-                          />
+                    <div className="animate-in fade-in slide-in-from-top-2 duration-200 p-4 bg-bg-surface/30 border border-border-light/20 rounded-lg">
+                      <div className="flex items-center justify-between mb-3 pb-2 border-b border-border-light/20">
+                        <span className="text-xs font-medium text-fg-tertiary">Edit Note</span>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              const content = editingContent[note.id] ?? displayContent;
+                              updateNote.mutate({ id: note.id, content });
+                            }}
+                            disabled={updateNote.isPending}
+                            className="text-xs px-3 py-1 bg-accent-primary text-white rounded-md hover:bg-accent-hover transition-colors disabled:opacity-50"
+                          >
+                            {updateNote.isPending ? t("notes.edit.saving") : t("notes.edit.save")}
+                          </button>
+                          <button
+                            onClick={() => void refetch()}
+                            className="p-1 text-fg-tertiary hover:text-fg-primary transition-colors"
+                          >
+                            <RefreshCw size={14} />
+                          </button>
                         </div>
-                      )}
-
-
+                      </div>
+                      <textarea
+                        value={editingContent[note.id] ?? displayContent}
+                        onChange={(e) => setEditingContent(prev => ({ ...prev, [note.id]: e.target.value }))}
+                        className="w-full min-h-[250px] bg-transparent border border-border-light/20 text-fg-primary rounded-lg p-3 text-sm leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary/50"
+                        placeholder={t("notes.placeholders.content")}
+                      />
                     </div>
                   )}
                 </div>
               );
             })
           ) : (
-            lockedNotesArray.length > 0 && (
-              <div className="bg-bg-surface/70 border border-border-light/30 rounded-xl p-8 flex flex-col items-center justify-center text-center">
-                 <div className="w-12 h-12 bg-bg-elevated/60 rounded-full flex items-center justify-center mb-3 border border-border-light/30">
-                   <Lock size={20} className="text-fg-secondary" />
-                 </div>
-                 <p className="text-fg-primary text-sm font-medium">{t("notes.allLocked")}</p>
-                 <p className="text-xs text-fg-tertiary mt-1">{t("notes.allLockedHint")}</p>
+            lockedNotesArray.length === 0 && (
+              <div className="text-center py-8 text-fg-tertiary text-sm">
+                {t("notes.empty")}
               </div>
             )
           )}
 
-          {/* Locked Notes Section - Expands Inline */}
+          {/* Locked Notes Section */}
           {showLockedNotes && lockedNotesArray.length > 0 && (
-            <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-              <h4 className="px-1 py-2 text-[10px] font-bold text-fg-tertiary uppercase tracking-wider opacity-80">
+            <div className="pt-4 border-t border-border-light/20 space-y-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-fg-tertiary opacity-70 mb-2">
                 {t("notes.password.sectionTitle")}
               </h4>
-              <div className="space-y-3">
-                {lockedNotesArray.map((note) => {
-                  const isSelected = selectedNoteId === note.id;
-                  const isLocked = !unlockedNotes[note.id]?.unlocked;
-                  const showPassword = showPasswords[note.id] ?? false;
-                  const passwordInput = passwordInputs[note.id] ?? '';
-                  const passwordError = passwordErrors[note.id];
-                  const unlockedContent = unlockedNotes[note.id]?.content;
+              {lockedNotesArray.map((note) => {
+                const isSelected = selectedNoteId === note.id;
+                const isLocked = !unlockedNotes[note.id]?.unlocked;
+                const showPassword = showPasswords[note.id] ?? false;
+                const passwordInput = passwordInputs[note.id] ?? '';
+                const passwordError = passwordErrors[note.id];
+                const unlockedContent = unlockedNotes[note.id]?.content;
 
-                  return (
-                    <div key={note.id} className="space-y-3">
-                      <div className="w-full p-4 rounded-xl border transition-all group bg-bg-surface border-error/30 hover:bg-bg-elevated hover:border-error/50">
-                        <div className="flex items-center justify-between mb-2">
-                          <button
-                            onClick={() => setSelectedNoteId(isSelected ? null : note.id)}
-                            className="flex-1 text-left"
-                          >
-                            <span className="text-xs text-fg-tertiary">
-                              {new Date(note.createdAt).toLocaleDateString()}
-                            </span>
-                          </button>
-                          <div className="flex items-center gap-2">
-                            <Lock size={14} className="text-error/80 opacity-70 group-hover:opacity-100" />
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                requestDeleteNote(note.id);
-                              }}
-                              className="text-error/70 hover:text-error transition-colors p-1"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
+                return (
+                  <div key={note.id} className="space-y-2">
+                    <button
+                      onClick={() => setSelectedNoteId(isSelected ? null : note.id)}
+                      className={`w-full text-left p-3 rounded-lg border transition-all ${
+                        isSelected 
+                          ? 'bg-error/10 border-error/30' 
+                          : 'bg-bg-surface/50 border-error/20 hover:bg-bg-surface hover:border-error/30'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <div className="flex items-center gap-2 flex-1">
+                          <Lock size={14} className="text-error flex-shrink-0" />
+                          <h4 className="text-sm font-semibold text-fg-tertiary line-clamp-1">
+                            {t("notes.encryptedNote")}
+                          </h4>
                         </div>
                         <button
-                          onClick={() => setSelectedNoteId(isSelected ? null : note.id)}
-                          className="w-full text-left"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            requestDeleteNote(note.id);
+                          }}
+                          className="p-1 text-fg-quaternary hover:text-error transition-colors rounded"
                         >
-                          <p className="text-sm text-fg-secondary line-clamp-3 font-medium">
-                            {t("notes.encryptedNote")}
-                          </p>
+                          <Trash2 size={14} />
                         </button>
                       </div>
+                      <p className="text-xs text-fg-tertiary">
+                        {new Date(note.createdAt).toLocaleDateString()}
+                      </p>
+                    </button>
 
-                      {/* EXPANDED CONTENT FOR LOCKED NOTES */}
-                      {isSelected && (
-                        <div className="animate-in fade-in slide-in-from-top-2 duration-200 space-y-3">
-                          {isLocked ? (
-                            <>
-                              {/* Password Input Card */}
-                              <div className="card-base p-6">
-                                <div className="flex items-center gap-2 mb-1">
-                                   <Lock className="text-error" size={20} />
-                                  <h3 className="text-lg font-bold text-fg-primary">{t("notes.password.protected")}</h3>
-                                </div>
-                                <p className="text-fg-secondary text-sm mb-5">{t("notes.password.protectedDesc")}</p>
-                                
-                                <div className="space-y-4">
-                                  <div className="relative group">
-                                    <input
-                                      type={showPassword ? "text" : "password"}
-                                      value={passwordInput}
-                                      onChange={(e) => {
-                                        setPasswordInputs(prev => ({ ...prev, [note.id]: e.target.value }));
-                                        if (passwordError) setPasswordErrors(prev => ({ ...prev, [note.id]: '' }));
-                                      }}
-                                      onKeyDown={(e) => e.key === 'Enter' && handlePasswordSubmit(note.id, passwordInput)}
-                                      placeholder={t("notes.password.placeholder")}
-                                      className="w-full bg-bg-elevated border border-border-light/40 text-fg-primary text-sm placeholder:text-fg-quaternary rounded-lg px-4 py-3 pr-10 outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/30 transition-all"
-                                    />
-                                    <button
-                                      type="button"
-                                      onClick={() => togglePasswordVisibility(note.id)}
-                                      className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-tertiary hover:text-fg-primary transition-colors"
-                                    >
-                                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                    </button>
-                                  </div>
-
-                                  {passwordError && (
-                                    <div className="text-error text-xs flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
-                                       <AlertCircle size={12} />
-                                       {passwordError}
-                                      <button onClick={() => handleResetRequest(note.id)} className="underline ml-1 hover:text-error/80">{t("notes.reset.cta")}</button>
-                                    </div>
-                                  )}
-
-                                  <button
-                                    onClick={() => handlePasswordSubmit(note.id, passwordInput)}
-                                    disabled={!passwordInput || verifyPassword.isPending}
-                                    className="w-full bg-accent-primary hover:bg-accent-hover text-white text-sm font-bold py-3 rounded-lg transition-all shadow-md disabled:opacity-50"
-                                  >
-                                    {verifyPassword.isPending ? t("notes.password.unlocking") : t("notes.password.unlock")}
-                                  </button>
-                                </div>
-                              </div>
-                            </>
-                          ) : (
-                            /* UNLOCKED CONTENT - EDITABLE */
-                            <div className="card-base p-6">
-                              <div className="flex items-center justify-between mb-4 pb-4 border-b border-border-light/50">
-                                <div className="flex items-center gap-2">
-                                  <FileText size={18} className="text-accent-primary" />
-                                  <h4 className="text-fg-primary font-semibold">{t("notes.edit.title")}</h4>
-                                </div>
-                                <div className="flex gap-2">
-                                  <button
-                                    onClick={() => {
-                                      const content = editingContent[note.id] ?? (unlockedContent ?? note.content);
-                                      updateNote.mutate({ id: note.id, content });
-                                    }}
-                                    disabled={updateNote.isPending}
-                                    className="text-success hover:text-success/80 transition-colors px-3 py-1 text-sm font-medium disabled:opacity-50"
-                                  >
-                                    {updateNote.isPending ? t("notes.edit.saving") : t("notes.edit.save")}
-                                  </button>
-                                  <button
-                                    onClick={() => void refetch()}
-                                    className="text-fg-tertiary hover:text-fg-primary transition-colors p-1"
-                                  >
-                                    <RefreshCw size={16} />
-                                  </button>
-                                </div>
-                              </div>
-                              <textarea
-                                value={editingContent[note.id] ?? (unlockedContent ?? note.content)}
-                                onChange={(e) => setEditingContent(prev => ({ ...prev, [note.id]: e.target.value }))}
-                                className="w-full min-h-[300px] bg-bg-secondary border border-border-light/40 text-fg-primary rounded-lg p-4 outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/30 transition-all resize-y font-mono text-sm leading-relaxed placeholder:text-fg-quaternary"
-                                placeholder={t("notes.placeholders.content")}
-                              />
+                    {/* EXPANDED CONTENT FOR LOCKED NOTES */}
+                    {isSelected && (
+                      <div className="animate-in fade-in slide-in-from-top-2 duration-200 p-4 bg-bg-surface/30 border border-border-light/20 rounded-lg">
+                        {isLocked ? (
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                              <Lock className="text-error" size={16} />
+                              <h3 className="text-sm font-semibold text-fg-primary">{t("notes.password.protected")}</h3>
                             </div>
-                          )}
+                            <p className="text-xs text-fg-secondary mb-3">{t("notes.password.protectedDesc")}</p>
+                            
+                            <div className="relative">
+                              <input
+                                type={showPassword ? "text" : "password"}
+                                value={passwordInput}
+                                onChange={(e) => {
+                                  setPasswordInputs(prev => ({ ...prev, [note.id]: e.target.value }));
+                                  if (passwordError) setPasswordErrors(prev => ({ ...prev, [note.id]: '' }));
+                                }}
+                                onKeyDown={(e) => e.key === 'Enter' && handlePasswordSubmit(note.id, passwordInput)}
+                                placeholder={t("notes.password.placeholder")}
+                                className="w-full bg-bg-elevated border border-border-light/30 text-fg-primary text-sm rounded-lg px-3 py-2 pr-9 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary/50"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => togglePasswordVisibility(note.id)}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-fg-tertiary hover:text-fg-primary"
+                              >
+                                {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                              </button>
+                            </div>
 
+                            {passwordError && (
+                              <div className="text-error text-xs flex items-center gap-1.5">
+                                <AlertCircle size={12} />
+                                {passwordError}
+                                <button onClick={() => handleResetRequest(note.id)} className="underline hover:no-underline">{t("notes.reset.cta")}</button>
+                              </div>
+                            )}
 
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                            <button
+                              onClick={() => handlePasswordSubmit(note.id, passwordInput)}
+                              disabled={!passwordInput || verifyPassword.isPending}
+                              className="w-full bg-accent-primary hover:bg-accent-hover text-white text-sm font-medium py-2 rounded-lg transition-all disabled:opacity-50"
+                            >
+                              {verifyPassword.isPending ? t("notes.password.unlocking") : t("notes.password.unlock")}
+                            </button>
+                          </div>
+                        ) : (
+                          /* UNLOCKED CONTENT */
+                          <div>
+                            <div className="flex items-center justify-between mb-3 pb-2 border-b border-border-light/20">
+                              <span className="text-xs font-medium text-fg-tertiary">Edit Note</span>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    const content = editingContent[note.id] ?? (unlockedContent ?? note.content);
+                                    updateNote.mutate({ id: note.id, content });
+                                  }}
+                                  disabled={updateNote.isPending}
+                                  className="text-xs px-3 py-1 bg-accent-primary text-white rounded-md hover:bg-accent-hover transition-colors disabled:opacity-50"
+                                >
+                                  {updateNote.isPending ? t("notes.edit.saving") : t("notes.edit.save")}
+                                </button>
+                                <button
+                                  onClick={() => void refetch()}
+                                  className="p-1 text-fg-tertiary hover:text-fg-primary transition-colors"
+                                >
+                                  <RefreshCw size={14} />
+                                </button>
+                              </div>
+                            </div>
+                            <textarea
+                              value={editingContent[note.id] ?? (unlockedContent ?? note.content)}
+                              onChange={(e) => setEditingContent(prev => ({ ...prev, [note.id]: e.target.value }))}
+                              className="w-full min-h-[250px] bg-transparent border border-border-light/20 text-fg-primary rounded-lg p-3 text-sm leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary/50"
+                              placeholder={t("notes.placeholders.content")}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
