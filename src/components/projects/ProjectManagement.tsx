@@ -25,17 +25,85 @@ interface ProjectFormProps {
   currentUser: User;
   isExpanded: boolean;
   onToggle: () => void;
+  projectId?: number;
+  onAddCollaborator?: (email: string, permission: "read" | "write") => Promise<void>;
+  currentCollaborators?: Array<{
+    user: User;
+    permission: "read" | "write";
+  }>;
+  onRemoveCollaborator?: (userId: string) => Promise<void>;
+  onUpdatePermission?: (userId: string, permission: "read" | "write") => Promise<void>;
+  isOwner?: boolean;
 }
 
-export function CreateProjectForm({ onSubmit, currentUser, isExpanded, onToggle }: ProjectFormProps) {
+export function CreateProjectForm({ 
+  onSubmit, 
+  currentUser, 
+  isExpanded, 
+  onToggle,
+  projectId,
+  onAddCollaborator,
+  currentCollaborators = [],
+  onRemoveCollaborator,
+  onUpdatePermission,
+  isOwner = true
+}: ProjectFormProps) {
   const useT = useTranslations as unknown as (namespace: string) => Translator;
   const t = useT("create");
   const toast = useToast();
+  const utils = api.useUtils();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [email, setEmail] = useState("");
+  const [permission, setPermission] = useState<"read" | "write">("read");
+  const [isAdding, setIsAdding] = useState(false);
+  const [searchedUser, setSearchedUser] = useState<{
+    id: string;
+    name: string | null;
+    email: string;
+    image: string | null;
+  } | null>(null);
+  const [searchError, setSearchError] = useState("");
 
   void currentUser;
+
+  const isValidEmail = (emailStr: string) => {
+    const trimmed = emailStr.trim();
+    return trimmed.length > 0 && trimmed.includes("@") && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+  };
+
+  const { refetch: searchUser, isFetching: isSearching } = api.user.searchByEmail.useQuery(
+    { email: email.trim() },
+    {
+      enabled: false,
+      retry: false,
+    }
+  );
+
+  useEffect(() => {
+    setSearchedUser(null);
+    setSearchError("");
+
+    if (isValidEmail(email) && projectId) {
+      const timer = setTimeout(() => {
+        void searchUser().then((result) => {
+          if (result.data) {
+            setSearchedUser(result.data);
+            setSearchError("");
+          } else {
+            setSearchedUser(null);
+            setSearchError(t("team.search.noUser"));
+          }
+        }).catch((error) => {
+          console.error("Search error:", error);
+          setSearchedUser(null);
+          setSearchError(t("team.search.error"));
+        });
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [email, searchUser, t, projectId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +122,39 @@ export function CreateProjectForm({ onSubmit, currentUser, isExpanded, onToggle 
     }
   };
 
+  const handleAddCollaborator = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!onAddCollaborator || !projectId) return;
+    
+    if (!isValidEmail(email)) {
+      setSearchError(t("team.search.invalidEmail"));
+      return;
+    }
+
+    if (!searchedUser) {
+      setSearchError(t("team.search.wait"));
+      return;
+    }
+
+    setIsAdding(true);
+    try {
+      await onAddCollaborator(searchedUser.email, permission);
+      setEmail("");
+      setSearchedUser(null);
+      setSearchError("");
+      setPermission("read");
+      void utils.project.getById.invalidate({ id: projectId });
+    } catch (error) {
+      console.error("Failed to add collaborator:", error);
+      if (error instanceof Error) {
+        setSearchError(error.message);
+      }
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
   return (
     <div className="surface-card overflow-hidden">
       <button
@@ -69,8 +170,8 @@ export function CreateProjectForm({ onSubmit, currentUser, isExpanded, onToggle 
       </button>
 
       {isExpanded && (
-        <form onSubmit={handleSubmit} className="px-6 pb-6 border-t border-border-light/30 pt-6">
-          <div className="space-y-4">
+        <div className="px-6 pb-6 border-t border-border-light/30 pt-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-fg-secondary mb-2 uppercase tracking-wide">
                 {t("projectForm.projectName")}
@@ -100,28 +201,180 @@ export function CreateProjectForm({ onSubmit, currentUser, isExpanded, onToggle 
               />
             </div>
 
-            {/* ACCENT-FILLED BUTTON */}
-            <button
-              type="submit"
-              disabled={isSubmitting || !title.trim()}
-              className="btn-primary w-full flex items-center justify-center gap-2"
-            >
-              <span className="relative z-10 flex items-center justify-center gap-2">
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="animate-spin" size={18} />
-                    {t("projectForm.creating")}
-                  </>
-                ) : (
-                  <>
-                    <Plus size={18} />
-                    {t("projectForm.create")}
-                  </>
+            {!projectId && (
+              <button
+                type="submit"
+                disabled={isSubmitting || !title.trim()}
+                className="btn-primary w-full flex items-center justify-center gap-2"
+              >
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="animate-spin" size={18} />
+                      {t("projectForm.creating")}
+                    </>
+                  ) : (
+                    <>
+                      <Plus size={18} />
+                      {t("projectForm.create")}
+                    </>
+                  )}
+                </span>
+              </button>
+            )}
+          </form>
+
+          {projectId && isOwner && onAddCollaborator && (
+            <div className="mt-6 pt-6 border-t border-border-light/30">
+              <h3 className="text-sm font-semibold text-fg-primary mb-4 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                {t("team.title")}
+              </h3>
+              
+              <form onSubmit={handleAddCollaborator} className="space-y-3 mb-4">
+                <div>
+                  <label className="block text-xs font-semibold text-fg-secondary mb-2 uppercase tracking-wide">
+                    {t("team.addMember")}
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder={t("team.emailPlaceholder")}
+                      className="w-full px-4 py-3 bg-bg-surface/60 border border-border-light/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary/50 text-fg-primary placeholder:text-fg-tertiary transition-all"
+                      disabled={isAdding}
+                    />
+                    {isSearching && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <div className="w-4 h-4 border-2 border-accent-primary border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {searchedUser && (
+                  <div className="flex items-center gap-3 p-3 bg-success/10 border border-success/30 rounded-lg animate-in fade-in slide-in-from-top-1">
+                    {searchedUser.image ? (
+                      <Image
+                        src={searchedUser.image}
+                        alt={searchedUser.name ?? "User"}
+                        width={40}
+                        height={40}
+                        className="rounded-full object-cover ring-2 ring-success/30"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center text-white font-semibold">
+                        {searchedUser.name?.[0]?.toUpperCase() ?? searchedUser.email[0]?.toUpperCase()}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-fg-primary truncate">
+                        {searchedUser.name ?? t("team.unknownUser")}
+                      </p>
+                      <p className="text-xs text-fg-secondary truncate">{searchedUser.email}</p>
+                    </div>
+                    <CheckCircle2 size={20} className="text-success flex-shrink-0" />
+                  </div>
                 )}
-              </span>
-            </button>
-          </div>
-        </form>
+
+                {searchError && (
+                  <div className="p-3 bg-error/10 border border-error/30 rounded-lg text-sm text-error animate-in fade-in slide-in-from-top-1">
+                    {searchError}
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <select
+                    value={permission}
+                    onChange={(e) => setPermission(e.target.value as "read" | "write")}
+                    className="flex-1 px-4 py-3 bg-bg-surface/60 border border-border-light/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary/50 text-fg-primary transition-all"
+                    disabled={isAdding}
+                  >
+                    <option value="read" className="bg-bg-secondary text-fg-primary">{t("team.canView")}</option>
+                    <option value="write" className="bg-bg-secondary text-fg-primary">{t("team.canEdit")}</option>
+                  </select>
+
+                  <button
+                    type="submit"
+                    disabled={isAdding || !searchedUser || isSearching}
+                    className="px-6 py-3 bg-success text-white font-semibold rounded-lg hover:bg-success/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-success/20"
+                  >
+                    {isAdding ? t("team.adding") : t("team.add")}
+                  </button>
+                </div>
+              </form>
+
+              <div className="space-y-2">
+                {currentCollaborators.length === 0 ? (
+                  <p className="text-center py-4 text-sm text-fg-tertiary">{t("team.empty")}</p>
+                ) : (
+                  currentCollaborators.map(({ user, permission: userPermission }) => (
+                    <div
+                      key={user.id}
+                      className="flex items-center justify-between p-3 bg-bg-surface/50 rounded-lg border border-border-light/30 hover:bg-bg-elevated transition-all"
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        {user.image ? (
+                          <Image
+                            src={user.image}
+                            alt={user.name ?? "User"}
+                            width={32}
+                            height={32}
+                            className="rounded-full object-cover ring-2 ring-white/10"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center text-white font-semibold text-xs">
+                            {user.name?.[0] ?? user.email[0]?.toUpperCase() ?? "?"}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-fg-primary truncate">
+                            {user.name ?? user.email}
+                          </p>
+                          {user.name && (
+                            <p className="text-xs text-fg-secondary truncate">{user.email}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {isOwner && onUpdatePermission && onRemoveCollaborator ? (
+                          <>
+                            <select
+                              value={userPermission}
+                              onChange={(e) => onUpdatePermission(user.id, e.target.value as "read" | "write")}
+                              className="px-3 py-1.5 text-xs border border-border-light/30 bg-bg-surface/50 rounded-lg text-fg-primary hover:bg-bg-elevated transition-all"
+                            >
+                              <option value="read" className="bg-bg-secondary text-fg-primary">{t("team.view")}</option>
+                              <option value="write" className="bg-bg-secondary text-fg-primary">{t("team.edit")}</option>
+                            </select>
+                            <button
+                              onClick={() => onRemoveCollaborator(user.id)}
+                              className="p-2 text-error hover:bg-error/10 rounded-lg transition-colors"
+                              title={t("team.remove")}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </>
+                        ) : (
+                          <span className="px-3 py-1.5 text-xs font-medium bg-bg-surface/50 text-fg-secondary rounded-lg border border-border-light/30">
+                            {userPermission === "read" ? t("team.view") : t("team.edit")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

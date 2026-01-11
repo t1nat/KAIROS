@@ -409,6 +409,44 @@ export function ProgressFeedClient() {
         : []),
     ];
 
+    // Task Status Distribution
+    const statusCounts = {
+      pending: allTasks.filter((t) => t.status === "pending").length,
+      in_progress: allTasks.filter((t) => t.status === "in_progress").length,
+      completed: allTasks.filter((t) => t.status === "completed").length,
+      blocked: allTasks.filter((t) => t.status === "blocked").length,
+    };
+
+    const statusSegments: PieSegment[] = [
+      { key: "completed", label: "Completed", value: statusCounts.completed, strokeColor: colors.success },
+      { key: "in_progress", label: "In Progress", value: statusCounts.in_progress, strokeColor: colors.info },
+      { key: "pending", label: "Pending", value: statusCounts.pending, strokeColor: colors.warning },
+      { key: "blocked", label: "Blocked", value: statusCounts.blocked, strokeColor: colors.error },
+    ].filter((s) => s.value > 0);
+
+    // Due Dates Tracking
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfWeek = new Date(today);
+    endOfWeek.setDate(endOfWeek.getDate() + 7);
+
+    // Type assertion for tasks with dueDate
+    type TaskWithDueDate = typeof allTasks[number] & { dueDate?: Date | null };
+    const tasksTyped = allTasks as TaskWithDueDate[];
+    
+    const tasksWithDueDates = tasksTyped.filter((t) => t.dueDate && t.status !== "completed");
+    const overdueTasks = tasksWithDueDates.filter((t) => t.dueDate && new Date(t.dueDate) < today).length;
+    const dueTodayTasks = tasksWithDueDates.filter((t) => {
+      if (!t.dueDate) return false;
+      const due = new Date(t.dueDate);
+      return due.toDateString() === today.toDateString();
+    }).length;
+    const dueThisWeekTasks = tasksWithDueDates.filter((t) => {
+      if (!t.dueDate) return false;
+      const due = new Date(t.dueDate);
+      return due > today && due <= endOfWeek;
+    }).length;
+
     return (
       <div className="min-h-screen p-4 lg:p-6">
         <div className="flex items-center justify-between mb-6">
@@ -457,6 +495,46 @@ export function ProgressFeedClient() {
             subtitle={t("perProject.subtitle")}
             segments={perProjectPieSegments}
           />
+        </div>
+
+        {/* Task Status Distribution */}
+        <div className="mb-6">
+          <PieChart
+            title="Task Status Distribution"
+            subtitle="Breakdown by status"
+            segments={statusSegments}
+          />
+        </div>
+
+        {/* Due Dates Section */}
+        <div className="mb-6">
+          <p className="text-sm font-medium text-fg-primary mb-3">Due Dates</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="p-4 rounded-lg border border-red-500/20 bg-red-500/5">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 rounded-full bg-red-500" />
+                <p className="text-xs font-medium text-fg-tertiary">Overdue</p>
+              </div>
+              <p className="text-2xl font-bold text-red-500">{overdueTasks}</p>
+              <p className="text-xs text-fg-tertiary mt-1">Tasks past due date</p>
+            </div>
+            <div className="p-4 rounded-lg border border-orange-500/20 bg-orange-500/5">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 rounded-full bg-orange-500" />
+                <p className="text-xs font-medium text-fg-tertiary">Due Today</p>
+              </div>
+              <p className="text-2xl font-bold text-orange-500">{dueTodayTasks}</p>
+              <p className="text-xs text-fg-tertiary mt-1">Tasks due today</p>
+            </div>
+            <div className="p-4 rounded-lg border border-blue-500/20 bg-blue-500/5">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 rounded-full bg-blue-500" />
+                <p className="text-xs font-medium text-fg-tertiary">Due This Week</p>
+              </div>
+              <p className="text-2xl font-bold text-blue-500">{dueThisWeekTasks}</p>
+              <p className="text-xs text-fg-tertiary mt-1">Tasks due within 7 days</p>
+            </div>
+          </div>
         </div>
 
         <div>
@@ -568,7 +646,7 @@ export function ProgressFeedClient() {
   ];
 
   return (
-    <div className="min-h-screen p-4 lg:p-6">
+    <div className="min-h-screen">
       <div className="flex items-center gap-3 mb-6">
         <button
           type="button"
@@ -599,33 +677,41 @@ export function ProgressFeedClient() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="p-3 rounded-lg border border-border-light/10">
-          <p className="text-xs text-fg-tertiary">{t("stats.tasks")}</p>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="surface-card p-3 hover:shadow-md transition-shadow">
+          <p className="text-xs font-medium text-fg-tertiary uppercase tracking-wide mb-1">{t("stats.tasks")}</p>
           <p className="text-2xl font-bold text-fg-primary">{totalTasks}</p>
         </div>
-        <div className="p-3 rounded-lg border border-border-light/10">
-          <p className="text-xs text-fg-tertiary">{t("stats.completed")}</p>
+        <div className="surface-card p-3 hover:shadow-md transition-shadow">
+          <p className="text-xs font-medium text-fg-tertiary uppercase tracking-wide mb-1">{t("stats.completed")}</p>
           <p className="text-2xl font-bold text-success">{completedTasks}</p>
         </div>
-        <div className="p-3 rounded-lg border border-border-light/10">
-          <p className="text-xs text-fg-tertiary">{t("labels.activity")}</p>
-          <p className="text-2xl font-bold text-fg-primary">{projectActivity.length}</p>
+        <div className="surface-card p-3 hover:shadow-md transition-shadow">
+          <p className="text-xs font-medium text-fg-tertiary uppercase tracking-wide mb-1">{t("labels.activity")}</p>
+          <p className="text-2xl font-bold text-accent-primary">{projectActivity.length}</p>
         </div>
-        <div className="p-3 rounded-lg border border-border-light/10">
-          <p className="text-xs text-fg-tertiary">{t("projectDetails.lastUpdate")}</p>
-          <p className="text-sm font-medium text-fg-primary">
+        <div className="surface-card p-3 hover:shadow-md transition-shadow">
+          <p className="text-xs font-medium text-fg-tertiary uppercase tracking-wide mb-1">{t("projectDetails.lastUpdate")}</p>
+          <p className="text-sm font-semibold text-fg-primary">
             {lastActivityAt
-              ? new Intl.DateTimeFormat(locale).format(new Date(lastActivityAt))
+              ? new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(new Date(lastActivityAt))
               : "—"}
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <PieChart title={t("projectDetails.taskCompletion")} segments={completionSegments} />
-        <PieChart title={t("projectDetails.activityCategories")} segments={activitySegments} />
-        <PieChart title={t("contributors.title")} subtitle={t("contributors.subtitle")} segments={contributorSegments} />
+      {/* Chart Cards */}
+      <div className="space-y-4">
+        <div className="surface-card p-4">
+          <PieChart title={t("projectDetails.taskCompletion")} segments={completionSegments} />
+        </div>
+        <div className="surface-card p-4">
+          <PieChart title={t("projectDetails.activityCategories")} segments={activitySegments} />
+        </div>
+        <div className="surface-card p-4">
+          <PieChart title={t("contributors.title")} subtitle={t("contributors.subtitle")} segments={contributorSegments} />
+        </div>
       </div>
     </div>
   );

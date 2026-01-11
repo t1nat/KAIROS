@@ -145,9 +145,7 @@ export default async function CreatePage({
                   </div>
                 </div>
 
-                <div className="mt-10">
-                  <ProjectsListWorkspace />
-                </div>
+
               </div>
           )}
         </main>

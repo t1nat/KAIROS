@@ -4,6 +4,15 @@ import { useEffect, useMemo, useState } from "react";
 
 type RgbTriplet = [number, number, number];
 
+function mixTriplets(a: RgbTriplet, b: RgbTriplet, t: number): RgbTriplet {
+  const tt = Math.max(0, Math.min(1, t));
+  return [
+    Math.round(a[0] + (b[0] - a[0]) * tt),
+    Math.round(a[1] + (b[1] - a[1]) * tt),
+    Math.round(a[2] + (b[2] - a[2]) * tt),
+  ];
+}
+
 function parseRgbTriplet(raw: string): RgbTriplet | null {
   const cleaned = raw.trim();
   if (!cleaned) return null;
@@ -132,10 +141,11 @@ export function useResolvedThemeColors() {
   const tick = useThemeColorTick();
 
   return useMemo(() => {
-    const accentTriplet = resolveCssVarToTriplet("--accent-primary");
+    const accentPrimaryTriplet = resolveCssVarToTriplet("--accent-primary");
+    const accentSecondaryTriplet = resolveCssVarToTriplet("--accent-secondary");
 
     const generatePalette = (): string[] => {
-      if (!accentTriplet) {
+      if (!accentPrimaryTriplet) {
         return [
           "rgba(156, 163, 205, 0.75)",
           "rgba(147, 160, 195, 0.7)",
@@ -146,13 +156,17 @@ export function useResolvedThemeColors() {
         ];
       }
 
-      const base = soften(accentTriplet, 0.35, 0.25);
-      const hueShifts = [0, 35, -35, 70, -70, 105];
+      const primaryPastel = soften(accentPrimaryTriplet, 0.55, 0.35);
+      const secondarySource = accentSecondaryTriplet ?? rotateHue(accentPrimaryTriplet, 40);
+      const secondaryPastel = soften(secondarySource, 0.55, 0.35);
+
+      const hueShifts = [0, 20, -20, 40, -40, 60];
 
       return hueShifts.map((shift, index) => {
-        const rotated = rotateHue(base, shift);
-        const lightened = lighten(rotated, 0.15 + index * 0.02);
-        const alpha = 0.7 - index * 0.015;
+        const mix = mixTriplets(primaryPastel, secondaryPastel, index % 2 === 0 ? 0.35 : 0.65);
+        const rotated = rotateHue(mix, shift);
+        const lightened = lighten(rotated, 0.08 + index * 0.01);
+        const alpha = 0.76 - index * 0.02;
         return rgbaFromTriplet(lightened, alpha);
       });
     };

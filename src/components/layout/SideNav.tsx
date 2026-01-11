@@ -13,7 +13,8 @@ import {
   Settings,
   Menu,
   X,
-  Plus
+  Plus,
+  MessageCircle
 } from "lucide-react";
 
 export function SideNav() {
@@ -45,6 +46,7 @@ export function SideNav() {
     { href: "/create?action=new_project", icon: FolderKanban, label: t("projects") },
     { href: "/create?action=new_note", icon: FileEdit, label: t("notes") },
     { href: "/progress", icon: BarChart3, label: t("progress") },
+    { href: "/chat", icon: MessageCircle, label: "Chat" },
   ];
 
   const profileItem = { href: "/orgs", icon: Users, label: tOrg("yourOrgs") };
@@ -57,6 +59,9 @@ export function SideNav() {
     }
     if (href === "/progress") {
       return pathname === "/progress";
+    }
+    if (href === "/chat") {
+      return pathname === "/chat";
     }
     if (href.startsWith("/settings")) {
       return pathname === "/settings";

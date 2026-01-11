@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { api } from "~/trpc/react";
 import { CreateProjectForm, CreateTaskForm, CollaboratorManager } from "./ProjectManagement";
 import { InteractiveTimeline } from "./InteractiveTimeline";
-import { ChevronDown, ChevronUp, RefreshCw, CheckCircle2, ArrowLeft, Folder, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, RefreshCw, CheckCircle2, ArrowLeft, Folder, Trash2, Plus } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useToast } from "~/components/providers/ToastProvider";
@@ -74,8 +74,6 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
   );
   const [isCreateProjectExpanded, setIsCreateProjectExpanded] = useState(true);
   const [showTaskForm, setShowTaskForm] = useState(false);
-  const [showCollaborators, setShowCollaborators] = useState(false);
-  const [showOtherProjects, setShowOtherProjects] = useState(false);
   const [deleteProjectArmed, setDeleteProjectArmed] = useState(false);
 
   const utils = api.useUtils();
@@ -246,8 +244,8 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
     : [];
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 relative w-full h-full">
-      <div className="w-full lg:w-96 lg:flex-shrink-0 space-y-3 sm:space-y-4">
+    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 relative w-full h-full max-w-7xl mx-auto">
+      <div className="w-full lg:w-96 xl:w-[420px] lg:flex-shrink-0 space-y-3">
         {!selectedProjectId && (
           <div className="animate-in slide-in-from-top-2 duration-200">
             <CreateProjectForm
@@ -260,8 +258,8 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
         )}
 
         {selectedProjectId && projectDetails && (
-          <div className="space-y-3 animate-in fade-in slide-in-from-left-2 duration-300">
-            <div className="surface-card p-5">
+          <div className="space-y-2 animate-in fade-in slide-in-from-left-2 duration-300">
+            <div className="bg-bg-surface/40 backdrop-blur-sm rounded-xl p-4 border border-border-light/10">
               <div className="flex items-start justify-between mb-4">
                 <button
                   onClick={() => setSelectedProjectId(null)}
@@ -328,140 +326,58 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                   </span>
                 </div>
               )}
-            </div>
-
-            {projectDetails.tasks && projectDetails.tasks.length > 0 && (
-              <div className="surface-card p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-accent-primary/10 border border-accent-primary/20 flex items-center justify-center">
-                      <CheckCircle2 size={20} className="text-accent-primary" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-accent-primary">
-                        {projectDetails.tasks.filter((t) => t.status === "completed").length}
-                      </p>
-                      <p className="text-xs text-fg-tertiary">{t("stats.completed")}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-fg-primary">
-                      {projectDetails.tasks.length}
-                    </p>
-                    <p className="text-xs text-fg-tertiary">{t("stats.totalTasks")}</p>
-                  </div>
+              
+              {/* Team Members Section - Now integrated */}
+              {isOwner && (
+                <div className="mt-4 pt-4 border-t border-border-light/20">
+                  <h3 className="text-sm font-semibold text-fg-primary mb-3 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    {t("team.title")}
+                  </h3>
+                  <CollaboratorManager
+                    projectId={selectedProjectId}
+                    currentCollaborators={(projectDetails.collaborators?.map((c) => ({
+                      user: {
+                        id: c.collaboratorId,
+                        name: c.collaborator?.name ?? null,
+                        email: c.collaborator?.email ?? "",
+                        image: c.collaborator?.image ?? null,
+                      },
+                      permission: c.permission,
+                    })) ?? []) as Collaborator[]}
+                    onAddCollaborator={handleAddCollaborator}
+                    onRemoveCollaborator={handleRemoveCollaborator}
+                    onUpdatePermission={handleUpdatePermission}
+                    isOwner={isOwner}
+                  />
                 </div>
-              </div>
-            )}
-
-            {hasWriteAccess && (
-              <div className="surface-card overflow-hidden">
-                <button
-                  onClick={() => setShowTaskForm(!showTaskForm)}
-                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-bg-elevated transition-colors"
-                >
-                  <span className="text-sm font-semibold text-fg-primary">{t("actions.addTask")}</span>
-                    {showTaskForm ? <ChevronUp size={16} className="text-fg-primary" /> : <ChevronDown size={16} className="text-fg-primary" />}
-                </button>
-
-                {showTaskForm && (
-                  <div className="px-4 pb-4 border-t border-border-light/20">
-                    <CreateTaskForm
-                      projectId={selectedProjectId}
-                      availableUsers={availableUsers}
-                      onSubmit={handleCreateTask}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {isOwner && (
-              <div className="surface-card overflow-hidden">
-                <button
-                  onClick={() => setShowCollaborators(!showCollaborators)}
-                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-bg-elevated transition-colors"
-                >
-                  <span className="text-sm font-semibold text-fg-primary">{t("team.title")}</span>
-                  {showCollaborators ? <ChevronUp size={16} className="text-fg-primary" /> : <ChevronDown size={16} className="text-fg-primary" />}
-                </button>
-
-                {showCollaborators && (
-                  <div className="px-4 pb-4 border-t border-border-light/20">
-                    <CollaboratorManager
-                      projectId={selectedProjectId}
-                      currentCollaborators={(projectDetails.collaborators?.map((c) => ({
-                        user: {
-                          id: c.collaboratorId,
-                          name: c.collaborator?.name ?? null,
-                          email: c.collaborator?.email ?? "",
-                          image: c.collaborator?.image ?? null,
-                        },
-                        permission: c.permission,
-                      })) ?? []) as Collaborator[]}
-                      onAddCollaborator={handleAddCollaborator}
-                      onRemoveCollaborator={handleRemoveCollaborator}
-                      onUpdatePermission={handleUpdatePermission}
-                      isOwner={isOwner}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {projects && projects.filter((p) => p.id !== selectedProjectId).length > 0 && selectedProjectId && (
-          <div className="relative">
-            <button
-              onClick={() => setShowOtherProjects((s) => !s)}
-              className="w-full flex items-center justify-between px-4 py-3 bg-bg-surface/60 hover:bg-bg-elevated rounded-xl border border-border-light/20 hover:border-accent-primary/30 transition-colors"
-            >
-              <span className="text-sm font-semibold text-fg-primary">{t("projects.otherProjects")}</span>
-              {showOtherProjects ? <ChevronUp size={16} className="text-fg-primary" /> : <ChevronDown size={16} className="text-fg-primary" />}
-            </button>
-
-            {showOtherProjects && (
-              <div className="mt-2 bg-bg-elevated border border-border-light/20 rounded-xl shadow-xl p-2 max-h-64 overflow-y-auto">
-                {projects
-                  .filter((p) => p.id !== selectedProjectId)
-                  .map((project) => (
-                    <button
-                      key={project.id}
-                      className="w-full text-left text-sm p-3 rounded-lg hover:bg-bg-surface hover:text-accent-primary text-fg-primary transition-colors flex items-center gap-3"
-                      onClick={() => {
-                        setSelectedProjectId(project.id);
-                        setShowOtherProjects(false);
-                      }}
-                    >
-                      <Folder size={16} className="text-accent-primary flex-shrink-0" />
-                      <span className="truncate">{project.title}</span>
-                    </button>
-                  ))}
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
       </div>
 
       <div className="flex-1 min-w-0">
         {selectedProjectId && projectDetails && (
-          <InteractiveTimeline
-            tasks={projectDetails.tasks as Task[]}
-            onTaskStatusChange={handleTaskStatusChange}
-            isReadOnly={!hasWriteAccess}
-            projectTitle={projectDetails.title}
-          />
+          <div className="h-full">
+            <InteractiveTimeline
+              tasks={projectDetails.tasks as Task[]}
+              onTaskStatusChange={handleTaskStatusChange}
+              isReadOnly={!hasWriteAccess}
+              projectTitle={projectDetails.title}
+            />
+          </div>
         )}
 
         {!selectedProjectId && (
           <div className="h-full flex items-center justify-center">
             <div className="text-center max-w-md px-8">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center mx-auto mb-6 shadow-lg shadow-accent-primary/20">
-                <Folder className="text-white" size={36} />
-              </div>
-              <h3 className="text-2xl font-bold text-fg-primary mb-3">{t("projects.selectProject")}</h3>
-              <p className="text-fg-secondary leading-relaxed">{t("projects.selectProjectDesc")}</p>
+              <p className="text-sm text-fg-tertiary">Create or select a project to get started</p>
             </div>
           </div>
         )}

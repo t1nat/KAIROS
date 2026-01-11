@@ -9,6 +9,7 @@ import { notificationRouter } from "~/server/api/routers/notification"; // NEW
 import { settingsRouter } from "~/server/api/routers/settings";
 import { authRouter } from "~/server/api/routers/auth";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
+import { chatRouter } from "~/server/api/routers/chat";
 
 
 export const appRouter = createTRPCRouter({
@@ -21,6 +22,7 @@ export const appRouter = createTRPCRouter({
   user: userRouter, 
   auth: authRouter,
   notification: notificationRouter,
+  chat: chatRouter,
 });
 
 export type AppRouter = typeof appRouter;

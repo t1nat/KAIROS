@@ -1,4 +1,5 @@
 import "~/styles/globals.css";
+import "react-chat-elements/dist/main.css";
 
 import { type Metadata } from "next";
 import { Cinzel, Newsreader, Uncial_Antiqua, Faustina, Space_Grotesk } from "next/font/google";

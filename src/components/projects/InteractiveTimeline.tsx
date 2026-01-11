@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { Check, Clock, User, CheckCircle2 } from "lucide-react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
-import { interpolateNumber, timer } from "d3";
+
 
 interface Task {
   id: number;
@@ -58,7 +58,7 @@ export function InteractiveTimeline({
   const [hoveredTaskId, setHoveredTaskId] = useState<number | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<number | null>(null);
 
-  const timerRef = useRef<ReturnType<typeof timer> | null>(null);
+  const rafRef = useRef<number | null>(null);
   const animatedPercentageRef = useRef(0);
     
   useEffect(() => {
@@ -70,23 +70,32 @@ export function InteractiveTimeline({
       ? 0 
       : (optimisticTasks.filter(t => t.status === "completed").length / optimisticTasks.length) * 100;
 
-    if (timerRef.current) timerRef.current.stop();
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
 
     const startPercentage = animatedPercentageRef.current;
     const duration = 400;
 
-    const interp = interpolateNumber(startPercentage, targetPercentage);
+    const start = performance.now();
 
-    timerRef.current = timer((elapsed: number) => {
+    const tick = (now: number) => {
+      const elapsed = now - start;
       const t = Math.min(elapsed / duration, 1);
-      const current = interp(t); // Linear interpolation - constant speed
+      const current = startPercentage + (targetPercentage - startPercentage) * t;
       animatedPercentageRef.current = current;
       setAnimatedPercentage(current);
-      if (t >= 1) timerRef.current?.stop();
-    });
+
+      if (t < 1) {
+        rafRef.current = requestAnimationFrame(tick);
+      } else {
+        rafRef.current = null;
+      }
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
 
     return () => {
-      if (timerRef.current) timerRef.current.stop();
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
     };
   }, [optimisticTasks]);
 

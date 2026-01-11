@@ -153,6 +153,7 @@ export const projectRouter = createTRPCRouter({
           .select({
             id: tasks.id,
             status: tasks.status,
+            dueDate: tasks.dueDate,
           })
           .from(tasks)
           .where(eq(tasks.projectId, project.id));
@@ -164,6 +165,7 @@ export const projectRouter = createTRPCRouter({
         };
       })
     );
+
 
     console.log("Projects with tasks:", projectsWithTasks.map(p => ({
       id: p.id,
