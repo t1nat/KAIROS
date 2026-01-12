@@ -14,7 +14,7 @@ import {
   Menu,
   X,
   Plus,
-  MessageCircle,
+  //MessageCircle,
   Calendar
 } from "lucide-react";
 
@@ -47,7 +47,7 @@ export function SideNav() {
     { href: "/projects", icon: FolderKanban, label: t("projects") },
     { href: "/create?action=new_note", icon: FileEdit, label: t("notes") },
     { href: "/progress", icon: BarChart3, label: t("progress") },
-    { href: "/chat", icon: MessageCircle, label: "Chat" },
+   // { href: "/chat", icon: MessageCircle, label: "Chat" },
     { href: "/publish", icon: Calendar, label: t("events") },
   ];
 
