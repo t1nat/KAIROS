@@ -146,7 +146,7 @@ export function InteractiveTimeline({
     return (
       <div className="flex-1 flex items-center justify-center min-h-[500px]">
         <div className="text-center max-w-md">
-          <div className="w-20 h-20 rounded-2xl bg-bg-surface flex items-center justify-center mx-auto mb-6 border border-border-light/30">
+          <div className="w-20 h-20 rounded-2xl bg-bg-surface flex items-center justify-center mx-auto mb-6 shadow-sm">
             <Clock size={32} className="text-fg-primary" />
           </div>
           <h3 className="text-2xl font-bold text-fg-primary mb-3">{t("timeline.emptyTitle")}</h3>
@@ -178,7 +178,7 @@ export function InteractiveTimeline({
           </div>
         </div>
 
-        <div className="relative w-full h-3 bg-bg-surface/60 rounded-full overflow-hidden border border-border-light/30">
+        <div className="relative w-full h-3 bg-bg-surface/60 rounded-full overflow-hidden shadow-sm">
           <div 
             className="absolute top-0 left-0 h-full rounded-full shadow-lg transition-all duration-300"
             style={{ 
@@ -336,7 +336,7 @@ export function InteractiveTimeline({
                     )}
 
                     {task.assignedTo && (
-                      <div className="flex items-center gap-1.5 bg-bg-surface/60 px-2 py-1 rounded-md border border-border-light/20">
+                      <div className="flex items-center gap-1.5 bg-bg-surface/60 px-2 py-1 rounded-md shadow-sm">
                         {task.assignedTo.image ? (
                           <Image 
                             src={task.assignedTo.image} 

@@ -44,7 +44,7 @@ export function OrgSwitcher() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="h-10 inline-flex items-center gap-2 rounded-xl bg-bg-surface border border-border-light px-3 text-sm text-fg-secondary hover:text-fg-primary hover:bg-bg-elevated transition-colors"
+        className="h-10 inline-flex items-center gap-2 rounded-xl bg-bg-surface shadow-sm px-3 text-sm text-fg-secondary hover:text-fg-primary hover:bg-bg-elevated hover:shadow-md transition-colors"
         aria-expanded={open}
         aria-haspopup="menu"
       >
@@ -57,7 +57,7 @@ export function OrgSwitcher() {
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 mt-2 w-72 overflow-hidden rounded-2xl border border-border-light/40 bg-bg-surface/95 backdrop-blur shadow-lg"
+          className="absolute right-0 mt-2 w-72 overflow-hidden rounded-2xl ios-card-elevated bg-bg-surface/95 backdrop-blur shadow-lg"
         >
           <div className="px-3 py-2 text-xs font-medium text-fg-tertiary border-b border-border-light/30">
             {tOrg("switchOrg")}

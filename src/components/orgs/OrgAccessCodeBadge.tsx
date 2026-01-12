@@ -32,7 +32,7 @@ export function OrgAccessCodeBadge() {
   const copyLabel = copied ? tCommon("copied") : tCommon("copy");
 
   return (
-    <div className="hidden sm:flex items-center gap-2 rounded-xl bg-bg-surface border border-border-light px-3 py-2">
+    <div className="hidden sm:flex items-center gap-2 rounded-xl bg-bg-surface shadow-sm px-3 py-2">
       <span className="text-xs font-medium text-fg-tertiary">
         {tOrg("accessCode")}
       </span>
@@ -42,7 +42,7 @@ export function OrgAccessCodeBadge() {
       <button
         type="button"
         onClick={() => void copyToClipboard()}
-        className="ml-1 w-8 h-8 rounded-lg bg-bg-secondary/40 border border-border-light/20 hover:bg-bg-secondary/60 hover:border-border-light/40 transition-colors flex items-center justify-center"
+        className="ml-1 w-8 h-8 rounded-lg bg-bg-secondary/40 shadow-sm hover:bg-bg-secondary/60 hover:shadow-md transition-colors flex items-center justify-center"
         aria-label={copyLabel}
         title={copyLabel}
       >

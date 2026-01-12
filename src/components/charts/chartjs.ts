@@ -13,7 +13,7 @@ class ChartJsRegistry {
       easing: "easeInOutQuart",
     };
     ChartJS.defaults.responsive = true;
-    ChartJS.defaults.maintainAspectRatio = false;
+    ChartJS.defaults.maintainAspectRatio = true;
 
     this.registered = true;
   }

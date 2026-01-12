@@ -22,7 +22,7 @@ export default async function ProgressPage() {
       <SideNav />
 
       <div className="lg:ml-16 min-h-screen flex flex-col pt-16 lg:pt-0">
-        <header className="sticky top-16 lg:top-0 z-30 topbar-solid border-b border-border-light/30">
+        <header className="sticky top-16 lg:top-0 z-30 topbar-solid ios-header">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-3 sm:py-4 flex flex-wrap justify-between items-center gap-3">
             <div className="flex items-center gap-3">
               <div>

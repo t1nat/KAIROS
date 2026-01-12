@@ -4,15 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 
 type RgbTriplet = [number, number, number];
 
-function mixTriplets(a: RgbTriplet, b: RgbTriplet, t: number): RgbTriplet {
-  const tt = Math.max(0, Math.min(1, t));
-  return [
-    Math.round(a[0] + (b[0] - a[0]) * tt),
-    Math.round(a[1] + (b[1] - a[1]) * tt),
-    Math.round(a[2] + (b[2] - a[2]) * tt),
-  ];
-}
-
 function parseRgbTriplet(raw: string): RgbTriplet | null {
   const cleaned = raw.trim();
   if (!cleaned) return null;
@@ -33,37 +24,25 @@ function rgbaFromTriplet(triplet: RgbTriplet, alpha: number): string {
   return `rgba(${triplet[0]}, ${triplet[1]}, ${triplet[2]}, ${a})`;
 }
 
-function desaturate(triplet: RgbTriplet, amount: number): RgbTriplet {
-  const gray = 0.299 * triplet[0] + 0.587 * triplet[1] + 0.114 * triplet[2];
-  return [
-    Math.round(triplet[0] + (gray - triplet[0]) * amount),
-    Math.round(triplet[1] + (gray - triplet[1]) * amount),
-    Math.round(triplet[2] + (gray - triplet[2]) * amount),
-  ];
+function hexToRgb(hex: string): RgbTriplet {
+  const clean = hex.replace('#', '');
+  const r = parseInt(clean.substring(0, 2), 16);
+  const g = parseInt(clean.substring(2, 4), 16);
+  const b = parseInt(clean.substring(4, 6), 16);
+  return [r, g, b];
 }
 
-function lighten(triplet: RgbTriplet, amount: number): RgbTriplet {
-  return [
-    Math.round(triplet[0] + (255 - triplet[0]) * amount),
-    Math.round(triplet[1] + (255 - triplet[1]) * amount),
-    Math.round(triplet[2] + (255 - triplet[2]) * amount),
-  ];
-}
-
-function soften(triplet: RgbTriplet, desaturateAmount: number, lightenAmount: number): RgbTriplet {
-  return lighten(desaturate(triplet, desaturateAmount), lightenAmount);
-}
-
-function rotateHue(triplet: RgbTriplet, degrees: number): RgbTriplet {
+// Convert RGB to HSL
+function rgbToHsl(triplet: RgbTriplet): [number, number, number] {
   const r = triplet[0] / 255;
   const g = triplet[1] / 255;
   const b = triplet[2] / 255;
 
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
-  const l = (max + min) / 2;
   let h = 0;
   let s = 0;
+  const l = (max + min) / 2;
 
   if (max !== min) {
     const d = max - min;
@@ -74,32 +53,121 @@ function rotateHue(triplet: RgbTriplet, degrees: number): RgbTriplet {
     else h = ((r - g) / d + 4) / 6;
   }
 
-  h = (h + degrees / 360 + 1) % 1;
-  s = s * 0.5;
+  return [h * 360, s * 100, l * 100];
+}
 
-  const hue2rgb = (p: number, q: number, t: number): number => {
-    let tt = t;
-    if (tt < 0) tt += 1;
-    if (tt > 1) tt -= 1;
-    if (tt < 1 / 6) return p + (q - p) * 6 * tt;
-    if (tt < 1 / 2) return q;
-    if (tt < 2 / 3) return p + (q - p) * (2 / 3 - tt) * 6;
-    return p;
-  };
+// Predefined vibrant palettes for each accent color
+// Each palette has 6 colors that work harmoniously together
+const ACCENT_PALETTES: Record<string, RgbTriplet[]> = {
+  // Pink accent - #FF99C8 based
+  pink: [
+    hexToRgb('#FF99C8'), // Pink
+    hexToRgb('#FF6B9D'), // Hot pink
+    hexToRgb('#FFB3D9'), // Light pink
+    hexToRgb('#E84A8A'), // Deep pink
+    hexToRgb('#FF85B3'), // Bright pink
+    hexToRgb('#FFC4DC'), // Pastel pink
+  ],
+  
+  // Caramel/Yellow accent - #FCF6BD based  
+  caramel: [
+    hexToRgb('#FCF6BD'), // Caramel
+    hexToRgb('#FFE66D'), // Bright yellow
+    hexToRgb('#FFF3A3'), // Light yellow
+    hexToRgb('#F4D35E'), // Golden
+    hexToRgb('#FFD93D'), // Vivid yellow
+    hexToRgb('#FFFACD'), // Lemon chiffon
+  ],
+  
+  // Mint/Green accent - #D0F4DE based
+  mint: [
+    hexToRgb('#D0F4DE'), // Mint
+    hexToRgb('#95E1B7'), // Bright mint
+    hexToRgb('#B8F0CB'), // Light mint
+    hexToRgb('#6BCB77'), // Green
+    hexToRgb('#A8E6CF'), // Seafoam
+    hexToRgb('#C1F4D5'), // Pale mint
+  ],
+  
+  // Sky/Blue accent - #A9DEF9 based
+  sky: [
+    hexToRgb('#A9DEF9'), // Sky blue
+    hexToRgb('#60C5F1'), // Bright blue
+    hexToRgb('#87CEEB'), // Light sky blue
+    hexToRgb('#4DB8E8'), // Vivid blue
+    hexToRgb('#7DD3FC'), // Light cyan
+    hexToRgb('#B8E4FA'), // Pale blue
+  ],
+  
+  // Purple accent - #E4C1F9, #8069BB based
+  purple: [
+    hexToRgb('#E4C1F9'), // Light purple
+    hexToRgb('#8069BB'), // Deep purple
+    hexToRgb('#C9A9F5'), // Medium purple
+    hexToRgb('#A855F7'), // Vivid purple
+    hexToRgb('#D4B3F7'), // Soft purple
+    hexToRgb('#9F7AEA'), // Bright purple
+  ],
+  
+  // Default violet palette
+  violet: [
+    hexToRgb('#8B5CF6'), // Violet
+    hexToRgb('#A78BFA'), // Light violet
+    hexToRgb('#7C3AED'), // Deep violet
+    hexToRgb('#C4B5FD'), // Pale violet
+    hexToRgb('#6D28D9'), // Dark violet
+    hexToRgb('#DDD6FE'), // Lavender
+  ],
+  
+  // Orange accent
+  orange: [
+    hexToRgb('#FB923C'), // Orange
+    hexToRgb('#FDBA74'), // Light orange
+    hexToRgb('#F97316'), // Vivid orange
+    hexToRgb('#FED7AA'), // Pale orange
+    hexToRgb('#EA580C'), // Deep orange
+    hexToRgb('#FFEDD5'), // Cream orange
+  ],
+  
+  // Red accent
+  red: [
+    hexToRgb('#F87171'), // Red
+    hexToRgb('#FCA5A5'), // Light red
+    hexToRgb('#EF4444'), // Vivid red
+    hexToRgb('#FECACA'), // Pale red
+    hexToRgb('#DC2626'), // Deep red
+    hexToRgb('#FEE2E2'), // Rose
+  ],
+  
+  // Teal accent
+  teal: [
+    hexToRgb('#2DD4BF'), // Teal
+    hexToRgb('#5EEAD4'), // Light teal
+    hexToRgb('#14B8A6'), // Vivid teal
+    hexToRgb('#99F6E4'), // Pale teal
+    hexToRgb('#0D9488'), // Deep teal
+    hexToRgb('#CCFBF1'), // Mint teal
+  ],
+};
 
-  if (s === 0) {
-    const gray = Math.round(l * 255);
-    return [gray, gray, gray];
-  }
-
-  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-  const p = 2 * l - q;
-
-  return [
-    Math.round(hue2rgb(p, q, h + 1 / 3) * 255),
-    Math.round(hue2rgb(p, q, h) * 255),
-    Math.round(hue2rgb(p, q, h - 1 / 3) * 255),
-  ];
+// Detect which accent color is active based on hue
+function detectAccentName(triplet: RgbTriplet): string {
+  const [h, s] = rgbToHsl(triplet);
+  
+  // Check saturation - if very low, might be grayscale
+  if (s < 10) return 'violet';
+  
+  // Map hue ranges to accent names
+  if (h >= 320 || h < 10) return 'pink';      // Pink/Magenta range
+  if (h >= 10 && h < 45) return 'orange';     // Orange range
+  if (h >= 45 && h < 70) return 'caramel';    // Yellow/Caramel range
+  if (h >= 70 && h < 170) return 'mint';      // Green/Mint range
+  if (h >= 170 && h < 200) return 'teal';     // Teal range
+  if (h >= 200 && h < 260) return 'sky';      // Blue/Sky range
+  if (h >= 260 && h < 290) return 'purple';   // Purple range
+  if (h >= 290 && h < 320) return 'violet';   // Violet range
+  
+  return 'violet';
 }
 
 export function resolveCssVarToRgba(varName: string, alpha = 1): string | null {
@@ -142,56 +210,46 @@ export function useResolvedThemeColors() {
 
   return useMemo(() => {
     const accentPrimaryTriplet = resolveCssVarToTriplet("--accent-primary");
-    const accentSecondaryTriplet = resolveCssVarToTriplet("--accent-secondary");
+    const defaultPalette = ACCENT_PALETTES.violet ?? [];
 
     const generatePalette = (): string[] => {
       if (!accentPrimaryTriplet) {
-        return [
-          "rgba(156, 163, 205, 0.85)",
-          "rgba(147, 160, 195, 0.8)",
-          "rgba(160, 155, 190, 0.8)",
-          "rgba(140, 170, 190, 0.75)",
-          "rgba(155, 175, 180, 0.75)",
-          "rgba(165, 155, 175, 0.7)",
-        ];
+        // Fallback to violet palette
+        return defaultPalette.map((c, i) => rgbaFromTriplet(c, 0.9 - i * 0.02));
       }
 
-      const primaryBright = soften(accentPrimaryTriplet, 0.35, 0.25);
-      const secondarySource = accentSecondaryTriplet ?? rotateHue(accentPrimaryTriplet, 40);
-      const secondaryBright = soften(secondarySource, 0.35, 0.25);
-
-      const hueShifts = [0, 20, -20, 40, -40, 60];
-
-      return hueShifts.map((shift, index) => {
-        const mix = mixTriplets(primaryBright, secondaryBright, index % 2 === 0 ? 0.35 : 0.65);
-        const rotated = rotateHue(mix, shift);
-        const lightened = lighten(rotated, 0.05 + index * 0.01);
-        const alpha = 0.85 - index * 0.02;
-        return rgbaFromTriplet(lightened, alpha);
+      // Detect which accent is active and use its predefined palette
+      const accentName = detectAccentName(accentPrimaryTriplet);
+      const palette = ACCENT_PALETTES[accentName] ?? defaultPalette;
+      
+      return palette.map((color, index) => {
+        const alpha = 0.92 - index * 0.02;
+        return rgbaFromTriplet(color, alpha);
       });
     };
 
     const palette = generatePalette();
 
-    const successTriplet: RgbTriplet = resolveCssVarToTriplet("--success") ?? [74, 222, 128];
-    const warningTriplet: RgbTriplet = resolveCssVarToTriplet("--warning") ?? [251, 191, 36];
-    const infoTriplet: RgbTriplet = resolveCssVarToTriplet("--info") ?? [96, 165, 250];
-    const errorTriplet: RgbTriplet = resolveCssVarToTriplet("--error") ?? [248, 113, 113];
+    // Semantic colors - vibrant and bright
+    const successTriplet: RgbTriplet = hexToRgb('#22C55E'); // Bright green
+    const warningTriplet: RgbTriplet = hexToRgb('#F59E0B'); // Bright amber
+    const infoTriplet: RgbTriplet = hexToRgb('#3B82F6');    // Bright blue
+    const errorTriplet: RgbTriplet = hexToRgb('#EF4444');   // Bright red
 
-    const brightSuccess = soften(successTriplet, 0.25, 0.2);
-    const brightWarning = soften(warningTriplet, 0.25, 0.15);
-    const brightInfo = soften(infoTriplet, 0.2, 0.2);
-    const brightError = soften(errorTriplet, 0.3, 0.2);
+    // Get accent name for remaining/other colors
+    const accentName = accentPrimaryTriplet ? detectAccentName(accentPrimaryTriplet) : 'violet';
+    const accentPalette = ACCENT_PALETTES[accentName] ?? defaultPalette;
+    const fallbackColor: RgbTriplet = accentPalette[0] ?? [139, 92, 246];
 
     return {
       palette,
-      other: "rgba(165, 170, 185, 0.6)",
-      remaining: "rgba(190, 195, 205, 0.5)",
+      other: rgbaFromTriplet(accentPalette[4] ?? fallbackColor, 0.7),
+      remaining: rgbaFromTriplet(accentPalette[5] ?? accentPalette[2] ?? fallbackColor, 0.5),
       border: "rgba(170, 175, 190, 0.3)",
-      success: rgbaFromTriplet(brightSuccess, 0.8),
-      warning: rgbaFromTriplet(brightWarning, 0.75),
-      info: rgbaFromTriplet(brightInfo, 0.75),
-      error: rgbaFromTriplet(brightError, 0.7),
+      success: rgbaFromTriplet(successTriplet, 0.9),
+      warning: rgbaFromTriplet(warningTriplet, 0.9),
+      info: rgbaFromTriplet(infoTriplet, 0.9),
+      error: rgbaFromTriplet(errorTriplet, 0.9),
       fgPrimary: resolveCssVarToRgba("--fg-primary", 1) ?? "rgba(15, 23, 42, 1)",
       bgOverlay: resolveCssVarToRgba("--bg-overlay", 0.96) ?? "rgba(255, 255, 255, 0.96)",
     };
