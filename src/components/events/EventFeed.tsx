@@ -246,7 +246,7 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="surface-card rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="p-4 sm:p-6 border-b border-border-light flex items-center justify-between sticky top-0 bg-bg-primary z-10">
+        <div className="p-4 sm:p-6 flex items-center justify-between sticky top-0 bg-bg-primary/95 backdrop-blur-sm z-10">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-accent-primary/20 rounded-lg flex items-center justify-center">
               <BarChart3 size={18} className="sm:w-5 sm:h-5 text-accent-primary" />
@@ -477,7 +477,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
 
   return (
     <>
-      <div className="card-interactive mb-8 pb-8 border-b border-border-light last:border-0">
+      <div className="card-interactive mb-8 pb-8 last:mb-0">
         <InfoMessageToast
           message={infoMessage?.message ?? null}
           type={infoMessage?.type ?? null}
@@ -510,10 +510,10 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                   <button
                     onClick={handleDeleteEvent}
                     disabled={deleteEvent.isPending}
-                    className={`p-2 rounded-lg transition-all border ${
+                    className={`p-2 rounded-lg transition-all ${
                       deleteEventArmed
-                        ? "bg-error/10 border-error/30 text-error"
-                        : "text-fg-secondary border-transparent hover:text-error hover:bg-bg-secondary"
+                        ? "bg-error/10 text-error"
+                        : "text-fg-secondary hover:text-error hover:bg-bg-secondary"
                     }`}
                     aria-label={deleteEventArmed ? "Confirm delete event" : "Delete event"}
                   >
@@ -593,10 +593,10 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                 <button
                   onClick={() => handleRsvpClick("going")}
                   disabled={updateRsvp.isPending}
-                  className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg border transition-all ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg transition-all ${
                     event.userRsvpStatus === "going"
-                      ? "bg-event-positive/20 border-event-positive/50 text-event-positive"
-                      : "border-border-light text-fg-secondary hover:bg-bg-secondary"
+                      ? "bg-event-positive/20 text-event-positive"
+                      : "bg-bg-surface/50 text-fg-secondary hover:bg-bg-secondary"
                   }`}
                 >
                   <CheckCircle2 size={14} className="sm:w-4 sm:h-4" />
@@ -605,10 +605,10 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                 <button
                   onClick={() => handleRsvpClick("maybe")}
                   disabled={updateRsvp.isPending}
-                  className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg border transition-all ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg transition-all ${
                     event.userRsvpStatus === "maybe"
-                      ? "bg-event-pending/20 border-event-pending/50 text-event-pending"
-                      : "border-border-light text-fg-secondary hover:bg-bg-secondary"
+                      ? "bg-event-pending/20 text-event-pending"
+                      : "bg-bg-surface/50 text-fg-secondary hover:bg-bg-secondary"
                   }`}
                 >
                   <HelpCircle size={14} className="sm:w-4 sm:h-4" />
@@ -617,10 +617,10 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                 <button
                   onClick={() => handleRsvpClick("not_going")}
                   disabled={updateRsvp.isPending}
-                  className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg border transition-all ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg transition-all ${
                     event.userRsvpStatus === "not_going"
-                      ? "bg-event-critical/20 border-event-critical/50 text-event-critical"
-                      : "border-border-light text-fg-secondary hover:bg-bg-secondary"
+                      ? "bg-event-critical/20 text-event-critical"
+                      : "bg-bg-surface/50 text-fg-secondary hover:bg-bg-secondary"
                   }`}
                 >
                   <XCircle size={14} className="sm:w-4 sm:h-4" />
@@ -631,7 +631,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
           </div>
         )}
 
-        <div className="px-2 sm:px-4 py-3 border-t border-border-light flex items-center gap-2 sm:gap-3">
+        <div className="px-2 sm:px-4 py-3 flex items-center gap-2 sm:gap-3">
           <button
             onClick={handleLike}
             disabled={toggleLike.isPending}
@@ -654,7 +654,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
           </button>
         </div>
 
-        <div className="border-t border-border-light">
+        <div className="mt-2">
           {displayedComments.length > 0 && (
             <div className="px-2 sm:px-4 py-4 sm:py-6 space-y-4">
               {displayedComments.map((comment) => (

@@ -10,11 +10,8 @@ export default function PublishPage() {
             
             <div className="lg:ml-16 pt-16 lg:pt-0">
                 <header className="sticky top-16 lg:top-0 z-30 ios-header">
-                    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
-                        <div>
-                            <h1 className="text-2xl sm:text-3xl font-bold text-fg-primary">Events</h1>
-                            <p className="text-sm text-fg-secondary">Discover and share upcoming events</p>
-                        </div>
+                    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 flex justify-between items-center">
+                        <h1 className="text-2xl sm:text-3xl font-bold text-fg-primary tracking-tight">Events</h1>
                         <UserDisplay />
                     </div>
                 </header>
@@ -22,7 +19,7 @@ export default function PublishPage() {
                 <main id="main-content" className="w-full">
                     <EventReminderService />
                     
-                    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+                    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
                         <EventFeed showCreateForm={true} />
                     </div>
                 </main>
