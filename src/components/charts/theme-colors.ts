@@ -58,18 +58,22 @@ function rgbToHsl(triplet: RgbTriplet): [number, number, number] {
 
 // Predefined vibrant palettes for each accent color
 // Each palette has 6 colors that work harmoniously together
+
+  
+// Predefined vibrant palettes for each accent color
+// Each palette has 6 colors that work harmoniously together
 const ACCENT_PALETTES: Record<string, RgbTriplet[]> = {
-  // Pink accent - #FF99C8 based
+  // Pink accent - Neon/Electric Pink based
   pink: [
-    hexToRgb('#FF99C8'), // Pink
-    hexToRgb('#FF6B9D'), // Hot pink
-    hexToRgb('#FFB3D9'), // Light pink
-    hexToRgb('#E84A8A'), // Deep pink
-    hexToRgb('#FF85B3'), // Bright pink
-    hexToRgb('#FFC4DC'), // Pastel pink
+    hexToRgb('#FF14BD'), // Main Neon Pink (was #FF99C8)
+    hexToRgb('#FF007F'), // Brightest Electric Pink
+    hexToRgb('#FF6EE0'), // Light Neon Pink
+    hexToRgb('#D600A4'), // Deep Neon Magenta
+    hexToRgb('#FF00CC'), // Vivid Pink
+    hexToRgb('#FFB6EB'), // Soft Neon/Pastel
   ],
   
-  // Caramel/Yellow accent - #FCF6BD based  
+  // Caramel/Yellow accent - #FCF6BD based   
   caramel: [
     hexToRgb('#FCF6BD'), // Caramel
     hexToRgb('#FFE66D'), // Bright yellow
@@ -243,6 +247,7 @@ export function useResolvedThemeColors() {
 
     return {
       palette,
+      completed: palette[0] ?? rgbaFromTriplet(fallbackColor, 0.9), // Use accent color for completed items
       other: rgbaFromTriplet(accentPalette[4] ?? fallbackColor, 0.7),
       remaining: rgbaFromTriplet(accentPalette[5] ?? accentPalette[2] ?? fallbackColor, 0.5),
       border: "rgba(170, 175, 190, 0.3)",

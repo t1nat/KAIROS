@@ -92,7 +92,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
   if (!isOpen) return null;
 
   return (
-    <div className="w-full max-w-2xl mx-auto animate-slideUp -mt-26">
+    <div className="w-full max-w-2xl mx-auto animate-slideUp mt-16">
       <div className="p-8">
         {step === "choose" && (
           <>
@@ -103,7 +103,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
             <div className="space-y-3">
               <button
                 onClick={() => setStep("admin-setup")}
-                className="w-full p-4 bg-bg-surface border border-border-light/20 rounded-xl hover:bg-bg-elevated hover:border-accent-primary/40 transition-all duration-200 text-left group flex items-center justify-between"
+                className="w-full p-4 bg-bg-surface shadow-sm rounded-xl hover:bg-bg-elevated hover:shadow-md transition-all duration-200 text-left group flex items-center justify-between"
               >
                 <span className="text-fg-primary font-medium">Organization Admin</span>
                 <ChevronRight className="text-fg-tertiary group-hover:text-accent-primary transition-colors" size={20} />
@@ -111,7 +111,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
 
               <button
                 onClick={() => setStep("worker-join")}
-                className="w-full p-4 bg-bg-surface border border-border-light/20 rounded-xl hover:bg-bg-elevated hover:border-accent-primary/40 transition-all duration-200 text-left group flex items-center justify-between"
+                className="w-full p-4 bg-bg-surface shadow-sm rounded-xl hover:bg-bg-elevated hover:shadow-md transition-all duration-200 text-left group flex items-center justify-between"
               >
                 <span className="text-fg-primary font-medium">Join Organization</span>
                 <ChevronRight className="text-fg-tertiary group-hover:text-accent-primary transition-colors" size={20} />
@@ -151,7 +151,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
                   onChange={(e) => setOrganizationName(e.target.value)}
                   onKeyDown={handleOrgNameKeyDown}
                   placeholder="e.g., Acme Corporation"
-                  className="w-full px-4 py-3 bg-bg-surface border border-border-light/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary/60 text-fg-primary placeholder:text-fg-tertiary"
+                  className="w-full px-4 py-3 bg-bg-surface shadow-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary placeholder:text-fg-tertiary"
                   autoFocus
                 />
               </div>
@@ -172,14 +172,14 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
             <h3 className="text-xl font-semibold text-fg-primary mb-2 text-center">Organization Created!</h3>
             <p className="text-sm text-fg-secondary mb-6 text-center">Share this code with your team</p>
 
-            <div className="bg-bg-surface border border-accent-primary/30 rounded-xl p-6 text-center mb-6">
+            <div className="bg-bg-surface shadow-sm rounded-xl p-6 text-center mb-6">
               <p className="text-xs text-fg-tertiary mb-2">Access Code</p>
               <p className="text-3xl font-bold text-accent-primary tracking-wider font-mono mb-4">
                 {generatedCode}
               </p>
               <button
                 onClick={handleCopyCode}
-                className="px-4 py-2 bg-accent-primary/15 border border-accent-primary/30 text-accent-primary rounded-lg hover:bg-accent-primary/25 transition text-sm font-medium"
+                className="px-4 py-2 bg-accent-primary/15 text-accent-primary rounded-lg hover:bg-accent-primary/25 transition text-sm font-medium"
               >
                 Copy Code
               </button>
@@ -216,7 +216,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
                   onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
                   onKeyDown={handleAccessCodeKeyDown}
                   placeholder="XXXX-XXXX-XXXX"
-                  className="w-full px-4 py-3 bg-bg-surface border border-border-light/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary/60 text-fg-primary font-mono text-center text-xl tracking-wider placeholder:text-fg-tertiary"
+                  className="w-full px-4 py-3 bg-bg-surface shadow-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary font-mono text-center text-xl tracking-wider placeholder:text-fg-tertiary"
                   maxLength={14}
                   autoFocus
                 />
