@@ -334,6 +334,9 @@
     "roleLabel": "Role",
     "roleAdmin": "Admin",
     "roleWorker": "Member",
-    "roleMentor": "Mentor"
+    "roleMentor": "Mentor",
+    "organization": "Organization",
+    "personalWorkspace": "Personal Workspace",
+    "personalHint": "Join an organization to collaborate with a team"
   }
 }
