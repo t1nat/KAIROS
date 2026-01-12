@@ -14,7 +14,8 @@ import {
   Menu,
   X,
   Plus,
-  MessageCircle
+  MessageCircle,
+  Calendar
 } from "lucide-react";
 
 export function SideNav() {
@@ -47,6 +48,7 @@ export function SideNav() {
     { href: "/create?action=new_note", icon: FileEdit, label: t("notes") },
     { href: "/progress", icon: BarChart3, label: t("progress") },
     { href: "/chat", icon: MessageCircle, label: "Chat" },
+    { href: "/publish", icon: Calendar, label: t("events") },
   ];
 
   const profileItem = { href: "/orgs", icon: Users, label: tOrg("yourOrgs") };
@@ -62,6 +64,12 @@ export function SideNav() {
     }
     if (href === "/chat") {
       return pathname === "/chat";
+    }
+    if (href === "/publish") {
+      return pathname === "/publish";
+    }
+    if (href === "/projects") {
+      return pathname === "/projects";
     }
     if (href.startsWith("/settings")) {
       return pathname === "/settings";

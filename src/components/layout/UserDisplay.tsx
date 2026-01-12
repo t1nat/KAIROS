@@ -133,7 +133,12 @@ export function UserDisplay() {
     return null;
   }
 
-  const otherAccounts = storedAccounts.filter((a) => a.email && a.email !== user.email);
+  const otherAccounts = storedAccounts.filter((a) => 
+    a.email && 
+    a.email !== user.email && 
+    a.userId && 
+    a.lastUsed > 0
+  );
 
   return (
     <div className="relative" ref={dropdownRef}>

@@ -145,8 +145,11 @@ export function HomeClient({ session }: {
     });
 
     useEffect(() => {
-        if (session?.user && userProfile !== undefined && !userProfile && !isProfileLoading) {
-            setShowRoleSelection(true);
+        if (session?.user && userProfile !== undefined && !isProfileLoading) {
+            // Show role selection if profile is null OR usageMode is null (needs onboarding)
+            if (!userProfile?.usageMode) {
+                setShowRoleSelection(true);
+            }
         }
     }, [session, userProfile, isProfileLoading]);
 
@@ -202,7 +205,7 @@ export function HomeClient({ session }: {
             router.replace("/");
         }
 
-        if (session?.user && userProfile !== undefined && !userProfile) {
+        if (session?.user && userProfile !== undefined && !userProfile?.usageMode) {
             setTimeout(() => {
                 setShowRoleSelection(true);
             }, 300);
@@ -217,12 +220,11 @@ export function HomeClient({ session }: {
         }
     };
 
-    const showActionButtons = session && !showRoleSelection && userProfile !== undefined && userProfile !== null;
+    const showActionButtons = session && !showRoleSelection && userProfile !== undefined && userProfile !== null && userProfile.usageMode !== null;
     const isDarkTheme = themeMounted ? resolvedTheme === "dark" : false;
     const logoSrc = isDarkTheme ? "/logo_white.png" : "/logo_purple.png";
 
-    // Generate circle gradients - using ANALOGOUS colors (close to accent)
-    // Only compute after client hydration to avoid mismatch
+    // Generate circle gradients - shifted towards pink/purple and lowered opacity
     const circleGradients = useMemo(() => {
         if (!isClient) {
             // Return empty strings during SSR to avoid hydration mismatch
@@ -237,27 +239,28 @@ export function HomeClient({ session }: {
         // Read the primary accent color from CSS variables
         const primary = getCssVarRgb("--accent-primary") ?? DEFAULT_PRIMARY;
         
-        // Generate analogous colors - small hue shifts for harmonious palette
-        const analog1 = rotateHue(primary, 25);    // Slight shift right
-        const analog2 = rotateHue(primary, -25);   // Slight shift left
-        const analog3 = rotateHue(primary, 40);    // A bit more shift
-        const analog4 = rotateHue(primary, -15);   // Subtle shift
+        // Generate analogous colors - shifted towards purple/magenta to avoid yellow
+        const analog1 = rotateHue(primary, -20); // Shift towards purple
+        const analog2 = rotateHue(primary, 10);  // Shift towards deep magenta
+        const analog3 = rotateHue(primary, -45); // Shift towards violet
+        const analog4 = rotateHue(primary, -10); // Subtle shift left
         
         const toRgb = (c: [number, number, number]) => `${c[0]}, ${c[1]}, ${c[2]}`;
         
+        // Opacities lowered here
         if (isDarkTheme) {
             return {
-                circle1: `radial-gradient(circle at 40% 40%, rgba(${toRgb(primary)}, 0.22), rgba(${toRgb(analog1)}, 0.12), transparent 65%)`,
-                circle2: `radial-gradient(circle at 60% 60%, rgba(${toRgb(analog2)}, 0.18), rgba(${toRgb(analog3)}, 0.10), transparent 65%)`,
-                circle3: `radial-gradient(circle at 50% 50%, rgba(${toRgb(analog3)}, 0.14), rgba(${toRgb(primary)}, 0.08), transparent 55%)`,
-                circle4: `radial-gradient(circle at 50% 50%, rgba(${toRgb(analog4)}, 0.12), rgba(${toRgb(analog1)}, 0.06), transparent 60%)`,
+                circle1: `radial-gradient(circle at 40% 40%, rgba(${toRgb(primary)}, 0.28), rgba(${toRgb(analog1)}, 0.15), transparent 65%)`,
+                circle2: `radial-gradient(circle at 60% 60%, rgba(${toRgb(analog2)}, 0.25), rgba(${toRgb(analog3)}, 0.12), transparent 65%)`,
+                circle3: `radial-gradient(circle at 50% 50%, rgba(${toRgb(analog3)}, 0.20), rgba(${toRgb(primary)}, 0.10), transparent 55%)`,
+                circle4: `radial-gradient(circle at 50% 50%, rgba(${toRgb(analog4)}, 0.18), rgba(${toRgb(analog1)}, 0.08), transparent 60%)`,
             };
         } else {
             return {
-                circle1: `radial-gradient(circle at 40% 40%, rgba(${toRgb(primary)}, 0.18), rgba(${toRgb(analog1)}, 0.10), transparent 65%)`,
-                circle2: `radial-gradient(circle at 60% 60%, rgba(${toRgb(analog2)}, 0.14), rgba(${toRgb(analog3)}, 0.08), transparent 65%)`,
-                circle3: `radial-gradient(circle at 50% 50%, rgba(${toRgb(analog3)}, 0.10), rgba(${toRgb(primary)}, 0.06), transparent 55%)`,
-                circle4: `radial-gradient(circle at 50% 50%, rgba(${toRgb(analog4)}, 0.10), rgba(${toRgb(analog1)}, 0.05), transparent 60%)`,
+                circle1: `radial-gradient(circle at 40% 40%, rgba(${toRgb(primary)}, 0.22), rgba(${toRgb(analog1)}, 0.10), transparent 65%)`,
+                circle2: `radial-gradient(circle at 60% 60%, rgba(${toRgb(analog2)}, 0.18), rgba(${toRgb(analog3)}, 0.08), transparent 65%)`,
+                circle3: `radial-gradient(circle at 50% 50%, rgba(${toRgb(analog3)}, 0.14), rgba(${toRgb(primary)}, 0.06), transparent 55%)`,
+                circle4: `radial-gradient(circle at 50% 50%, rgba(${toRgb(analog4)}, 0.12), rgba(${toRgb(analog1)}, 0.05), transparent 60%)`,
             };
         }
     
@@ -403,7 +406,7 @@ export function HomeClient({ session }: {
                                     KAIROS
                                 </h2>
                                 <p className="text-lg sm:text-xl md:text-2xl text-fg-secondary leading-relaxed animate-slideUp" style={{ animationDelay: '0.2s' }}>
-                                Where great ideas come to life. The workspace where teams align and launch moments that matter.                         </p>
+                                Where great ideas come to life. The workspace where teams align and launch moments that matter.                             </p>
                                 <div className="flex flex-wrap gap-4 text-sm text-fg-tertiary justify-center animate-slideUp" style={{ animationDelay: '0.3s' }}>
                                     <div className="flex items-center gap-2">
                                         <div className="w-1.5 h-1.5 bg-event-active rounded-full"></div>
@@ -415,7 +418,7 @@ export function HomeClient({ session }: {
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <div className="w-1.5 h-1.5 bg-event-completed rounded-full"></div>
-                                 
+                                     
                                     </div>
                                 </div>
                             </div>
@@ -500,122 +503,46 @@ export function HomeClient({ session }: {
                             <div className="grid md:grid-cols-2 gap-6">
                                 <div className="flex items-start gap-4 p-4 rounded-xl bg-success/5 hover:bg-success/8 transition-colors group shadow-md hover:shadow-lg">
                                     <div className="flex-shrink-0 w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
-                                        <Calendar className="text-success" size={20} />
+                                        <Zap size={20} className="text-success" />
                                     </div>
                                     <div>
-                                        <h5 className="font-semibold text-fg-primary mb-2">Interactive Timeline</h5>
-                                        <p className="text-sm text-fg-secondary">Visualize the flow. Manage tasks and track progress at a glance.</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-4 p-4 rounded-xl bg-success/5 hover:bg-success/8 transition-colors group shadow-md hover:shadow-lg">
-                                    <div className="flex-shrink-0 w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
-                                        <Zap className="text-success" size={20} />
-                                    </div>
-                                    <div>
-                                        <h5 className="font-semibold text-fg-primary mb-2">Event Publishing</h5>
-                                        <p className="text-sm text-fg-secondary">Go live. Turn internal project plans into public events in seconds.</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-4 p-4 rounded-xl bg-warning/5 hover:bg-warning/8 transition-colors group shadow-md hover:shadow-lg">
-                                    <div className="flex-shrink-0 w-10 h-10 bg-warning/10 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
-                                        <Lock className="text-warning" size={20} />
-                                    </div>
-                                    <div>
-                                        <h5 className="font-semibold text-fg-primary mb-2">Secure Team Access</h5>
-                                        <p className="text-sm text-fg-secondary">Secure your organization with roles and access codes.</p>
+                                        <h5 className="text-lg font-semibold text-fg-primary mb-1">Streamlined Workflow</h5>
+                                        <p className="text-fg-secondary">Plan, track, and publish events from a single, intuitive interface.</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-4 p-4 rounded-xl bg-accent-primary/5 hover:bg-accent-primary/8 transition-colors group shadow-md hover:shadow-lg">
                                     <div className="flex-shrink-0 w-10 h-10 bg-accent-primary/10 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
-                                        <Sparkles className="text-accent-primary" size={20} />
+                                        <Sparkles size={20} className="text-accent-primary" />
                                     </div>
                                     <div>
-                                        <h5 className="font-semibold text-fg-primary mb-2">Unified Workspace</h5>
-                                        <p className="text-sm text-fg-secondary">Projects, notes, timelines, and events in one place.</p>
+                                        <h5 className="text-lg font-semibold text-fg-primary mb-1">Beautiful Publications</h5>
+                                        <p className="text-fg-secondary">Create stunning event pages that match your brand identity.</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-warning/5 hover:bg-warning/8 transition-colors group shadow-md hover:shadow-lg">
+                                    <div className="flex-shrink-0 w-10 h-10 bg-warning/10 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
+                                        <Lock size={20} className="text-warning" />
+                                    </div>
+                                    <div>
+                                        <h5 className="text-lg font-semibold text-fg-primary mb-1">Secure & Reliable</h5>
+                                        <p className="text-fg-secondary">Your data is protected with enterprise-grade security measures.</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-info/5 hover:bg-info/8 transition-colors group shadow-md hover:shadow-lg">
+                                    <div className="flex-shrink-0 w-10 h-10 bg-info/10 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
+                                        <Calendar size={20} className="text-info" />
+                                    </div>
+                                    <div>
+                                        <h5 className="text-lg font-semibold text-fg-primary mb-1">Smart Scheduling</h5>
+                                        <p className="text-fg-secondary">Effortlessly manage timelines and coordinate across teams.</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </section>
-
-                {!session && (
-                    <section className="py-14 sm:py-20 px-4 sm:px-6 relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-accent-primary/10 via-accent-secondary/10 to-accent-tertiary/10"></div>
-                        <div className="max-w-4xl mx-auto text-center relative z-10">
-                            <div className="surface-card p-6 sm:p-10 md:p-12 hover:shadow-2xl hover:shadow-accent-primary/20 transition-all duration-500 group relative overflow-hidden">
-                                <div className="absolute inset-0 bg-gradient-to-br from-accent-primary/5 via-transparent to-accent-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                                <div className="relative">
-                                    <h3 className="text-3xl sm:text-4xl md:text-5xl font-bold text-fg-primary mb-4">
-                                        Ready to Transform Your Events?
-                                    </h3>
-                                    <p className="text-lg sm:text-xl text-fg-secondary mb-8">
-                                        Join teams worldwide coordinating seamless events with Kairos.
-                                    </p>
-                                    <button
-                                        onClick={() => setIsModalOpen(true)}
-                                        className="inline-flex items-center gap-2 px-7 sm:px-10 py-4 sm:py-5 bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-accent transition-all hover:scale-[1.02] text-base sm:text-lg group"
-                                    >
-                                        Start Planning Today
-                                        <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                )}
-
-                <footer className="py-12 px-4 sm:px-6">
-                    <div className="max-w-7xl mx-auto text-center">
-                        <div className="flex items-center justify-center gap-3 mb-4">
-                            <span className="text-xl font-bold text-fg-primary font-display tracking-tight">Kairos</span>
-                        </div>
-                        <p className="text-fg-secondary">
-                            © 2025 Kairos.
-                        </p>
-                    </div>
-                </footer>
             </div>
-
-            <SignInModal
-                isOpen={isModalOpen}
-                onClose={handleSignInClose}
-                initialEmail={searchParams.get("email") ?? undefined}
-            />
-
-            <style jsx>{`
-                @keyframes hero-fade-in {
-                    0% { 
-                        opacity: 0;
-                        transform: translateY(20px);
-                        filter: blur(8px);
-                    }
-                    100% { 
-                        opacity: 1;
-                        transform: translateY(0);
-                        filter: blur(0px);
-                    }
-                }
-                @keyframes hero-float {
-                    0% { 
-                        transform: translateY(-8px);
-                    }
-                    50% { 
-                        transform: translateY(8px);
-                    }
-                    100% {
-                        transform: translateY(-8px);
-                    }
-                }
-                .animate-hero-fade-in {
-                    animation: hero-fade-in 1.5s ease-out forwards;
-                    opacity: 0;
-                }
-                .animate-hero-fade-in-delayed {
-                    animation: hero-fade-in 1.5s ease-out 0.3s forwards;
-                    opacity: 0;
-                }
-            `}</style>
+            <SignInModal isOpen={isModalOpen} onClose={handleSignInClose} />
         </main>
     );
 }
