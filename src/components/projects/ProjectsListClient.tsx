@@ -149,7 +149,7 @@ function ProjectCard({
           ? "border-border-light/10 bg-bg-surface/50 opacity-60"
           : "border-border-light/20 hover:border-accent/40 hover:shadow-lg cursor-pointer"
       }`}
-      onClick={() => !isArchived && router.push(`/publish?project=${project.id}`)}
+      onClick={() => !isArchived && router.push(`/create?projectId=${project.id}`)}
     >
       {/* Project Header */}
       <div className="flex items-start gap-3 mb-3">

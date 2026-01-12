@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { api } from "~/trpc/react";
 import { CreateProjectForm, CreateTaskForm, CollaboratorManager } from "./ProjectManagement";
 import { InteractiveTimeline } from "./InteractiveTimeline";
-import { ChevronDown, ChevronUp, RefreshCw, CheckCircle2, ArrowLeft, Folder, Trash2, Plus } from "lucide-react";
+import { ChevronDown, RefreshCw, CheckCircle2, ArrowLeft, Folder, Trash2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useToast } from "~/components/providers/ToastProvider";
@@ -73,7 +73,6 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
     projectIdFromUrl ? parseInt(projectIdFromUrl) : null
   );
   const [isCreateProjectExpanded, setIsCreateProjectExpanded] = useState(true);
-  const [showTaskForm, setShowTaskForm] = useState(false);
   const [deleteProjectArmed, setDeleteProjectArmed] = useState(false);
 
   const utils = api.useUtils();
@@ -118,7 +117,6 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
       void utils.project.getById.invalidate({ id: selectedProjectId! });
       void utils.project.getMyProjects.invalidate();
       void utils.task.getOrgActivity.invalidate();
-      setShowTaskForm(false);
     },
     onError: (error) => toast.error(t("errors.generic", { message: error.message })),
   });
@@ -228,12 +226,14 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
 
   const availableUsers: User[] = projectDetails
     ? [
-        {
-          id: projectDetails.createdById,
+        // Owner - use session user if they are the owner, otherwise show generic
+        ...(isOwner ? [{
+          id: userId,
           name: t("team.projectOwner"),
           email: "",
           image: null,
-        },
+        }] : []),
+        // Collaborators
         ...(projectDetails.collaborators?.map((c) => ({
           id: c.collaboratorId,
           name: c.collaborator?.name ?? null,
@@ -244,8 +244,10 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
     : [];
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 relative w-full h-full max-w-7xl mx-auto">
-      <div className="w-full lg:w-96 xl:w-[420px] lg:flex-shrink-0 space-y-3">
+    <div className="flex flex-col lg:flex-row gap-6 relative w-full h-full max-w-7xl mx-auto">
+      {/* Left Sidebar - Projects List & Create */}
+      <div className="w-full lg:w-80 xl:w-96 lg:flex-shrink-0 space-y-4">
+        {/* Create New Project - Simple inline form */}
         {!selectedProjectId && (
           <div className="animate-in slide-in-from-top-2 duration-200">
             <CreateProjectForm
@@ -257,9 +259,38 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
           </div>
         )}
 
+        {/* Existing Projects List */}
+        {!selectedProjectId && projects && projects.length > 0 && (
+          <div className="space-y-2 animate-in fade-in duration-300">
+            <div className="space-y-1">
+              {projects.map((project) => (
+                <button
+                  key={project.id}
+                  onClick={() => setSelectedProjectId(project.id)}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-bg-elevated/60 transition-all group text-left"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-accent-primary/20 to-accent-secondary/20 flex items-center justify-center flex-shrink-0 group-hover:from-accent-primary/30 group-hover:to-accent-secondary/30 transition-colors">
+                    <Folder size={18} className="text-accent-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-fg-primary truncate group-hover:text-accent-primary transition-colors">
+                      {project.title || t("project.untitled")}
+                    </p>
+                    <p className="text-xs text-fg-tertiary truncate">
+                      {project.tasks?.length ?? 0} tasks
+                    </p>
+                  </div>
+                  <ChevronDown size={16} className="text-fg-tertiary -rotate-90 group-hover:text-accent-primary transition-colors" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {selectedProjectId && projectDetails && (
-          <div className="space-y-2 animate-in fade-in slide-in-from-left-2 duration-300">
-            <div className="bg-bg-surface/40 backdrop-blur-sm rounded-xl p-4 ios-card">
+          <div className="space-y-4 animate-in fade-in slide-in-from-left-2 duration-300">
+            {/* Project Header */}
+            <div className="p-4 rounded-2xl bg-bg-surface/50">
               <div className="flex items-start justify-between mb-4">
                 <button
                   onClick={() => setSelectedProjectId(null)}
@@ -273,10 +304,10 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                     <button
                       onClick={handleDeleteProject}
                       disabled={deleteProject.isPending}
-                      className={`p-2 rounded-lg transition-all border ${
+                      className={`p-2 rounded-lg transition-all ${
                         deleteProjectArmed
-                          ? "bg-error/10 border-error/30 text-error"
-                          : "text-fg-secondary border-transparent hover:text-error hover:bg-bg-elevated"
+                          ? "bg-error/10 text-error"
+                          : "text-fg-secondary hover:text-error hover:bg-bg-elevated"
                       }`}
                       aria-label={deleteProjectArmed ? "Confirm delete project" : "Delete project"}
                     >
@@ -307,12 +338,12 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
               </div>
 
               {!isOwner && (
-                <div className="flex items-center gap-2 pt-3 border-t border-border-light/20">
+                <div className="flex items-center gap-2 pt-3 border-t border-border-light/10">
                   <span
-                    className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium border ${
+                    className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium ${
                       hasWriteAccess
-                        ? "text-success bg-success/10 border-success/30"
-                        : "text-fg-secondary bg-bg-surface/50 border-border-light/30"
+                        ? "text-success bg-success/10"
+                        : "text-fg-secondary bg-bg-surface/50"
                     }`}
                   >
                     {hasWriteAccess ? (
@@ -327,9 +358,9 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                 </div>
               )}
               
-              {/* Team Members Section - Now integrated */}
+              {/* Team Members Section */}
               {isOwner && (
-                <div className="mt-4 pt-4 border-t border-border-light/20">
+                <div className="mt-4 pt-4 border-t border-border-light/10">
                   <h3 className="text-sm font-semibold text-fg-primary mb-3 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
                       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -357,11 +388,23 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                   />
                 </div>
               )}
+
+              {/* Add Task Section */}
+              {hasWriteAccess && (
+                <div className="mt-4 pt-4 border-t border-border-light/10">
+                  <CreateTaskForm
+                    projectId={selectedProjectId}
+                    onSubmit={handleCreateTask}
+                    availableUsers={availableUsers}
+                  />
+                </div>
+              )}
             </div>
           </div>
         )}
       </div>
 
+      {/* Main Content Area */}
       <div className="flex-1 min-w-0">
         {selectedProjectId && projectDetails && (
           <div className="h-full">
@@ -375,9 +418,11 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
         )}
 
         {!selectedProjectId && (
-          <div className="h-full flex items-center justify-center">
+          <div className="h-[400px] flex items-center justify-center rounded-2xl bg-bg-surface/30">
             <div className="text-center max-w-md px-8">
-              <p className="text-sm text-fg-tertiary">Create or select a project to get started</p>
+              <div className="w-16 h-16 rounded-2xl bg-accent-primary/10 flex items-center justify-center mx-auto mb-4">
+                <Folder size={28} className="text-accent-primary" />
+              </div>
             </div>
           </div>
         )}

@@ -177,6 +177,77 @@ export const projectRouter = createTRPCRouter({
     return projectsWithTasks;
   }),
 
+  // Get all projects across all organizations the user is a member of
+  getAllProjectsAcrossOrgs: protectedProcedure.query(async ({ ctx }) => {
+    // Get all organizations the user is a member of
+    const memberships = await ctx.db
+      .select({ organizationId: organizationMembers.organizationId })
+      .from(organizationMembers)
+      .where(eq(organizationMembers.userId, ctx.session.user.id));
+
+    const orgIds = memberships.map((m) => m.organizationId);
+
+    // Get projects from all user's organizations + personal projects
+    let projectsList;
+    if (orgIds.length > 0) {
+      projectsList = await ctx.db
+        .select()
+        .from(projects)
+        .where(
+          sql`(${projects.organizationId} IN ${orgIds} OR (${projects.createdById} = ${ctx.session.user.id} AND ${projects.organizationId} IS NULL))`
+        )
+        .orderBy(desc(projects.createdAt));
+    } else {
+      // Only personal projects
+      projectsList = await ctx.db
+        .select()
+        .from(projects)
+        .where(
+          and(
+            eq(projects.createdById, ctx.session.user.id),
+            isNull(projects.organizationId)
+          )
+        )
+        .orderBy(desc(projects.createdAt));
+    }
+
+    // Get created by users
+    const createdByIds = Array.from(new Set(projectsList.map((p) => p.createdById)));
+    const createdByUsers = createdByIds.length
+      ? await ctx.db
+          .select({
+            id: users.id,
+            name: users.name,
+            email: users.email,
+            image: users.image,
+          })
+          .from(users)
+          .where(inArray(users.id, createdByIds))
+      : [];
+    const createdByUserMap = new Map(createdByUsers.map((u) => [u.id, u] as const));
+
+    const projectsWithTasks = await Promise.all(
+      projectsList.map(async (project) => {
+        const projectTasks = await ctx.db
+          .select({
+            id: tasks.id,
+            status: tasks.status,
+            dueDate: tasks.dueDate,
+          })
+          .from(tasks)
+          .where(eq(tasks.projectId, project.id));
+
+        return {
+          ...project,
+          createdByUser: createdByUserMap.get(project.createdById) ?? null,
+          tasks: projectTasks,
+        };
+      })
+    );
+
+    return projectsWithTasks;
+  }),
+
   
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))

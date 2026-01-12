@@ -17,7 +17,9 @@
     "empty": "No projects yet.",
     "scope": {
       "organization": "Organization",
-      "personal": "Personal"
+      "personal": "Personal",
+      "allOrgs": "All Organizations",
+      "allOrgsDesc": "View projects from all organizations"
     },
     "stats": {
       "projects": "Projects",

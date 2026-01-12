@@ -75,7 +75,10 @@ function getCategory(entry: OrgActivityEntry): ActivityCategory {
 const typedApi = api as unknown as {
   project: {
     getMyProjects: {
-      useQuery: (input?: undefined, opts?: { staleTime?: number }) => ProjectsQueryResult;
+      useQuery: (input?: undefined, opts?: { staleTime?: number; enabled?: boolean }) => ProjectsQueryResult;
+    };
+    getAllProjectsAcrossOrgs: {
+      useQuery: (input?: undefined, opts?: { staleTime?: number; enabled?: boolean }) => ProjectsQueryResult;
     };
   };
   task: {
@@ -341,6 +344,9 @@ export function ProgressFeedClient() {
 
   const utils = api.useUtils();
   
+  // View mode: "all" = all organizations, "org" = specific organization
+  const [viewMode, setViewMode] = useState<"all" | "org">("org");
+  
   // Organization queries
   const activeOrgQuery = api.organization.getActive.useQuery();
   const orgsQuery = api.organization.listMine.useQuery();
@@ -351,28 +357,78 @@ export function ProgressFeedClient() {
   const orgs = orgsQuery.data ?? [];
 
   const setActiveOrg = api.organization.setActive.useMutation({
-    onSuccess: async () => {
-      await utils.organization.getActive.invalidate();
-      await utils.organization.listMine.invalidate();
-      await utils.user.getProfile.invalidate();
-      await utils.project.invalidate();
-      await utils.task.invalidate();
+    onMutate: async ({ organizationId }) => {
+      // Optimistic update - cancel any outgoing queries
+      await utils.organization.getActive.cancel();
+      
+      // Snapshot the previous value
+      const previousOrg = utils.organization.getActive.getData();
+      
+      // Find the org we're switching to
+      const newOrg = orgs.find(o => o.id === organizationId);
+      
+      // Optimistically update the active org
+      if (newOrg) {
+        utils.organization.getActive.setData(undefined, {
+          organization: {
+            id: newOrg.id,
+            name: newOrg.name,
+            accessCode: newOrg.accessCode,
+          },
+          role: newOrg.role,
+        });
+      }
+      
       setOrgDropdownOpen(false);
+      setViewMode("org");
+      
+      return { previousOrg };
+    },
+    onError: (_err, _vars, context) => {
+      // Rollback on error
+      if (context?.previousOrg) {
+        utils.organization.getActive.setData(undefined, context.previousOrg);
+      }
+    },
+    onSettled: () => {
+      // Always refetch after mutation settles
+      void utils.organization.getActive.invalidate();
+      void utils.project.invalidate();
+      void utils.task.invalidate();
     },
   });
 
   const handleOrgPick = useCallback(
-    (organizationId: number) => {
+    (organizationId: number | "all") => {
+      if (organizationId === "all") {
+        setViewMode("all");
+        setOrgDropdownOpen(false);
+        return;
+      }
       if (setActiveOrg.isPending) return;
       setActiveOrg.mutate({ organizationId });
     },
     [setActiveOrg],
   );
 
-  const { data: projects, isLoading: isLoadingProjects, error: projectsError } =
+  // Query for current org's projects
+  const { data: orgProjects, isLoading: isLoadingOrgProjects, error: orgProjectsError } =
     typedApi.project.getMyProjects.useQuery(undefined, {
       staleTime: 1000 * 30,
+      enabled: viewMode === "org",
     });
+
+  // Query for all projects across orgs (only when viewing all)
+  const { data: allOrgProjects, isLoading: isLoadingAllProjects, error: allProjectsError } =
+    typedApi.project.getAllProjectsAcrossOrgs.useQuery(undefined, {
+      staleTime: 1000 * 60, // Cache longer since it's more expensive
+      enabled: viewMode === "all",
+    });
+
+  // Use the appropriate projects based on view mode
+  const projects = viewMode === "all" ? allOrgProjects : orgProjects;
+  const isLoadingProjects = viewMode === "all" ? isLoadingAllProjects : isLoadingOrgProjects;
+  const projectsError = viewMode === "all" ? allProjectsError : orgProjectsError;
 
   const { data: activity, isLoading: isLoadingActivity, error: activityError } = typedApi.task.getOrgActivity.useQuery(
     { limit: 200 },
@@ -553,7 +609,7 @@ export function ProgressFeedClient() {
                   aria-haspopup="menu"
                 >
                   <span className="max-w-[150px] truncate">
-                    {activeName ?? tOrg("yourOrgs")}
+                    {viewMode === "all" ? t("scope.allOrgs") : (activeName ?? tOrg("yourOrgs"))}
                   </span>
                   <ChevronDown size={14} className="text-fg-tertiary" />
                 </button>
@@ -568,8 +624,28 @@ export function ProgressFeedClient() {
                     </div>
 
                     <div className="max-h-60 overflow-auto">
+                      {/* All Organizations option */}
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => handleOrgPick("all")}
+                        className={`w-full px-3 py-2 text-left flex items-center justify-between gap-3 transition-colors ${
+                          viewMode === "all"
+                            ? "bg-accent-primary/10 text-fg-primary"
+                            : "hover:bg-bg-elevated text-fg-secondary"
+                        }`}
+                      >
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium truncate">{t("scope.allOrgs")}</div>
+                          <div className="text-xs text-fg-tertiary">{t("scope.allOrgsDesc")}</div>
+                        </div>
+                        {viewMode === "all" && <Check size={14} className="text-accent-primary shrink-0" />}
+                      </button>
+
+                      <div className="h-px bg-border-subtle mx-3 my-1" />
+
                       {orgs.map((org) => {
-                        const isActive = activeOrgId === org.id;
+                        const isActive = viewMode === "org" && activeOrgId === org.id;
                         return (
                           <button
                             key={org.id}
@@ -594,7 +670,7 @@ export function ProgressFeedClient() {
                 )}
               </div>
             )}
-            <span className="text-xs text-fg-tertiary px-3 py-1.5 rounded-full bg-bg-elevated/50">{scopeLabel}</span>
+            <span className="text-xs text-fg-tertiary px-3 py-1.5 rounded-full bg-bg-elevated/50">{viewMode === "all" ? t("scope.allOrgs") : scopeLabel}</span>
           </div>
         </div>
 
