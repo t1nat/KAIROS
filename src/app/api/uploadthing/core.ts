@@ -14,7 +14,7 @@ export const ourFileRouter = {
       return { uploadedBy: metadata.userId, url: file.url };
     }),
   chatAttachment: f({ 
-    image: { maxFileSize: "5MB", maxFileCount: 5 },
+    image: { maxFileSize: "4MB", maxFileCount: 5 },
     pdf: { maxFileSize: "16MB", maxFileCount: 3 }
   })
     .middleware(async () => {
