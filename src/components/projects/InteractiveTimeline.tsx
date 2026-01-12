@@ -169,7 +169,7 @@ export function InteractiveTimeline({
             </p>
           </div>
           <div className="text-right">
-            <div className="text-4xl font-bold text-success mb-1">
+            <div className="text-4xl font-bold text-accent-primary mb-1">
               {Math.round(animatedPercentage)}%
             </div>
             <div className="text-xs text-fg-secondary font-medium">
@@ -178,52 +178,24 @@ export function InteractiveTimeline({
           </div>
         </div>
 
-        <div className="relative w-full h-3 bg-bg-surface/60 rounded-full overflow-hidden shadow-sm">
+        <div className="relative w-full h-3 bg-bg-surface/60 rounded-full overflow-hidden shadow-sm ring-1 ring-white/20">
           <div 
             className="absolute top-0 left-0 h-full rounded-full shadow-lg transition-all duration-300"
             style={{ 
               width: `${animatedPercentage}%`,
               background: animatedPercentage === 0 
                 ? 'transparent'
-                : animatedPercentage < 25
-                ? 'linear-gradient(90deg, rgb(var(--accent-primary) / 0.6), rgb(var(--accent-primary) / 0.8))'
-                : animatedPercentage < 50
-                ? 'linear-gradient(90deg, rgb(var(--accent-primary) / 0.7), rgb(var(--accent-secondary) / 0.8))'
-                : animatedPercentage < 75
-                ? 'linear-gradient(90deg, rgb(var(--accent-secondary) / 0.8), rgb(var(--accent-tertiary) / 0.85))'
-                : animatedPercentage < 100
-                ? 'linear-gradient(90deg, rgb(var(--accent-tertiary) / 0.85), rgba(34, 197, 94, 0.8))'
-                : 'linear-gradient(90deg, rgba(34, 197, 94, 0.9), rgba(22, 163, 74, 0.9))',
+                : 'linear-gradient(90deg, rgb(var(--accent-primary)), rgb(var(--accent-secondary)), rgb(var(--accent-tertiary)))',
               boxShadow: animatedPercentage === 0
                 ? 'none'
-                : animatedPercentage < 100
-                ? '0 4px 12px rgb(var(--accent-primary) / 0.3)'
-                : '0 4px 12px rgba(34, 197, 94, 0.3)'
+                : '0 4px 12px rgb(var(--accent-primary) / 0.3)'
             }}
           />
         </div>
       </div>
 
       <div className="relative flex-1 pb-8">
-        {/* Removed the background line: <div className="absolute top-[52px] left-0 right-0 h-[3px] bg-border-light/40" /> */}
-        <div
-          className="absolute top-[52px] left-0 h-[3px] transition-all duration-300"
-          style={{ 
-            width: `${animatedPercentage}%`,
-            background: animatedPercentage === 0 
-              ? 'transparent'
-              : animatedPercentage < 25
-              ? 'linear-gradient(90deg, rgb(var(--accent-primary) / 0.6), rgb(var(--accent-primary) / 0.8))'
-              : animatedPercentage < 50
-              ? 'linear-gradient(90deg, rgb(var(--accent-primary) / 0.7), rgb(var(--accent-secondary) / 0.8))'
-              : animatedPercentage < 75
-              ? 'linear-gradient(90deg, rgb(var(--accent-secondary) / 0.8), rgb(var(--accent-tertiary) / 0.85))'
-              : animatedPercentage < 100
-              ? 'linear-gradient(90deg, rgb(var(--accent-tertiary) / 0.85), rgba(34, 197, 94, 0.8))'
-              : 'linear-gradient(90deg, rgba(34, 197, 94, 0.9), rgba(22, 163, 74, 0.9))'
-          }}
-          aria-hidden
-        />
+        {/* Secondary timeline line removed */}
         
         <div className="relative flex items-start gap-6 md:gap-8 overflow-x-auto pb-4 scrollbar-thin scroll-smooth snap-x snap-mandatory">
           {sortedTasks.map((task, index) => {
