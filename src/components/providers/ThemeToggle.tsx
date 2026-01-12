@@ -19,7 +19,7 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <div className="w-10 h-10 rounded-xl bg-bg-secondary border border-border-light animate-pulse" />
+      <div className="w-10 h-10 rounded-xl bg-bg-secondary shadow-sm animate-pulse" />
     );
   }
 
@@ -35,7 +35,7 @@ export function ThemeToggle() {
           updateAppearance.mutate({ theme: nextTheme });
         }
       }}
-      className="group relative w-10 h-10 rounded-xl bg-bg-surface border border-border-light hover:border-border-medium transition-all hover:shadow-md flex items-center justify-center"
+      className="group relative w-10 h-10 rounded-xl bg-bg-surface shadow-sm hover:shadow-md transition-all flex items-center justify-center"
       aria-label={toggleLabel}
       title={toggleLabel}
     >

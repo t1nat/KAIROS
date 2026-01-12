@@ -62,7 +62,7 @@ export function ToggleRow({
   disabled = false,
 }: ToggleRowProps) {
   return (
-    <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+    <div className="flex items-center justify-between p-4 rounded-lg shadow-sm">
       <div className="flex flex-col">
         <span className="text-sm font-medium text-[rgb(var(--text-primary))] dark:text-[rgb(var(--text-primary))]">
           {title}

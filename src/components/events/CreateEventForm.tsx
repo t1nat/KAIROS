@@ -35,7 +35,11 @@ const REGION_MAP: RegionOption[] = [
   { value: "shumen", label: "Shumen", lat: 43.2706, lng: 26.9229 },
 ];
 
-export const CreateEventForm: React.FC = () => {
+interface CreateEventFormProps {
+  onSuccess?: () => void;
+}
+
+export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess }) => {
   const { data: session } = useSession();
   const utils = api.useUtils();
   const toast = useToast();
@@ -72,6 +76,7 @@ export const CreateEventForm: React.FC = () => {
       setImagePreview(null);
       setShowForm(false);
       void utils.event.getPublicEvents.invalidate();
+      onSuccess?.();
     },
     onError: (error) => {
       console.error('Error creating event:', error);
@@ -137,7 +142,7 @@ export const CreateEventForm: React.FC = () => {
 
   if (!session) {
     return (
-      <div className="surface-card p-6 sm:p-8 rounded-xl sm:rounded-2xl mb-8">
+      <div className="ios-card p-6 sm:p-8 rounded-xl sm:rounded-2xl mb-8">
         <div className="text-center">
           <div className="w-12 h-12 sm:w-16 sm:h-16 bg-accent-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
             <CalendarCheck size={24} className="sm:w-8 sm:h-8 text-accent-primary" />
@@ -150,7 +155,7 @@ export const CreateEventForm: React.FC = () => {
   }
 
   return (
-    <div className="surface-card rounded-xl sm:rounded-2xl mb-8 overflow-hidden shadow-md">
+    <div className="ios-card-elevated rounded-xl sm:rounded-2xl mb-8 overflow-hidden">
       {!showForm ? (
         <button
           onClick={() => setShowForm(true)}
@@ -163,7 +168,7 @@ export const CreateEventForm: React.FC = () => {
         </button>
       ) : (
         <form onSubmit={handleSubmit} className="p-4 sm:p-8">
-          <div className="flex items-center justify-between mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-border-light/30">
+          <div className="flex items-center justify-between mb-6 sm:mb-8 pb-4 sm:pb-6 shadow-sm">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="w-8 h-8 sm:w-10 sm:h-10 bg-accent-primary/15 rounded-lg flex items-center justify-center">
                 <CalendarCheck size={16} className="sm:w-5 sm:h-5 text-accent-primary" />
@@ -191,7 +196,7 @@ export const CreateEventForm: React.FC = () => {
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g., Summer BBQ Party, Team Building Event"
                 maxLength={256}
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-bg-secondary border border-border-light rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all text-sm sm:text-base text-fg-primary placeholder:text-fg-tertiary"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-bg-secondary shadow-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all text-sm sm:text-base text-fg-primary placeholder:text-fg-tertiary"
                 disabled={createEvent.isPending || isUploading}
                 required
               />
@@ -207,7 +212,7 @@ export const CreateEventForm: React.FC = () => {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe your event... What can attendees expect?"
                 rows={4}
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-bg-secondary border border-border-light rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all text-sm sm:text-base text-fg-primary placeholder:text-fg-tertiary resize-none"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-bg-secondary shadow-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all text-sm sm:text-base text-fg-primary placeholder:text-fg-tertiary resize-none"
                 disabled={createEvent.isPending || isUploading}
                 required
               />
@@ -222,7 +227,7 @@ export const CreateEventForm: React.FC = () => {
                 type="datetime-local"
                 value={eventDate}
                 onChange={(e) => setEventDate(e.target.value)}
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-bg-secondary border border-border-light rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all text-sm sm:text-base text-fg-primary"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-bg-secondary shadow-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all text-sm sm:text-base text-fg-primary [color-scheme:dark]"
                 disabled={createEvent.isPending || isUploading}
                 required
               />
@@ -242,7 +247,7 @@ export const CreateEventForm: React.FC = () => {
                     id="region"
                     value={region}
                     onChange={(e) => setRegion(e.target.value)}
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-bg-secondary border border-border-light rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all text-sm sm:text-base text-fg-primary appearance-none cursor-pointer"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-bg-secondary shadow-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all text-sm sm:text-base text-fg-primary appearance-none cursor-pointer [&>option]:text-fg-primary [&>option]:bg-bg-secondary"
                     disabled={createEvent.isPending || isUploading}
                     required
                   >
@@ -261,7 +266,7 @@ export const CreateEventForm: React.FC = () => {
                 Event Image <span className="text-fg-tertiary font-normal">(optional)</span>
               </label>
               {imagePreview ? (
-                <div className="relative rounded-lg sm:rounded-xl overflow-hidden border-2 border-border-light">
+                <div className="relative rounded-lg sm:rounded-xl overflow-hidden shadow-md">
                   <Image
                     src={imagePreview}
                     alt="Preview"
@@ -278,7 +283,7 @@ export const CreateEventForm: React.FC = () => {
                   </button>
                 </div>
               ) : (
-                <div className="border-2 border-dashed border-border-light rounded-lg sm:rounded-xl p-6 sm:p-8 text-center hover:border-accent-primary/50 hover:bg-bg-secondary transition-all duration-300">
+                <div className="ios-card rounded-lg sm:rounded-xl p-6 sm:p-8 text-center hover:bg-accent-primary/5 transition-all duration-300">
                   <input
                     id="image"
                     type="file"
@@ -301,14 +306,14 @@ export const CreateEventForm: React.FC = () => {
               )}
             </div>
 
-            <div className="space-y-3 p-3 sm:p-4 bg-bg-surface/60 rounded-xl border border-border-light/30">
+            <div className="space-y-3 p-3 sm:p-4 bg-bg-surface/60 rounded-xl ios-card">
               <div className="flex items-center gap-2 sm:gap-3">
                 <input
                   type="checkbox"
                   id="enableRsvp"
                   checked={enableRsvp}
                   onChange={(e) => setEnableRsvp(e.target.checked)}
-                  className="w-4 h-4 sm:w-5 sm:h-5 rounded border-border-light/40 bg-bg-surface/60 text-accent-primary focus:ring-2 focus:ring-accent-primary/30 cursor-pointer"
+                  className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-bg-surface/60 text-accent-primary focus:ring-2 focus:ring-accent-primary/30 cursor-pointer"
                 />
                 <label htmlFor="enableRsvp" className="text-xs sm:text-sm font-medium text-fg-secondary cursor-pointer">
                   Enable RSVP for this event
@@ -322,7 +327,7 @@ export const CreateEventForm: React.FC = () => {
                     id="sendReminders"
                     checked={sendReminders}
                     onChange={(e) => setSendReminders(e.target.checked)}
-                    className="w-4 h-4 sm:w-5 sm:h-5 rounded border-border-light bg-bg-secondary text-accent-primary focus:ring-2 focus:ring-accent-primary cursor-pointer"
+                    className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-bg-secondary text-accent-primary focus:ring-2 focus:ring-accent-primary cursor-pointer"
                   />
                   <label htmlFor="sendReminders" className="text-xs sm:text-sm font-medium text-fg-secondary cursor-pointer">
                     Send reminders to attendees
@@ -331,7 +336,7 @@ export const CreateEventForm: React.FC = () => {
               )}
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 pt-4 sm:pt-6 border-t border-border-light">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4 sm:pt-6 shadow-sm">
               <button
                 type="submit"
                 disabled={createEvent.isPending || isUploading || !title.trim() || !description.trim() || !eventDate || !region}
@@ -353,7 +358,7 @@ export const CreateEventForm: React.FC = () => {
                 type="button"
                 onClick={() => setShowForm(false)}
                 disabled={createEvent.isPending || isUploading}
-                className="px-4 sm:px-6 py-2.5 sm:py-3 border-2 border-border-light text-fg-secondary font-semibold rounded-lg hover:bg-bg-secondary transition-all text-sm sm:text-base"
+                className="px-4 sm:px-6 py-2.5 sm:py-3 shadow-sm text-fg-secondary font-semibold rounded-lg hover:bg-bg-secondary transition-all text-sm sm:text-base"
               >
                 Cancel
               </button>

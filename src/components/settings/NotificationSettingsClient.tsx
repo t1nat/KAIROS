@@ -76,7 +76,7 @@ export function NotificationSettingsClient() {
   };
 
   return (
-    <div className="bg-bg-secondary/40 backdrop-blur-sm rounded-2xl border border-border-light/20 p-8">
+    <div className="bg-bg-secondary/40 backdrop-blur-sm rounded-2xl ios-card-elevated p-8">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 bg-accent-primary/15 rounded-lg flex items-center justify-center">
           <Bell className="text-accent-primary" size={20} />

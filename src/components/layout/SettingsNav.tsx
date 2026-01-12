@@ -28,7 +28,7 @@ export function SettingsNav({ activeSection, variant = "card" }: SettingsNavProp
       className={
         variant === "embedded"
           ? "p-2"
-          : "bg-bg-secondary/40 backdrop-blur-sm rounded-2xl border border-border-light/20 p-2"
+          : "bg-bg-secondary/40 backdrop-blur-sm rounded-2xl ios-card p-2"
       }
       aria-label="Settings"
     >
@@ -42,10 +42,10 @@ export function SettingsNav({ activeSection, variant = "card" }: SettingsNavProp
               key={section.id}
               href={`/settings?section=${section.id}`}
               aria-current={isActive ? "page" : undefined}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
                 isActive
-                  ? "bg-accent-primary/10 text-accent-primary border-accent-primary/30 shadow-sm"
-                  : "text-fg-secondary border-transparent hover:bg-bg-secondary/60"
+                  ? "bg-accent-primary/10 text-accent-primary shadow-sm"
+                  : "text-fg-secondary hover:bg-bg-secondary/60"
               }`}
             >
               <Icon size={20} />

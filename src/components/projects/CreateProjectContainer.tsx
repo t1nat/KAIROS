@@ -259,7 +259,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
 
         {selectedProjectId && projectDetails && (
           <div className="space-y-2 animate-in fade-in slide-in-from-left-2 duration-300">
-            <div className="bg-bg-surface/40 backdrop-blur-sm rounded-xl p-4 border border-border-light/10">
+            <div className="bg-bg-surface/40 backdrop-blur-sm rounded-xl p-4 ios-card">
               <div className="flex items-start justify-between mb-4">
                 <button
                   onClick={() => setSelectedProjectId(null)}

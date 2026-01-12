@@ -168,7 +168,7 @@ export function UserDisplay() {
 
       {isOpen && (
         <div
-          className="absolute right-0 mt-3 w-64 bg-bg-primary/95 rounded-2xl border border-border-light/20 shadow-2xl overflow-hidden z-50 backdrop-blur-xl"
+          className="absolute right-0 mt-3 w-64 bg-bg-primary/95 rounded-2xl ios-card-elevated shadow-2xl overflow-hidden z-50 backdrop-blur-xl"
           role="menu"
           aria-label={tSettings("title")}
         >

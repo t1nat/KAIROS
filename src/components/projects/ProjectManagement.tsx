@@ -162,7 +162,7 @@ export function CreateProjectForm({
         className="w-full flex items-center justify-between px-6 py-4 hover:bg-bg-elevated transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-accent-primary/10 border border-accent-primary/20 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-accent-primary/10 shadow-sm rounded-lg flex items-center justify-center">
             <FolderPlus size={18} className="text-accent-primary" />
           </div>
           <span className="text-sm font-semibold text-fg-primary">{t("projectForm.title")}</span>
@@ -317,7 +317,7 @@ export function CreateProjectForm({
                   currentCollaborators.map(({ user, permission: userPermission }) => (
                     <div
                       key={user.id}
-                      className="flex items-center justify-between p-3 bg-bg-surface/50 rounded-lg border border-border-light/30 hover:bg-bg-elevated transition-all"
+                      className="flex items-center justify-between p-3 bg-bg-surface/50 rounded-lg ios-card hover:bg-bg-elevated transition-all"
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         {user.image ? (
@@ -349,7 +349,7 @@ export function CreateProjectForm({
                             <select
                               value={userPermission}
                               onChange={(e) => onUpdatePermission(user.id, e.target.value as "read" | "write")}
-                              className="px-3 py-1.5 text-xs border border-border-light/30 bg-bg-surface/50 rounded-lg text-fg-primary hover:bg-bg-elevated transition-all"
+                              className="px-3 py-1.5 text-xs shadow-sm bg-bg-surface/50 rounded-lg text-fg-primary hover:bg-bg-elevated transition-all"
                             >
                               <option value="read" className="bg-bg-secondary text-fg-primary">{t("team.view")}</option>
                               <option value="write" className="bg-bg-secondary text-fg-primary">{t("team.edit")}</option>
@@ -363,7 +363,7 @@ export function CreateProjectForm({
                             </button>
                           </>
                         ) : (
-                          <span className="px-3 py-1.5 text-xs font-medium bg-bg-surface/50 text-fg-secondary rounded-lg border border-border-light/30">
+                          <span className="px-3 py-1.5 text-xs font-medium bg-bg-surface/50 text-fg-secondary rounded-lg shadow-sm">
                             {userPermission === "read" ? t("team.view") : t("team.edit")}
                           </span>
                         )}
@@ -731,7 +731,7 @@ export function CollaboratorManager({
           currentCollaborators.map(({ user, permission: userPermission }) => (
             <div
               key={user.id}
-              className="flex items-center justify-between p-4 bg-bg-surface/50 rounded-lg border border-border-light/30 hover:bg-bg-elevated transition-all"
+              className="flex items-center justify-between p-4 bg-bg-surface/50 rounded-lg ios-card hover:bg-bg-elevated transition-all"
             >
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 {user.image ? (
@@ -763,7 +763,7 @@ export function CollaboratorManager({
                     <select
                       value={userPermission}
                       onChange={(e) => onUpdatePermission(user.id, e.target.value as "read" | "write")}
-                      className="px-3 py-2 text-xs border border-border-light/30 bg-bg-surface/50 rounded-lg text-fg-primary hover:bg-bg-elevated transition-all"
+                      className="px-3 py-2 text-xs shadow-sm bg-bg-surface/50 rounded-lg text-fg-primary hover:bg-bg-elevated transition-all"
                     >
                       <option value="read" className="bg-bg-secondary text-fg-primary">{t("team.view")}</option>
                       <option value="write" className="bg-bg-secondary text-fg-primary">{t("team.edit")}</option>
@@ -777,7 +777,7 @@ export function CollaboratorManager({
                     </button>
                   </>
                 ) : (
-                  <span className="px-3 py-2 text-xs font-medium bg-bg-surface/50 text-fg-secondary rounded-lg border border-border-light/30">
+                  <span className="px-3 py-2 text-xs font-medium bg-bg-surface/50 text-fg-secondary rounded-lg shadow-sm">
                     {userPermission === "read" ? t("team.view") : t("team.edit")}
                   </span>
                 )}

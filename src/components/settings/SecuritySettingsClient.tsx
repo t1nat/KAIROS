@@ -69,7 +69,7 @@ export function SecuritySettingsClient() {
   };
 
   return (
-    <div className="bg-bg-secondary/40 backdrop-blur-sm rounded-2xl border border-border-light/20 p-8">
+    <div className="bg-bg-secondary/40 backdrop-blur-sm rounded-2xl ios-card-elevated p-8">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 bg-accent-primary/15 rounded-lg flex items-center justify-center">
           <Shield className="text-accent-primary" size={20} />
@@ -84,7 +84,7 @@ export function SecuritySettingsClient() {
         <div>
           <h3 className="font-semibold text-fg-primary mb-2">{t("twoFactor")}</h3>
           <p className="text-sm text-fg-secondary mb-4">{t("twoFactorDesc")}</p>
-          <div className="flex items-center justify-between gap-4 p-4 bg-bg-surface rounded-xl border border-border-light/20">
+          <div className="flex items-center justify-between gap-4 p-4 bg-bg-surface rounded-xl ios-card">
             <div>
               <p className="font-semibold text-fg-primary">
                 {twoFactorEnabled ? t("disableTwoFactor") : t("enableTwoFactor")}
@@ -116,7 +116,7 @@ export function SecuritySettingsClient() {
             type="button"
             onClick={onSignOut}
             disabled={isBusy}
-            className="px-6 py-2 bg-accent-primary/10 text-accent-primary font-semibold rounded-lg hover:bg-accent-primary hover:text-white transition-colors border border-accent-primary/25 hover:border-accent-primary/40 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2 bg-accent-primary/10 text-accent-primary font-semibold rounded-lg hover:bg-accent-primary hover:text-white transition-colors shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t("signOut")}
           </button>
@@ -149,7 +149,7 @@ export function SecuritySettingsClient() {
                   type="button"
                   onClick={() => setShowDeleteConfirm(false)}
                   disabled={isBusy}
-                  className="px-6 py-2 bg-bg-surface text-fg-primary font-semibold rounded-lg hover:bg-bg-elevated transition-colors border border-border-light/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2 bg-bg-surface text-fg-primary font-semibold rounded-lg hover:bg-bg-elevated transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>

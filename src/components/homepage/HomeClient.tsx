@@ -367,11 +367,11 @@ export function HomeClient({ session }: {
             </div>
 
             <div className="relative z-10">
-                <header className="fixed top-0 left-0 right-0 z-50 topbar-solid border-b border-border-light/30 shadow-sm">
+                <header className="fixed top-0 left-0 right-0 z-50 topbar-solid shadow-lg">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-md border border-border-light/60 bg-bg-surface/80 dark:bg-gradient-to-br dark:from-accent-primary dark:to-accent-secondary dark:border-transparent">
+                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-lg bg-bg-surface/80 dark:bg-gradient-to-br dark:from-accent-primary dark:to-accent-secondary">
                                     <Image
                                         src={logoSrc}
                                         alt="Kairos Logo"
@@ -396,31 +396,26 @@ export function HomeClient({ session }: {
                     <div className="max-w-7xl mx-auto w-full">
                         <div className="flex flex-col items-center justify-center gap-8 text-center">
                            <div className="space-y-6 max-w-4xl">
-                                <div className="inline-flex items-center gap-2 px-4 py-2 bg-accent-primary/10 border border-accent-primary/20 rounded-full text-sm font-semibold text-accent-primary animate-slideUp">
-                                    <span className="relative flex h-2 w-2">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-primary opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-primary"></span>
-                                    </span>
-                                    Event Planning & Coordination Platform
+                                <div className="inline-flex items-center gap-2 px-4 py-2 bg-accent-primary/10 shadow-sm rounded-full text-sm font-semibold text-accent-primary animate-slideUp">
+    
                                 </div>
                                 <h2 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-fg-primary leading-tight tracking-tight font-display animate-slideUp" style={{ animationDelay: '0.1s' }}>
                                     KAIROS
                                 </h2>
                                 <p className="text-lg sm:text-xl md:text-2xl text-fg-secondary leading-relaxed animate-slideUp" style={{ animationDelay: '0.2s' }}>
-                                    The all-in-one platform for seamless event coordination, team collaboration, and project timelines.
-                                </p>
+                                Where great ideas come to life. The workspace where teams align and launch moments that matter.                         </p>
                                 <div className="flex flex-wrap gap-4 text-sm text-fg-tertiary justify-center animate-slideUp" style={{ animationDelay: '0.3s' }}>
                                     <div className="flex items-center gap-2">
                                         <div className="w-1.5 h-1.5 bg-event-active rounded-full"></div>
-                                        Live RSVP Tracking
+                               
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <div className="w-1.5 h-1.5 bg-event-upcoming rounded-full"></div>
-                                        Timeline Management
+                            
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <div className="w-1.5 h-1.5 bg-event-completed rounded-full"></div>
-                                        Team Collaboration
+                                 
                                     </div>
                                 </div>
                             </div>
@@ -430,14 +425,14 @@ export function HomeClient({ session }: {
                                         <Link 
                                             ref={projectSpaceButtonRef}
                                             href="/create" 
-                                            className="flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 font-semibold rounded-xl transition-all hover:scale-[1.02] text-base sm:text-lg group border-2 border-accent-primary text-accent-primary hover:bg-accent-primary/5"
+                                            className="flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 font-semibold rounded-xl transition-all hover:scale-[1.02] text-base sm:text-lg group bg-accent-primary text-white shadow-lg shadow-accent-primary/30 hover:shadow-xl hover:shadow-accent-primary/40"
                                         >
                                             Enter Project Space
                                             <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />
                                         </Link>
                                         <Link 
                                             href="/publish" 
-                                            className="flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 border-2 border-border-medium text-fg-primary font-semibold rounded-xl hover:bg-bg-elevated/50 hover:border-accent-primary/30 transition-all text-base sm:text-lg group"
+                                            className="flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 text-fg-primary font-semibold rounded-xl hover:bg-bg-elevated/50 transition-all text-base sm:text-lg group shadow-md hover:shadow-lg"
                                         >
                                             View Publications
                                             <Calendar size={22} className="group-hover:rotate-12 transition-transform" />
@@ -448,7 +443,7 @@ export function HomeClient({ session }: {
                                 {!session && (
                                     <button
                                         onClick={() => setIsModalOpen(true)}
-                                        className="flex items-center justify-center gap-2 px-8 sm:px-10 py-4 sm:py-5 border-2 border-accent-primary text-accent-primary font-semibold rounded-xl hover:bg-accent-primary hover:text-white transition-all hover:scale-[1.02] text-base sm:text-lg group"
+                                        className="flex items-center justify-center gap-2 px-8 sm:px-10 py-4 sm:py-5 bg-accent-primary text-white font-semibold rounded-xl hover:bg-accent-primary/90 transition-all hover:scale-[1.02] text-base sm:text-lg group shadow-lg shadow-accent-primary/30 hover:shadow-xl hover:shadow-accent-primary/40"
                                     >
                                         Log In / Sign Up
                                         <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
@@ -503,7 +498,7 @@ export function HomeClient({ session }: {
                         <div className="mt-12 sm:mt-16 w-full max-w-[1200px] mx-auto">
                             <h4 className="text-2xl md:text-3xl font-bold text-fg-primary mb-8">Why Teams Choose Kairos</h4>
                             <div className="grid md:grid-cols-2 gap-6">
-                                <div className="flex items-start gap-4 p-4 rounded-xl bg-success/5 border border-success/10 hover:bg-success/8 transition-colors group">
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-success/5 hover:bg-success/8 transition-colors group shadow-md hover:shadow-lg">
                                     <div className="flex-shrink-0 w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
                                         <Calendar className="text-success" size={20} />
                                     </div>
@@ -512,7 +507,7 @@ export function HomeClient({ session }: {
                                         <p className="text-sm text-fg-secondary">Visualize the flow. Manage tasks and track progress at a glance.</p>
                                     </div>
                                 </div>
-                                <div className="flex items-start gap-4 p-4 rounded-xl bg-success/5 border border-success/10 hover:bg-success/8 transition-colors group">
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-success/5 hover:bg-success/8 transition-colors group shadow-md hover:shadow-lg">
                                     <div className="flex-shrink-0 w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
                                         <Zap className="text-success" size={20} />
                                     </div>
@@ -521,7 +516,7 @@ export function HomeClient({ session }: {
                                         <p className="text-sm text-fg-secondary">Go live. Turn internal project plans into public events in seconds.</p>
                                     </div>
                                 </div>
-                                <div className="flex items-start gap-4 p-4 rounded-xl bg-warning/5 border border-warning/10 hover:bg-warning/8 transition-colors group">
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-warning/5 hover:bg-warning/8 transition-colors group shadow-md hover:shadow-lg">
                                     <div className="flex-shrink-0 w-10 h-10 bg-warning/10 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
                                         <Lock className="text-warning" size={20} />
                                     </div>
@@ -530,7 +525,7 @@ export function HomeClient({ session }: {
                                         <p className="text-sm text-fg-secondary">Secure your organization with roles and access codes.</p>
                                     </div>
                                 </div>
-                                <div className="flex items-start gap-4 p-4 rounded-xl bg-accent-primary/5 border border-accent-primary/10 hover:bg-accent-primary/8 transition-colors group">
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-accent-primary/5 hover:bg-accent-primary/8 transition-colors group shadow-md hover:shadow-lg">
                                     <div className="flex-shrink-0 w-10 h-10 bg-accent-primary/10 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
                                         <Sparkles className="text-accent-primary" size={20} />
                                     </div>

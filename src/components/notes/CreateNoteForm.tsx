@@ -69,9 +69,13 @@ export const CreateNoteForm: React.FC = () => {
             <textarea
               id="content"
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={(e) => {
+                setContent(e.target.value);
+                e.target.style.height = 'auto';
+                e.target.style.height = e.target.scrollHeight + 'px';
+              }}
               placeholder={t("notes.placeholders.content")}
-              className="flex-1 w-full px-3 py-3 text-sm bg-transparent border border-border-light/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary/50 transition-all text-fg-primary placeholder:text-fg-quaternary resize-none"
+              className="w-full px-3 py-3 text-sm bg-transparent shadow-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary/50 transition-all text-fg-primary placeholder:text-fg-quaternary resize-none min-h-[80px] max-h-[400px] overflow-y-auto"
               disabled={createNote.isPending}
             />
           </div>
@@ -98,7 +102,7 @@ export const CreateNoteForm: React.FC = () => {
               type="button"
               onClick={() => setShowForm(false)}
               disabled={createNote.isPending}
-              className="px-4 py-2.5 text-sm border border-border-light/30 text-fg-secondary font-medium rounded-lg hover:bg-bg-secondary/40 transition-all"
+              className="px-4 py-2.5 text-sm shadow-sm text-fg-secondary font-medium rounded-lg hover:bg-bg-secondary/40 hover:shadow-md transition-all"
             >
               {t("notes.actions.cancel")}
             </button>

@@ -120,7 +120,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
               <button
                 onClick={() => setPersonalMode.mutate()}
                 disabled={setPersonalMode.isPending}
-                className="w-full p-4 bg-bg-surface border border-border-light/20 rounded-xl hover:bg-bg-elevated hover:border-accent-primary/40 transition-all duration-200 text-left group disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
+                className="w-full p-4 bg-bg-surface shadow-sm rounded-xl hover:bg-bg-elevated hover:shadow-md transition-all duration-200 text-left group disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
               >
                 <span className="text-fg-primary font-medium">Personal Use</span>
                 <ChevronRight className="text-fg-tertiary group-hover:text-accent-primary transition-colors" size={20} />

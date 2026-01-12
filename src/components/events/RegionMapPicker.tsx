@@ -53,10 +53,10 @@ export function RegionMapPicker({
 
   return (
     <div className={className ?? ""}>
-      <div className="surface-card rounded-xl p-3 sm:p-4">
+      <div className="ios-card rounded-xl p-3 sm:p-4">
         <div className="flex items-center gap-2 sm:gap-3 mb-3">
           <MapPin className="text-accent-primary" size={18} />
-          <div className="flex-1 flex items-center gap-2 bg-bg-secondary border border-border-light rounded-lg px-3 py-2">
+          <div className="flex-1 flex items-center gap-2 bg-bg-secondary shadow-sm rounded-lg px-3 py-2">
             <Search size={16} className="text-fg-tertiary" />
             <input
               value={query}
@@ -69,10 +69,10 @@ export function RegionMapPicker({
             <button
               type="button"
               onClick={() => onChange("")}
-              className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-medium border transition-colors ${
+              className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors shadow-sm ${
                 value === ""
-                  ? "bg-accent-primary/20 text-accent-primary border-accent-primary/30"
-                  : "bg-bg-secondary text-fg-secondary border-border-light hover:bg-bg-tertiary"
+                  ? "bg-accent-primary/20 text-accent-primary"
+                  : "bg-bg-secondary text-fg-secondary hover:bg-bg-tertiary"
               }`}
             >
               {allLabel}
@@ -80,7 +80,7 @@ export function RegionMapPicker({
           )}
         </div>
 
-        <div className="rounded-xl overflow-hidden border border-border-light">
+        <div className="rounded-xl overflow-hidden ios-card">
           <LoadScript googleMapsApiKey={apiKey} onError={() => setMapsLoadFailed(true)}>
             <GoogleMap
               mapContainerStyle={{ width: "100%", height: "220px" }}
@@ -109,10 +109,10 @@ export function RegionMapPicker({
               key={r.value}
               type="button"
               onClick={() => onChange(r.value)}
-              className={`px-3 py-1.5 rounded-full text-xs sm:text-sm border transition-colors ${
+              className={`px-3 py-1.5 rounded-full text-xs sm:text-sm transition-colors shadow-sm ${
                 value === r.value
-                  ? "bg-accent-primary/20 text-accent-primary border-accent-primary/30"
-                  : "bg-bg-secondary text-fg-secondary border-border-light hover:bg-bg-tertiary"
+                  ? "bg-accent-primary/20 text-accent-primary"
+                  : "bg-bg-secondary text-fg-secondary hover:bg-bg-tertiary"
               }`}
             >
               {r.label}

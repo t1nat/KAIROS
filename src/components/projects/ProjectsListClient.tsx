@@ -58,7 +58,7 @@ export function ProjectsListClient() {
         <h1 className="text-2xl font-bold text-fg-primary">My Projects</h1>
         <button
           onClick={() => setShowArchived(!showArchived)}
-          className="flex items-center gap-2 px-3 py-2 text-sm text-fg-secondary hover:text-fg-primary border border-border-light/20 rounded-lg transition-colors"
+          className="flex items-center gap-2 px-3 py-2 text-sm text-fg-secondary hover:text-fg-primary shadow-sm rounded-lg transition-colors"
         >
           <Archive size={16} />
           {showArchived ? "Hide Archived" : `Show Archived (${archivedProjects.length})`}

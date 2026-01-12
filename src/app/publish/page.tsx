@@ -1,25 +1,29 @@
 import { EventFeed } from "~/components/events/EventFeed";
-import { CreateEventForm } from "~/components/events/CreateEventForm";
 import { SideNav } from "~/components/layout/SideNav";
 import { UserDisplay } from "~/components/layout/UserDisplay";
 import { EventReminderService } from "~/components/events/EventReminderService";
 
 export default function PublishPage() {
     return (
-        <div className="min-h-screen bg-bg-primary relative">
+        <div className="min-h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary">
             <SideNav />
             
             <div className="lg:ml-16 pt-16 lg:pt-0">
-                <main id="main-content" className="w-full px-4 sm:px-6 lg:px-8 pt-6 pb-10">
-                    <EventReminderService />
-
-                    <div className="flex justify-end mb-4">
+                <header className="sticky top-16 lg:top-0 z-30 ios-header">
+                    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
+                        <div>
+                            <h1 className="text-2xl sm:text-3xl font-bold text-fg-primary">Events</h1>
+                            <p className="text-sm text-fg-secondary">Discover and share upcoming events</p>
+                        </div>
                         <UserDisplay />
                     </div>
+                </header>
 
-                    <div className="mx-auto w-full max-w-2xl space-y-4">
-                        <CreateEventForm />
-                        <EventFeed />
+                <main id="main-content" className="w-full">
+                    <EventReminderService />
+                    
+                    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+                        <EventFeed showCreateForm={true} />
                     </div>
                 </main>
             </div>

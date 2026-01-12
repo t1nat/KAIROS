@@ -218,7 +218,7 @@ export function ProjectsListWorkspace() {
         
         <button
           onClick={() => setShowProjects((s) => !s)}
-          className="group flex items-center gap-2 sm:gap-3 mx-auto px-4 sm:px-6 py-2.5 sm:py-3 rounded-full bg-accent-primary/10 hover:bg-accent-primary/15 border border-accent-primary/25 hover:border-accent-primary/40 transition-all"
+          className="group flex items-center gap-2 sm:gap-3 mx-auto px-4 sm:px-6 py-2.5 sm:py-3 rounded-full bg-accent-primary/10 hover:bg-accent-primary/15 shadow-sm hover:shadow-md transition-all"
         >
           <Folder size={16} className="text-accent-primary group-hover:scale-110 transition-transform sm:w-[18px] sm:h-[18px]" />
           <span className="text-xs sm:text-sm font-semibold text-fg-primary">
@@ -244,7 +244,7 @@ export function ProjectsListWorkspace() {
                 router.push(`/create?action=new_project&projectId=${project.id}`);
                 setShowProjects(false);
               }}
-              className="group relative p-4 sm:p-6 rounded-xl sm:rounded-2xl text-left transition-all duration-300 hover:scale-[1.02] bg-gradient-to-br from-bg-surface to-transparent hover:from-bg-elevated hover:to-bg-surface border border-border-light/20 hover:border-accent-primary/30"
+              className="group relative p-4 sm:p-6 rounded-xl sm:rounded-2xl text-left transition-all duration-300 hover:scale-[1.02] bg-gradient-to-br from-bg-surface to-transparent hover:from-bg-elevated hover:to-bg-surface ios-card-elevated hover:shadow-lg"
             >
               <div className="flex items-start gap-3 sm:gap-5">
                 <div className="flex-shrink-0">

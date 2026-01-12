@@ -154,12 +154,20 @@ export function NotesList() {
 
               return (
                 <div key={note.id} className="space-y-2">
-                  <button
+                  <div
                     onClick={() => setSelectedNoteId(isSelected ? null : note.id)}
-                    className={`w-full text-left p-3 rounded-lg border transition-all ${
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelectedNoteId(isSelected ? null : note.id);
+                      }
+                    }}
+                    className={`w-full text-left p-3 rounded-lg shadow-sm transition-all cursor-pointer ${
                       isSelected 
-                        ? 'bg-accent-primary/10 border-accent-primary/30' 
-                        : 'bg-bg-surface/50 border-border-light/20 hover:bg-bg-surface hover:border-border-light/40'
+                        ? 'bg-accent-primary/10 ios-card-elevated' 
+                        : 'bg-bg-surface/50 ios-card hover:bg-bg-surface'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2 mb-1">
@@ -181,11 +189,11 @@ export function NotesList() {
                     <p className="text-xs text-fg-tertiary">
                       {new Date(note.createdAt).toLocaleDateString()}
                     </p>
-                  </button>
+                  </div>
 
                   {/* EXPANDED CONTENT */}
                   {isSelected && (
-                    <div className="animate-in fade-in slide-in-from-top-2 duration-200 p-4 bg-bg-surface/30 border border-border-light/20 rounded-lg">
+                    <div className="animate-in fade-in slide-in-from-top-2 duration-200 p-4 bg-bg-surface/30 ios-card rounded-lg">
                       <div className="flex items-center justify-between mb-3 pb-2 border-b border-border-light/20">
                         <span className="text-xs font-medium text-fg-tertiary">Edit Note</span>
                         <div className="flex gap-2">
@@ -274,7 +282,7 @@ export function NotesList() {
 
                     {/* EXPANDED CONTENT FOR LOCKED NOTES */}
                     {isSelected && (
-                      <div className="animate-in fade-in slide-in-from-top-2 duration-200 p-4 bg-bg-surface/30 border border-border-light/20 rounded-lg">
+                      <div className="animate-in fade-in slide-in-from-top-2 duration-200 p-4 bg-bg-surface/30 ios-card rounded-lg">
                         {isLocked ? (
                           <div className="space-y-3">
                             <div className="flex items-center gap-2">
@@ -367,7 +375,7 @@ export function NotesList() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="card-base rounded-2xl shadow-2xl max-w-md w-full p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-accent-primary/10 border border-accent-primary/20 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-accent-primary/10 shadow-sm rounded-lg flex items-center justify-center">
                 <Mail className="text-accent-primary" size={20} />
               </div>
               <h3 className="text-xl font-bold text-fg-primary">{t("notes.reset.title")}</h3>

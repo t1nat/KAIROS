@@ -35,7 +35,7 @@ export function AppearanceSettings() {
 
   if (!mounted) {
     return (
-      <div className="bg-bg-secondary/40 backdrop-blur-sm rounded-2xl border border-border-light/20 p-8">
+      <div className="bg-bg-secondary/40 backdrop-blur-sm rounded-2xl ios-card-elevated p-8">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 bg-accent-primary/15 rounded-lg flex items-center justify-center">
             <Palette className="text-accent-primary" size={20} />
@@ -138,7 +138,7 @@ export function AppearanceSettings() {
   ];
 
   return (
-    <div className="bg-bg-secondary/40 backdrop-blur-sm rounded-2xl border border-border-light/20 p-8">
+    <div className="bg-bg-secondary/40 backdrop-blur-sm rounded-2xl ios-card-elevated p-8">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 bg-accent-primary/15 rounded-lg flex items-center justify-center">
           <Palette className="text-accent-primary" size={20} />
@@ -222,7 +222,7 @@ export function AppearanceSettings() {
             </div>
           </div>
 
-          <div className="p-4 bg-bg-surface rounded-xl border border-border-light/20">
+          <div className="p-4 bg-bg-surface rounded-xl ios-card">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 bg-accent-primary/15 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                 <Palette size={16} className="text-accent-primary" />

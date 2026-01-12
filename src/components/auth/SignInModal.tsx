@@ -129,7 +129,7 @@ export function SignInModal({
         onClick={onClose}
       />
       
-      <div className="relative bg-bg-primary dark:bg-gradient-to-br dark:from-bg-secondary dark:to-bg-primary rounded-3xl shadow-2xl w-full max-w-md border border-accent-primary/20 overflow-hidden">
+      <div className="relative bg-bg-primary dark:bg-gradient-to-br dark:from-bg-secondary dark:to-bg-primary rounded-3xl shadow-2xl w-full max-w-md shadow-sm overflow-hidden">
         
         <div className="absolute inset-0 bg-gradient-to-br from-accent-primary/10 to-transparent pointer-events-none" />
         
@@ -175,7 +175,7 @@ export function SignInModal({
           <button
             onClick={handleGoogleSignIn}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-bg-surface border border-border-light/20 rounded-2xl font-semibold text-fg-primary hover:bg-bg-elevated hover:border-border-medium/50 transition-all duration-300 shadow-sm hover:shadow-md hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-bg-surface shadow-sm rounded-2xl font-semibold text-fg-primary hover:bg-bg-elevated hover:shadow-md transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
             <div className="w-5 h-5 bg-white dark:bg-white rounded flex items-center justify-center">
               <svg viewBox="0 0 24 24" className="w-4 h-4">

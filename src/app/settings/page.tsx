@@ -47,7 +47,7 @@ export default async function SettingsPage({
       </Link>
 
       <div className="lg:ml-16 pt-16 lg:pt-0 min-h-screen flex flex-col">
-        <header className="sticky top-16 lg:top-0 z-30 topbar-solid border-b border-border-light/30">
+        <header className="sticky top-16 lg:top-0 z-30 topbar-solid ios-header">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex flex-wrap justify-between items-center gap-3">
             <div className="flex items-center gap-3">
               <div>
@@ -63,20 +63,22 @@ export default async function SettingsPage({
           </div>
         </header>
 
-        <main id="main-content" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full">
-          <div className="flex flex-col lg:flex-row gap-6 items-start">
-            <aside className="w-full lg:w-64 lg:flex-shrink-0">
-              <div className="lg:sticky lg:top-24 bg-bg-secondary/30 backdrop-blur-sm rounded-2xl border border-border-light/10">
+        <main id="main-content" className="flex-1 w-full">
+          <div className="flex flex-col lg:flex-row h-full">
+            <aside className="w-full lg:w-72 lg:flex-shrink-0 bg-bg-primary/50 shadow-sm">
+              <div className="lg:sticky lg:top-20 p-4 lg:p-6">
                 <SettingsNav activeSection={activeSection} variant="embedded" />
               </div>
             </aside>
 
-            <div className="flex-1 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 duration-300">
-              {activeSection === "profile" && <ProfileSettingsClient user={session.user} />}
-              {activeSection === "notifications" && <NotificationSettingsClient />}
-              {activeSection === "security" && <SecuritySettingsClient />}
-              {activeSection === "language" && <LanguageSettingsClient />}
-              {activeSection === "appearance" && <AppearanceSettings />}
+            <div className="flex-1 bg-bg-secondary/30 px-4 sm:px-6 lg:px-12 py-6 sm:py-8 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 duration-300">
+              <div className="max-w-4xl">
+                {activeSection === "profile" && <ProfileSettingsClient user={session.user} />}
+                {activeSection === "notifications" && <NotificationSettingsClient />}
+                {activeSection === "security" && <SecuritySettingsClient />}
+                {activeSection === "language" && <LanguageSettingsClient />}
+                {activeSection === "appearance" && <AppearanceSettings />}
+              </div>
             </div>
           </div>
         </main>

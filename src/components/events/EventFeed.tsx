@@ -19,10 +19,12 @@ import {
   Users,
   TrendingUp,
   Trash2,
+  Plus,
 } from "lucide-react";
 import { api } from "~/trpc/react";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
+import { CreateEventForm } from "~/components/events/CreateEventForm";
 import { RegionMapPicker, type RegionOption } from "~/components/events/RegionMapPicker";
 
 const REGIONS = [
@@ -259,7 +261,7 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
         </div>
 
         <div className="p-4 sm:p-6 space-y-6">
-          <div className="bg-bg-secondary rounded-xl p-4 sm:p-5 border border-border-light">
+          <div className="bg-bg-secondary rounded-xl p-4 sm:p-5 ios-card">
             <div className="flex items-center gap-3 mb-2">
               <Users className="text-accent-primary" size={20} />
               <h3 className="text-base sm:text-lg font-semibold text-fg-primary">Total Responses</h3>
@@ -325,7 +327,7 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
             </div>
           </div>
 
-          <div className="bg-bg-secondary rounded-xl p-4 border border-border-light">
+          <div className="bg-bg-secondary rounded-xl p-4 ios-card">
             <h4 className="text-sm font-semibold text-fg-secondary mb-2">Event Details</h4>
             <p className="text-fg-primary font-medium mb-1">{event.title}</p>
             <div className="flex items-center gap-2 text-xs text-fg-tertiary">
@@ -755,9 +757,14 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
   );
 };
 
-export const EventFeed: React.FC = () => {
+interface EventFeedProps {
+  showCreateForm?: boolean;
+}
+
+export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false }) => {
   const { data: session } = useSession();
   const [selectedRegion, setSelectedRegion] = useState<string>('');
+  const [showForm, setShowForm] = useState(false);
   
 
   const { data: eventsData, isLoading, error } = api.event.getPublicEvents.useQuery(undefined, {
@@ -792,8 +799,37 @@ export const EventFeed: React.FC = () => {
   ) ?? [];
 
   return (
-    <div>
-      <div className="mb-6">
+    <div className="space-y-6">
+      {showCreateForm && session && (
+        <div>
+          {showForm ? (
+            <div className="ios-card-elevated p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-fg-primary">Create Event</h3>
+                <button
+                  onClick={() => setShowForm(false)}
+                  className="p-2 hover:bg-bg-secondary rounded-lg transition-colors"
+                >
+                  <X size={20} className="text-fg-secondary" />
+                </button>
+              </div>
+              <CreateEventForm onSuccess={() => setShowForm(false)} />
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowForm(true)}
+              className="w-full ios-card p-4 flex items-center gap-3 text-fg-secondary hover:text-accent-primary hover:bg-accent-primary/5 transition-colors group"
+            >
+              <div className="w-10 h-10 rounded-full bg-accent-primary/10 flex items-center justify-center group-hover:bg-accent-primary/20 transition-colors">
+                <Plus size={20} className="text-accent-primary" />
+              </div>
+              <span className="font-medium">Create new event</span>
+            </button>
+          )}
+        </div>
+      )}
+
+      <div>
         <RegionMapPicker
           value={selectedRegion}
           onChange={setSelectedRegion}
@@ -801,13 +837,13 @@ export const EventFeed: React.FC = () => {
           allowAll
           allLabel="All"
           fallback={
-            <div className="surface-card rounded-xl p-3 sm:p-4">
+            <div className="ios-card p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
                 <MapPin className="text-accent-primary" size={18} />
                 <select
                   value={selectedRegion}
                   onChange={(e) => setSelectedRegion(e.target.value)}
-                  className="flex-1 px-3 sm:px-4 py-2 bg-bg-secondary border border-border-light rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all text-sm sm:text-base text-fg-primary appearance-none cursor-pointer"
+                  className="flex-1 px-3 sm:px-4 py-2 bg-bg-secondary shadow-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all text-sm sm:text-base text-fg-primary appearance-none cursor-pointer [&>option]:text-fg-primary [&>option]:bg-bg-secondary [color-scheme:dark]"
                 >
                   {REGIONS.map((region) => (
                     <option key={region.value} value={region.value}>
@@ -834,7 +870,7 @@ export const EventFeed: React.FC = () => {
           </p>
         </div>
       ) : (
-        <div>
+        <div className="space-y-4">
           {filteredEvents.map((event) => (
             <EventCard
               key={event.id}

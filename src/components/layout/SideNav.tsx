@@ -77,7 +77,7 @@ export function SideNav() {
 
   return (
     <>
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-bg-primary/95 backdrop-blur-md border-b border-border-light/20 px-4 py-3 flex items-center justify-between">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-bg-primary/95 backdrop-blur-md shadow-sm px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center shadow-lg shadow-accent-primary/25">
             <span className="text-white font-bold text-sm">K</span>
@@ -111,7 +111,7 @@ export function SideNav() {
             id={mobileNavId}
             role="dialog"
             aria-label="Navigation"
-            className="lg:hidden fixed left-0 top-0 bottom-0 w-72 bg-bg-primary z-50 border-r border-border-light/20 pt-16 animate-slideIn"
+            className="lg:hidden fixed left-0 top-0 bottom-0 w-72 bg-bg-primary z-50 shadow-2xl pt-16 animate-slideIn"
           >
             <nav className="flex flex-col gap-1 p-3" aria-label="Primary">
               {mainNavItems.map((item) => {
@@ -157,14 +157,14 @@ export function SideNav() {
                 <span>{settingsItem.label}</span>
               </Link>
               
-              <div className="mt-6 pt-6 border-t border-border-light/20">
+              <div className="mt-6 pt-6">
                 <p className="text-xs font-semibold text-fg-secondary uppercase tracking-wider mb-3 px-4">
                   {t("quickActions")}
                 </p>
                 <Link
                   href="/create?action=new_project"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-accent-primary hover:bg-accent-primary/10 transition-colors border border-accent-primary/30 font-medium"
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-accent-primary hover:bg-accent-primary/10 transition-colors shadow-sm font-medium"
                   title={t("newProject")}
                 >
                   <Plus size={20} />
@@ -176,7 +176,7 @@ export function SideNav() {
         </>
       )}
 
-      <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-16 bg-bg-primary border-r border-border-light/20 flex-col items-center py-8 gap-6 z-40" aria-label="Primary">
+      <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-16 bg-bg-primary/95 backdrop-blur-md shadow-lg flex-col items-center py-8 gap-6 z-40" aria-label="Primary">
         <div className="flex flex-col items-center gap-6">
           {mainNavItems.map((item) => {
             const isActive = isItemActive(item.href);
@@ -194,7 +194,7 @@ export function SideNav() {
               >
                 <item.icon size={20} />
                 
-                <span className="absolute left-full ml-4 px-3 py-1.5 bg-bg-primary text-fg-primary text-sm rounded-lg border border-border-light/20 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
+                <span className="absolute left-full ml-4 px-3 py-1.5 ios-card text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
                   {item.label}
                 </span>
               </Link>
@@ -214,7 +214,7 @@ export function SideNav() {
             title={settingsItem.label}
           >
             <settingsItem.icon size={20} />
-            <span className="absolute left-full ml-4 px-3 py-1.5 bg-bg-primary text-fg-primary text-sm rounded-lg border border-border-light/20 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
+            <span className="absolute left-full ml-4 px-3 py-1.5 ios-card text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
               {settingsItem.label}
             </span>
           </Link>

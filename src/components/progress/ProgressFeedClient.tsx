@@ -105,9 +105,10 @@ function PieChart(props: {
   ensureChartJsRegistered();
   const colors = useResolvedThemeColors();
 
-  const total = props.segments.reduce((s, seg) => s + seg.value, 0);
-  const chartSegments = props.segments.filter((s) => s.value > 0);
-  const chartTotal = chartSegments.reduce((s, seg) => s + seg.value, 0);
+  const chartSegments = useMemo(
+    () => props.segments.filter((s) => s.value > 0),
+    [props.segments]
+  );
 
   const data = useMemo(
     () => ({
@@ -118,6 +119,7 @@ function PieChart(props: {
           backgroundColor: chartSegments.map((s) => s.strokeColor),
           borderColor: colors.border,
           borderWidth: 1,
+          hoverOffset: 8,
         },
       ],
     }),
@@ -141,62 +143,80 @@ function PieChart(props: {
           boxWidth: 12,
           boxHeight: 12,
           usePointStyle: true,
-          callbacks: {
-            title: (items: any[]) => {
-              return items[0]?.label ?? "";
-            },
-            label: (ctx: any) => {
-              const label = ctx.label ?? "";
-              const value = ctx.parsed ?? 0;
-              const pct = chartTotal > 0 ? Math.round((value / chartTotal) * 100) : 0;
-              return `Value: ${value} (${pct}%)`;
-            },
-          },
+          cornerRadius: 8,
         },
       },
       interaction: {
         mode: 'nearest' as const,
         intersect: true,
       },
-      onHover: (event: any, activeElements: any[]) => {
-        const target = event.native?.target as HTMLElement | null;
-        if (target) {
-          target.style.cursor = activeElements.length > 0 ? "pointer" : "default";
-        }
-      },
-      onClick: (_event: any, activeElements: any[]) => {
-        if (activeElements.length > 0 && props.onSegmentClick) {
-          const index = activeElements[0]?.index;
-          if (typeof index === "number" && chartSegments[index]?.projectId) {
-            props.onSegmentClick(chartSegments[index]!.projectId!);
-          }
-        }
-      },
     }),
-    [colors.bgOverlay, colors.fgPrimary, colors.border, chartTotal, chartSegments, props]
+    [colors.bgOverlay, colors.fgPrimary, colors.border]
   );
 
+  // Handle click separately to avoid the callback error
+  const handleChartClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!props.onSegmentClick) return;
+    
+    const container = event.currentTarget;
+    const rect = container.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    
+    // Simple hit detection - find which segment was clicked based on angle
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const radius = Math.min(centerX, centerY);
+    
+    const dx = x - centerX;
+    const dy = y - centerY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance > radius) return;
+    
+    let angle = Math.atan2(dy, dx) + Math.PI / 2;
+    if (angle < 0) angle += 2 * Math.PI;
+    
+    const total = chartSegments.reduce((sum, s) => sum + s.value, 0);
+    let cumulative = 0;
+    
+    for (const segment of chartSegments) {
+      const segmentAngle = (segment.value / total) * 2 * Math.PI;
+      if (angle >= cumulative && angle < cumulative + segmentAngle) {
+        if (segment.projectId) {
+          props.onSegmentClick(segment.projectId);
+        }
+        return;
+      }
+      cumulative += segmentAngle;
+    }
+  };
+
   return (
-    <div className="flex flex-col p-2">
-      <div className="mb-2">
-        <p className="text-sm font-medium text-fg-primary">{props.title}</p>
-        {props.subtitle && <p className="text-xs text-fg-tertiary">{props.subtitle}</p>}
+    <div className="flex flex-col p-4 rounded-2xl bg-gradient-to-br from-bg-elevated/80 to-bg-surface/40 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 group">
+      <div className="mb-3">
+        <p className="text-sm font-semibold text-fg-primary">{props.title}</p>
+        {props.subtitle && <p className="text-xs text-fg-tertiary mt-0.5">{props.subtitle}</p>}
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="relative w-32 h-32 flex-shrink-0">
+      <div className="flex items-center gap-5">
+        <div 
+          className="relative w-28 h-28 flex-shrink-0 drop-shadow-lg group-hover:scale-105 transition-transform duration-300"
+          onClick={props.onSegmentClick ? handleChartClick : undefined}
+          style={{ cursor: props.onSegmentClick ? 'pointer' : 'default' }}
+        >
           <Doughnut data={data} options={options} aria-label={props.title} role="img" />
         </div>
 
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-col gap-2">
           {chartSegments.map((s) => (
             <span
               key={s.key}
-              className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs text-fg-secondary"
+              className="inline-flex items-center gap-2 text-xs group/item hover:bg-white/5 rounded-md px-2 py-1 transition-colors"
             >
-              <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: s.strokeColor }} />
-              <span className="text-fg-primary">{s.label}</span>
-              <span className="text-fg-tertiary">{s.value}</span>
+              <span className="h-2.5 w-2.5 rounded-full flex-shrink-0 ring-2 ring-white/10" style={{ backgroundColor: s.strokeColor }} />
+              <span className="text-fg-primary font-medium">{s.label}</span>
+              <span className="text-fg-tertiary ml-auto tabular-nums">{s.value}</span>
             </span>
           ))}
         </div>
@@ -216,8 +236,10 @@ function LargePieChart(props: {
   ensureChartJsRegistered();
   const colors = useResolvedThemeColors();
 
-  const chartSegments = props.segments.filter((s) => s.value > 0);
-  const chartTotal = chartSegments.reduce((s, seg) => s + seg.value, 0);
+  const chartSegments = useMemo(
+    () => props.segments.filter((s) => s.value > 0),
+    [props.segments]
+  );
   const clampedPercent = Math.max(0, Math.min(100, props.percent));
 
   const data = useMemo(
@@ -229,6 +251,7 @@ function LargePieChart(props: {
           backgroundColor: chartSegments.map((s) => s.strokeColor),
           borderColor: colors.border,
           borderWidth: 1,
+          hoverOffset: 12,
         },
       ],
     }),
@@ -237,7 +260,7 @@ function LargePieChart(props: {
 
   const options = useMemo(
     () => ({
-      cutout: "0%",
+      cutout: "60%",
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -252,71 +275,45 @@ function LargePieChart(props: {
           boxWidth: 14,
           boxHeight: 14,
           usePointStyle: true,
-          titleFont: {
-            size: 14,
-            weight: 'bold' as const,
-          },
-          bodyFont: {
-            size: 13,
-          },
-          callbacks: {
-            title: (items: any[]) => {
-              return items[0]?.label ?? "";
-            },
-            label: (ctx: any) => {
-              const label = ctx.label ?? "";
-              const value = ctx.parsed ?? 0;
-              const pct = chartTotal > 0 ? Math.round((value / chartTotal) * 100) : 0;
-              return `Tasks: ${value} (${pct}%)`;
-            },
-            afterLabel: (ctx: any) => {
-              const completed = props.completed;
-              const total = props.total;
-              return `Overall: ${completed}/${total}`;
-            },
-          },
+          cornerRadius: 8,
         },
       },
       interaction: {
         mode: 'nearest' as const,
         intersect: true,
       },
-      onHover: (event: any, activeElements: any[]) => {
-        const target = event.native?.target as HTMLElement | null;
-        if (target) {
-          target.style.cursor = activeElements.length > 0 ? "pointer" : "default";
-        }
-      },
     }),
-    [colors.bgOverlay, colors.fgPrimary, colors.border, chartTotal, props.completed, props.total]
+    [colors.bgOverlay, colors.fgPrimary, colors.border]
   );
 
   return (
-    <div className="flex flex-col items-center p-2">
-      <div className="text-center mb-3">
-        <h3 className="text-base font-semibold text-fg-primary">{props.title}</h3>
-        <p className="text-xs text-fg-tertiary">{props.subtitle}</p>
+    <div className="flex flex-col items-center p-6 rounded-2xl bg-gradient-to-br from-bg-elevated/80 to-bg-surface/40 backdrop-blur-sm shadow-lg">
+      <div className="text-center mb-4">
+        <h3 className="text-lg font-bold text-fg-primary">{props.title}</h3>
+        <p className="text-xs text-fg-tertiary mt-1">{props.subtitle}</p>
       </div>
 
-      <div className="relative w-52 h-52">
+      <div className="relative w-48 h-48 drop-shadow-xl">
         <Doughnut data={data} options={options} aria-label={props.title} />
+        {/* Center overlay with percentage */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <p className="text-4xl font-bold bg-gradient-to-r from-accent-primary to-accent-secondary bg-clip-text text-transparent">
+            {Math.round(clampedPercent)}%
+          </p>
+          <p className="text-xs text-fg-tertiary font-medium">{props.completed}/{props.total}</p>
+        </div>
       </div>
 
-      <div className="mt-3 text-center">
-        <p className="text-3xl font-bold text-fg-primary">{Math.round(clampedPercent)}%</p>
-        <p className="text-xs text-fg-tertiary">{props.completed}/{props.total}</p>
-      </div>
-
-      <div className="mt-3 flex flex-wrap justify-center gap-x-3 gap-y-1">
+      <div className="mt-5 flex flex-wrap justify-center gap-3">
         {chartSegments.map((s) => (
-            <span
-              key={s.key}
-              className="inline-flex items-center gap-1.5 text-xs text-fg-secondary"
-            >
-              <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: s.strokeColor }} />
-              <span className="text-fg-primary">{s.label}</span>
-              <span className="text-fg-tertiary">{s.value}</span>
-            </span>
+          <span
+            key={s.key}
+            className="inline-flex items-center gap-2 text-xs bg-white/5 hover:bg-white/10 rounded-full px-3 py-1.5 transition-colors"
+          >
+            <span className="h-2.5 w-2.5 rounded-full flex-shrink-0 ring-2 ring-white/10" style={{ backgroundColor: s.strokeColor }} />
+            <span className="text-fg-primary font-medium">{s.label}</span>
+            <span className="text-fg-tertiary tabular-nums">{s.value}</span>
+          </span>
         ))}
       </div>
     </div>
@@ -458,10 +455,6 @@ export function ProgressFeedClient() {
     const globalTop = globalSorted.slice(0, 5);
     const globalOtherTotal = globalSorted.slice(5).reduce((s, [, v]) => s + v, 0);
 
-    const topContributor = globalSorted[0] ?? null;
-    const topContributorLabel = topContributor?.[0] ?? "—";
-    const topContributorCount = topContributor?.[1] ?? 0;
-
     const contributorShareSegments: PieSegment[] = [
       ...globalTop.map(([name, value], idx) => ({
         key: name,
@@ -514,73 +507,78 @@ export function ProgressFeedClient() {
 
     return (
       <div className="min-h-screen p-4 lg:p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-fg-primary">{t("title")}</h2>
-          <p className="text-xs text-fg-tertiary">{scopeLabel}</p>
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-2xl font-bold text-fg-primary">{t("title")}</h2>
+          <span className="text-xs text-fg-tertiary px-3 py-1.5 rounded-full bg-bg-elevated/50">{scopeLabel}</span>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <LargePieChart
-            title={t("overall.title")}
-            subtitle={t("overall.subtitle")}
-            percent={overallPercent}
-            completed={completedTasksAll}
-            total={totalTasksAll}
-            segments={overallSegments}
-          />
+        {/* Main charts layout - 2 column design */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Left column - Project Analytics (large) + Task Status below */}
+          <div className="flex flex-col gap-6">
+            <LargePieChart
+              title={t("overall.title")}
+              subtitle={t("overall.subtitle")}
+              percent={overallPercent}
+              completed={completedTasksAll}
+              total={totalTasksAll}
+              segments={overallSegments}
+            />
+            
+            {/* Task Status Distribution - below Project Analytics */}
+            <PieChart
+              title="Task Status Distribution"
+              subtitle="Breakdown by status"
+              segments={statusSegments}
+            />
+          </div>
 
-          <PieChart
-            title={t("contributors.title")}
-            subtitle={t("contributors.subtitle")}
-            segments={contributorShareSegments}
-          />
+          {/* Right column - Contributor and Per-project share stacked */}
+          <div className="flex flex-col gap-6">
+            <PieChart
+              title={t("contributors.title")}
+              subtitle={t("contributors.subtitle")}
+              segments={contributorShareSegments}
+            />
 
-          <PieChart
-            title={t("perProject.title")}
-            subtitle={t("perProject.subtitle")}
-            segments={perProjectPieSegments}
-            onSegmentClick={(projectId) => {
-              router.push(`/publish?project=${projectId}`);
-            }}
-          />
-        </div>
-
-        {/* Task Status Distribution */}
-        <div className="mb-6">
-          <PieChart
-            title="Task Status Distribution"
-            subtitle="Breakdown by status"
-            segments={statusSegments}
-          />
+            <PieChart
+              title={t("perProject.title")}
+              subtitle={t("perProject.subtitle")}
+              segments={perProjectPieSegments}
+              onSegmentClick={(projectId) => {
+                router.push(`/publish?project=${projectId}`);
+              }}
+            />
+          </div>
         </div>
 
         {/* Due Dates Section */}
-        <div className="mb-6">
-          <p className="text-sm font-medium text-fg-primary mb-3">Due Dates</p>
+        <div className="mb-8">
+          <p className="text-sm font-semibold text-fg-primary mb-4">Due Dates</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-4 rounded-lg border border-red-500/20 bg-red-500/5">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 rounded-full bg-red-500" />
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-red-500/10 to-red-600/5 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
                 <p className="text-xs font-medium text-fg-tertiary">Overdue</p>
               </div>
-              <p className="text-2xl font-bold text-red-500">{overdueTasks}</p>
-              <p className="text-xs text-fg-tertiary mt-1">Tasks past due date</p>
+              <p className="text-3xl font-bold text-red-500">{overdueTasks}</p>
+              <p className="text-xs text-fg-tertiary mt-2">Tasks past due date</p>
             </div>
-            <div className="p-4 rounded-lg border border-orange-500/20 bg-orange-500/5">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 rounded-full bg-orange-500" />
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-orange-500/10 to-orange-600/5 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />
                 <p className="text-xs font-medium text-fg-tertiary">Due Today</p>
               </div>
-              <p className="text-2xl font-bold text-orange-500">{dueTodayTasks}</p>
-              <p className="text-xs text-fg-tertiary mt-1">Tasks due today</p>
+              <p className="text-3xl font-bold text-orange-500">{dueTodayTasks}</p>
+              <p className="text-xs text-fg-tertiary mt-2">Tasks due today</p>
             </div>
-            <div className="p-4 rounded-lg border border-blue-500/20 bg-blue-500/5">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 rounded-full bg-blue-500" />
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-500/10 to-blue-600/5 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
                 <p className="text-xs font-medium text-fg-tertiary">Due This Week</p>
               </div>
-              <p className="text-2xl font-bold text-blue-500">{dueThisWeekTasks}</p>
-              <p className="text-xs text-fg-tertiary mt-1">Tasks due within 7 days</p>
+              <p className="text-3xl font-bold text-blue-500">{dueThisWeekTasks}</p>
+              <p className="text-xs text-fg-tertiary mt-2">Tasks due within 7 days</p>
             </div>
           </div>
         </div>
@@ -598,7 +596,7 @@ export function ProgressFeedClient() {
                   key={project.id}
                   type="button"
                   onClick={() => setSelectedProjectId(project.id)}
-                  className="text-left p-3 rounded-lg border border-border-light/10 hover:border-border-light/20 hover:bg-bg-elevated/30 transition-colors"
+                  className="text-left p-3 rounded-lg shadow-sm hover:shadow-md hover:bg-bg-elevated/30 transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg bg-bg-secondary/50 overflow-hidden flex items-center justify-center flex-shrink-0">
