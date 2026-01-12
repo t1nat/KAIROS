@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
 import Image from "next/image";
-import { ArrowLeft, Folder } from "lucide-react";
+import { ArrowLeft, Folder, ChevronDown, Check } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Doughnut } from "react-chartjs-2";
 import { ensureChartJsRegistered } from "~/components/charts/chartjs";
@@ -334,9 +334,40 @@ function getProjectOwnerLabel(project: ProjectCard): string {
 
 export function ProgressFeedClient() {
   const t = useTranslations("progress");
+  const tOrg = useTranslations("org");
   const locale = useLocale();
   const colors = useResolvedThemeColors();
   const router = useRouter();
+
+  const utils = api.useUtils();
+  
+  // Organization queries
+  const activeOrgQuery = api.organization.getActive.useQuery();
+  const orgsQuery = api.organization.listMine.useQuery();
+  const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
+  
+  const activeOrgId = activeOrgQuery.data?.organization?.id ?? null;
+  const activeName = activeOrgQuery.data?.organization?.name ?? null;
+  const orgs = orgsQuery.data ?? [];
+
+  const setActiveOrg = api.organization.setActive.useMutation({
+    onSuccess: async () => {
+      await utils.organization.getActive.invalidate();
+      await utils.organization.listMine.invalidate();
+      await utils.user.getProfile.invalidate();
+      await utils.project.invalidate();
+      await utils.task.invalidate();
+      setOrgDropdownOpen(false);
+    },
+  });
+
+  const handleOrgPick = useCallback(
+    (organizationId: number) => {
+      if (setActiveOrg.isPending) return;
+      setActiveOrg.mutate({ organizationId });
+    },
+    [setActiveOrg],
+  );
 
   const { data: projects, isLoading: isLoadingProjects, error: projectsError } =
     typedApi.project.getMyProjects.useQuery(undefined, {
@@ -476,8 +507,8 @@ export function ProgressFeedClient() {
     };
 
     const statusSegments: PieSegment[] = [
-      { key: "completed", label: "Completed", value: statusCounts.completed, strokeColor: colors.success },
-      { key: "in_progress", label: "In Progress", value: statusCounts.in_progress, strokeColor: colors.palette[0] ?? colors.info },
+      { key: "completed", label: "Completed", value: statusCounts.completed, strokeColor: colors.completed },
+      { key: "in_progress", label: "In Progress", value: statusCounts.in_progress, strokeColor: colors.palette[1] ?? colors.info },
       { key: "pending", label: "Pending", value: statusCounts.pending, strokeColor: colors.palette[2] ?? colors.warning },
       { key: "blocked", label: "Blocked", value: statusCounts.blocked, strokeColor: colors.error },
     ].filter((s) => s.value > 0);
@@ -509,7 +540,62 @@ export function ProgressFeedClient() {
       <div className="min-h-screen p-4 lg:p-6">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-2xl font-bold text-fg-primary">{t("title")}</h2>
-          <span className="text-xs text-fg-tertiary px-3 py-1.5 rounded-full bg-bg-elevated/50">{scopeLabel}</span>
+          
+          {/* Organization Switcher */}
+          <div className="flex items-center gap-3">
+            {orgs.length > 0 && (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setOrgDropdownOpen((v) => !v)}
+                  className="h-9 inline-flex items-center gap-2 rounded-xl bg-bg-surface shadow-sm px-3 text-sm text-fg-secondary hover:text-fg-primary hover:bg-bg-elevated hover:shadow-md transition-colors"
+                  aria-expanded={orgDropdownOpen}
+                  aria-haspopup="menu"
+                >
+                  <span className="max-w-[150px] truncate">
+                    {activeName ?? tOrg("yourOrgs")}
+                  </span>
+                  <ChevronDown size={14} className="text-fg-tertiary" />
+                </button>
+
+                {orgDropdownOpen && (
+                  <div
+                    role="menu"
+                    className="absolute right-0 mt-2 w-64 overflow-hidden rounded-xl bg-bg-surface shadow-lg z-50"
+                  >
+                    <div className="px-3 py-2 text-xs font-medium text-fg-tertiary">
+                      {tOrg("switchOrg")}
+                    </div>
+
+                    <div className="max-h-60 overflow-auto">
+                      {orgs.map((org) => {
+                        const isActive = activeOrgId === org.id;
+                        return (
+                          <button
+                            key={org.id}
+                            type="button"
+                            role="menuitem"
+                            onClick={() => handleOrgPick(org.id)}
+                            className={`w-full px-3 py-2 text-left flex items-center justify-between gap-3 transition-colors ${
+                              isActive
+                                ? "bg-accent-primary/10 text-fg-primary"
+                                : "hover:bg-bg-elevated text-fg-secondary"
+                            }`}
+                          >
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium truncate">{org.name}</div>
+                            </div>
+                            {isActive && <Check size={14} className="text-accent-primary shrink-0" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            <span className="text-xs text-fg-tertiary px-3 py-1.5 rounded-full bg-bg-elevated/50">{scopeLabel}</span>
+          </div>
         </div>
 
         {/* Main charts layout - 2 column design */}
@@ -546,7 +632,7 @@ export function ProgressFeedClient() {
               subtitle={t("perProject.subtitle")}
               segments={perProjectPieSegments}
               onSegmentClick={(projectId) => {
-                router.push(`/publish?project=${projectId}`);
+                router.push(`/create?projectId=${projectId}`);
               }}
             />
           </div>
@@ -666,12 +752,12 @@ export function ProgressFeedClient() {
   const otherContribTotal = contributorsSorted.slice(5).reduce((s, [, v]) => s + v, 0);
 
   const completionSegments: PieSegment[] = [
-    { key: "done", label: t("labels.done"), value: completedTasks, strokeColor: colors.success },
+    { key: "done", label: t("labels.done"), value: completedTasks, strokeColor: colors.completed },
     { key: "remaining", label: t("labels.remaining"), value: remainingTasks, strokeColor: colors.remaining },
   ];
 
   const activitySegments: PieSegment[] = [
-    { key: "completed", label: t("labels.completed"), value: categoryCounts.completed, strokeColor: colors.success },
+    { key: "completed", label: t("labels.completed"), value: categoryCounts.completed, strokeColor: colors.completed },
     { key: "created", label: t("labels.created"), value: categoryCounts.created, strokeColor: colors.palette[0] ?? colors.other },
     { key: "updated", label: t("labels.updated"), value: categoryCounts.updated, strokeColor: colors.warning },
     { key: "status", label: t("labels.status"), value: categoryCounts.status, strokeColor: colors.info },
