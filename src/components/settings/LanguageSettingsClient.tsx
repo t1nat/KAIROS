@@ -93,7 +93,6 @@ export function LanguageSettingsClient() {
         setIsOpen(false);
       }
     }
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -102,7 +101,6 @@ export function LanguageSettingsClient() {
 
   const handleLanguageChange = (newLocale: LanguageCode) => {
     setIsOpen(false);
-
     startTransition(async () => {
       try {
         await updateLanguageRegion.mutateAsync({ language: newLocale });
@@ -123,6 +121,7 @@ export function LanguageSettingsClient() {
 
   return (
     <div className="bg-bg-secondary/40 backdrop-blur-sm rounded-2xl ios-card-elevated p-8">
+      {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 bg-accent-primary/15 rounded-lg flex items-center justify-center">
           <Globe className="text-accent-primary" size={20} />
@@ -161,7 +160,7 @@ export function LanguageSettingsClient() {
             {isOpen && (
               <div
                 role="listbox"
-                className="absolute z-10 mt-2 w-full bg-bg-elevated border border-border-light/20 rounded-lg overflow-hidden shadow-lg"
+                className="absolute z-50 mt-2 w-full bg-white dark:bg-[#1a1a1a] border border-border-light/20 rounded-lg overflow-hidden shadow-xl"
               >
                 {languages.map((language) => (
                   <button
@@ -254,7 +253,7 @@ export function LanguageSettingsClient() {
             {t("save")}
           </button>
           {updateLanguageRegion.error && (
-            <p className="text-sm text-error">{updateLanguageRegion.error.message}</p>
+            <p className="text-sm text-red-500">{updateLanguageRegion.error.message}</p>
           )}
         </div>
 
