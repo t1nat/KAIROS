@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "~/trpc/react";
 import type { RouterOutputs } from "~/trpc/react";
 import Image from "next/image";
-import { Send, Paperclip, Search, MoreVertical, X } from "lucide-react";
+import { Send, Paperclip, Search, MoreVertical, X, Plus, MessageCircle } from "lucide-react";
 import { useToast } from "~/components/providers/ToastProvider";
 import { useUploadThing } from "~/lib/uploadthing";
 
@@ -18,6 +18,8 @@ export function ChatClient({ userId }: { userId: string }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [newChatEmail, setNewChatEmail] = useState("");
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -88,6 +90,32 @@ export function ChatClient({ userId }: { userId: string }) {
     },
   });
 
+  // Search user by email for new chat
+  const searchUserQuery = api.user.searchByEmail.useQuery(
+    { email: newChatEmail.trim() },
+    { enabled: newChatEmail.trim().length > 3 && newChatEmail.includes("@"), retry: false }
+  );
+
+  // Create new conversation
+  const createConversation = api.chat.getOrCreateDirectConversation.useMutation({
+    onSuccess: async (data) => {
+      setSelectedConversationId(data.conversationId);
+      await utils.chat.listAllConversations.invalidate();
+      setShowNewChatModal(false);
+      setNewChatEmail("");
+      toast.success("Chat started!");
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const handleStartNewChat = () => {
+    if (searchUserQuery.data) {
+      createConversation.mutate({ otherUserId: searchUserQuery.data.id });
+    }
+  };
+
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     const el = scrollRef.current;
@@ -140,25 +168,107 @@ export function ChatClient({ userId }: { userId: string }) {
 
   return (
     <div className="flex flex-col sm:flex-row h-full w-full">
+      {/* New Chat Modal */}
+      {showNewChatModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-bg-secondary rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in fade-in slide-in-from-bottom-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-fg-primary">Start New Chat</h3>
+              <button
+                onClick={() => { setShowNewChatModal(false); setNewChatEmail(""); }}
+                className="p-2 hover:bg-bg-surface rounded-lg transition-colors"
+              >
+                <X size={20} className="text-fg-secondary" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-fg-secondary mb-2">Enter email address</label>
+                <input
+                  type="email"
+                  value={newChatEmail}
+                  onChange={(e) => setNewChatEmail(e.target.value)}
+                  placeholder="user@example.com"
+                  className="w-full px-4 py-3 bg-bg-surface rounded-xl text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
+                />
+              </div>
+              {searchUserQuery.data && (
+                <div className="flex items-center gap-3 p-3 bg-success/10 rounded-xl">
+                  {searchUserQuery.data.image ? (
+                    <Image
+                      src={searchUserQuery.data.image}
+                      alt={searchUserQuery.data.name ?? "User"}
+                      width={40}
+                      height={40}
+                      className="rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center text-white font-bold">
+                      {searchUserQuery.data.name?.[0]?.toUpperCase() ?? "?"}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-fg-primary truncate">{searchUserQuery.data.name ?? "User"}</p>
+                    <p className="text-xs text-fg-tertiary truncate">{searchUserQuery.data.email}</p>
+                  </div>
+                </div>
+              )}
+              {searchUserQuery.isLoading && newChatEmail.includes("@") && (
+                <p className="text-sm text-fg-tertiary text-center">Searching...</p>
+              )}
+              {searchUserQuery.isError && (
+                <p className="text-sm text-error text-center">User not found</p>
+              )}
+              <button
+                onClick={handleStartNewChat}
+                disabled={!searchUserQuery.data || createConversation.isPending}
+                className="w-full py-3 bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-all"
+              >
+                {createConversation.isPending ? "Starting chat..." : "Start Chat"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Conversations Sidebar */}
       <div className={`${selectedConversationId ? 'hidden sm:flex' : 'flex'} w-full sm:w-72 lg:w-80 xl:w-96 shadow-lg flex-col bg-bg-surface/40`}>
         <div className="p-3 sm:p-4 shadow-sm">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-tertiary" size={16} />
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm bg-bg-surface shadow-sm rounded-full text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
-            />
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-tertiary" size={16} />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 text-sm bg-bg-surface shadow-sm rounded-full text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
+              />
+            </div>
+            <button
+              onClick={() => setShowNewChatModal(true)}
+              className="p-2.5 bg-gradient-to-r from-accent-primary to-accent-secondary text-white rounded-full hover:shadow-lg transition-all flex-shrink-0"
+              title="New chat"
+            >
+              <Plus size={18} />
+            </button>
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">
           {conversations.length === 0 ? (
-            <div className="flex items-center justify-center h-full p-8">
-              <p className="text-sm text-fg-tertiary text-center">No conversations yet</p>
+            <div className="flex flex-col items-center justify-center h-full p-8">
+              <div className="w-16 h-16 rounded-full bg-accent-primary/10 flex items-center justify-center mb-4">
+                <MessageCircle size={28} className="text-accent-primary" />
+              </div>
+              <p className="text-sm font-medium text-fg-primary mb-1">No conversations yet</p>
+              <p className="text-xs text-fg-tertiary text-center mb-4">Start a new chat to get started</p>
+              <button
+                onClick={() => setShowNewChatModal(true)}
+                className="px-4 py-2 bg-accent-primary/10 text-accent-primary text-sm font-medium rounded-lg hover:bg-accent-primary/20 transition-colors"
+              >
+                Start New Chat
+              </button>
             </div>
           ) : (
             <div className="space-y-0.5 p-1.5 sm:p-2">
