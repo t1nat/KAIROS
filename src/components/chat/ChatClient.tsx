@@ -141,8 +141,8 @@ export function ChatClient({ userId }: { userId: string }) {
   return (
     <div className="flex flex-col sm:flex-row h-full w-full">
       {/* Conversations Sidebar */}
-      <div className={`${selectedConversationId ? 'hidden sm:flex' : 'flex'} w-full sm:w-72 lg:w-80 xl:w-96 border-r border-border-light/20 flex-col bg-bg-surface/40`}>
-        <div className="p-3 sm:p-4 border-b border-border-light/20">
+      <div className={`${selectedConversationId ? 'hidden sm:flex' : 'flex'} w-full sm:w-72 lg:w-80 xl:w-96 shadow-lg flex-col bg-bg-surface/40`}>
+        <div className="p-3 sm:p-4 shadow-sm">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-tertiary" size={16} />
             <input
@@ -150,7 +150,7 @@ export function ChatClient({ userId }: { userId: string }) {
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm bg-bg-surface border border-border-light/30 rounded-full text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
+              className="w-full pl-9 pr-4 py-2 text-sm bg-bg-surface shadow-sm rounded-full text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
             />
           </div>
         </div>
@@ -180,8 +180,8 @@ export function ChatClient({ userId }: { userId: string }) {
                     }}
                     className={`w-full p-2.5 sm:p-3 rounded-xl transition-all text-left flex items-center gap-2.5 sm:gap-3 ${
                       selectedConversationId === conv.id
-                        ? "bg-accent-primary/10 border border-accent-primary/30"
-                        : "hover:bg-bg-elevated border border-transparent"
+                        ? "bg-accent-primary/10 shadow-sm"
+                        : "hover:bg-bg-elevated shadow-sm"
                     }`}
                   >
                     {otherUser.image ? (
@@ -223,7 +223,7 @@ export function ChatClient({ userId }: { userId: string }) {
         {selectedConversationId && selectedUser ? (
           <>
             {/* Chat Header */}
-            <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-border-light/20 flex items-center justify-between bg-gradient-to-r from-bg-elevated to-bg-surface">
+            <div className="px-3 sm:px-6 py-3 sm:py-4 shadow-sm flex items-center justify-between bg-gradient-to-r from-bg-elevated to-bg-surface">
               <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 <button
                   onClick={() => setSelectedConversationId(null)}
@@ -314,7 +314,37 @@ export function ChatClient({ userId }: { userId: string }) {
                               : "bg-bg-elevated text-fg-primary rounded-bl-md"
                           }`}
                         >
-                          <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">{message.body}</p>
+                          {(() => {
+                            const imageRegex = /(https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|webp|svg)(?:\?[^\s]*)?|https?:\/\/utfs\.io\/[^\s]+)/gi;
+                            const parts = message.body.split(imageRegex);
+                            const matches = message.body.match(imageRegex) ?? [];
+                            
+                            if (matches.length === 0) {
+                              return <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">{message.body}</p>;
+                            }
+                            
+                            return (
+                              <div className="flex flex-col gap-2">
+                                {parts.map((part, i) => (
+                                  <span key={i}>
+                                    {part && <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">{part.trim()}</p>}
+                                    {matches[i] && (
+                                      <a href={matches[i]} target="_blank" rel="noopener noreferrer" className="block mt-2">
+                                        <Image
+                                          src={matches[i]}
+                                          alt="Shared image"
+                                          width={400}
+                                          height={300}
+                                          className="max-w-full max-h-64 rounded-lg object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                                          unoptimized
+                                        />
+                                      </a>
+                                    )}
+                                  </span>
+                                ))}
+                              </div>
+                            );
+                          })()}
                         </div>
                         <span className="text-xs text-fg-tertiary px-2.5 sm:px-3">
                           {new Date(message.createdAt).toLocaleTimeString([], {
@@ -330,12 +360,12 @@ export function ChatClient({ userId }: { userId: string }) {
             </div>
 
             {/* Message Input */}
-            <form onSubmit={handleSubmit} className="p-3 sm:p-4 border-t border-border-light/20 bg-bg-elevated/50">
+            <form onSubmit={handleSubmit} className="p-3 sm:p-4 shadow-sm bg-bg-elevated/50">
               {attachments.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-3 p-2 bg-bg-surface/50 rounded-lg">
                   {attachments.map((file, idx) => (
                     <div key={idx} className="relative group">
-                      <div className="flex items-center gap-2 px-3 py-1.5 bg-bg-elevated rounded-lg border border-border-light/30">
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-bg-elevated rounded-lg shadow-sm">
                         <span className="text-xs text-fg-secondary truncate max-w-[120px]">{file.name}</span>
                         <button
                           type="button"
@@ -376,7 +406,7 @@ export function ChatClient({ userId }: { userId: string }) {
                   onChange={(e) => setDraft(e.target.value)}
                   placeholder="Type a message..."
                   disabled={isUploading}
-                  className="flex-1 text-sm bg-bg-surface border border-border-light/30 rounded-full px-4 sm:px-5 py-2.5 sm:py-3 text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/30 disabled:opacity-50"
+                  className="flex-1 text-sm bg-bg-surface shadow-sm rounded-full px-4 sm:px-5 py-2.5 sm:py-3 text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/30 disabled:opacity-50"
                 />
                 <button
                   type="submit"

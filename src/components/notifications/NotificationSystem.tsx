@@ -141,7 +141,7 @@ export function NotificationSystem() {
             onClick={() => setIsOpen(false)}
             aria-hidden="true"
           />
-          <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-96 glass-effect rounded-2xl border border-border-light/60 shadow-2xl z-50 max-h-[600px] overflow-hidden animate-in slide-in-from-top-2 duration-200">
+          <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-96 glass-effect rounded-2xl ios-card-elevated shadow-2xl z-50 max-h-[600px] overflow-hidden animate-in slide-in-from-top-2 duration-200">
             <div className="p-4 border-b border-border-light/50 flex items-center justify-between sticky top-0 bg-bg-overlay/80 z-10">
               <div>
                 <h3 className="text-lg font-bold text-fg-primary">
@@ -183,7 +183,7 @@ export function NotificationSystem() {
                       }`}
                     >
                       <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-10 h-10 bg-accent-primary/10 border border-accent-primary/20 rounded-lg flex items-center justify-center">
+                        <div className="flex-shrink-0 w-10 h-10 bg-accent-primary/10 shadow-sm rounded-lg flex items-center justify-center">
                           {getIcon(notification.type)}
                         </div>
                         <div className="flex-1 min-w-0">
