@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { User, Loader2, Upload, Camera } from "lucide-react";
+import { useEffect, useState } from "react";
+import { User, Loader2 } from "lucide-react";
 import { api } from "~/trpc/react";
-import Image from "next/image";
 import { useUploadThing } from "~/lib/uploadthing";
 import { useToast } from "~/components/providers/ToastProvider";
 import { useSession } from "next-auth/react";
+import { ImageUpload } from "~/components/ui/ImageUpload";
 
 interface ProfileSettingsClientProps {
   user: {
@@ -28,7 +28,7 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
   const [imagePreview, setImagePreview] = useState(user.image ?? "");
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  
 
   const { startUpload } = useUploadThing("imageUploader");
 
@@ -119,36 +119,13 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
     },
   });
 
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // reset input so selecting the same file again triggers onChange
-    e.target.value = "";
-
-    const maxBytes = 4 * 1024 * 1024;
-    if (file.size > maxBytes) {
-      toast.error("File size must be 4MB or less");
-      return;
-    }
-
-    // Check file type
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please upload an image file");
-      return;
-    }
-
+  const handleImageUpload = async (file: File) => {
     if (!uploadImageMutation) {
       toast.error("Upload feature not available");
       return;
     }
 
     setIsUploading(true);
-
-    // Local preview only (do NOT store base64 in DB)
-    const reader = new FileReader();
-    reader.onloadend = () => setImagePreview(reader.result as string);
-    reader.readAsDataURL(file);
 
     try {
       const uploadResult = await startUpload([file]);
@@ -189,7 +166,7 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
   const joinedDate = getJoinedDate();
 
   return (
-    <div className="bg-bg-secondary/40 backdrop-blur-sm rounded-2xl ios-card-elevated p-8">
+    <div>
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 bg-accent-primary/15 rounded-lg flex items-center justify-center">
           <User className="text-accent-primary" size={20} />
@@ -201,57 +178,14 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label className="block text-sm font-semibold text-fg-secondary mb-4">
-            Profile Picture
-          </label>
-          <div className="flex items-center gap-6">
-            <div className="relative group">
-              {imagePreview ? (
-                <Image
-                  src={imagePreview}
-                  alt="Profile"
-                  width={96}
-                  height={96}
-                  className="w-24 h-24 rounded-full object-cover border-2 border-accent-primary/30"
-                />
-              ) : (
-                <div className="w-24 h-24 rounded-full bg-accent-primary/15 flex items-center justify-center border-2 border-accent-primary/30">
-                  <User className="text-accent-primary" size={40} />
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-                className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <Camera className="text-white" size={24} />
-              </button>
-            </div>
-            <div className="flex-1">
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-                className="flex items-center gap-2 px-6 py-2 font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-fg-primary text-bg-primary hover:bg-fg-primary/90 dark:bg-bg-surface dark:text-fg-primary dark:hover:bg-bg-elevated shadow-sm"
-              >
-                <Upload size={18} />
-                {isUploading ? "Uploading..." : "Upload New Picture"}
-              </button>
-              <p className="text-xs text-fg-secondary mt-2">
-                JPG, PNG or GIF. Max size 5MB.
-              </p>
-            </div>
-          </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            className="hidden"
-          />
-        </div>
+        <ImageUpload
+          imagePreview={imagePreview}
+          onImageChange={handleImageUpload}
+          onImagePreviewChange={setImagePreview}
+          isUploading={isUploading}
+          label="Profile Picture"
+          description="JPG, PNG or GIF. Max size 4MB."
+        />
 
         <div>
           <label className="block text-sm font-semibold text-fg-secondary mb-2">

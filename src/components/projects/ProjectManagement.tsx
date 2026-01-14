@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Trash2, FolderPlus, CheckCircle2, Plus, Loader2, ChevronDown, ChevronUp, User as UserIcon } from "lucide-react";
+import { FolderPlus, CheckCircle2, Plus, Loader2, ChevronDown, ChevronUp, User as UserIcon } from "lucide-react";
 import Image from "next/image";
 import { api } from "~/trpc/react";
 import { useTranslations } from "next-intl";
 import { useToast } from "~/components/providers/ToastProvider";
+import { CollaboratorItem } from "./CollaboratorItem";
 
 type Translator = (key: string, values?: Record<string, unknown>) => string;
 
@@ -314,60 +315,14 @@ export function CreateProjectForm({
                   <p className="text-center py-4 text-sm text-fg-tertiary">{t("team.empty")}</p>
                 ) : (
                   currentCollaborators.map(({ user, permission: userPermission }) => (
-                    <div
+                    <CollaboratorItem
                       key={user.id}
-                      className="flex items-center justify-between p-3 bg-bg-surface/50 rounded-lg ios-card hover:bg-bg-elevated transition-all"
-                    >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        {user.image ? (
-                          <Image
-                            src={user.image}
-                            alt={user.name ?? "User"}
-                            width={32}
-                            height={32}
-                            className="rounded-full object-cover ring-2 ring-white/10"
-                          />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center text-white font-semibold text-xs">
-                            {user.name?.[0] ?? user.email[0]?.toUpperCase() ?? "?"}
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-fg-primary truncate">
-                            {user.name ?? user.email}
-                          </p>
-                          {user.name && (
-                            <p className="text-xs text-fg-secondary truncate">{user.email}</p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        {isOwner && onUpdatePermission && onRemoveCollaborator ? (
-                          <>
-                            <select
-                              value={userPermission}
-                              onChange={(e) => onUpdatePermission(user.id, e.target.value as "read" | "write")}
-                              className="px-3 py-1.5 text-xs shadow-sm bg-bg-surface/50 rounded-lg text-fg-primary hover:bg-bg-elevated transition-all"
-                            >
-                              <option value="read" className="bg-bg-secondary text-fg-primary">{t("team.view")}</option>
-                              <option value="write" className="bg-bg-secondary text-fg-primary">{t("team.edit")}</option>
-                            </select>
-                            <button
-                              onClick={() => onRemoveCollaborator(user.id)}
-                              className="p-2 text-error hover:bg-error/10 rounded-lg transition-colors"
-                              title={t("team.remove")}
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </>
-                        ) : (
-                          <span className="px-3 py-1.5 text-xs font-medium bg-bg-surface/50 text-fg-secondary rounded-lg shadow-sm">
-                            {userPermission === "read" ? t("team.view") : t("team.edit")}
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                      user={user}
+                      permission={userPermission}
+                      isOwner={isOwner}
+                      onUpdatePermission={onUpdatePermission}
+                      onRemove={onRemoveCollaborator}
+                    />
                   ))
                 )}
               </div>
@@ -813,60 +768,14 @@ export function CollaboratorManager({
           <p className="text-center py-6 text-sm text-fg-tertiary">{t("team.empty")}</p>
         ) : (
           currentCollaborators.map(({ user, permission: userPermission }) => (
-            <div
+            <CollaboratorItem
               key={user.id}
-              className="flex items-center justify-between p-4 bg-bg-surface/50 rounded-lg ios-card hover:bg-bg-elevated transition-all"
-            >
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                {user.image ? (
-                  <Image
-                    src={user.image}
-                    alt={user.name ?? "User"}
-                    width={36}
-                    height={36}
-                    className="rounded-full object-cover ring-2 ring-white/10"
-                  />
-                ) : (
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center text-white font-semibold text-sm">
-                    {user.name?.[0] ?? user.email[0]?.toUpperCase() ?? "?"}
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-fg-primary truncate">
-                    {user.name ?? user.email}
-                  </p>
-                  {user.name && (
-                    <p className="text-xs text-fg-secondary truncate">{user.email}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                {isOwner ? (
-                  <>
-                    <select
-                      value={userPermission}
-                      onChange={(e) => onUpdatePermission(user.id, e.target.value as "read" | "write")}
-                      className="px-3 py-2 text-xs shadow-sm bg-bg-surface/50 rounded-lg text-fg-primary hover:bg-bg-elevated transition-all"
-                    >
-                      <option value="read" className="bg-bg-secondary text-fg-primary">{t("team.view")}</option>
-                      <option value="write" className="bg-bg-secondary text-fg-primary">{t("team.edit")}</option>
-                    </select>
-                    <button
-                      onClick={() => onRemoveCollaborator(user.id)}
-                      className="p-2 text-error hover:bg-error/10 rounded-lg transition-colors"
-                      title={t("team.remove")}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </>
-                ) : (
-                  <span className="px-3 py-2 text-xs font-medium bg-bg-surface/50 text-fg-secondary rounded-lg shadow-sm">
-                    {userPermission === "read" ? t("team.view") : t("team.edit")}
-                  </span>
-                )}
-              </div>
-            </div>
+              user={user}
+              permission={userPermission}
+              isOwner={isOwner}
+              onUpdatePermission={onUpdatePermission}
+              onRemove={onRemoveCollaborator}
+            />
           ))
         )}
       </div>
