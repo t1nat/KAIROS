@@ -1,7 +1,7 @@
-import { z } from "zod";
+ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { projects, tasks, projectCollaborators, users, organizationMembers, notifications } from "~/server/db/schema";
-import { eq, and, desc, inArray, isNull, sql } from "drizzle-orm";
+import { eq, and, desc, inArray, isNull, sql, ne } from "drizzle-orm";
 
 export const projectRouter = createTRPCRouter({
   
@@ -112,19 +112,20 @@ export const projectRouter = createTRPCRouter({
       projectsList = await ctx.db
         .select()
         .from(projects)
-        .where(eq(projects.organizationId, membership.organizationId))
+        .where(and(eq(projects.organizationId, membership.organizationId), ne(projects.status, "archived")))
         .orderBy(desc(projects.createdAt));
 
       console.log("Found organization projects:", projectsList.length);
     } else {
-      
+
       projectsList = await ctx.db
         .select()
         .from(projects)
         .where(
           and(
             eq(projects.createdById, ctx.session.user.id),
-            isNull(projects.organizationId)
+            isNull(projects.organizationId),
+            ne(projects.status, "archived")
           )
         )
         .orderBy(desc(projects.createdAt));
@@ -194,7 +195,10 @@ export const projectRouter = createTRPCRouter({
         .select()
         .from(projects)
         .where(
-          sql`(${projects.organizationId} IN ${orgIds} OR (${projects.createdById} = ${ctx.session.user.id} AND ${projects.organizationId} IS NULL))`
+          and(
+            sql`(${projects.organizationId} IN ${orgIds} OR (${projects.createdById} = ${ctx.session.user.id} AND ${projects.organizationId} IS NULL))`,
+            ne(projects.status, "archived")
+          )
         )
         .orderBy(desc(projects.createdAt));
     } else {
@@ -205,7 +209,8 @@ export const projectRouter = createTRPCRouter({
         .where(
           and(
             eq(projects.createdById, ctx.session.user.id),
-            isNull(projects.organizationId)
+            isNull(projects.organizationId),
+            ne(projects.status, "archived")
           )
         )
         .orderBy(desc(projects.createdAt));

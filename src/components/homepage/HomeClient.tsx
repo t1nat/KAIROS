@@ -399,22 +399,25 @@ export function HomeClient({ session }: {
                     <div className="max-w-7xl mx-auto w-full">
                         <div className="flex flex-col items-center justify-center gap-8 text-center">
                            <div className="space-y-6 max-w-4xl">
-                                <div className="inline-flex items-center gap-2 px-4 py-2 bg-accent-primary/10 shadow-sm rounded-full text-sm font-semibold text-accent-primary animate-slideUp">
-    
-                                </div>
-                                <h2 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-fg-primary leading-tight tracking-tight font-display animate-slideUp" style={{ animationDelay: '0.1s' }}>
-                                    KAIROS
+
+                                <h2 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-fg-primary leading-tight tracking-tight font-display animate-slideUp relative" style={{ animationDelay: '0.1s' }}>
+                                    <span className="relative inline-block">
+                                        KAIROS
+                                        <div className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-accent-primary to-accent-secondary rounded-full animate-scale-in" style={{ animationDelay: '1.2s', animationFillMode: 'both' }}></div>
+                                        <div className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-accent-primary to-accent-secondary rounded-full animate-pulse opacity-60 animate-scale-in" style={{ animationDelay: '1.4s', animationFillMode: 'both' }}></div>
+                                    </span>
                                 </h2>
                                 <p className="text-lg sm:text-xl md:text-2xl text-fg-secondary leading-relaxed animate-slideUp" style={{ animationDelay: '0.2s' }}>
-                                Where great ideas come to life. The workspace where teams align and launch moments that matter.                             </p>
+                                Where great ideas come to life. The workspace where teams align and launch moments that matter.
+                                </p>
                                 <div className="flex flex-wrap gap-4 text-sm text-fg-tertiary justify-center animate-slideUp" style={{ animationDelay: '0.3s' }}>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-1.5 h-1.5 bg-event-active rounded-full"></div>
-                               
+                                    <div className="flex items-center gap-2 group">
+                                        <div className="w-1.5 h-1.5 bg-event-active rounded-full animate-pulse group-hover:animate-ping"></div>
+                                       
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-1.5 h-1.5 bg-event-upcoming rounded-full"></div>
-                            
+                                    <div className="flex items-center gap-2 group">
+                                        <div className="w-1.5 h-1.5 bg-event-upcoming rounded-full animate-pulse group-hover:animate-ping" style={{ animationDelay: '0.5s' }}></div>
+                                       
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <div className="w-1.5 h-1.5 bg-event-completed rounded-full"></div>

@@ -28,7 +28,7 @@ import { CreateEventForm } from "~/components/events/CreateEventForm";
 import { RegionMapPicker, type RegionOption } from "~/components/events/RegionMapPicker";
 
 const REGIONS = [
-  { value: '', label: 'All Regions' }, 
+  { value: '', label: 'All Regions' },
   { value: 'sofia', label: 'Sofia' },
   { value: 'plovdiv', label: 'Plovdiv' },
   { value: 'varna', label: 'Varna' },
@@ -450,12 +450,12 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
 
   const formatDate = (date: Date) => {
     const eventDate = new Date(date);
-    const dateStr = eventDate.toLocaleDateString('en-US', { 
+    const dateStr = eventDate.toLocaleDateString('en-US', {
       year: 'numeric',
-      month: 'short', 
-      day: 'numeric' 
+      month: 'short',
+      day: 'numeric'
     });
-    const timeStr = eventDate.toLocaleTimeString('en-US', { 
+    const timeStr = eventDate.toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true
@@ -477,14 +477,14 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
 
   return (
     <>
-      <div className="card-interactive mb-8 pb-8 last:mb-0">
+      <div className="bg-bg-primary border border-border-light rounded-lg shadow-sm mb-6 p-4 last:mb-0">
         <InfoMessageToast
           message={infoMessage?.message ?? null}
           type={infoMessage?.type ?? null}
           onClose={() => setInfoMessage(null)}
         />
 
-        <div className="px-2 sm:px-4 mb-4">
+        <div className="mb-4">
           <div className="flex items-start gap-3 sm:gap-4">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-bg-secondary overflow-hidden flex-shrink-0">
               {event.author.image ? (
@@ -503,7 +503,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-3">
-                <h2 className="text-xl sm:text-2xl font-bold text-fg-primary mb-2 break-words flex-1 min-w-0">
+                <h2 className="text-lg sm:text-xl font-bold text-fg-primary mb-2 break-words flex-1 min-w-0">
                   {event.title}
                 </h2>
                 {event.isOwner && (
@@ -566,15 +566,15 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
           </div>
         )}
 
-        <div className="px-2 sm:px-4 mb-4">
-          <p className="text-sm sm:text-base text-fg-secondary whitespace-pre-wrap leading-relaxed">
+        <div className="mb-4">
+          <p className="text-xs sm:text-sm text-fg-secondary whitespace-pre-wrap leading-relaxed">
             {event.description}
           </p>
         </div>
 
         {event.enableRsvp && (
-          <div className="px-2 sm:px-4 mb-4">
-            <div className="surface-card rounded-xl p-3 sm:p-4">
+          <div className="mb-4">
+            <div className="p-3 sm:p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xs sm:text-sm font-semibold text-fg-secondary">
                   Will you come?
@@ -631,7 +631,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
           </div>
         )}
 
-        <div className="px-2 sm:px-4 py-3 flex items-center gap-2 sm:gap-3">
+        <div className="py-3 flex items-center gap-2 sm:gap-3">
           <button
             onClick={handleLike}
             disabled={toggleLike.isPending}
@@ -656,7 +656,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
 
         <div className="mt-2">
           {displayedComments.length > 0 && (
-            <div className="px-2 sm:px-4 py-4 sm:py-6 space-y-4">
+            <div className="py-4 sm:py-6 space-y-4">
               {displayedComments.map((comment) => (
                 <div key={comment.id} className="flex gap-2 sm:gap-3">
                   <div className="w-8 h-8 rounded-full bg-bg-secondary flex-shrink-0 overflow-hidden">
@@ -701,7 +701,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
           )}
 
           {session && (
-            <div className="px-2 sm:px-4 py-4 sm:py-6 border-t border-border-light">
+            <div className="py-4 sm:py-6 border-t border-border-light">
               <div className="flex gap-2 sm:gap-3">
                 <div className="w-8 h-8 rounded-full bg-bg-secondary flex-shrink-0 overflow-hidden">
                   {session.user.image ? (
@@ -794,7 +794,7 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false }) 
     );
   }
   
-  const filteredEvents = eventsData?.filter(event => 
+  const filteredEvents = eventsData?.filter(event =>
     selectedRegion === '' || event.region === selectedRegion
   ) ?? [];
 
@@ -870,7 +870,7 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false }) 
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {filteredEvents.map((event) => (
             <EventCard
               key={event.id}

@@ -657,34 +657,74 @@ const MagicBento: React.FC<BentoProps> = ({
     }
   ];
 
-  // GSAP scroll animations for cards - simple fade in with stagger
+  // Enhanced GSAP scroll animations for cards - smooth reveal with advanced effects
   useEffect(() => {
     if (shouldDisableAnimations) return;
 
     const ctx = gsap.context(() => {
-      // Set initial state
+      // Set initial state with more sophisticated transforms
       gsap.set(cardRefs.current, {
         opacity: 0,
-        y: 40
+        y: 60,
+        scale: 0.9,
+        rotationY: 15,
+        transformOrigin: 'center center'
       });
 
-      // Animate cards with stagger when they come into view
+      // Animate cards with advanced scroll-triggered effects
       cardRefs.current.forEach((card, index) => {
         if (!card) return;
 
-        gsap.to(card, {
-          opacity: 1,
-          y: 0,
-          duration: 0.8,
-          ease: 'power3.out',
-          delay: index * 0.15,
+        // Create individual timeline for each card
+        const cardTl = gsap.timeline({
           scrollTrigger: {
             trigger: card,
-            start: 'top 85%',
-            toggleActions: 'play none none none'
+            start: 'top 80%',
+            end: 'bottom 20%',
+            toggleActions: 'play none none reverse',
+            scrub: 0.3, // Smooth scrubbing for continuous animation
+            markers: false
           }
         });
+
+        // Staggered reveal with multiple properties
+        cardTl.to(card, {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          rotationY: 0,
+          duration: 1.2,
+          ease: 'power4.out',
+          delay: index * 0.2,
+        })
+        .to(card, {
+          y: -10,
+          duration: 0.6,
+          ease: 'power2.inOut',
+          yoyo: true,
+          repeat: 1,
+        }, '-=0.8')
+        .to(card, {
+          boxShadow: '0 20px 40px rgba(0,0,0,0.1), 0 0 20px rgba(var(--glow-color), 0.1)',
+          duration: 0.8,
+          ease: 'power2.out'
+        }, '-=0.4');
       });
+
+      // Add parallax effect to the grid container
+      if (gridRef.current) {
+        gsap.to(gridRef.current, {
+          y: -50,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: gridRef.current,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 0.5,
+          }
+        });
+      }
+
     }, gridRef);
 
     return () => ctx.revert();

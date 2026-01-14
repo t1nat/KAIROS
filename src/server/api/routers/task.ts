@@ -2,7 +2,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { tasks, projects, projectCollaborators, taskActivityLog, organizationMembers, users, organizations } from "~/server/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 
 export const taskRouter = createTRPCRouter({
  
@@ -485,11 +485,15 @@ export const taskRouter = createTRPCRouter({
     .input(
       z.object({
         limit: z.number().min(1).max(200).optional(),
+        scope: z.enum(["personal", "organization", "all"]).optional(),
       })
     )
     .query(async ({ ctx, input }) => {
-      let activeOrganizationId: number | null = null;
+      const limit = input.limit ?? 50;
+      const scope = input.scope ?? "organization";
 
+      // Get active organization
+      let activeOrganizationId: number | null = null;
       try {
         const [userRow] = await ctx.db
           .select({ activeOrganizationId: users.activeOrganizationId })
@@ -498,84 +502,32 @@ export const taskRouter = createTRPCRouter({
           .limit(1);
         activeOrganizationId = userRow?.activeOrganizationId ?? null;
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        if (!message.includes("active_organization_id")) {
-          throw err;
-        }
         activeOrganizationId = null;
       }
 
-      const limit = input.limit ?? 50;
-
-      if (!activeOrganizationId) {
-        const rows = await ctx.db
-          .select({
-            id: taskActivityLog.id,
-            taskId: taskActivityLog.taskId,
-            action: taskActivityLog.action,
-            oldValue: taskActivityLog.oldValue,
-            newValue: taskActivityLog.newValue,
-            createdAt: taskActivityLog.createdAt,
-            taskTitle: tasks.title,
-            projectId: tasks.projectId,
-            projectTitle: projects.title,
-            user: {
-              id: users.id,
-              name: users.name,
-              email: users.email,
-              image: users.image,
-            },
-          })
-          .from(taskActivityLog)
-          .innerJoin(tasks, eq(taskActivityLog.taskId, tasks.id))
-          .innerJoin(projects, eq(tasks.projectId, projects.id))
-          .leftJoin(users, eq(taskActivityLog.userId, users.id))
-          .where(eq(taskActivityLog.userId, ctx.session.user.id))
-          .orderBy(desc(taskActivityLog.createdAt))
-          .limit(limit);
-
-        return { scope: "personal" as const, rows };
-      }
-
-      const [membership] = await ctx.db
-        .select()
+      // Get all organizations the user is a member of
+      const memberships = await ctx.db
+        .select({ organizationId: organizationMembers.organizationId })
         .from(organizationMembers)
-        .where(
-          and(
-            eq(organizationMembers.organizationId, activeOrganizationId),
-            eq(organizationMembers.userId, ctx.session.user.id)
-          )
-        )
-        .limit(1);
+        .where(eq(organizationMembers.userId, ctx.session.user.id));
 
-      if (!membership) {
-        const rows = await ctx.db
-          .select({
-            id: taskActivityLog.id,
-            taskId: taskActivityLog.taskId,
-            action: taskActivityLog.action,
-            oldValue: taskActivityLog.oldValue,
-            newValue: taskActivityLog.newValue,
-            createdAt: taskActivityLog.createdAt,
-            taskTitle: tasks.title,
-            projectId: tasks.projectId,
-            projectTitle: projects.title,
-            user: {
-              id: users.id,
-              name: users.name,
-              email: users.email,
-              image: users.image,
-            },
-          })
-          .from(taskActivityLog)
-          .innerJoin(tasks, eq(taskActivityLog.taskId, tasks.id))
-          .innerJoin(projects, eq(tasks.projectId, projects.id))
-          .leftJoin(users, eq(taskActivityLog.userId, users.id))
-          .where(eq(taskActivityLog.userId, ctx.session.user.id))
-          .orderBy(desc(taskActivityLog.createdAt))
-          .limit(limit);
+      const orgIds = memberships.map((m) => m.organizationId);
 
-        return { scope: "personal" as const, rows };
+      let whereCondition;
+      let returnScope: "personal" | "organization" | "all";
+
+      if (scope === "all" && orgIds.length > 0) {
+        // All organizations + personal projects
+        whereCondition = sql`(${projects.organizationId} IN ${orgIds} OR (${projects.createdById} = ${ctx.session.user.id} AND ${projects.organizationId} IS NULL))`;
+        returnScope = "all";
+      } else if (scope === "organization" && activeOrganizationId && orgIds.includes(activeOrganizationId)) {
+        // Active organization
+        whereCondition = eq(projects.organizationId, activeOrganizationId);
+        returnScope = "organization";
+      } else {
+        // Personal only
+        whereCondition = eq(taskActivityLog.userId, ctx.session.user.id);
+        returnScope = "personal";
       }
 
       const rows = await ctx.db
@@ -600,10 +552,10 @@ export const taskRouter = createTRPCRouter({
         .innerJoin(tasks, eq(taskActivityLog.taskId, tasks.id))
         .innerJoin(projects, eq(tasks.projectId, projects.id))
         .leftJoin(users, eq(taskActivityLog.userId, users.id))
-        .where(eq(projects.organizationId, activeOrganizationId))
+        .where(whereCondition)
         .orderBy(desc(taskActivityLog.createdAt))
         .limit(limit);
 
-      return { scope: "organization" as const, rows };
+      return { scope: returnScope, rows };
     }),
 });

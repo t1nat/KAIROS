@@ -32,7 +32,6 @@ export default async function ProgressPage() {
 
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
               <OrgSwitcher />
-              <OrgAccessCodeBadge />
               <NotificationSystem />
               <UserDisplay />
             </div>
