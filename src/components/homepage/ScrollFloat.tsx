@@ -48,10 +48,12 @@ const ScrollFloat: React.FC<ScrollFloatProps> = ({
     const scroller = scrollContainerRef?.current ?? window;
     const charElements = el.querySelectorAll('.char-float');
 
-    // Set initial state
+    // Set initial state with dynamic entrance from below
     gsap.set(charElements, {
       opacity: 0,
-      y: 20,
+      y: 30,
+      scale: 0.8,
+      rotationX: 15,
       filter: 'blur(8px)',
       willChange: 'opacity, transform, filter'
     });
@@ -63,7 +65,7 @@ const ScrollFloat: React.FC<ScrollFloatProps> = ({
         scroller,
         start: scrollStart,
         end: scrollEnd,
-        scrub: 0.8, // Smooth scrubbing with slight lag for natural feel
+        scrub: 1, // Consistent scrubbing value
       }
     });
 
@@ -72,6 +74,8 @@ const ScrollFloat: React.FC<ScrollFloatProps> = ({
       ease: ease,
       opacity: 1,
       y: 0,
+      scale: 1,
+      rotationX: 0,
       filter: 'blur(0px)',
       stagger: stagger,
     });

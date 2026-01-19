@@ -657,64 +657,49 @@ const MagicBento: React.FC<BentoProps> = ({
     }
   ];
 
-  // Enhanced GSAP scroll animations for cards - smooth reveal with advanced effects
+  // Enhanced GSAP scroll animations for cards - smooth fade in with scroll
   useEffect(() => {
     if (shouldDisableAnimations) return;
 
     const ctx = gsap.context(() => {
-      // Set initial state with more sophisticated transforms
+      // Set initial state for dynamic fade in from below with blur
       gsap.set(cardRefs.current, {
         opacity: 0,
-        y: 60,
+        y: 40,
         scale: 0.9,
-        rotationY: 15,
-        transformOrigin: 'center center'
+        rotationX: 15,
+        filter: 'blur(5px)',
+        transformOrigin: 'center bottom'
       });
 
-      // Animate cards with advanced scroll-triggered effects
-      cardRefs.current.forEach((card, index) => {
-        if (!card) return;
-
-        // Create individual timeline for each card
-        const cardTl = gsap.timeline({
-          scrollTrigger: {
-            trigger: card,
-            start: 'top 80%',
-            end: 'bottom 20%',
-            toggleActions: 'play none none reverse',
-            scrub: 0.3, // Smooth scrubbing for continuous animation
-            markers: false
-          }
-        });
-
-        // Staggered reveal with multiple properties
-        cardTl.to(card, {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          rotationY: 0,
-          duration: 1.2,
-          ease: 'power4.out',
-          delay: index * 0.2,
-        })
-        .to(card, {
-          y: -10,
-          duration: 0.6,
-          ease: 'power2.inOut',
-          yoyo: true,
-          repeat: 1,
-        }, '-=0.8')
-        .to(card, {
-          boxShadow: '0 20px 40px rgba(0,0,0,0.1), 0 0 20px rgba(var(--glow-color), 0.1)',
-          duration: 0.8,
-          ease: 'power2.out'
-        }, '-=0.4');
+      // Create scroll-triggered animation for all cards together
+      const gridTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: gridRef.current,
+          start: 'top 80%',
+          end: 'center center',
+          scrub: 0.8, // Fast scrubbing for quick appearance
+          toggleActions: 'play none none reverse',
+          markers: false
+        }
       });
 
-      // Add parallax effect to the grid container
+      // Animate all cards simultaneously with dynamic effects
+      gridTl.to(cardRefs.current, {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        rotationX: 0,
+        filter: 'blur(0px)',
+        duration: 0.8,
+        ease: 'back.out(1.7)',
+        stagger: 0 // No stagger - all animate together
+      });
+
+      // Add subtle parallax effect to the grid container
       if (gridRef.current) {
         gsap.to(gridRef.current, {
-          y: -50,
+          y: -30,
           ease: 'none',
           scrollTrigger: {
             trigger: gridRef.current,

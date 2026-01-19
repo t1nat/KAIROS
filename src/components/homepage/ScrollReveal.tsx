@@ -62,14 +62,22 @@ const ScrollReveal: React.FC<ScrollRevealProps> = ({
             if (wordElements.length === 0) return;
 
             // Set initial state
-            gsap.set(wordElements, { 
+            gsap.set(wordElements, {
                 opacity: baseOpacity,
-                willChange: 'opacity'
+                filter: 'blur(5px)',
+                y: 15,
+                scale: 0.95,
+                rotationX: 5,
+                willChange: 'opacity, filter, transform'
             });
 
             // Create a smooth fade-in animation that reveals words as you scroll
             const opacityTween = gsap.to(wordElements, {
                 opacity: 1,
+                filter: 'blur(0px)',
+                y: 0,
+                scale: 1,
+                rotationX: 0,
                 ease: 'none',
                 stagger: 0.03,
                 scrollTrigger: {
@@ -77,7 +85,7 @@ const ScrollReveal: React.FC<ScrollRevealProps> = ({
                     scroller,
                     start: 'top 85%',
                     end: wordAnimationEnd,
-                    scrub: 0.5
+                    scrub: 1
                 }
             });
 

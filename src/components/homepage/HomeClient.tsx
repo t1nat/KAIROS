@@ -136,6 +136,7 @@ export function HomeClient({ session }: {
     const aboutRef = useRef<HTMLElement>(null);
     const subtitleRef = useRef<HTMLParagraphElement>(null);
     const projectSpaceButtonRef = useRef<HTMLAnchorElement>(null);
+    const whyTeamsCardsRef = useRef<HTMLDivElement[]>([]);
     
     // Watch for accent color changes
     const colorTick = useThemeColorTick();
@@ -168,30 +169,87 @@ export function HomeClient({ session }: {
         }
     }, [searchParams]);
 
-    // Animate the subtitle "Whether you're managing:" in sync with the cards
+    // Animate Why Teams Choose Kairos cards with blurred fade in
     useEffect(() => {
-        if (!subtitleRef.current) return;
+        if (!whyTeamsCardsRef.current.length) return;
 
         const ctx = gsap.context(() => {
-            gsap.fromTo(
-                subtitleRef.current,
-                { opacity: 0, y: 20 },
-                {
-                    opacity: 1,
-                    y: 0,
-                    duration: 0.6,
-                    ease: 'power2.out',
-                    scrollTrigger: {
-                        trigger: subtitleRef.current,
-                        start: 'top 85%',
-                        toggleActions: 'play none none none'
-                    }
+            // Set initial states for dynamic entrance from below
+            gsap.set(whyTeamsCardsRef.current, {
+                opacity: 0,
+                filter: 'blur(10px)',
+                y: 60,
+                scale: 0.8,
+                rotationY: 20,
+                transformOrigin: 'center bottom'
+            });
+
+            // Left cards (0 and 2) slide from left with additional offset
+            gsap.set([whyTeamsCardsRef.current[0], whyTeamsCardsRef.current[2]], {
+                x: -80
+            });
+
+            // Right cards (1 and 3) slide from right with additional offset
+            gsap.set([whyTeamsCardsRef.current[1], whyTeamsCardsRef.current[3]], {
+                x: 80
+            });
+
+            // Animate all cards with dynamic effects
+            gsap.to(whyTeamsCardsRef.current, {
+                opacity: 1,
+                filter: 'blur(0px)',
+                x: 0,
+                y: 0,
+                scale: 1,
+                rotationY: 0,
+                duration: 1.2,
+                ease: 'back.out(1.7)',
+                stagger: 0.15,
+                scrollTrigger: {
+                    trigger: whyTeamsCardsRef.current[0]?.parentElement,
+                    start: 'top 80%',
+                    toggleActions: 'play none none none',
+                    markers: false
                 }
-            );
+            });
         });
 
         return () => ctx.revert();
     }, []);
+
+ useEffect(() => {
+    if (!subtitleRef.current) return;
+
+    const ctx = gsap.context(() => {
+        gsap.fromTo(
+            subtitleRef.current,
+            {
+                opacity: 0,
+                filter: 'blur(5px)',
+                y: 30,
+                scale: 0.9,
+                rotationX: 20
+            },
+            {
+                opacity: 1,
+                filter: 'blur(0px)',
+                y: 0,
+                scale: 1,
+                rotationX: 0,
+                duration: 0.8,
+                ease: 'back.out(1.7)',
+                scrollTrigger: {
+                    trigger: subtitleRef.current,
+                    start: 'top 85%',
+                    scrub: 1,
+                    toggleActions: 'play none none reverse'
+                }
+            }
+        );
+    });
+
+    return () => ctx.revert();
+}, []);
 
     const handleRoleSelectionComplete = () => {
         setShowRoleSelection(false);
@@ -504,7 +562,7 @@ export function HomeClient({ session }: {
                         <div className="mt-12 sm:mt-16 w-full max-w-[1200px] mx-auto">
                             <h4 className="text-2xl md:text-3xl font-bold text-fg-primary mb-8">Why Teams Choose Kairos</h4>
                             <div className="grid md:grid-cols-2 gap-6">
-                                <div className="flex items-start gap-4 p-4 rounded-xl bg-success/5 hover:bg-success/8 transition-colors group shadow-md hover:shadow-lg">
+                                <div ref={(el) => { if (el) whyTeamsCardsRef.current[0] = el; }} className="flex items-start gap-4 p-4 rounded-xl bg-success/5 hover:bg-success/8 transition-colors group shadow-md hover:shadow-lg">
                                     <div className="flex-shrink-0 w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
                                         <Zap size={20} className="text-success" />
                                     </div>
@@ -513,7 +571,7 @@ export function HomeClient({ session }: {
                                         <p className="text-fg-secondary">Plan, track, and publish events from a single, intuitive interface.</p>
                                     </div>
                                 </div>
-                                <div className="flex items-start gap-4 p-4 rounded-xl bg-accent-primary/5 hover:bg-accent-primary/8 transition-colors group shadow-md hover:shadow-lg">
+                                <div ref={(el) => { if (el) whyTeamsCardsRef.current[1] = el; }} className="flex items-start gap-4 p-4 rounded-xl bg-accent-primary/5 hover:bg-accent-primary/8 transition-colors group shadow-md hover:shadow-lg">
                                     <div className="flex-shrink-0 w-10 h-10 bg-accent-primary/10 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
                                         <Sparkles size={20} className="text-accent-primary" />
                                     </div>
@@ -522,7 +580,7 @@ export function HomeClient({ session }: {
                                         <p className="text-fg-secondary">Create stunning event pages that match your brand identity.</p>
                                     </div>
                                 </div>
-                                <div className="flex items-start gap-4 p-4 rounded-xl bg-warning/5 hover:bg-warning/8 transition-colors group shadow-md hover:shadow-lg">
+                                <div ref={(el) => { if (el) whyTeamsCardsRef.current[2] = el; }} className="flex items-start gap-4 p-4 rounded-xl bg-warning/5 hover:bg-warning/8 transition-colors group shadow-md hover:shadow-lg">
                                     <div className="flex-shrink-0 w-10 h-10 bg-warning/10 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
                                         <Lock size={20} className="text-warning" />
                                     </div>
@@ -531,7 +589,7 @@ export function HomeClient({ session }: {
                                         <p className="text-fg-secondary">Your data is protected with enterprise-grade security measures.</p>
                                     </div>
                                 </div>
-                                <div className="flex items-start gap-4 p-4 rounded-xl bg-info/5 hover:bg-info/8 transition-colors group shadow-md hover:shadow-lg">
+                                <div ref={(el) => { if (el) whyTeamsCardsRef.current[3] = el; }} className="flex items-start gap-4 p-4 rounded-xl bg-info/5 hover:bg-info/8 transition-colors group shadow-md hover:shadow-lg">
                                     <div className="flex-shrink-0 w-10 h-10 bg-info/10 rounded-xl flex items-center justify-center mt-1 group-hover:scale-110 transition-transform">
                                         <Calendar size={20} className="text-info" />
                                     </div>
