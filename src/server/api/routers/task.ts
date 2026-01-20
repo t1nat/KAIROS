@@ -77,16 +77,15 @@ export const taskRouter = createTRPCRouter({
       }
 
       
-      const existingTasks = await ctx.db
-        .select()
+      // PERF + correctness: avoid loading all tasks and avoid race conditions on orderIndex.
+      // Compute next order index with a MAX() query.
+      const [maxRow] = await ctx.db
+        .select({ max: sql<number>`COALESCE(MAX(${tasks.orderIndex}), 0)`.mapWith(Number) })
         .from(tasks)
         .where(eq(tasks.projectId, input.projectId));
 
-      const maxOrderIndex = existingTasks.length > 0
-        ? Math.max(...existingTasks.map(t => t.orderIndex))
-        : 0;
+      const nextOrderIndex = (maxRow?.max ?? 0) + 1;
 
-      
       const [task] = await ctx.db
         .insert(tasks)
         .values({
@@ -98,7 +97,7 @@ export const taskRouter = createTRPCRouter({
           dueDate: input.dueDate,
           status: "pending",
           createdById: ctx.session.user.id,
-          orderIndex: maxOrderIndex + 1,
+          orderIndex: nextOrderIndex,
         })
         .returning();
 
@@ -501,7 +500,7 @@ export const taskRouter = createTRPCRouter({
           .where(eq(users.id, ctx.session.user.id))
           .limit(1);
         activeOrganizationId = userRow?.activeOrganizationId ?? null;
-      } catch (err) {
+      } catch {
         activeOrganizationId = null;
       }
 

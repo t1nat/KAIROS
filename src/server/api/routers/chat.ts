@@ -267,31 +267,33 @@ export const chatRouter = createTRPCRouter({
         .where(or(eq(directConversations.userOneId, selfId), eq(directConversations.userTwoId, selfId)))
         .orderBy(desc(directConversations.lastMessageAt));
 
-      const result = [];
-      for (const convo of convos) {
-        const [userOne] = await ctx.db
-          .select({ id: users.id, name: users.name, email: users.email, image: users.image })
-          .from(users)
-          .where(eq(users.id, convo.userOneId))
-          .limit(1);
+      // Avoid N+1: fetch all users in one query.
+      const userIds = Array.from(
+        new Set(convos.flatMap((c) => [c.userOneId, c.userTwoId])),
+      );
 
-        const [userTwo] = await ctx.db
-          .select({ id: users.id, name: users.name, email: users.email, image: users.image })
-          .from(users)
-          .where(eq(users.id, convo.userTwoId))
-          .limit(1);
+      const userRows = userIds.length
+        ? await ctx.db
+            .select({ id: users.id, name: users.name, email: users.email, image: users.image })
+            .from(users)
+            .where(inArray(users.id, userIds))
+        : [];
 
-        if (userOne && userTwo) {
-          result.push({
+      const userById = new Map(userRows.map((u) => [u.id, u] as const));
+
+      return convos
+        .map((convo) => {
+          const userOne = userById.get(convo.userOneId);
+          const userTwo = userById.get(convo.userTwoId);
+          if (!userOne || !userTwo) return null;
+          return {
             id: convo.id,
             userOne,
             userTwo,
             lastMessageAt: convo.lastMessageAt,
-          });
-        }
-      }
-
-      return result;
+          };
+        })
+        .filter((x): x is NonNullable<typeof x> => x !== null);
     }),
 
   getOrCreateDirectConversation: protectedProcedure

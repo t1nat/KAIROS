@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { env } from "~/env";
 import { db } from "~/server/db";
 import { users } from "~/server/db/schema";
-import { eq, inArray } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 import {
   ACCOUNT_SWITCH_COOKIE,
   decodeAccountSwitchCookie,

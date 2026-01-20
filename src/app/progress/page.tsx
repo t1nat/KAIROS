@@ -5,7 +5,6 @@ import { getTranslations } from "next-intl/server";
 import { SideNav } from "~/components/layout/SideNav";
 import { UserDisplay } from "~/components/layout/UserDisplay";
 import { NotificationSystem } from "~/components/notifications/NotificationSystem";
-import { OrgAccessCodeBadge } from "~/components/orgs/OrgAccessCodeBadge";
 import { OrgSwitcher } from "~/components/orgs/OrgSwitcher";
 import { ProgressFeedClient } from "~/components/progress/ProgressFeedClient";
 

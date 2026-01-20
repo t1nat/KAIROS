@@ -38,7 +38,9 @@ export const authConfig = {
     Google({
       clientId: env.AUTH_GOOGLE_ID,
       clientSecret: env.AUTH_GOOGLE_SECRET,
-      allowDangerousEmailAccountLinking: true,
+      // SECURITY: keep disabled to avoid unintended cross-provider account linking.
+      // If you need explicit account linking, implement a dedicated flow requiring re-auth.
+      allowDangerousEmailAccountLinking: false,
     }),
     Credentials({
       id: "account-switch",

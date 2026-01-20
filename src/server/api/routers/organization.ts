@@ -6,12 +6,22 @@ import { eq, and } from "drizzle-orm";
 
 
 function generateAccessCode(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  // SECURITY: use cryptographically secure randomness (Math.random() is predictable).
+  // Generates a code like XXXX-XXXX-XXXX.
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+  // 12 chars => 12 * log2(36) ~= 62 bits of entropy.
+  // With rate limiting on join, this is fine for an org invite code.
+  const bytes = new Uint8Array(12);
+  // node runtime in Next.js supports WebCrypto.
+  crypto.getRandomValues(bytes);
+
   let code = "";
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < bytes.length; i++) {
     if (i > 0 && i % 4 === 0) code += "-";
-    code += chars[Math.floor(Math.random() * chars.length)];
+    code += alphabet[bytes[i]! % alphabet.length];
   }
+
   return code;
 }
 
@@ -464,7 +474,7 @@ export const organizationRouter = createTRPCRouter({
         .from(organizations)
         .where(eq(organizations.id, input.organizationId));
 
-      if (!org || org.createdById !== ctx.session.user.id) {
+      if (org?.createdById !== ctx.session.user.id) {
         throw new Error("Only the organization owner can update member permissions");
       }
 

@@ -1,7 +1,7 @@
  import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { projects, tasks, projectCollaborators, users, organizationMembers, notifications } from "~/server/db/schema";
-import { eq, and, desc, inArray, isNull, sql, ne } from "drizzle-orm";
+import { eq, and, desc, inArray, isNull, sql, ne, or } from "drizzle-orm";
 
 export const projectRouter = createTRPCRouter({
   
@@ -180,7 +180,6 @@ export const projectRouter = createTRPCRouter({
 
   // Get all projects across all organizations the user is a member of
   getAllProjectsAcrossOrgs: protectedProcedure.query(async ({ ctx }) => {
-    // Get all organizations the user is a member of
     const memberships = await ctx.db
       .select({ organizationId: organizationMembers.organizationId })
       .from(organizationMembers)
@@ -188,33 +187,33 @@ export const projectRouter = createTRPCRouter({
 
     const orgIds = memberships.map((m) => m.organizationId);
 
-    // Get projects from all user's organizations + personal projects
-    let projectsList;
-    if (orgIds.length > 0) {
-      projectsList = await ctx.db
-        .select()
-        .from(projects)
-        .where(
-          and(
-            sql`(${projects.organizationId} IN ${orgIds} OR (${projects.createdById} = ${ctx.session.user.id} AND ${projects.organizationId} IS NULL))`,
-            ne(projects.status, "archived")
+    // Fetch projects from all user's orgs + personal projects.
+    // Avoid raw SQL interpolation for IN-clause.
+    const projectsList = orgIds.length
+      ? await ctx.db
+          .select()
+          .from(projects)
+          .where(
+            and(
+              or(
+                inArray(projects.organizationId, orgIds),
+                and(eq(projects.createdById, ctx.session.user.id), isNull(projects.organizationId)),
+              ),
+              ne(projects.status, "archived"),
+            ),
           )
-        )
-        .orderBy(desc(projects.createdAt));
-    } else {
-      // Only personal projects
-      projectsList = await ctx.db
-        .select()
-        .from(projects)
-        .where(
-          and(
-            eq(projects.createdById, ctx.session.user.id),
-            isNull(projects.organizationId),
-            ne(projects.status, "archived")
+          .orderBy(desc(projects.createdAt))
+      : await ctx.db
+          .select()
+          .from(projects)
+          .where(
+            and(
+              eq(projects.createdById, ctx.session.user.id),
+              isNull(projects.organizationId),
+              ne(projects.status, "archived"),
+            ),
           )
-        )
-        .orderBy(desc(projects.createdAt));
-    }
+          .orderBy(desc(projects.createdAt));
 
     // Get created by users
     const createdByIds = Array.from(new Set(projectsList.map((p) => p.createdById)));
@@ -231,26 +230,30 @@ export const projectRouter = createTRPCRouter({
       : [];
     const createdByUserMap = new Map(createdByUsers.map((u) => [u.id, u] as const));
 
-    const projectsWithTasks = await Promise.all(
-      projectsList.map(async (project) => {
-        const projectTasks = await ctx.db
+    // Avoid N+1: fetch all tasks for these projects in one query.
+    const projectIds = projectsList.map((p) => p.id);
+    const allTasks = projectIds.length
+      ? await ctx.db
           .select({
             id: tasks.id,
             status: tasks.status,
             dueDate: tasks.dueDate,
+            projectId: tasks.projectId,
           })
           .from(tasks)
-          .where(eq(tasks.projectId, project.id));
+          .where(inArray(tasks.projectId, projectIds))
+      : [];
 
-        return {
-          ...project,
-          createdByUser: createdByUserMap.get(project.createdById) ?? null,
-          tasks: projectTasks,
-        };
-      })
-    );
+    const tasksByProjectId = allTasks.reduce((acc, t) => {
+      (acc[t.projectId] ??= []).push({ id: t.id, status: t.status, dueDate: t.dueDate });
+      return acc;
+    }, {} as Record<number, Array<{ id: number; status: (typeof tasks.$inferSelect)["status"]; dueDate: Date | null }>>);
 
-    return projectsWithTasks;
+    return projectsList.map((project) => ({
+      ...project,
+      createdByUser: createdByUserMap.get(project.createdById) ?? null,
+      tasks: tasksByProjectId[project.id] ?? [],
+    }));
   }),
 
   
@@ -549,7 +552,7 @@ export const projectRouter = createTRPCRouter({
         .from(projects)
         .where(eq(projects.id, input.projectId));
 
-      if (!project || project.createdById !== ctx.session.user.id) {
+      if (project?.createdById !== ctx.session.user.id) {
         throw new Error("Only project owner can remove collaborators");
       }
 
@@ -581,7 +584,7 @@ export const projectRouter = createTRPCRouter({
         .from(projects)
         .where(eq(projects.id, input.projectId));
 
-      if (!project || project.createdById !== ctx.session.user.id) {
+      if (project?.createdById !== ctx.session.user.id) {
         throw new Error("Only project owner can update permissions");
       }
 

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { api } from "~/trpc/react";
 import { CreateProjectForm, CreateTaskForm, CollaboratorManager } from "./ProjectManagement";
 import { InteractiveTimeline } from "./InteractiveTimeline";
-import { ChevronDown, RefreshCw, CheckCircle2, ArrowLeft, Folder, Trash2, Archive } from "lucide-react";
+import { ChevronDown, RefreshCw, CheckCircle2, ArrowLeft, Folder, Trash2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useToast } from "~/components/providers/ToastProvider";
@@ -177,15 +177,6 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
       setSelectedProjectId(null);
       void utils.project.getMyProjects.invalidate();
       toast.success("Project deleted");
-    },
-    onError: (error) => toast.error(t("errors.generic", { message: error.message })),
-  });
-
-  const archiveProject = api.project.archiveProject.useMutation({
-    onSuccess: () => {
-      setSelectedProjectId(null);
-      void utils.project.getMyProjects.invalidate();
-      toast.success("Project archived");
     },
     onError: (error) => toast.error(t("errors.generic", { message: error.message })),
   });
