@@ -10,8 +10,11 @@ const globalForDb = globalThis as unknown as {
 };
 
 
-const conn = globalForDb.conn ?? postgres(env.DATABASE_URL, {
-    max: 30, 
+const databaseUrl =
+  env.DATABASE_URL ?? "postgres://postgres:postgres@localhost:5432/kairos";
+
+const conn = globalForDb.conn ?? postgres(databaseUrl, {
+  max: 30,
   prepare: env.NODE_ENV === "production",
 });
 

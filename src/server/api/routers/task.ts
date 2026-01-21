@@ -2,7 +2,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { tasks, projects, projectCollaborators, taskActivityLog, organizationMembers, users, organizations } from "~/server/db/schema";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, isNull } from "drizzle-orm";
 
 export const taskRouter = createTRPCRouter({
  
@@ -515,17 +515,34 @@ export const taskRouter = createTRPCRouter({
       let whereCondition;
       let returnScope: "personal" | "organization" | "all";
 
-      if (scope === "all" && orgIds.length > 0) {
-        // All organizations + personal projects
-        whereCondition = sql`(${projects.organizationId} IN ${orgIds} OR (${projects.createdById} = ${ctx.session.user.id} AND ${projects.organizationId} IS NULL))`;
+      if (scope === "all") {
+        // All orgs the user is in + personal projects.
+        // If user has no org memberships, we still want personal projects.
+        whereCondition = orgIds.length
+          ? sql`(
+              ${projects.organizationId} IN ${orgIds}
+              OR (
+                ${projects.createdById} = ${ctx.session.user.id}
+                AND ${projects.organizationId} IS NULL
+              )
+            )`
+          : sql`(${projects.createdById} = ${ctx.session.user.id} AND ${projects.organizationId} IS NULL)`;
         returnScope = "all";
-      } else if (scope === "organization" && activeOrganizationId && orgIds.includes(activeOrganizationId)) {
-        // Active organization
+      } else if (scope === "organization") {
+        // Active org only. If there is no active org (or user not member), return nothing
+        // rather than leaking personal activity into org scope.
+        if (!activeOrganizationId || !orgIds.includes(activeOrganizationId)) {
+          return { scope: "organization", rows: [] };
+        }
         whereCondition = eq(projects.organizationId, activeOrganizationId);
         returnScope = "organization";
       } else {
-        // Personal only
-        whereCondition = eq(taskActivityLog.userId, ctx.session.user.id);
+        // Personal activity only: tasks from personal projects.
+        // This matches the projects list (which uses `organizationId IS NULL`).
+        whereCondition = and(
+          eq(projects.createdById, ctx.session.user.id),
+          isNull(projects.organizationId)
+        );
         returnScope = "personal";
       }
 

@@ -6,7 +6,7 @@ import { api } from "~/trpc/react";
 import Image from "next/image";
 import { ArrowLeft, Folder, ChevronDown, Check } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { Doughnut } from "react-chartjs-2";
+import { Doughnut, Bar } from "react-chartjs-2";
 import { ensureChartJsRegistered } from "~/components/charts/chartjs";
 import { useResolvedThemeColors } from "~/components/charts/theme-colors";
 
@@ -323,6 +323,100 @@ function LargePieChart(props: {
   );
 }
 
+function ActivityBarChart(props: {
+  title: string;
+  subtitle?: string;
+  rows: OrgActivityEntry[];
+}) {
+  ensureChartJsRegistered();
+  const colors = useResolvedThemeColors();
+
+  const data = useMemo(() => {
+    const now = new Date();
+    const buckets: { key: string; label: string; count: number; date: Date }[] = [];
+
+    // Last 7 days (including today) in local time.
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      const label = d.toLocaleDateString(undefined, { weekday: "short" });
+      buckets.push({
+        key: d.toISOString().slice(0, 10),
+        label,
+        count: 0,
+        date: d,
+      });
+    }
+
+    const bucketByKey = new Map(buckets.map((b) => [b.key, b] as const));
+
+    for (const r of props.rows) {
+      const d = new Date(r.createdAt);
+      const key = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString().slice(0, 10);
+      const bucket = bucketByKey.get(key);
+      if (bucket) bucket.count += 1;
+    }
+
+    return {
+      labels: buckets.map((b) => b.label),
+      datasets: [
+        {
+          label: props.title,
+          data: buckets.map((b) => b.count),
+          backgroundColor: colors.palette[0] ?? colors.info,
+          borderColor: colors.border,
+          borderWidth: 1,
+          borderRadius: 10,
+          maxBarThickness: 28,
+        },
+      ],
+    };
+  }, [props.rows, props.title, colors.palette, colors.info, colors.border]);
+
+  const options = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: true,
+          backgroundColor: colors.bgOverlay,
+          titleColor: colors.fgPrimary,
+          bodyColor: colors.fgPrimary,
+          borderColor: colors.border,
+          borderWidth: 1,
+          padding: 12,
+          cornerRadius: 8,
+        },
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: colors.fgPrimary },
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: colors.border },
+          ticks: { color: colors.fgPrimary, precision: 0 },
+        },
+      },
+    }),
+    [colors.bgOverlay, colors.fgPrimary, colors.border]
+  );
+
+  return (
+    <div className="flex flex-col p-4 rounded-2xl bg-gradient-to-br from-bg-elevated/80 to-bg-surface/40 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300">
+      <div className="mb-3">
+        <p className="text-sm font-semibold text-fg-primary">{props.title}</p>
+        {props.subtitle && <p className="text-xs text-fg-tertiary mt-0.5">{props.subtitle}</p>}
+      </div>
+      <div className="relative h-40">
+        <Bar data={data} options={options} aria-label={props.title} role="img" />
+      </div>
+    </div>
+  );
+}
+
 function getProjectDisplayName(project: ProjectCard, untitledProjectLabel: string): string {
   return project.title || untitledProjectLabel;
 }
@@ -528,6 +622,10 @@ export function ProgressFeedClient() {
     const completionRows = activityRows.filter(
       (r) => r.action === "status_changed" && r.newValue === "completed"
     );
+
+    // New/different data: track created tasks separately and show activity trend.
+    const createdRows = activityRows.filter((r) => r.action === "created");
+
     const rowsForContributorShare = completionRows.length > 0 ? completionRows : activityRows;
 
     const globalContributorCounts = new Map<string, number>();
@@ -693,6 +791,13 @@ export function ProgressFeedClient() {
               subtitle="Breakdown by status"
               segments={statusSegments}
             />
+
+            {/* New chart: Activity trend (last 7 days) */}
+            <ActivityBarChart
+              title={t("activityTrend.title")}
+              subtitle={t("activityTrend.subtitle")}
+              rows={activityRows}
+            />
           </div>
 
           {/* Right column - Contributor and Per-project share stacked */}
@@ -701,6 +806,16 @@ export function ProgressFeedClient() {
               title={t("contributors.title")}
               subtitle={t("contributors.subtitle")}
               segments={contributorShareSegments}
+            />
+
+            {/* New/different data: tasks created vs completed */}
+            <PieChart
+              title={t("createdVsCompleted.title")}
+              subtitle={t("createdVsCompleted.subtitle")}
+              segments={([
+                { key: "created", label: t("labels.created"), value: createdRows.length, strokeColor: colors.info },
+                { key: "completed", label: t("labels.completed"), value: completionRows.length, strokeColor: colors.completed },
+              ] as PieSegment[]).filter((s) => s.value > 0)}
             />
 
             <PieChart

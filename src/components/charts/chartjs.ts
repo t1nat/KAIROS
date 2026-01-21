@@ -1,4 +1,4 @@
-import { ArcElement, Chart as ChartJS, Legend, Tooltip } from "chart.js";
+import { ArcElement, BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Tooltip } from "chart.js";
 
 class ChartJsRegistry {
   private registered = false;
@@ -6,7 +6,7 @@ class ChartJsRegistry {
   ensureRegistered() {
     if (this.registered) return;
 
-    ChartJS.register(ArcElement, Tooltip, Legend);
+    ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
     ChartJS.defaults.animation = {
       duration: 800,

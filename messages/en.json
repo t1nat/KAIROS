@@ -1,4 +1,14 @@
 {
+  "progress": {
+    "activityTrend": {
+      "title": "Activity (last 7 days)",
+      "subtitle": "All task activity events"
+    },
+    "createdVsCompleted": {
+      "title": "Created vs Completed",
+      "subtitle": "New tasks created compared to tasks completed"
+    }
+  },
   "nav": {
     "home": "Home",
     "create": "Create",

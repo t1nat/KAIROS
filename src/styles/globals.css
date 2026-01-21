@@ -5,8 +5,13 @@
 }
 
 :root {
+  /* Keep CSS var aligned with Tailwind's `font-sans` (see `tailwind.config.cjs`). */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+  /* Ensure plain elements (inputs/selects/buttons) inherit the same font everywhere,
+     including Create Project flow + any 3rd-party component styling. */
+  font-family: var(--font-sans);
   
   /* Backgrounds - Light */
   --bg-primary: 252 253 255;
