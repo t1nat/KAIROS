@@ -458,30 +458,34 @@ export function HomeClient({ session }: {
                         <div className="flex flex-col items-center justify-center gap-8 text-center">
                            <div className="space-y-6 max-w-4xl">
 
-                                <h2 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-fg-primary leading-tight tracking-tight font-display animate-slideUp relative" style={{ animationDelay: '0.1s' }}>
-                                    <span className="relative inline-block">
-                                        KAIROS
-                                        <div className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-accent-primary to-accent-secondary rounded-full animate-scale-in" style={{ animationDelay: '1.2s', animationFillMode: 'both' }}></div>
-                                        <div className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-accent-primary to-accent-secondary rounded-full animate-pulse opacity-60 animate-scale-in" style={{ animationDelay: '1.4s', animationFillMode: 'both' }}></div>
-                                    </span>
+                                <h2
+                                  className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-tight tracking-tight font-display animate-slideUp relative kairos-title"
+                                  style={{ animationDelay: "0.1s" }}
+                                >
+                                  <span className="relative inline-block kairos-title-gradient">
+                                    KAIROS
+                                    <div
+                                      className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-accent-primary to-accent-secondary rounded-full kairos-underline"
+                                      style={{ animationDelay: "1.05s" }}
+                                    />
+                                    <div
+                                      className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-accent-primary to-accent-secondary rounded-full opacity-60 animate-pulse kairos-underline"
+                                      style={{ animationDelay: "1.25s" }}
+                                    />
+                                  </span>
                                 </h2>
-                                <p className="text-lg sm:text-xl md:text-2xl text-fg-secondary leading-relaxed animate-slideUp" style={{ animationDelay: '0.2s' }}>
-                                Where great ideas come to life. The workspace where teams align and launch moments that matter.
+
+                                <p
+                                  className="text-lg sm:text-xl md:text-2xl text-fg-secondary leading-relaxed animate-slideUp"
+                                  style={{ animationDelay: "0.2s" }}
+                                >
+                                  Where great ideas come to life. The workspace where teams align and launch moments that matter.
                                 </p>
-                                <div className="flex flex-wrap gap-4 text-sm text-fg-tertiary justify-center animate-slideUp" style={{ animationDelay: '0.3s' }}>
-                                    <div className="flex items-center gap-2 group">
-                                        <div className="w-1.5 h-1.5 bg-event-active rounded-full animate-pulse group-hover:animate-ping"></div>
-                                       
-                                    </div>
-                                    <div className="flex items-center gap-2 group">
-                                        <div className="w-1.5 h-1.5 bg-event-upcoming rounded-full animate-pulse group-hover:animate-ping" style={{ animationDelay: '0.5s' }}></div>
-                                       
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-1.5 h-1.5 bg-event-completed rounded-full"></div>
-                                     
-                                    </div>
-                                </div>
+
+                                <div
+                                  className="flex flex-wrap gap-4 text-sm text-fg-tertiary justify-center animate-slideUp"
+                                  style={{ animationDelay: "0.3s" }}
+                                />
                             </div>
                             <div className={`flex flex-col gap-4 w-full max-w-md justify-center ${!hasAnimated ? 'animate-smooth-fade-in' : ''}`} style={{ animationDelay: !hasAnimated ? '0.4s' : '0s' }}>
                                 {showActionButtons && (
@@ -505,13 +509,13 @@ export function HomeClient({ session }: {
                                 )}
                                 
                                 {!session && (
-                                    <button
-                                        onClick={() => setIsModalOpen(true)}
-                                        className="flex items-center justify-center gap-2 px-8 sm:px-10 py-4 sm:py-5 bg-accent-primary text-white font-semibold rounded-xl hover:bg-accent-primary/90 transition-all hover:scale-[1.02] text-base sm:text-lg group shadow-lg shadow-accent-primary/30 hover:shadow-xl hover:shadow-accent-primary/40"
-                                    >
-                                        Log In / Sign Up
-                                        <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                                    </button>
+                                  <button
+                                    onClick={() => setIsModalOpen(true)}
+                                    className="kairos-glass-button flex items-center justify-center gap-2 px-8 sm:px-10 py-4 sm:py-5 text-fg-primary font-semibold rounded-xl transition-all text-base sm:text-lg group"
+                                  >
+                                    <span className="relative z-10">Log In / Sign Up</span>
+                                    <ArrowRight size={20} className="relative z-10 group-hover:translate-x-1 transition-transform" />
+                                  </button>
                                 )}
 
                                 {showRoleSelection && (

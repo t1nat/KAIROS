@@ -124,51 +124,52 @@ export function SignInModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div 
-        className="absolute inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-md"
+      <div
+        className="absolute inset-0 bg-black/70 backdrop-blur-md"
         onClick={onClose}
       />
-      
-      {/* Modal - white in light mode, black in dark mode */}
-      <div className="relative bg-white dark:bg-black rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-200 dark:border-white/10">
-        
-        <div className="absolute inset-0 bg-gradient-to-br from-accent-primary/5 to-transparent pointer-events-none" />
-        
-        <button 
-          onClick={onClose} 
-          className="absolute top-4 right-4 p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-all duration-200 z-10"
+
+      {/* Modal (black by default) */}
+      <div className="relative bg-black rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/10 animate-in fade-in slide-in-from-bottom-4">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-accent-primary/10 pointer-events-none" />
+
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200 z-10"
+          aria-label="Close"
         >
           <X size={20} />
         </button>
 
-        <div className="relative p-8 pb-6 text-center border-b border-gray-200 dark:border-white/10">
+        <div className="relative p-8 pb-6 text-center border-b border-white/10">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Image
-              src="/logo_purple.png"
-              alt="Kairos Logo"
-              width={64}
-              height={64}
-              className="w-16 h-16 object-contain dark:hidden"
-              priority
-            />
             <Image
               src="/logo_white.png"
               alt="Kairos Logo"
               width={64}
               height={64}
-              className="hidden w-16 h-16 object-contain dark:block"
+              className="w-16 h-16 object-contain"
               priority
             />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 font-display tracking-tight">
-            {isSignUp ? "Create Account" : "Welcome to Kairos"}
+
+          <h2 className="text-2xl font-bold text-white mb-2 font-display tracking-tight">
+            {isSignUp ? "Create your Kairos workspace" : "Welcome back"}
           </h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            {isSignUp 
-              ? "Sign up to launch your projects." 
-              : "Sign in to launch your projects."
+          <p className="text-white/70 leading-relaxed">
+            {isSignUp
+              ? "Plan, collaborate, and publish in one place — built for teams that move fast."
+              : "Sign in to pick up where your team left off."
             }
           </p>
+
+          {isSignUp && (
+            <div className="mt-5 grid grid-cols-3 gap-2 text-xs text-white/70">
+              <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">No credit card</div>
+              <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">Secure by design</div>
+              <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">2 min setup</div>
+            </div>
+          )}
         </div>
 
         <div className="relative p-8 space-y-6">
@@ -176,7 +177,7 @@ export function SignInModal({
           <button
             onClick={handleGoogleSignIn}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl font-semibold text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 hover:shadow-md transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white/5 border border-white/10 rounded-2xl font-semibold text-white hover:bg-white/10 hover:shadow-md transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
             <div className="w-5 h-5 bg-white rounded flex items-center justify-center">
               <svg viewBox="0 0 24 24" className="w-4 h-4">
@@ -190,15 +191,13 @@ export function SignInModal({
           </button>
 
           <div className="flex flex-col items-center gap-3 py-2">
-            <span className="text-sm text-gray-500 dark:text-gray-500">
-              or {isSignUp ? "sign up" : "sign in"} with email
-            </span>
-            <div className="w-full border-t border-gray-200 dark:border-white/10"></div>
+            <span className="text-sm text-white/60">or continue with email</span>
+            <div className="w-full border-t border-white/10" />
           </div>
 
           <form onSubmit={isSignUp ? handleSignUp : handleEmailSignIn} className="space-y-4">
             {error && (
-              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 dark:text-red-400 text-sm text-center">
+              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-300 text-sm text-center">
                 {error}
               </div>
             )}
@@ -212,11 +211,11 @@ export function SignInModal({
 
             {isSignUp && (
               <div className="space-y-2">
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Name (Optional)
+                <label htmlFor="name" className="block text-sm font-medium text-white/80">
+                  Full name (optional)
                 </label>
                 <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                   <input
                     id="name"
                     type="text"
@@ -224,18 +223,18 @@ export function SignInModal({
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Your name"
                     disabled={isLoading}
-                    className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:border-accent-primary/60 focus:bg-white dark:focus:bg-white/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/35 focus:outline-none focus:border-accent-primary/60 focus:bg-white/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
               </div>
             )}
 
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label htmlFor="email" className="block text-sm font-medium text-white/80">
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                 <input
                   id="email"
                   type="email"
@@ -244,17 +243,17 @@ export function SignInModal({
                   placeholder="your@email.com"
                   required
                   disabled={isLoading}
-                  className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:border-accent-primary/60 focus:bg-white dark:focus:bg-white/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/35 focus:outline-none focus:border-accent-primary/60 focus:bg-white/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label htmlFor="password" className="block text-sm font-medium text-white/80">
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                 <input
                   id="password"
                   type="password"
@@ -264,11 +263,11 @@ export function SignInModal({
                   required
                   minLength={isSignUp ? 8 : undefined}
                   disabled={isLoading}
-                  className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:border-accent-primary/60 focus:bg-white dark:focus:bg-white/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/35 focus:outline-none focus:border-accent-primary/60 focus:bg-white/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
               {isSignUp && (
-                <p className="text-sm text-gray-500 dark:text-gray-500">Password must be at least 8 characters</p>
+                <p className="text-sm text-white/50">Use 8+ characters for a stronger password.</p>
               )}
             </div>
 
@@ -292,13 +291,13 @@ export function SignInModal({
             <button
               onClick={toggleMode}
               disabled={isLoading}
-              className="text-base text-gray-600 dark:text-gray-400 hover:text-accent-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              className="text-base text-white/70 hover:text-accent-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
               {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
             </button>
           </div>
 
-          <p className="text-sm text-center text-gray-500 dark:text-gray-500 leading-relaxed pt-2">
+          <p className="text-sm text-center text-white/50 leading-relaxed pt-2">
             By continuing, you agree to Kairos&#39;s Terms of Service and Privacy Policy.
           </p>
         </div>
