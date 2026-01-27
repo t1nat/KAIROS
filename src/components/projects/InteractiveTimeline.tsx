@@ -178,7 +178,7 @@ export function InteractiveTimeline({
           </div>
         </div>
 
-        <div className="relative w-full h-3 bg-bg-surface/60 rounded-full overflow-hidden shadow-sm ring-1 ring-white/20">
+        <div className="relative w-full h-3 bg-bg-surface/60 rounded-full overflow-hidden shadow-sm">
           <div 
             className="absolute top-0 left-0 h-full rounded-full shadow-lg transition-all duration-300"
             style={{ 
@@ -195,8 +195,12 @@ export function InteractiveTimeline({
       </div>
 
       <div className="relative flex-1 pb-8">
-        {/* Secondary timeline line removed */}
-        
+        {/* Main timeline rail */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute left-0 right-0 top-[40px] h-px bg-gradient-to-r from-transparent via-border-light/30 to-transparent"
+        />
+
         <div className="relative flex items-start gap-6 md:gap-8 overflow-x-auto pb-4 scrollbar-thin scroll-smooth snap-x snap-mandatory">
           {sortedTasks.map((task, index) => {
             const isCompleted = task.status === "completed";
@@ -215,19 +219,29 @@ export function InteractiveTimeline({
                 onMouseEnter={() => setHoveredTaskId(task.id)}
                 onMouseLeave={() => setHoveredTaskId(null)}
               >
-                {/* Removed the thin connecting line that appeared under timeline */}
+                {/* Connector from rail -> task card */}
+                <div
+                  aria-hidden="true"
+                  className={`pointer-events-none absolute left-1/2 -translate-x-1/2 top-[41px] h-[52px] w-px transition-opacity duration-300 ${
+                    isCompleted
+                      ? "bg-success/40"
+                      : isHovered || isExpanded
+                        ? "bg-accent-primary/35"
+                        : "bg-border-light/20"
+                  }`}
+                />
 
-                <div className="absolute left-1/2 -translate-x-1/2 top-[42px] z-10">
+                <div className="absolute left-1/2 -translate-x-1/2 top-[26px] z-10">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleCheckboxToggle(task);
                     }}
                     disabled={isReadOnly || task.id < 0}
-                    className={`w-8 h-8 rounded-full border-3 flex items-center justify-center transition-all duration-300 ${
+                    className={`w-8 h-8 rounded-full ring-2 ring-transparent flex items-center justify-center transition-all duration-300 ${
                       isCompleted
-                        ? "bg-success border-success shadow-lg shadow-success/30 scale-110"
-                        : "bg-bg-primary border-border-medium/70 hover:border-success hover:scale-110"
+                        ? "bg-success shadow-lg shadow-success/30 scale-110"
+                        : "bg-bg-primary shadow-sm hover:shadow-md hover:scale-110"
                     } ${isReadOnly || task.id < 0 ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
                     aria-label={isCompleted ? t("timeline.markIncomplete") : t("timeline.markComplete")}
                   >
@@ -247,10 +261,10 @@ export function InteractiveTimeline({
                       setExpandedTaskId((prev) => (prev === task.id ? null : task.id));
                     }
                   }}
-                  className={`mt-24 bg-bg-surface rounded-xl p-5 border transition-all duration-300 outline-none ${
-                    isCompleted 
-                      ? "border-success/30 bg-success/5" 
-                      : "border-border-light/30 hover:border-accent-primary/40 hover:bg-bg-elevated hover:shadow-lg hover:shadow-accent-primary/10"
+                  className={`mt-20 bg-bg-surface rounded-xl p-5 transition-all duration-300 outline-none shadow-sm hover:shadow-lg ${
+                    isCompleted
+                      ? "bg-success/5"
+                      : "hover:bg-bg-elevated hover:shadow-accent-primary/10"
                   } ${(isHovered || isExpanded) ? "scale-[1.03]" : ""}`}
                 >
                   <div className="flex items-center justify-between mb-3">
@@ -296,8 +310,8 @@ export function InteractiveTimeline({
 
                   <div className="flex items-center gap-3 text-xs text-fg-secondary flex-wrap">
                     {task.dueDate && (
-                      <div className={`flex items-center gap-1.5 bg-bg-surface/60 px-2 py-1 rounded-md border ${
-                        isOverdue ? "border-error/40" : "border-border-light/20"
+                      <div className={`flex items-center gap-1.5 bg-bg-surface/60 px-2 py-1 rounded-md shadow-sm ${
+                        isOverdue ? "shadow-error/10" : ""
                       }`}>
                         <Clock size={12} className={isOverdue ? "text-error" : "text-accent-primary"} />
                         <span>{formatShortDate(new Date(task.dueDate))}</span>
@@ -414,11 +428,13 @@ export function InteractiveTimeline({
         @keyframes fadeInUp {
           from {
             opacity: 0;
-            transform: translateY(20px);
+            transform: translateY(18px);
+            filter: blur(4px);
           }
           to {
             opacity: 1;
             transform: translateY(0);
+            filter: blur(0);
           }
         }
 
@@ -441,7 +457,8 @@ export function InteractiveTimeline({
         }
 
         .animate-fadeInUp {
-          animation: fadeInUp 0.5s ease-out;
+          animation: fadeInUp 650ms cubic-bezier(0.22, 1, 0.36, 1);
+          will-change: transform, opacity, filter;
         }
 
         .animate-scaleIn {

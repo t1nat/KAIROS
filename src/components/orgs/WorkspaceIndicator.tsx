@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, User, Copy } from "lucide-react";
+import { Copy } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useTranslations } from "next-intl";
 import { api } from "~/trpc/react";
@@ -30,19 +30,6 @@ export function WorkspaceIndicator() {
   
   return (
     <div className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-bg-surface/80 to-bg-elevated/50 backdrop-blur-sm">
-      {/* Workspace Type Icon */}
-      <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
-        isOrganization 
-          ? 'bg-gradient-to-br from-accent-primary to-accent-secondary shadow-lg shadow-accent-primary/20' 
-          : 'bg-gradient-to-br from-blue-500 to-cyan-500 shadow-lg shadow-blue-500/20'
-      }`}>
-        {isOrganization ? (
-          <Building2 className="text-white" size={24} />
-        ) : (
-          <User className="text-white" size={24} />
-        )}
-      </div>
-      
       {/* Workspace Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
@@ -53,7 +40,7 @@ export function WorkspaceIndicator() {
           </span>
         </div>
         
-        <h3 className="text-lg font-bold text-fg-primary truncate">
+        <h3 className="text-lg font-semibold text-fg-primary truncate tracking-[-0.01em] font-display">
           {isOrganization ? orgName : tOrg("personalWorkspace")}
         </h3>
       </div>

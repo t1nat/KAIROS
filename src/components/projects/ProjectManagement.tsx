@@ -157,10 +157,12 @@ export function CreateProjectForm({
   };
 
   return (
-    <div className="rounded-2xl bg-bg-surface/50 overflow-hidden shadow-sm">
+    <div className="rounded-2xl bg-bg-surface/70 overflow-hidden shadow-2xl shadow-black/10">
       <button
+        type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-5 py-4 hover:bg-bg-elevated/50 transition-colors"
+        className="w-full flex items-center justify-between px-5 py-4 hover:bg-bg-elevated/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/30"
+        aria-expanded={isExpanded}
       >
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-gradient-to-br from-accent-primary to-accent-secondary rounded-lg flex items-center justify-center shadow-sm">
@@ -175,7 +177,7 @@ export function CreateProjectForm({
         <div className="px-5 pb-5 pt-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-fg-secondary mb-2">
+              <label className="block text-xs font-semibold text-fg-secondary mb-2 uppercase tracking-wide">
                 {t("projectForm.projectName")}
               </label>
               <input
@@ -190,7 +192,7 @@ export function CreateProjectForm({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-fg-secondary mb-2">
+              <label className="block text-xs font-semibold text-fg-secondary mb-2 uppercase tracking-wide">
                 {t("common.description")} <span className="text-fg-tertiary font-normal">({t("common.optional")})</span>
               </label>
               <textarea
@@ -476,7 +478,7 @@ export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskForm
           </button>
           
           {showAssignDropdown && (
-            <div className="absolute z-50 w-full mt-2 py-2 bg-bg-secondary/95 backdrop-blur-xl rounded-xl shadow-xl border border-white/10 animate-in fade-in slide-in-from-top-2 max-h-48 overflow-y-auto">
+            <div className="absolute z-50 w-full mt-2 py-2 bg-bg-secondary/95 backdrop-blur-xl rounded-xl shadow-xl animate-in fade-in slide-in-from-top-2 max-h-48 overflow-y-auto">
               <button
                 type="button"
                 onClick={() => { setAssignedToId(""); setShowAssignDropdown(false); }}
@@ -526,7 +528,7 @@ export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskForm
           </button>
           
           {showPriorityDropdown && (
-            <div className="absolute z-50 w-full mt-2 py-2 bg-bg-secondary/95 backdrop-blur-xl rounded-xl shadow-xl border border-white/10 animate-in fade-in slide-in-from-top-2">
+            <div className="absolute z-50 w-full mt-2 py-2 bg-bg-secondary/95 backdrop-blur-xl rounded-xl shadow-xl animate-in fade-in slide-in-from-top-2">
               {(["low", "medium", "high", "urgent"] as const).map((p) => (
                 <button
                   type="button"
@@ -554,7 +556,7 @@ export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskForm
           type="datetime-local"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
-          className="w-full px-4 py-3 bg-bg-surface/60 border border-border-light/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary/50 text-fg-primary transition-all"
+          className="w-full px-4 py-3 bg-bg-surface/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary transition-all"
           disabled={isSubmitting}
         />
       </div>
@@ -711,7 +713,7 @@ export function CollaboratorManager({
           </div>
 
           {searchedUser && (
-            <div className="flex items-center gap-3 p-3 bg-success/10 border border-success/30 rounded-lg animate-in fade-in slide-in-from-top-1">
+            <div className="flex items-center gap-3 p-3 bg-success/10 rounded-lg shadow-sm shadow-success/10 animate-in fade-in slide-in-from-top-1">
               {searchedUser.image ? (
                 <Image
                   src={searchedUser.image}
@@ -736,7 +738,7 @@ export function CollaboratorManager({
           )}
 
           {searchError && (
-            <div className="p-3 bg-error/10 border border-error/30 rounded-lg text-sm text-error animate-in fade-in slide-in-from-top-1">
+            <div className="p-3 bg-error/10 rounded-lg text-sm text-error shadow-sm shadow-error/10 animate-in fade-in slide-in-from-top-1">
               {searchError}
             </div>
           )}

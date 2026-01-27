@@ -90,7 +90,7 @@ export function SideNav() {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center shadow-lg shadow-accent-primary/25">
             <span className="text-white font-bold text-sm">K</span>
           </div>
-          <h1 className="text-lg font-bold text-fg-primary font-display tracking-tight">KAIROS</h1>
+          <h1 className="text-lg font-semibold text-fg-primary font-display tracking-[-0.02em]">KAIROS</h1>
         </div>
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}

@@ -72,7 +72,10 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
     projectIdFromUrl ? parseInt(projectIdFromUrl) : null
   );
-  const [isCreateProjectExpanded, setIsCreateProjectExpanded] = useState(true);
+
+  // Default to collapsed when the user initially opens the Create page.
+  // If a project is selected via URL, keep the panel state irrelevant (form is hidden anyway).
+  const [isCreateProjectExpanded, setIsCreateProjectExpanded] = useState(false);
   const [deleteProjectArmed, setDeleteProjectArmed] = useState(false);
 
   const utils = api.useUtils();
@@ -226,13 +229,20 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
 
   const availableUsers: User[] = projectDetails
     ? [
-        // Owner - use session user if they are the owner, otherwise show generic
-        ...(isOwner ? [{
-          id: userId,
-          name: t("team.projectOwner"),
-          email: "",
-          image: null,
-        }] : []),
+        // Owner
+        ...(projectDetails.createdById
+          ? [
+              {
+                id: projectDetails.createdById,
+                name:
+                  projectDetails.createdBy?.name ??
+                  projectDetails.createdBy?.email ??
+                  t("team.projectOwner"),
+                email: projectDetails.createdBy?.email ?? "",
+                image: projectDetails.createdBy?.image ?? null,
+              },
+            ]
+          : []),
         // Collaborators
         ...(projectDetails.collaborators?.map((c) => ({
           id: c.collaboratorId,
@@ -418,11 +428,11 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
         )}
 
         {!selectedProjectId && (
-          <div className="h-[400px] flex items-center justify-center rounded-2xl bg-bg-surface/30">
+          <div className="h-[320px] flex items-center justify-center rounded-2xl bg-bg-surface/30">
             <div className="text-center max-w-md px-8">
-              <div className="w-16 h-16 rounded-2xl bg-accent-primary/10 flex items-center justify-center mx-auto mb-4">
-                <Folder size={28} className="text-accent-primary" />
-              </div>
+              <p className="text-sm text-fg-secondary">
+                Select an existing project on the left, or expand “New Project” to create one.
+              </p>
             </div>
           </div>
         )}

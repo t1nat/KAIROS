@@ -67,22 +67,20 @@ export default async function CreatePage({
           <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-3 sm:py-4 flex flex-wrap justify-between items-center gap-3">
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${
-                shouldShowProjectManagement 
+                shouldShowProjectManagement
                   ? 'bg-accent-primary'
                   : shouldShowNoteForm
                   ? 'bg-warning'
-                  : 'bg-success'
+                  : 'bg-gradient-to-br from-accent-primary to-accent-secondary'
               }`}>
                 {shouldShowProjectManagement ? (
                   <FolderKanban className="text-white" size={22} />
                 ) : shouldShowNoteForm ? (
                   <FileEdit className="text-bg-primary" size={22} />
-                ) : (
-                  <FolderKanban className="text-white" size={22} />
-                )}
+                ) : null}
               </div>
               <div>
-                <h1 className="text-xl font-bold text-fg-primary tracking-tight">
+                <h1 className="text-xl font-semibold text-fg-primary tracking-[-0.02em] font-display">
                   {shouldShowProjectManagement
                     ? tNav("projects")
                     : shouldShowNoteForm

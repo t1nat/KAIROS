@@ -332,6 +332,17 @@ export const projectRouter = createTRPCRouter({
         .leftJoin(users, eq(projectCollaborators.collaboratorId, users.id))
         .where(eq(projectCollaborators.projectId, input.id));
 
+      const [createdBy] = await ctx.db
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          image: users.image,
+        })
+        .from(users)
+        .where(eq(users.id, project.createdById))
+        .limit(1);
+
      
       const projectTasks = await ctx.db
         .select({
@@ -419,6 +430,7 @@ export const projectRouter = createTRPCRouter({
 
       return {
         ...project,
+        createdBy: createdBy ?? null,
         collaborators,
         tasks: formattedTasks,
         userHasWriteAccess: hasWriteAccess,
