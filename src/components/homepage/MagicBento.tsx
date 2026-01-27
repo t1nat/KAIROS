@@ -1,10 +1,15 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { FolderKanban, Users, Shield } from 'lucide-react';
-import ScrollReveal from '~/components/homepage/ScrollReveal';
+import React, { useRef, useEffect, useState, useCallback } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { FolderKanban, Users, Shield } from "lucide-react";
+import ScrollReveal from "~/components/homepage/ScrollReveal";
 
 gsap.registerPlugin(ScrollTrigger);
+
+function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined" || typeof window.matchMedia === "undefined") return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
 
 export interface BentoCardProps {
   color?: string;
@@ -141,22 +146,15 @@ const ParticleCard: React.FC<{
   const clearAllParticles = useCallback(() => {
     timeoutsRef.current.forEach(clearTimeout);
     timeoutsRef.current = [];
+
     if (magnetismAnimationRef.current) {
       magnetismAnimationRef.current.kill();
+      magnetismAnimationRef.current = null;
     }
 
-    particlesRef.current.forEach(particle => {
-      if (particle) {
-        gsap.to(particle, {
-          scale: 0,
-          opacity: 0,
-          duration: 0.3,
-          ease: 'back.in(1.7)',
-          onComplete: () => {
-            particle?.parentNode?.removeChild(particle);
-          }
-        });
-      }
+    // For reliability on weak devices: remove particles immediately instead of animating teardown.
+    particlesRef.current.forEach((particle) => {
+      particle?.parentNode?.removeChild(particle);
     });
     particlesRef.current = [];
   }, []);
@@ -168,7 +166,10 @@ const ParticleCard: React.FC<{
       initializeParticles();
     }
 
-    memoizedParticles.current.forEach((particle, index) => {
+    // Cap runtime particle DOM for stability.
+    const maxParticles = Math.min(particleCount, 10);
+
+    memoizedParticles.current.slice(0, maxParticles).forEach((particle, index) => {
       const timeoutId = setTimeout(() => {
         if (!isHoveredRef.current || !internalCardRef.current) return;
 
@@ -176,36 +177,33 @@ const ParticleCard: React.FC<{
         internalCardRef.current.appendChild(clone);
         particlesRef.current.push(clone);
 
-        gsap.fromTo(clone, 
-          { scale: 0, opacity: 0 }, 
-          { scale: 1, opacity: 1, duration: 0.3, ease: 'back.out(1.7)' }
-        );
+        // Use only transform/opacity animations.
+        gsap.fromTo(clone, { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.25, ease: "power2.out" });
 
         gsap.to(clone, {
-          x: (Math.random() - 0.5) * 100,
-          y: (Math.random() - 0.5) * 100,
-          rotation: Math.random() * 360,
-          duration: 2 + Math.random() * 2,
-          ease: 'none',
+          x: (Math.random() - 0.5) * 60,
+          y: (Math.random() - 0.5) * 60,
+          duration: 1.6 + Math.random() * 0.8,
+          ease: "sine.inOut",
           repeat: -1,
-          yoyo: true
+          yoyo: true,
         });
 
         gsap.to(clone, {
-          opacity: 0.3,
-          duration: 1.5,
-          ease: 'power2.inOut',
+          opacity: 0.25,
+          duration: 1.2,
+          ease: "sine.inOut",
           repeat: -1,
-          yoyo: true
+          yoyo: true,
         });
-      }, index * 100);
+      }, index * 120);
 
       timeoutsRef.current.push(timeoutId);
     });
-  }, [initializeParticles]);
+  }, [initializeParticles, particleCount]);
 
   useEffect(() => {
-    if (disableAnimations || !internalCardRef.current) return;
+    if (disableAnimations || prefersReducedMotion() || !internalCardRef.current) return;
 
     const element = internalCardRef.current;
 
@@ -247,39 +245,49 @@ const ParticleCard: React.FC<{
       }
     };
 
+    let moveRaf = 0;
+
     const handleMouseMove = (e: MouseEvent) => {
       if (!element || (!enableTilt && !enableMagnetism)) return;
 
-      const rect = element.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const centerX = rect.width / 2;
-      const centerY = rect.height / 2;
+      // Throttle updates to one per frame.
+      if (moveRaf) return;
+      moveRaf = window.requestAnimationFrame(() => {
+        moveRaf = 0;
 
-      if (enableTilt) {
-        const rotateX = ((y - centerY) / centerY) * -10;
-        const rotateY = ((x - centerX) / centerX) * 10;
+        const rect = element.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
 
-        gsap.to(element, {
-          rotateX,
-          rotateY,
-          duration: 0.1,
-          ease: 'power2.out',
-          transformPerspective: 1000
-        });
-      }
+        if (enableTilt) {
+          const rotateX = ((y - centerY) / centerY) * -8;
+          const rotateY = ((x - centerX) / centerX) * 8;
 
-      if (enableMagnetism) {
-        const magnetX = (x - centerX) * 0.05;
-        const magnetY = (y - centerY) * 0.05;
+          gsap.to(element, {
+            rotateX,
+            rotateY,
+            duration: 0.16,
+            ease: "power2.out",
+            transformPerspective: 1000,
+            overwrite: "auto",
+          });
+        }
 
-        magnetismAnimationRef.current = gsap.to(element, {
-          x: magnetX,
-          y: magnetY,
-          duration: 0.3,
-          ease: 'power2.out'
-        });
-      }
+        if (enableMagnetism) {
+          const magnetX = (x - centerX) * 0.04;
+          const magnetY = (y - centerY) * 0.04;
+
+          magnetismAnimationRef.current = gsap.to(element, {
+            x: magnetX,
+            y: magnetY,
+            duration: 0.25,
+            ease: "power2.out",
+            overwrite: "auto",
+          });
+        }
+      });
     };
 
     const handleClick = (e: MouseEvent) => {
@@ -334,11 +342,12 @@ const ParticleCard: React.FC<{
 
     return () => {
       isHoveredRef.current = false;
-      element.removeEventListener('mouseenter', handleMouseEnter);
-      element.removeEventListener('mouseleave', handleMouseLeave);
-      element.removeEventListener('mousemove', handleMouseMove);
-      element.removeEventListener('click', handleClick);
+      element.removeEventListener("mouseenter", handleMouseEnter);
+      element.removeEventListener("mouseleave", handleMouseLeave);
+      element.removeEventListener("mousemove", handleMouseMove);
+      element.removeEventListener("click", handleClick);
       clearAllParticles();
+      if (moveRaf) window.cancelAnimationFrame(moveRaf);
     };
   }, [animateParticles, clearAllParticles, disableAnimations, enableTilt, enableMagnetism, clickEffect, glowColor]);
 
@@ -370,7 +379,7 @@ const GlobalSpotlight: React.FC<{
   const isInsideSection = useRef(false);
 
   useEffect(() => {
-    if (disableAnimations || !gridRef?.current || !enabled) return;
+    if (disableAnimations || prefersReducedMotion() || !gridRef?.current || !enabled) return;
 
     const spotlight = document.createElement('div');
     spotlight.className = 'global-spotlight';
@@ -396,11 +405,16 @@ const GlobalSpotlight: React.FC<{
     document.body.appendChild(spotlight);
     spotlightRef.current = spotlight;
 
+    let moveRaf = 0;
+
     const handleMouseMove = (e: MouseEvent) => {
       const spotlightElement = spotlightRef.current;
       const gridElement = gridRef.current;
-      
       if (!spotlightElement || !gridElement) return;
+
+      if (moveRaf) return;
+      moveRaf = window.requestAnimationFrame(() => {
+        moveRaf = 0;
 
       const section = gridElement.closest('.bento-section');
       const rect = section?.getBoundingClientRect();
@@ -460,12 +474,14 @@ const GlobalSpotlight: React.FC<{
             ? ((fadeDistance - minDistance) / (fadeDistance - proximity)) * 0.8
             : 0;
 
-      gsap.to(spotlightElement, {
-        opacity: targetOpacity,
-        duration: targetOpacity > 0 ? 0.2 : 0.5,
-        ease: 'power2.out'
-      });
-    };
+       gsap.to(spotlightElement, {
+         opacity: targetOpacity,
+         duration: targetOpacity > 0 ? 0.2 : 0.5,
+         ease: "power2.out",
+         overwrite: "auto",
+       });
+     });
+   };
 
     const handleMouseLeave = () => {
       isInsideSection.current = false;
@@ -486,8 +502,9 @@ const GlobalSpotlight: React.FC<{
     document.addEventListener('mouseleave', handleMouseLeave);
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseleave', handleMouseLeave);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseleave", handleMouseLeave);
+      if (moveRaf) window.cancelAnimationFrame(moveRaf);
       const spotlightElement = spotlightRef.current;
       spotlightElement?.parentNode?.removeChild(spotlightElement);
     };
@@ -659,57 +676,55 @@ const MagicBento: React.FC<BentoProps> = ({
 
   // Enhanced GSAP scroll animations for cards - smooth fade in with scroll
   useEffect(() => {
-    if (shouldDisableAnimations) return;
+    if (shouldDisableAnimations || prefersReducedMotion()) return;
 
     const ctx = gsap.context(() => {
-      // Set initial state for dynamic fade in from below with blur
+      // Cheap initial state: transform+opacity only.
       gsap.set(cardRefs.current, {
         opacity: 0,
-        y: 40,
-        scale: 0.9,
-        rotationX: 15,
-        filter: 'blur(5px)',
-        transformOrigin: 'center bottom'
+        y: 28,
+        scale: 0.96,
+        transformOrigin: "center bottom",
       });
 
-      // Create scroll-triggered animation for all cards together
       const gridTl = gsap.timeline({
         scrollTrigger: {
           trigger: gridRef.current,
-          start: 'top 80%',
-          end: 'center center',
-          scrub: 0.8, // Fast scrubbing for quick appearance
-          toggleActions: 'play none none reverse',
-          markers: false
-        }
+          start: "top 80%",
+          end: "center center",
+          scrub: 0.8,
+          toggleActions: "play none none reverse",
+          markers: false,
+        },
       });
 
-      // Animate all cards simultaneously with dynamic effects
       gridTl.to(cardRefs.current, {
         opacity: 1,
         y: 0,
         scale: 1,
-        rotationX: 0,
-        filter: 'blur(0px)',
-        duration: 0.8,
-        ease: 'back.out(1.7)',
-        stagger: 0 // No stagger - all animate together
+        duration: 0.7,
+        ease: "power2.out",
+        stagger: 0,
+        onComplete: () => {
+          cardRefs.current.forEach((el) => {
+            if (!el) return;
+            (el as HTMLElement).style.willChange = "auto";
+          });
+        },
       });
 
-      // Add subtle parallax effect to the grid container
       if (gridRef.current) {
         gsap.to(gridRef.current, {
-          y: -30,
-          ease: 'none',
+          y: -20,
+          ease: "none",
           scrollTrigger: {
             trigger: gridRef.current,
-            start: 'top bottom',
-            end: 'bottom top',
+            start: "top bottom",
+            end: "bottom top",
             scrub: 0.5,
-          }
+          },
         });
       }
-
     }, gridRef);
 
     return () => ctx.revert();
