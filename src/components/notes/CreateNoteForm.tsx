@@ -44,22 +44,25 @@ export const CreateNoteForm: React.FC = () => {
       {!showForm ? (
         <button
           onClick={() => setShowForm(true)}
-          className="w-full p-3 sm:p-4 flex items-center justify-center gap-2 border-2 border-dashed border-border-medium/40 rounded-xl text-fg-tertiary hover:text-accent-primary hover:border-accent-primary/40 hover:bg-accent-primary/5 transition-all group"
+          className="w-full p-5 rounded-3xl bg-gradient-to-b from-bg-elevated to-bg-surface/70 text-fg-primary shadow-xl shadow-accent-primary/10 hover:shadow-2xl hover:shadow-accent-primary/15 transition-all"
         >
-          <Plus size={18} className="group-hover:scale-110 transition-transform" />
-          <span className="text-sm font-medium">{t("notes.actions.createNew")}</span>
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-lg sm:text-xl font-bold tracking-[-0.02em]">{t("notes.actions.createNew")}</span>
+          </div>
+          <div className="mt-3 h-1.5 w-24 mx-auto rounded-full bg-gradient-to-r from-accent-primary/70 via-accent-secondary/50 to-success/30" />
         </button>
       ) : (
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-border-light/20">
-            <h2 className="text-base font-semibold text-fg-primary flex items-center gap-2">
-              <FileEdit size={16} className="text-accent-primary" />
-              {t("notes.title")}
-            </h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="leading-tight">
+              <h2 className="text-lg font-bold text-fg-primary tracking-[-0.02em]">New note</h2>
+              <div className="mt-2 h-1 w-12 rounded-full bg-gradient-to-r from-accent-primary/70 to-accent-secondary/50" />
+            </div>
             <button
               type="button"
               onClick={() => setShowForm(false)}
-              className="p-1 text-fg-tertiary hover:text-fg-primary rounded-lg transition-colors"
+              className="p-2 text-fg-tertiary hover:text-fg-primary rounded-lg transition-colors"
+              aria-label="Close"
             >
               <X size={18} />
             </button>
@@ -75,16 +78,16 @@ export const CreateNoteForm: React.FC = () => {
                 e.target.style.height = e.target.scrollHeight + 'px';
               }}
               placeholder={t("notes.placeholders.content")}
-              className="w-full px-3 py-3 text-sm bg-transparent shadow-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary/50 transition-all text-fg-primary placeholder:text-fg-quaternary resize-none min-h-[80px] max-h-[400px] overflow-y-auto"
+              className="w-full px-4 py-3 text-lg bg-bg-surface/60 rounded-3xl focus:outline-none focus:ring-2 focus:ring-accent-primary/35 transition-all text-fg-primary placeholder:text-fg-quaternary resize-none min-h-[160px] max-h-[460px] overflow-y-auto shadow-md"
               disabled={createNote.isPending}
             />
           </div>
 
-          <div className="flex gap-2 pt-4 mt-4 border-t border-border-light/20">
+          <div className="flex gap-2 pt-4 mt-4">
             <button
               type="submit"
               disabled={createNote.isPending || !content.trim()}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm bg-accent-primary text-white font-medium rounded-lg hover:bg-accent-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-semibold rounded-xl shadow-md shadow-accent-primary/15 hover:shadow-lg hover:shadow-accent-primary/20 hover:brightness-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {createNote.isPending ? (
                 <>
@@ -102,7 +105,7 @@ export const CreateNoteForm: React.FC = () => {
               type="button"
               onClick={() => setShowForm(false)}
               disabled={createNote.isPending}
-              className="px-4 py-2.5 text-sm shadow-sm text-fg-secondary font-medium rounded-lg hover:bg-bg-secondary/40 hover:shadow-md transition-all"
+              className="px-4 py-3 text-sm bg-bg-surface/40 text-fg-secondary font-semibold rounded-xl shadow-sm hover:shadow-md hover:bg-bg-secondary/50 transition-all"
             >
               {t("notes.actions.cancel")}
             </button>

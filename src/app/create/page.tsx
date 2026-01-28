@@ -59,7 +59,7 @@ export default async function CreatePage({
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary"> 
+    <div className="min-h-screen bg-bg-primary bg-[radial-gradient(900px_circle_at_10%_10%,rgb(var(--accent-primary)/0.18),transparent_55%),radial-gradient(700px_circle_at_90%_15%,rgb(var(--accent-secondary)/0.14),transparent_55%),radial-gradient(900px_circle_at_50%_92%,rgb(var(--brand-mint)/0.10),transparent_60%)]">
       <SideNav />
 
       <div className="lg:ml-16 min-h-screen flex flex-col pt-16 lg:pt-0">
@@ -75,8 +75,6 @@ export default async function CreatePage({
               }`}>
                 {shouldShowProjectManagement ? (
                   <FolderKanban className="text-white" size={22} />
-                ) : shouldShowNoteForm ? (
-                  <FileEdit className="text-bg-primary" size={22} />
                 ) : null}
               </div>
               <div>
@@ -104,13 +102,13 @@ export default async function CreatePage({
             </div>
           ) : shouldShowNoteForm ?(
               <div className="flex flex-col lg:flex-row gap-4 w-full h-[calc(100vh-200px)] mt-4">
-                 <div className="w-full lg:w-[400px] lg:flex-shrink-0 flex flex-col p-4 bg-bg-surface/50 rounded-2xl">
-                       <CreateNoteForm />
-                   </div>
-                    <div className="flex-1 p-4 overflow-hidden bg-bg-surface/50 rounded-2xl">
-                          <NotesList />
-                    </div>
-                   </div>
+                <div className="w-full lg:w-[400px] lg:flex-shrink-0 flex flex-col p-5 rounded-3xl bg-bg-elevated shadow-xl shadow-accent-primary/10">
+                  <CreateNoteForm />
+                </div>
+                <div className="flex-1 p-5 overflow-hidden rounded-3xl bg-bg-elevated shadow-xl shadow-accent-primary/10">
+                  <NotesList />
+                </div>
+              </div>
           ) : (
               <div className="relative max-w-7xl mx-auto pt-6">
                 <CreateProjectContainer userId={session.user.id} />
