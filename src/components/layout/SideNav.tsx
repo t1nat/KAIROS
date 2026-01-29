@@ -40,7 +40,7 @@ export function SideNav() {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [isMobileMenuOpen]);
 
-  const action = searchParams.get("action");
+  const action = searchParams?.get("action");
 
   const mainNavItems = [
     { href: "/", icon: Home, label: t("home") },

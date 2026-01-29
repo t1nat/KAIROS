@@ -67,7 +67,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
   const t = useT("create");
   const toast = useToast();
   const searchParams = useSearchParams();
-  const projectIdFromUrl = searchParams.get("projectId");
+  const projectIdFromUrl = searchParams?.get("projectId");
   
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
     projectIdFromUrl ? parseInt(projectIdFromUrl) : null

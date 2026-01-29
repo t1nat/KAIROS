@@ -127,7 +127,7 @@ export function HomeClient({ session }: {
 }) {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const isSwitchingAccount = searchParams.get("switchAccount") === "1";
+    const isSwitchingAccount = searchParams?.get("switchAccount") === "1";
     const { resolvedTheme } = useTheme();
     const [themeMounted, setThemeMounted] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -165,7 +165,7 @@ export function HomeClient({ session }: {
     }, []);
 
     useEffect(() => {
-        if (searchParams.get("switchAccount") === "1") {
+        if (searchParams?.get("switchAccount") === "1") {
             setIsModalOpen(true);
         }
     }, [searchParams]);
