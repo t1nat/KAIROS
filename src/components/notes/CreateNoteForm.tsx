@@ -48,7 +48,7 @@ export const CreateNoteForm: React.FC = () => {
       {!showForm ? (
         <button
           onClick={() => setShowForm(true)}
-          className="w-full p-5 rounded-3xl bg-gradient-to-b from-bg-elevated to-bg-surface/70 text-fg-primary shadow-xl shadow-accent-primary/10 hover:shadow-2xl hover:shadow-accent-primary/15 transition-all"
+          className="w-full p-5 rounded-3xl bg-accent-primary text-white shadow-xl shadow-accent-primary/20 hover:shadow-2xl hover:shadow-accent-primary/30 hover:brightness-[1.02] transition-all"
         >
           <div className="flex items-center justify-center gap-2">
             <span className="text-lg sm:text-xl font-bold tracking-[-0.02em]">{t("notes.actions.createNew")}</span>
@@ -115,7 +115,7 @@ export const CreateNoteForm: React.FC = () => {
             <button
               type="submit"
               disabled={createNote.isPending || !content.trim()}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-semibold rounded-xl shadow-md shadow-accent-primary/15 hover:shadow-lg hover:shadow-accent-primary/20 hover:brightness-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm bg-accent-primary text-white font-semibold rounded-xl shadow-md shadow-accent-primary/15 hover:shadow-lg hover:shadow-accent-primary/20 hover:brightness-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {createNote.isPending ? (
                 <>

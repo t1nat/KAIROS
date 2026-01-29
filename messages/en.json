@@ -269,7 +269,7 @@
       },
       "empty": "No notes yet. Create your first note!",
       "encrypted": "Encrypted ({count})",
-      "encryptedNote": "🔒 Encrypted Note",
+      "encryptedNote": "🔒 Locked Note",
       "deleteConfirm": "Delete this note? This cannot be undone.",
       "allLocked": "All notes are locked",
       "allLockedHint": "Check the encrypted folder",
