@@ -64,6 +64,14 @@
       "lastUpdate": "Последна промяна",
       "taskCompletion": "Завършване на задачи",
       "activityCategories": "Категории активност"
+    },
+    "createdVsCompleted": {
+      "title": "Създадени vs Завършени",
+      "subtitle": "Сравнение на създадени и завършени задачи"
+    },
+    "activityTrend": {
+      "title": "Тренд на активността",
+      "subtitle": "Активност през последните 7 дни"
     }
   },
   "home": {
@@ -336,6 +344,9 @@
     "roleLabel": "Роля",
     "roleAdmin": "Админ",
     "roleWorker": "Член",
-    "roleMentor": "Ментор"
+    "roleMentor": "Ментор",
+    "organization": "Организация",
+    "personalWorkspace": "Лично работно пространство",
+    "personalHint": "Присъединете се към организация, за да работите в екип"
   }
 }

@@ -142,7 +142,7 @@ export function HomeClient({ session }: {
     // Watch for accent color changes
     const colorTick = useThemeColorTick();
 
-    const { data: userProfile, isLoading: isProfileLoading } = api.user.getProfile.useQuery(undefined, {
+    const { data: userProfile, isLoading: isProfileLoading, refetch: refetchUserProfile } = api.user.getProfile.useQuery(undefined, {
         enabled: !!session?.user,
     });
 
@@ -252,8 +252,9 @@ export function HomeClient({ session }: {
     return () => ctx.revert();
 }, []);
 
-    const handleRoleSelectionComplete = () => {
+    const handleRoleSelectionComplete = async () => {
         setShowRoleSelection(false);
+        await refetchUserProfile();
         window.location.href = "/create";
     };
 

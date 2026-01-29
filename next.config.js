@@ -4,6 +4,10 @@ const withNextIntl = createNextIntlPlugin('./src/i18n.ts');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  i18n: {
+    locales: ['en', 'bg', 'es', 'fr', 'de'],
+    defaultLocale: 'en',
+  },
   images: {
     remotePatterns: [
       {

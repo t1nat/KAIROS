@@ -198,7 +198,7 @@ export function InteractiveTimeline({
         {/* Main timeline rail */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute left-0 right-0 top-[40px] h-px bg-gradient-to-r from-transparent via-border-light/30 to-transparent"
+          className="pointer-events-none absolute left-0 right-0 top-[40px] h-1 bg-gradient-to-r from-transparent via-accent-primary/70 to-transparent border-y-2 border-accent-primary/40 shadow-md"
         />
 
         <div className="relative flex items-start gap-6 md:gap-8 overflow-x-auto pb-4 scrollbar-thin scroll-smooth snap-x snap-mandatory">
