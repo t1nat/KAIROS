@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
 import Image from "next/image";
-import { ArrowLeft, Folder, ChevronDown, Check } from "lucide-react";
+import { ArrowLeft, Folder } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Doughnut, Bar } from "react-chartjs-2";
 import { ensureChartJsRegistered } from "~/components/charts/chartjs";
@@ -431,101 +431,28 @@ function getProjectOwnerLabel(project: ProjectCard): string {
 
 export function ProgressFeedClient() {
   const t = useTranslations("progress");
-  const tOrg = useTranslations("org");
+
   const locale = useLocale();
   const colors = useResolvedThemeColors();
   const router = useRouter();
 
-  const utils = api.useUtils();
-  
-  // View mode: "all" = all organizations, "org" = specific organization
-  const [viewMode, setViewMode] = useState<"all" | "org">("org");
-  
-  // Organization queries
-  const activeOrgQuery = api.organization.getActive.useQuery();
-  const orgsQuery = api.organization.listMine.useQuery();
-  const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
-  
-  const activeOrgId = activeOrgQuery.data?.organization?.id ?? null;
-  const activeName = activeOrgQuery.data?.organization?.name ?? null;
-  const orgs = orgsQuery.data ?? [];
 
-  const setActiveOrg = api.organization.setActive.useMutation({
-    onMutate: async ({ organizationId }) => {
-      // Optimistic update - cancel any outgoing queries
-      await utils.organization.getActive.cancel();
-      
-      // Snapshot the previous value
-      const previousOrg = utils.organization.getActive.getData();
-      
-      // Find the org we're switching to
-      const newOrg = orgs.find(o => o.id === organizationId);
-      
-      // Optimistically update the active org
-      if (newOrg) {
-        utils.organization.getActive.setData(undefined, {
-          organization: {
-            id: newOrg.id,
-            name: newOrg.name,
-            accessCode: newOrg.accessCode,
-          },
-          role: newOrg.role,
-        });
-      }
-      
-      setOrgDropdownOpen(false);
-      setViewMode("org");
-      
-      return { previousOrg };
-    },
-    onError: (_err, _vars, context) => {
-      // Rollback on error
-      if (context?.previousOrg) {
-        utils.organization.getActive.setData(undefined, context.previousOrg);
-      }
-    },
-    onSettled: () => {
-      // Always refetch after mutation settles
-      void utils.organization.getActive.invalidate();
-      void utils.project.invalidate();
-      void utils.task.invalidate();
-    },
-  });
+  
+  // Removed organization/orgs dropdown and related logic
 
-  const handleOrgPick = useCallback(
-    (organizationId: number | "all") => {
-      if (organizationId === "all") {
-        setViewMode("all");
-        setOrgDropdownOpen(false);
-        return;
-      }
-      if (setActiveOrg.isPending) return;
-      setActiveOrg.mutate({ organizationId });
-    },
-    [setActiveOrg],
-  );
-
-  // Query for current org's projects
+  // Only query for current org's projects and activity
   const { data: orgProjects, isLoading: isLoadingOrgProjects, error: orgProjectsError } =
     typedApi.project.getMyProjects.useQuery(undefined, {
       staleTime: 1000 * 30,
-      enabled: viewMode === "org",
+      enabled: true,
     });
 
-  // Query for all projects across orgs (only when viewing all)
-  const { data: allOrgProjects, isLoading: isLoadingAllProjects, error: allProjectsError } =
-    typedApi.project.getAllProjectsAcrossOrgs.useQuery(undefined, {
-      staleTime: 1000 * 60, // Cache longer since it's more expensive
-      enabled: viewMode === "all",
-    });
-
-  // Use the appropriate projects based on view mode
-  const projects = viewMode === "all" ? allOrgProjects : orgProjects;
-  const isLoadingProjects = viewMode === "all" ? isLoadingAllProjects : isLoadingOrgProjects;
-  const projectsError = viewMode === "all" ? allProjectsError : orgProjectsError;
+  const projects = orgProjects;
+  const isLoadingProjects = isLoadingOrgProjects;
+  const projectsError = orgProjectsError;
 
   const { data: activity, isLoading: isLoadingActivity, error: activityError } = typedApi.task.getOrgActivity.useQuery(
-    { limit: 200, scope: viewMode === "all" ? "all" : "organization" },
+    { limit: 200, scope: "organization" },
     { staleTime: 1000 * 15 }
   );
 
@@ -551,8 +478,7 @@ export function ProgressFeedClient() {
     );
   }
 
-  const scopeLabel =
-    activity?.scope === "organization" ? t("scope.organization") : t("scope.personal");
+  const scopeLabel = t("scope.organization");
 
   if (!projects || projects.length === 0) {
     return (
@@ -692,84 +618,8 @@ export function ProgressFeedClient() {
 
     return (
       <div className="min-h-screen p-4 lg:p-6">
-        <div className="flex items-center justify-between mb-8">
+        <div className="mb-8">
           <h2 className="text-2xl font-bold text-fg-primary">{t("title")}</h2>
-          
-          {/* Organization Switcher */}
-          <div className="flex items-center gap-3">
-            {orgs.length > 0 && (
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setOrgDropdownOpen((v) => !v)}
-                  className="h-9 inline-flex items-center gap-2 rounded-xl bg-bg-surface shadow-sm px-3 text-sm text-fg-secondary hover:text-fg-primary hover:bg-bg-elevated hover:shadow-md transition-colors"
-                  aria-expanded={orgDropdownOpen}
-                  aria-haspopup="menu"
-                >
-                  <span className="max-w-[150px] truncate">
-                    {viewMode === "all" ? t("scope.allOrgs") : (activeName ?? tOrg("yourOrgs"))}
-                  </span>
-                  <ChevronDown size={14} className="text-fg-tertiary" />
-                </button>
-
-                {orgDropdownOpen && (
-                  <div
-                    role="menu"
-                    className="absolute right-0 mt-2 w-64 overflow-hidden rounded-xl bg-bg-secondary shadow-lg z-50"
-                  >
-                    <div className="px-3 py-2 text-xs font-medium text-fg-tertiary">
-                      {tOrg("switchOrg")}
-                    </div>
-
-                    <div className="max-h-60 overflow-auto">
-                      {/* All Organizations option */}
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={() => handleOrgPick("all")}
-                        className={`w-full px-3 py-2 text-left flex items-center justify-between gap-3 transition-colors ${
-                          viewMode === "all"
-                            ? "bg-accent-primary/10 text-fg-primary"
-                            : "hover:bg-bg-elevated text-fg-secondary"
-                        }`}
-                      >
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium truncate">{t("scope.allOrgs")}</div>
-                          <div className="text-xs text-fg-tertiary">{t("scope.allOrgsDesc")}</div>
-                        </div>
-                        {viewMode === "all" && <Check size={14} className="text-accent-primary shrink-0" />}
-                      </button>
-
-                      <div className="h-px bg-border-subtle mx-3 my-1" />
-
-                      {orgs.map((org) => {
-                        const isActive = viewMode === "org" && activeOrgId === org.id;
-                        return (
-                          <button
-                            key={org.id}
-                            type="button"
-                            role="menuitem"
-                            onClick={() => handleOrgPick(org.id)}
-                            className={`w-full px-3 py-2 text-left flex items-center justify-between gap-3 transition-colors ${
-                              isActive
-                                ? "bg-accent-primary/10 text-fg-primary"
-                                : "hover:bg-bg-elevated text-fg-secondary"
-                            }`}
-                          >
-                            <div className="min-w-0">
-                              <div className="text-sm font-medium truncate">{org.name}</div>
-                              {isActive && <div className="text-xs text-fg-tertiary">{tOrg("active")}</div>}
-                            </div>
-                            {isActive && <Check size={14} className="text-accent-primary shrink-0" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Main charts layout - 2 column design */}
