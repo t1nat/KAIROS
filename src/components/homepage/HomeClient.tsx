@@ -127,6 +127,7 @@ export function HomeClient({ session }: {
 }) {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const isSwitchingAccount = searchParams.get("switchAccount") === "1";
     const { resolvedTheme } = useTheme();
     const [themeMounted, setThemeMounted] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -147,12 +148,12 @@ export function HomeClient({ session }: {
 
     useEffect(() => {
         if (session?.user && userProfile !== undefined && !isProfileLoading) {
-            // Show role selection if profile is null OR usageMode is null (needs onboarding)
-            if (!userProfile?.usageMode) {
+            // Show role selection ONLY for first-time users, not when switching accounts
+            if (!isSwitchingAccount && !userProfile?.usageMode) {
                 setShowRoleSelection(true);
             }
         }
-    }, [session, userProfile, isProfileLoading]);
+    }, [session, userProfile, isProfileLoading, isSwitchingAccount]);
 
     useEffect(() => {
         setHasAnimated(true);
@@ -259,20 +260,16 @@ export function HomeClient({ session }: {
     const handleSignInClose = () => {
         setIsModalOpen(false);
 
-        if (searchParams.get("switchAccount") === "1") {
-            router.replace("/");
-        }
-
-        if (session?.user && userProfile !== undefined && !userProfile?.usageMode) {
+        if (session?.user && userProfile !== undefined && !userProfile?.usageMode && !isSwitchingAccount) {
             setTimeout(() => {
                 setShowRoleSelection(true);
             }, 300);
         } else if (session?.user) {
             // Auto-scroll to project space button after successful login
             setTimeout(() => {
-                projectSpaceButtonRef.current?.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'center' 
+                projectSpaceButtonRef.current?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
                 });
             }, 300);
         }
@@ -518,10 +515,10 @@ export function HomeClient({ session }: {
                                   </button>
                                 )}
 
-                                {showRoleSelection && (
-                                    <RoleSelectionModal 
-                                        isOpen={showRoleSelection} 
-                                        onComplete={handleRoleSelectionComplete} 
+                                {showRoleSelection && !isSwitchingAccount && (
+                                    <RoleSelectionModal
+                                        isOpen={showRoleSelection}
+                                        onComplete={handleRoleSelectionComplete}
                                     />
                                 )}
                             </div>

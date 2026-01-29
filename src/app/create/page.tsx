@@ -6,6 +6,7 @@ import { CreateNoteForm } from "~/components/notes/CreateNoteForm";
 import { CreateProjectContainer } from "~/components/projects/CreateProjectContainer";
 import { NotesList } from "~/components/notes/NotesList";
 import { NotificationSystem } from "~/components/notifications/NotificationSystem";
+import { WorkspaceIndicator } from "~/components/orgs/WorkspaceIndicator";
 import { LogIn, ArrowRight, FolderKanban } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
@@ -66,13 +67,16 @@ export default async function CreatePage({
         <header className="sticky top-16 lg:top-0 z-30 topbar-solid shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-3 sm:py-4 flex flex-wrap justify-between items-center gap-3">
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${
-                shouldShowProjectManagement
-                  ? 'bg-accent-primary'
-                  : shouldShowNoteForm
-                  ? 'bg-warning'
-                  : 'bg-gradient-to-br from-accent-primary to-accent-secondary'
-              }`}>
+              <div
+                className={
+                  "w-10 h-10 rounded-xl flex items-center justify-center shadow-sm " +
+                  (shouldShowProjectManagement
+                    ? "bg-accent-primary"
+                    : shouldShowNoteForm
+                      ? "bg-warning"
+                      : "bg-gradient-to-br from-accent-primary to-accent-secondary")
+                }
+              >
                 {shouldShowProjectManagement ? (
                   <FolderKanban className="text-white" size={22} />
                 ) : null}
@@ -87,7 +91,6 @@ export default async function CreatePage({
                 </h1>
               </div>
             </div>
-            
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
               <NotificationSystem />
               <UserDisplay />
@@ -96,11 +99,14 @@ export default async function CreatePage({
         </header>
 
         <main id="main-content" className="flex-1 w-full px-4 sm:px-6 md:px-8 py-5 sm:py-6 overflow-auto relative">
-          {shouldShowProjectManagement ? (
-            <div className="relative w-full h-full mt-4">
-              <CreateProjectContainer userId={session.user.id} />
-            </div>
-          ) : shouldShowNoteForm ?(
+          <div className="max-w-7xl mx-auto w-full space-y-4">
+            <WorkspaceIndicator />
+
+            {shouldShowProjectManagement ? (
+              <div className="relative w-full h-full mt-4">
+                <CreateProjectContainer userId={session.user.id} />
+              </div>
+            ) : shouldShowNoteForm ? (
               <div className="flex flex-col lg:flex-row gap-4 w-full h-[calc(100vh-200px)] mt-4">
                 <div className="w-full lg:w-[400px] lg:flex-shrink-0 flex flex-col p-5 rounded-3xl bg-bg-elevated shadow-xl shadow-accent-primary/10">
                   <CreateNoteForm />
@@ -109,11 +115,12 @@ export default async function CreatePage({
                   <NotesList />
                 </div>
               </div>
-          ) : (
+            ) : (
               <div className="relative max-w-7xl mx-auto pt-6">
                 <CreateProjectContainer userId={session.user.id} />
               </div>
-          )}
+            )}
+          </div>
         </main>
       </div>
     </div>
