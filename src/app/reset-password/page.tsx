@@ -14,12 +14,13 @@ function ResetPasswordForm() {
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [resetPin, setResetPin] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  const resetPassword = api.note.publicResetPassword.useMutation({
+  const resetPassword = api.note.resetPasswordWithPin.useMutation({
     onSuccess: () => {
       setSuccess(true);
       setTimeout(() => {
@@ -35,7 +36,7 @@ function ResetPasswordForm() {
     e.preventDefault();
     setError("");
 
-    if (!noteId || !token) {
+    if (!noteId) {
       setError("Invalid reset link. Please request a new one.");
       return;
     }
@@ -50,14 +51,19 @@ function ResetPasswordForm() {
       return;
     }
 
+    if (!resetPin || resetPin.length < 4 || !/^\d+$/.test(resetPin)) {
+      setError("Reset PIN must be at least 4 digits.");
+      return;
+    }
+
     resetPassword.mutate({
       noteId: parseInt(noteId),
-      resetToken: token,
       newPassword: newPassword,
+      resetPin: resetPin,
     });
   };
 
-  if (!noteId || !token) {
+  if (!noteId) {
     return (
       <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4">
         <div className="surface-card p-8 max-w-md w-full text-center">
@@ -171,16 +177,36 @@ function ResetPasswordForm() {
             </div>
           </div>
 
+          <div>
+            <label htmlFor="reset-pin" className="block text-sm font-semibold text-fg-primary mb-2">
+              Reset PIN
+            </label>
+            <input
+              id="reset-pin"
+              type="password"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={resetPin}
+              onChange={(e) => setResetPin(e.target.value)}
+              placeholder="Enter your secret reset PIN"
+              className="w-full p-3 bg-bg-surface/60 border border-border-light/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:border-accent-primary/50 text-fg-primary placeholder:text-fg-tertiary"
+              disabled={resetPassword.isPending}
+            />
+            <p className="mt-1 text-xs text-fg-tertiary">
+              This is the PIN you configured in Security Settings to reset locked note passwords.
+            </p>
+          </div>
+
           <div className="bg-accent-primary/5 border border-accent-primary/20 rounded-lg p-4">
             <p className="text-sm text-fg-secondary">
-              💡 <strong className="text-fg-primary">Tip:</strong> Choose a strong password that you will remember. 
+              💡 <strong className="text-fg-primary">Tip:</strong> Choose a strong password that you will remember.
               You will need this password to access your encrypted note.
             </p>
           </div>
 
           <button
             type="submit"
-            disabled={resetPassword.isPending || !newPassword || !confirmPassword}
+            disabled={resetPassword.isPending || !newPassword || !confirmPassword || !resetPin}
             className="w-full px-6 py-3 bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-semibold rounded-lg hover:shadow-xl hover:shadow-accent transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             <Lock size={18} />

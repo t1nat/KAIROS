@@ -104,22 +104,24 @@ export function SecuritySettingsClient() {
   };
 
   return (
-    <div>
+    <div className="max-w-3xl mx-auto space-y-8">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-accent-primary/15 rounded-lg flex items-center justify-center">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent-primary/20 via-accent-secondary/10 to-bg-elevated flex items-center justify-center shadow-sm">
           <Shield className="text-accent-primary" size={20} />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-fg-primary">{t("title")}</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-fg-primary">{t("title")}</h2>
           <p className="text-sm text-fg-secondary">{t("subtitle")}</p>
         </div>
       </div>
 
-      <div className="space-y-6">
-        <div>
-          <h3 className="font-semibold text-fg-primary mb-2">{t("twoFactor")}</h3>
+      <div className="space-y-8">
+        <div className="rounded-2xl bg-gradient-to-br from-bg-surface/80 via-bg-elevated/80 to-bg-surface/80 p-5 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.9)] border border-border-light/5">
+          <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-fg-tertiary mb-2">
+            {t("twoFactor")}
+          </h3>
           <p className="text-sm text-fg-secondary mb-4">{t("twoFactorDesc")}</p>
-          <div className="flex items-center justify-between gap-4 p-4 bg-bg-surface rounded-xl ios-card">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl bg-bg-surface/70 px-4 py-3">
             <div>
               <p className="font-semibold text-fg-primary">
                 {twoFactorEnabled ? t("disableTwoFactor") : t("enableTwoFactor")}
@@ -144,14 +146,16 @@ export function SecuritySettingsClient() {
           ) : null}
         </div>
 
-        <div className="pt-4 border-t border-border-light/10 space-y-4">
+        <div className="space-y-5 rounded-2xl bg-gradient-to-br from-bg-surface/80 via-bg-elevated/80 to-bg-surface/80 p-5 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.9)] border border-border-light/5">
           <div>
-            <h3 className="font-semibold text-fg-primary mb-2">Notes</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-fg-tertiary mb-2">
+              Notes
+            </h3>
             <p className="text-sm text-fg-secondary mb-4">
               Control whether encrypted notes stay unlocked while you use the app.
             </p>
 
-            <div className="flex items-center justify-between gap-4 p-4 bg-bg-surface rounded-xl ios-card">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl bg-bg-surface/70 px-4 py-3">
               <div>
                 <p className="font-semibold text-fg-primary">
                   Keep encrypted notes unlocked until app is closed
@@ -170,8 +174,10 @@ export function SecuritySettingsClient() {
             </div>
           </div>
 
-          <div className="p-4 bg-bg-surface rounded-xl ios-card border border-border-light/30">
-            <h3 className="font-semibold text-fg-primary mb-1">Reset PIN</h3>
+          <div className="rounded-2xl bg-gradient-to-br from-bg-surface/80 via-bg-elevated/80 to-bg-surface/80 p-5 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.9)] border border-border-light/5">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-fg-tertiary mb-2">
+              Reset PIN
+            </h3>
             <p className="text-sm text-fg-secondary mb-3">
               Configure a secret PIN and optional hint used to reset locked note passwords.
             </p>
@@ -181,7 +187,7 @@ export function SecuritySettingsClient() {
               {hasResetPin ? "PIN configured" : "No PIN configured"}
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-fg-secondary mb-1">
                   New PIN (min 4 digits)
@@ -195,7 +201,7 @@ export function SecuritySettingsClient() {
                     setPin(e.target.value);
                     setPinError(null);
                   }}
-                  className="w-full bg-bg-surface/60 text-fg-primary text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 border border-border-light/40"
+                  className="w-full bg-bg-surface/70 text-fg-primary text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 border border-border-light/10"
                 />
               </div>
 
@@ -212,7 +218,7 @@ export function SecuritySettingsClient() {
                     setConfirmPin(e.target.value);
                     setPinError(null);
                   }}
-                  className="w-full bg-bg-surface/60 text-fg-primary text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 border border-border-light/40"
+                  className="w-full bg-bg-surface/70 text-fg-primary text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 border border-border-light/10"
                 />
               </div>
 
@@ -225,7 +231,7 @@ export function SecuritySettingsClient() {
                   maxLength={200}
                   value={hint}
                   onChange={(e) => setHint(e.target.value)}
-                  className="w-full bg-bg-surface/60 text-fg-primary text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 border border-border-light/40"
+                  className="w-full bg-bg-surface/70 text-fg-primary text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 border border-border-light/10"
                 />
               </div>
 
@@ -243,7 +249,7 @@ export function SecuritySettingsClient() {
                   void updateResetPin.mutate({ pin, confirmPin, hint });
                 }}
                 disabled={isBusy}
-                className="px-4 py-2 bg-accent-primary text-white text-sm font-semibold rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-gradient-to-r from-accent-primary to-accent-secondary text-white text-sm font-semibold shadow-sm hover:shadow-md hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {updateResetPin.isPending ? "Saving..." : "Save Reset PIN"}
               </button>
@@ -251,56 +257,60 @@ export function SecuritySettingsClient() {
           </div>
         </div>
 
-        <div className="pt-4 border-t border-border-light/10">
-          <h3 className="font-semibold text-fg-primary mb-2">{t("session")}</h3>
-          <p className="text-sm text-fg-secondary mb-4">{t("sessionDesc")}</p>
+        <div className="space-y-3 rounded-2xl bg-gradient-to-br from-bg-surface/80 via-bg-elevated/80 to-bg-surface/80 p-5 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.9)] border border-border-light/5">
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-fg-tertiary mb-2">
+              {t("session")}
+            </h3>
+            <p className="text-sm text-fg-secondary mb-4">{t("sessionDesc")}</p>
+          </div>
           <button
             type="button"
             onClick={onSignOut}
             disabled={isBusy}
-            className="px-6 py-2 bg-accent-primary/10 text-accent-primary font-semibold rounded-lg hover:bg-accent-primary hover:text-white transition-colors shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center px-6 py-2 rounded-lg bg-bg-elevated text-accent-primary font-semibold hover:bg-accent-primary hover:text-white transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t("signOut")}
           </button>
         </div>
 
-        <div className="pt-4 border-t border-border-light/10">
-          <div className="p-4 bg-error/10 rounded-xl border-2 border-error/30">
-            <h3 className="font-semibold text-error mb-2">{t("dangerZone")}</h3>
-            <p className="text-sm text-fg-secondary mb-4">{t("dangerZoneDesc")}</p>
-            {!showDeleteConfirm ? (
+        <div className="rounded-2xl bg-error/5 p-5 shadow-[0_18px_45px_-32px_rgba(127,29,29,0.9)] border border-error/20">
+          <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-error mb-2">
+            {t("dangerZone")}
+          </h3>
+          <p className="text-sm text-fg-secondary mb-4">{t("dangerZoneDesc")}</p>
+          {!showDeleteConfirm ? (
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={isBusy}
+              className="px-6 py-2 rounded-lg bg-error text-white font-semibold shadow-sm hover:shadow-md hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {t("deleteAccount")}
+            </button>
+          ) : (
+            <div className="flex flex-wrap items-center gap-3">
               <button
                 type="button"
-                onClick={() => setShowDeleteConfirm(true)}
+                onClick={onDeleteAccount}
                 disabled={isBusy}
-                className="px-6 py-2 bg-error text-white font-semibold rounded-lg hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 rounded-lg bg-error text-white font-semibold shadow-sm hover:shadow-md hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {t("deleteAccount")}
               </button>
-            ) : (
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={onDeleteAccount}
-                  disabled={isBusy}
-                  className="px-6 py-2 bg-error text-white font-semibold rounded-lg hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {t("deleteAccount")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowDeleteConfirm(false)}
-                  disabled={isBusy}
-                  className="px-6 py-2 bg-bg-surface text-fg-primary font-semibold rounded-lg hover:bg-bg-elevated transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Cancel
-                </button>
-              </div>
-            )}
-            {deleteAllData.error ? (
-              <p className="mt-2 text-sm text-error">{deleteAllData.error.message}</p>
-            ) : null}
-          </div>
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isBusy}
+                className="px-6 py-2 rounded-lg bg-bg-surface text-fg-primary font-semibold hover:bg-bg-elevated transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+          {deleteAllData.error ? (
+            <p className="mt-2 text-sm text-error">{deleteAllData.error.message}</p>
+          ) : null}
         </div>
       </div>
     </div>
