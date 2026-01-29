@@ -6,7 +6,7 @@ import { CreateNoteForm } from "~/components/notes/CreateNoteForm";
 import { CreateProjectContainer } from "~/components/projects/CreateProjectContainer";
 import { NotesList } from "~/components/notes/NotesList";
 import { NotificationSystem } from "~/components/notifications/NotificationSystem";
-import { LogIn, ArrowRight, FolderKanban, FileEdit } from "lucide-react";
+import { LogIn, ArrowRight, FolderKanban } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 export default async function CreatePage({ 

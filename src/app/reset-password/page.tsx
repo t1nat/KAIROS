@@ -19,7 +19,7 @@ function ResetPasswordForm() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  const resetPassword = api.note.resetPassword.useMutation({
+  const resetPassword = api.note.publicResetPassword.useMutation({
     onSuccess: () => {
       setSuccess(true);
       setTimeout(() => {

@@ -300,7 +300,9 @@ export const eventRouter = createTRPCRouter({
   sendEventReminders: protectedProcedure
     .input(sendRemindersSchema)
     .mutation(async ({ ctx: _ctx }) => {
-      console.log(`[Reminder Service] Running reminder check at ${new Date().toISOString()}`);
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`[Reminder Service] Running reminder check at ${new Date().toISOString()}`);
+      }
       return { success: true, message: "Reminder check initiated." };
     }),
 });

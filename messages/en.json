@@ -1,14 +1,4 @@
 {
-  "progress": {
-    "activityTrend": {
-      "title": "Activity (last 7 days)",
-      "subtitle": "All task activity events"
-    },
-    "createdVsCompleted": {
-      "title": "Created vs Completed",
-      "subtitle": "New tasks created compared to tasks completed"
-    }
-  },
   "nav": {
     "home": "Home",
     "create": "Create",
@@ -304,9 +294,21 @@
         "title": "Reset Password",
         "desc": "We will send you an email with a link to reset the password for this note.",
         "expiry": "The reset link will expire in 1 hour.",
-        "send": "Send Email",
-        "sending": "Sending...",
-        "success": "✅ Password reset email sent! Check your inbox."
+        "descPin": "Use your secret reset PIN to set a new password for this encrypted note.",
+        "pinLabel": "Reset PIN",
+        "pinPlaceholder": "Enter your reset PIN",
+        "hintLabel": "Hint",
+        "noHint": "No hint configured. You can add one in Settings → Security → Notes.",
+        "newPasswordLabel": "New note password",
+        "confirmPasswordLabel": "Confirm new password",
+        "showPasswords": "Show passwords",
+        "hidePasswords": "Hide passwords",
+        "pinRequired": "Please enter your reset PIN.",
+        "passwordRequired": "Please enter and confirm a new password.",
+        "passwordMismatch": "The passwords do not match.",
+        "send": "Reset password",
+        "sending": "Resetting...",
+        "success": "✅ Note password reset successfully."
       }
     }
   },

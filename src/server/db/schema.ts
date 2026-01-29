@@ -61,8 +61,15 @@ export const users = createTable("user", (d) => ({
     usageMode: usageModeEnum("usage_mode"),
     activeOrganizationId: integer("active_organization_id"),
     password: varchar("password", { length: 255 }),
-    passwordResetToken: varchar("password_reset_token", { length: 255 }),
-    passwordResetExpires: timestamp("password_reset_expires", { mode: "date", withTimezone: true }),
+
+    // Secret reset PIN (hashed) + hint
+    resetPinHash: varchar("reset_pin_hash", { length: 255 }),
+    resetPinHint: text("reset_pin_hint"),
+
+    // PIN-based lockout / rate limiting
+    resetPinFailedAttempts: integer("reset_pin_failed_attempts").notNull().default(0),
+    resetPinLockedUntil: timestamp("reset_pin_locked_until", { mode: "date", withTimezone: true }),
+    resetPinLastFailedAt: timestamp("reset_pin_last_failed_at", { mode: "date", withTimezone: true }),
     
     bio: text("bio"),
     
@@ -76,8 +83,12 @@ export const users = createTable("user", (d) => ({
     timezone: varchar("timezone", { length: 100 }).default("UTC").notNull(),
     dateFormat: dateFormatEnum("date_format").default("MM/DD/YYYY").notNull(),
     
+    
     theme: themeEnum("theme").default("dark").notNull(),
     accentColor: varchar("accent_color", { length: 20 }).default("purple").notNull(),
+
+    // Notes
+    notesKeepUnlockedUntilClose: boolean("notes_keep_unlocked_until_close").default(false).notNull(),
     
     profileVisibility: boolean("profile_visibility").default(true).notNull(),
     showOnlineStatus: boolean("show_online_status").default(true).notNull(),
@@ -94,7 +105,6 @@ export const users = createTable("user", (d) => ({
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
 }));
-
 export type UserSettings = {
   name: string | null;
   bio: string | null;
@@ -120,6 +130,8 @@ export type UserSettings = {
   dataCollection: boolean;
   
   twoFactorEnabled: boolean;
+
+  notesKeepUnlockedUntilClose: boolean;
 };
 
 export const organizations = createTable(
@@ -239,6 +251,7 @@ export const tasks = createTable(
 );
 
 
+
 export const stickyNotes = createTable(
   "sticky_notes",
   (d) => ({
@@ -254,16 +267,12 @@ export const stickyNotes = createTable(
     passwordHash: varchar("password_hash", { length: 256 }),
     passwordSalt: varchar("password_salt", { length: 256 }),
 
-    resetToken: text("reset_token"),
-    resetTokenExpiry: timestamp("reset_token_expiry", { withTimezone: true }),
-
     shareStatus: shareStatusEnum("share_status").notNull(),
   }),
   (t) => [
     index("note_created_by_idx").on(t.createdById),
   ]
 );
-
 
 export const projectCollaborators = createTable(
   "project_collaborators",

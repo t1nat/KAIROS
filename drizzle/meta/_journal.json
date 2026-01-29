@@ -57,6 +57,20 @@
       "when": 1768162540127,
       "tag": "0007_icy_robin_chapel",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1769592012359,
+      "tag": "0008_tidy_night_thrasher",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1769688663406,
+      "tag": "0009_steady_freak",
+      "breakpoints": true
     }
   ]
 }

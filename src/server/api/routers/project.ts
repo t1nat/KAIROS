@@ -45,8 +45,10 @@ export const projectRouter = createTRPCRouter({
             .limit(1)
         : [undefined];
 
-      console.log("Creating project - User ID:", ctx.session.user.id);
-      console.log("User's organization membership:", membership);
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Creating project - User ID:", ctx.session.user.id);
+        console.log("User's organization membership:", membership);
+      }
 
       const [project] = await ctx.db
         .insert(projects)
@@ -59,18 +61,22 @@ export const projectRouter = createTRPCRouter({
         })
         .returning();
 
-      console.log("Created project:", {
-        id: project?.id,
-        title: project?.title,
-        organizationId: project?.organizationId,
-      });
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Created project:", {
+          id: project?.id,
+          title: project?.title,
+          organizationId: project?.organizationId,
+        });
+      }
 
       return project;
     }),
 
  
   getMyProjects: protectedProcedure.query(async ({ ctx }) => {
-    console.log("Fetching projects for user:", ctx.session.user.id);
+    if (process.env.NODE_ENV !== "production") {
+      console.log("Fetching projects for user:", ctx.session.user.id);
+    }
 
     let activeOrganizationId: number | null = null;
 
@@ -103,7 +109,9 @@ export const projectRouter = createTRPCRouter({
           .limit(1)
       : [undefined];
 
-    console.log("User active organization membership:", membership);
+    if (process.env.NODE_ENV !== "production") {
+      console.log("User active organization membership:", membership);
+    }
 
     let projectsList;
 
@@ -115,7 +123,9 @@ export const projectRouter = createTRPCRouter({
         .where(and(eq(projects.organizationId, membership.organizationId), ne(projects.status, "archived")))
         .orderBy(desc(projects.createdAt));
 
-      console.log("Found organization projects:", projectsList.length);
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Found organization projects:", projectsList.length);
+      }
     } else {
 
       projectsList = await ctx.db
@@ -130,7 +140,9 @@ export const projectRouter = createTRPCRouter({
         )
         .orderBy(desc(projects.createdAt));
 
-      console.log("Found personal projects:", projectsList.length);
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Found personal projects:", projectsList.length);
+      }
     }
 
     
@@ -168,12 +180,14 @@ export const projectRouter = createTRPCRouter({
     );
 
 
-    console.log("Projects with tasks:", projectsWithTasks.map(p => ({
-      id: p.id,
-      title: p.title,
-      tasksCount: p.tasks.length,
-      completedCount: p.tasks.filter(t => t.status === 'completed').length,
-    })));
+    if (process.env.NODE_ENV !== "production") {
+      console.log("Projects with tasks:", projectsWithTasks.map(p => ({
+        id: p.id,
+        title: p.title,
+        tasksCount: p.tasks.length,
+        completedCount: p.tasks.filter(t => t.status === 'completed').length,
+      })));
+    }
 
     return projectsWithTasks;
   }),
@@ -270,11 +284,13 @@ export const projectRouter = createTRPCRouter({
         throw new Error("Project not found");
       }
 
-      console.log("Fetching project:", {
-        id: project.id,
-        organizationId: project.organizationId,
-        createdById: project.createdById,
-      });
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Fetching project:", {
+          id: project.id,
+          organizationId: project.organizationId,
+          createdById: project.createdById,
+        });
+      }
 
       
 
@@ -295,7 +311,9 @@ export const projectRouter = createTRPCRouter({
           );
         hasOrgAccess = !!membership;
         isOrgMember = !!membership;
-        console.log("User has org access:", hasOrgAccess, "via membership:", !!membership);
+        if (process.env.NODE_ENV !== "production") {
+          console.log("User has org access:", hasOrgAccess, "via membership:", !!membership);
+        }
       }
 
       
@@ -309,7 +327,9 @@ export const projectRouter = createTRPCRouter({
           )
         );
 
-      console.log("Access check:", { isOwner, hasOrgAccess, isCollaborator: !!collaboration });
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Access check:", { isOwner, hasOrgAccess, isCollaborator: !!collaboration });
+      }
 
       if (!isOwner && !collaboration && !hasOrgAccess) {
         throw new Error("Access denied - You don't have permission to view this project");
@@ -423,7 +443,9 @@ export const projectRouter = createTRPCRouter({
           : null,
       }));
 
-      console.log("Project tasks:", formattedTasks.length);
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Project tasks:", formattedTasks.length);
+      }
 
       
       const hasWriteAccess = isOwner || isOrgMember || (collaboration?.permission === "write");
@@ -513,7 +535,9 @@ export const projectRouter = createTRPCRouter({
         const ownerName = owner?.name ?? owner?.email ?? "Someone";
         const permissionText = input.permission === "write" ? "edit" : "view";
         
-        console.log("Creating notification for user:", userToAdd.id);
+        if (process.env.NODE_ENV !== "production") {
+          console.log("Creating notification for user:", userToAdd.id);
+        }
         
         
         const projectLink = `/create?action=new_project&projectId=${input.projectId}`;
@@ -527,7 +551,9 @@ export const projectRouter = createTRPCRouter({
           read: false,
         }).returning();
 
-        console.log("Notification created:", notification);
+        if (process.env.NODE_ENV !== "production") {
+          console.log("Notification created:", notification);
+        }
 
         return { 
           success: true,

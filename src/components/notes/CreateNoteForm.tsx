@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { api } from '~/trpc/react';
-import { Plus, X, FileEdit, Loader2 } from 'lucide-react';
+import { X, FileEdit, Loader2 } from 'lucide-react';
 import { useTranslations } from "next-intl";
 import { useToast } from "~/components/providers/ToastProvider";
 
@@ -15,10 +15,13 @@ export const CreateNoteForm: React.FC = () => {
   const utils = api.useUtils();
   const [showForm, setShowForm] = useState(false);
   const [content, setContent] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const createNote = api.note.create.useMutation({
     onSuccess: () => {
       setContent('');
+      setPassword('');
       setShowForm(false);
       void utils.note.invalidate();
     },
@@ -36,6 +39,7 @@ export const CreateNoteForm: React.FC = () => {
 
     createNote.mutate({
       content: content.trim(),
+      password: password.trim() ? password : undefined,
     });
   };
 
@@ -68,7 +72,7 @@ export const CreateNoteForm: React.FC = () => {
             </button>
           </div>
 
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col gap-3">
             <textarea
               id="content"
               value={content}
@@ -81,6 +85,30 @@ export const CreateNoteForm: React.FC = () => {
               className="w-full px-4 py-3 text-lg bg-bg-surface/60 rounded-3xl focus:outline-none focus:ring-2 focus:ring-accent-primary/35 transition-all text-fg-primary placeholder:text-fg-quaternary resize-none min-h-[160px] max-h-[460px] overflow-y-auto shadow-md"
               disabled={createNote.isPending}
             />
+
+            <div>
+              <label className="block text-sm font-semibold text-fg-primary mb-2">
+                Password (optional)
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Add a password to lock this note"
+                  className="w-full px-4 py-3 text-base bg-bg-surface/60 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent-primary/35 transition-all text-fg-primary placeholder:text-fg-quaternary shadow-sm"
+                  disabled={createNote.isPending}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-tertiary hover:text-fg-primary"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="flex gap-2 pt-4 mt-4">

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { users } from "~/server/db/schema";
 import { eq } from "drizzle-orm";
+import * as argon2 from "argon2";
 
 export const settingsRouter = createTRPCRouter({
  
@@ -37,7 +38,14 @@ export const settingsRouter = createTRPCRouter({
           dataCollection: true,
         
           twoFactorEnabled: true,
-          
+
+          notesKeepUnlockedUntilClose: true,
+
+          // Expose reset PIN hint and lockout metadata (but never the PIN itself)
+          resetPinHint: true,
+          resetPinFailedAttempts: true,
+          resetPinLockedUntil: true,
+
           createdAt: true,
         },
       });
@@ -102,13 +110,54 @@ export const settingsRouter = createTRPCRouter({
     }),
 
   updateSecurity: protectedProcedure
-    .input(z.object({
-      twoFactorEnabled: z.boolean().optional(),
-    }))
+    .input(
+      z.object({
+        twoFactorEnabled: z.boolean().optional(),
+        notesKeepUnlockedUntilClose: z.boolean().optional(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
-      await ctx.db.update(users)
+      await ctx.db
+        .update(users)
         .set({
           ...input,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, ctx.session.user.id));
+
+      return { success: true };
+    }),
+
+  /**
+   * Configure or update the secret reset PIN + hint for the current user.
+   */
+  updateResetPin: protectedProcedure
+    .input(
+      z.object({
+        pin: z.string().regex(/^\d{4,}$/, "PIN must be at least 4 digits"),
+        confirmPin: z.string().regex(/^\d{4,}$/, "PIN must be at least 4 digits"),
+        hint: z.string().max(200).optional().nullable(),
+      }).refine((data) => data.pin === data.confirmPin, {
+        message: "PINs do not match",
+        path: ["confirmPin"],
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Sanitize hint by trimming whitespace; empty -> null
+      const rawHint = input.hint ?? "";
+      const sanitizedHint = rawHint.trim() === "" ? null : rawHint.trim();
+
+      const hash = await argon2.hash(input.pin);
+
+      await ctx.db
+        .update(users)
+        .set({
+          resetPinHash: hash,
+          resetPinHint: sanitizedHint,
+          // Reset lockout state on successful (re)configuration
+          resetPinFailedAttempts: 0,
+          resetPinLockedUntil: null,
+          resetPinLastFailedAt: null,
           updatedAt: new Date(),
         })
         .where(eq(users.id, ctx.session.user.id));
