@@ -38,10 +38,49 @@ Stop juggling disconnected apps and platforms. KAIROS provides a complete ecosys
 
 ## 🛠 Built With Modern Technology
 
-- **Frontend:** Next.js, React, TypeScript, Tailwind CSS
-- **Backend:** Next.js API, tRPC, TypeScript
-- **Authentication:** NextAuth.js with enterprise-grade security
-- **Database:** PostgreSQL with advanced security features
+- **Frontend:** Next.js 16, React 19, TypeScript, Tailwind CSS v4
+- **Backend:** Next.js API, tRPC v11, TypeScript
+- **Authentication:** NextAuth.js v5 with enterprise-grade security
+- **Database:** PostgreSQL with Drizzle ORM
+- **i18n:** next-intl (5 languages: EN, BG, ES, FR, DE)
+
+## 📁 Project Structure
+
+```
+KAIROS/
+├── config/                 # Configuration files
+│   ├── drizzle.config.ts   # Database/ORM configuration
+│   ├── eslint.config.js    # Linting rules
+│   ├── postcss.config.js   # PostCSS configuration
+│   ├── prettier.config.js  # Code formatting
+│   └── tailwind.config.js  # Tailwind CSS theme
+├── public/                 # Static assets
+├── src/
+│   ├── app/                # Next.js App Router pages
+│   ├── components/         # React components (feature-based)
+│   ├── i18n/               # Internationalization config & messages
+│   ├── lib/                # Utility libraries
+│   ├── server/             # Server-side code (api, auth, db)
+│   ├── styles/             # Global styles
+│   └── trpc/               # tRPC client setup
+├── .env.example            # Environment template
+├── .github/                # CI/CD and contribution guidelines
+├── *.config.js             # Thin wrappers (re-export from config/)
+├── components.json         # shadcn/ui configuration
+├── next.config.js          # Next.js configuration
+├── package.json            # Dependencies & scripts
+└── tsconfig.json           # TypeScript configuration
+```
+
+## 🚀 Getting Started
+
+1. Clone the repository
+2. Copy `.env.example` to `.env` and fill in your values
+3. Install dependencies: `pnpm install`
+4. Push database schema: `pnpm db:push`
+5. Start development server: `pnpm dev`
+
+See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for detailed setup instructions.
 
 ## 👥 Development Team
 

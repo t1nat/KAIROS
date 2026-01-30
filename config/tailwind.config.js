@@ -1,7 +1,10 @@
-/** @type {import('tailwindcss').Config} */
-module.exports = {
+/**
+ * Tailwind CSS Configuration
+ * @type {import('tailwindcss').Config}
+ */
+export default {
   content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
-  darkMode: "class", 
+  darkMode: "class",
   theme: {
     extend: {
       colors: {

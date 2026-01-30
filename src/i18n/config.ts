@@ -11,10 +11,10 @@ export default getRequestConfig(async () => {
 
   let messages: AbstractIntlMessages = {};
   try {
-    const messagesModule = await import(`../messages/${locale}.json`) as { default: AbstractIntlMessages };
+    const messagesModule = await import(`./messages/${locale}.json`) as { default: AbstractIntlMessages };
     messages = messagesModule.default;
   } catch {
-    const fallbackModule = await import(`../messages/en.json`) as { default: AbstractIntlMessages };
+    const fallbackModule = await import(`./messages/en.json`) as { default: AbstractIntlMessages };
     messages = fallbackModule.default;
   }
 
