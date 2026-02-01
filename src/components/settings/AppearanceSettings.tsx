@@ -6,8 +6,13 @@ import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { api } from "~/trpc/react";
 import { useToast } from "~/components/providers/ToastProvider";
+import { useTranslations } from "next-intl";
+
+type Translator = (key: string, values?: Record<string, unknown>) => string;
 
 export function AppearanceSettings() {
+  const useT = useTranslations as unknown as (namespace: string) => Translator;
+  const t = useT("settings");
   const { theme, setTheme, systemTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const toast = useToast();
@@ -81,12 +86,12 @@ export function AppearanceSettings() {
   const currentAccent = normalizeAccent(data?.accentColor);
 
   const accentOptions = [
-    { id: "purple", name: "Purple", swatchVar: "--brand-purple" },
-    { id: "pink", name: "Pink", swatchVar: "--brand-pink" },
-    { id: "caramel", name: "Caramel", swatchVar: "--brand-caramel" },
-    { id: "mint", name: "Mint", swatchVar: "--brand-mint" },
-    { id: "sky", name: "Sky", swatchVar: "--brand-sky" },
-    { id: "strawberry", name: "Strawberry", swatchVar: "--brand-strawberry" },
+    { id: "purple", name: t('appearance.purple'), swatchVar: "--brand-purple" },
+    { id: "pink", name: t('appearance.pink'), swatchVar: "--brand-pink" },
+    { id: "caramel", name: t('appearance.caramel'), swatchVar: "--brand-caramel" },
+    { id: "mint", name: t('appearance.mint'), swatchVar: "--brand-mint" },
+    { id: "sky", name: t('appearance.sky'), swatchVar: "--brand-sky" },
+    { id: "strawberry", name: t('appearance.strawberry'), swatchVar: "--brand-strawberry" },
   ] as const;
 
   const isBusy = updateAppearance.isPending;
@@ -116,86 +121,78 @@ export function AppearanceSettings() {
   const themes = [
     {
       id: 'light',
-      name: 'Light',
-      description: 'Bright and clean interface',
+      name: t('appearance.light'),
+      description: t('appearance.lightDesc'),
       icon: Sun,
       preview: 'from-bg-primary to-bg-secondary'
     },
     {
       id: 'dark',
-      name: 'Dark',
-      description: 'Easy on the eyes',
+      name: t('appearance.dark'),
+      description: t('appearance.darkDesc'),
       icon: Moon,
       preview: 'from-bg-secondary to-bg-primary'
     },
     {
       id: 'system',
-      name: 'System',
-      description: 'Match your device settings',
+      name: t('appearance.system'),
+      description: t('appearance.systemDesc'),
       icon: Monitor,
       preview: 'from-bg-tertiary to-bg-secondary'
     }
   ];
 
   return (
-    <div>
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-accent-primary/15 rounded-lg flex items-center justify-center">
-          <Palette className="text-accent-primary" size={20} />
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold text-fg-primary">Appearance</h2>
-          <p className="text-sm text-fg-secondary">Customize how Kairos looks</p>
+    <div className="w-full">
+      {/* Theme Selection */}
+      <div className="px-12 py-8 border-b border-border-light/[0.01]">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <label className="text-lg font-medium text-fg-primary block mb-2">{t('appearance.themeLabel')}</label>
+            <p className="text-base text-fg-tertiary">{t('appearance.themeDescription')}</p>
+          </div>
+          <div className="ml-12 w-96">
+            <div className="space-y-1">
+              {themes.map((themeOption) => {
+                const Icon = themeOption.icon;
+                const isActive = theme === themeOption.id;
+                
+                return (
+                  <button
+                    key={themeOption.id}
+                    onClick={() => onSelectTheme(themeOption.id as "light" | "dark" | "system")}
+                    disabled={isBusy}
+                    className={`w-full flex items-center gap-4 px-6 py-4 border-b border-border-light/[0.02] transition-all text-left ${
+                      isActive
+                        ? "bg-bg-surface/20 text-fg-primary border-border-light/[0.08]"
+                        : "hover:bg-bg-surface/10 hover:border-border-light/[0.05]"
+                    } ${isBusy ? "opacity-70 cursor-not-allowed" : ""}`}
+                  >
+                    <Icon className={isActive ? "text-accent-primary" : "text-fg-tertiary"} size={20} />
+                    <div className="flex-1">
+                      <div className="text-lg font-medium text-fg-primary">{themeOption.name}</div>
+                      <div className="text-base text-fg-tertiary">{themeOption.description}</div>
+                    </div>
+                    {isActive && (
+                      <Check size={18} className="text-accent-primary" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="space-y-4">
-        <div>
-          <h3 className="text-sm font-semibold text-fg-secondary mb-4">Theme</h3>
-          <div className="grid gap-4">
-            {themes.map((themeOption) => {
-              const Icon = themeOption.icon;
-              const isActive = theme === themeOption.id;
-              
-              return (
-                <button
-                  key={themeOption.id}
-                  onClick={() => onSelectTheme(themeOption.id as "light" | "dark" | "system")}
-                  disabled={isBusy}
-                  className={`relative flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${
-                    isActive
-                      ? 'border-accent-primary bg-accent-primary/10'
-                      : 'border-border-light/20 hover:border-border-medium/50 bg-bg-surface hover:bg-bg-elevated'
-                  } ${isBusy ? 'opacity-70 cursor-not-allowed' : ''}`}
-                >
-                  <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${themeOption.preview} flex items-center justify-center shadow-lg`}>
-                    <Icon className={isActive ? "text-accent-primary" : "text-fg-secondary"} size={24} />
-                  </div>
-                  
-                  <div className="flex-1 text-left">
-                    <div className="font-semibold text-fg-primary mb-1">
-                      {themeOption.name}
-                    </div>
-                    <div className="text-sm text-fg-secondary">
-                      {themeOption.description}
-                    </div>
-                  </div>
-
-                  {isActive && (
-                    <div className="w-6 h-6 bg-accent-primary rounded-full flex items-center justify-center">
-                      <Check size={16} className="text-white" />
-                    </div>
-                  )}
-                </button>
-              );
-            })}
+      {/* Accent Color Selection */}
+      <div className="px-12 py-8 border-b border-border-light/[0.01]">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <label className="text-lg font-medium text-fg-primary block mb-2">{t('appearance.accentLabel')}</label>
+            <p className="text-base text-fg-tertiary">{t('appearance.accentDescription')}</p>
           </div>
-        </div>
-
-        <div className="pt-6 border-t border-border-light/20">
-          <div className="mb-6">
-            <h3 className="text-sm font-semibold text-fg-secondary mb-4">Accent</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="ml-12 w-96">
+            <div className="grid grid-cols-2 gap-1">
               {accentOptions.map((opt) => {
                 const isActive = currentAccent === opt.id;
                 return (
@@ -204,37 +201,41 @@ export function AppearanceSettings() {
                     type="button"
                     disabled={isBusy}
                     onClick={() => onSelectAccent(opt.id)}
-                    className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+                    className={`flex items-center gap-4 px-6 py-4 border-b border-border-light/[0.02] transition-all ${
                       isActive
-                        ? 'border-accent-primary bg-accent-primary/10'
-                        : 'border-border-light/20 bg-bg-surface hover:bg-bg-elevated hover:border-border-medium/50'
-                    } ${isBusy ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        ? "bg-bg-surface/20 text-fg-primary border-border-light/[0.08]"
+                        : "hover:bg-bg-surface/10 hover:border-border-light/[0.05]"
+                    } ${isBusy ? "opacity-70 cursor-not-allowed" : ""}`}
                   >
                     <span
-                      className="h-4 w-4 rounded-full"
+                      className="h-5 w-5 rounded-full flex-shrink-0"
                       style={{ backgroundColor: `rgb(var(${opt.swatchVar}))` }}
                       aria-hidden
                     />
-                    <span className="text-sm font-semibold text-fg-primary">{opt.name}</span>
+                    <span className="text-lg font-medium text-fg-primary flex-1">{opt.name}</span>
+                    {isActive && <Check size={16} className="text-accent-primary" />}
                   </button>
                 );
               })}
             </div>
           </div>
+        </div>
+      </div>
 
-          <div className="p-4 bg-bg-surface rounded-xl ios-card">
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 bg-accent-primary/15 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Palette size={16} className="text-accent-primary" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-fg-primary mb-1">Current Theme</h4>
-                <p className="text-sm text-fg-secondary">
-                  {theme === 'system' 
-                    ? `System (${currentTheme === 'dark' ? 'Dark' : 'Light'})` 
-                    : theme === 'dark' ? 'Dark' : 'Light'}
-                </p>
-              </div>
+      {/* Current Settings Display */}
+      <div className="px-12 py-8">
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <label className="text-lg font-medium text-fg-primary block mb-2">{t('appearance.currentTheme')}</label>
+          </div>
+          <div className="ml-12 w-96">
+            <div className="flex items-center gap-4 px-6 py-4 border border-border-light/[0.03] bg-bg-surface/10">
+              <Palette size={20} className="text-accent-primary" />
+              <span className="text-lg text-fg-secondary">
+                {theme === 'system' 
+                  ? `${t('appearance.system')} (${currentTheme === 'dark' ? t('appearance.dark') : t('appearance.light')})` 
+                  : theme === 'dark' ? t('appearance.dark') : t('appearance.light')}
+              </span>
             </div>
           </div>
         </div>

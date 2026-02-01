@@ -24,15 +24,8 @@ export function SettingsNav({ activeSection, variant = "card" }: SettingsNavProp
   ];
 
   return (
-    <nav
-      className={
-        variant === "embedded"
-          ? "p-2"
-          : "bg-bg-secondary/40 backdrop-blur-sm rounded-2xl ios-card p-2"
-      }
-      aria-label="Settings"
-    >
-      <div className="space-y-1">
+    <nav className="h-full bg-transparent" aria-label="Settings">
+      <div className="flex flex-col h-full">
         {sections.map((section) => {
           const Icon = section.icon;
           const isActive = activeSection === section.id;
@@ -42,14 +35,19 @@ export function SettingsNav({ activeSection, variant = "card" }: SettingsNavProp
               key={section.id}
               href={`/settings?section=${section.id}`}
               aria-current={isActive ? "page" : undefined}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+              className={`group flex items-center gap-4 px-8 py-6 border-b border-border-light/[0.02] transition-all duration-200 ${
                 isActive
-                  ? "bg-accent-primary/10 text-accent-primary shadow-sm"
-                  : "text-fg-secondary hover:bg-bg-secondary/60"
+                  ? "bg-bg-surface/20 text-fg-primary border-border-light/[0.06]"
+                  : "text-fg-secondary hover:bg-bg-surface/10 hover:text-fg-primary hover:border-border-light/[0.04]"
               }`}
             >
-              <Icon size={20} />
-              <span className="font-medium">{section.label}</span>
+              <Icon 
+                size={20} 
+                className={`transition-colors ${
+                  isActive ? "text-accent-primary" : "text-fg-tertiary group-hover:text-fg-secondary"
+                }`} 
+              />
+              <span className="font-medium text-base tracking-[-0.01em]">{section.label}</span>
             </Link>
           );
         })}

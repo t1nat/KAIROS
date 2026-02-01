@@ -251,7 +251,7 @@ export function UserDisplay() {
                     ) : (
                       <div className="w-5 h-5 rounded-full bg-bg-tertiary/60" />
                     )}
-                    <span className="truncate">{acct.name?.trim() ? acct.name : "Account"}</span>
+                    <span className="truncate">{acct.name?.trim() ? acct.name : tSettings("security.account")}</span>
                   </button>
                 ))}
 

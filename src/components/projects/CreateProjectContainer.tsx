@@ -431,7 +431,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
           <div className="h-[320px] flex items-center justify-center rounded-2xl bg-bg-surface/30">
             <div className="text-center max-w-md px-8">
               <p className="text-sm text-fg-secondary">
-                Select an existing project on the left, or expand “New Project” to create one.
+                {t("selectProjectHint")}
               </p>
             </div>
           </div>

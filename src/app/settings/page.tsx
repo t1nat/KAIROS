@@ -66,30 +66,45 @@ export default async function SettingsPage({
           </div>
         </header>
 
-        <main id="main-content" className="flex-1 w-full">
-          <div className="flex flex-col lg:flex-row h-full gap-6 px-4 sm:px-6 lg:px-10 py-6 sm:py-8">
-            <aside className="w-full lg:w-72 lg:flex-shrink-0">
-              <div className="lg:sticky lg:top-28 rounded-2xl bg-gradient-to-b from-bg-surface/90 via-bg-elevated/80 to-bg-surface/90 border border-border-light/5 shadow-[0_18px_45px_-32px_rgba(15,23,42,0.9)] p-3">
-                <SettingsNav activeSection={activeSection} variant="embedded" />
-              </div>
-            </aside>
+        <main id="main-content" className="flex-1 flex h-screen overflow-hidden">
+          {/* Minimalist Navigation Rail */}
+          <aside className="w-80 bg-bg-primary/60 border-r border-border-light/[0.01] flex-shrink-0">
+            <div className="h-full">
+              <SettingsNav activeSection={activeSection} variant="embedded" />
+            </div>
+          </aside>
 
-            <section className="flex-1 rounded-2xl bg-gradient-to-br from-bg-surface/90 via-bg-elevated/90 to-bg-surface/90 border border-border-light/5 shadow-[0_18px_55px_-32px_rgba(15,23,42,0.9)] p-4 sm:p-6 lg:p-8 overflow-hidden">
-              <div className="mb-4 text-xs font-medium tracking-[0.2em] uppercase text-fg-tertiary">
-                {activeSection === "profile" && "Profile"}
-                {activeSection === "notifications" && "Notifications"}
-                {activeSection === "security" && "Security"}
-                {activeSection === "language" && "Language"}
-                {activeSection === "appearance" && "Appearance"}
+          {/* Edge-to-Edge Content Area */}
+          <section className="flex-1 bg-bg-primary overflow-y-auto">
+            <div className="w-full">
+              {/* Page Header - Full Width */}
+              <div className="px-12 py-8 border-b border-border-light/[0.01]">
+                <h1 className="text-2xl font-semibold text-fg-primary tracking-[-0.02em] mb-2">
+                  {activeSection === "profile" && t("profile.title")}
+                  {activeSection === "notifications" && t("notifications.title")}
+                  {activeSection === "security" && t("security.title")}
+                  {activeSection === "language" && t("language.title")}
+                  {activeSection === "appearance" && t("appearance.title")}
+                </h1>
+                <p className="text-base text-fg-secondary">
+                  {activeSection === "profile" && t("profile.subtitle")}
+                  {activeSection === "notifications" && t("notifications.subtitle")}
+                  {activeSection === "security" && t("security.subtitle")}
+                  {activeSection === "language" && t("language.subtitle")}
+                  {activeSection === "appearance" && t("appearance.subtitle")}
+                </p>
               </div>
 
-              {activeSection === "profile" && <ProfileSettingsClient user={session.user} />}
-              {activeSection === "notifications" && <NotificationSettingsClient />}
-              {activeSection === "security" && <SecuritySettingsClient />}
-              {activeSection === "language" && <LanguageSettingsClient />}
-              {activeSection === "appearance" && <AppearanceSettings />}
-            </section>
-          </div>
+              {/* Settings Content - Full Width Rows */}
+              <div className="w-full">
+                {activeSection === "profile" && <ProfileSettingsClient user={session.user} />}
+                {activeSection === "notifications" && <NotificationSettingsClient />}
+                {activeSection === "security" && <SecuritySettingsClient />}
+                {activeSection === "language" && <LanguageSettingsClient />}
+                {activeSection === "appearance" && <AppearanceSettings />}
+              </div>
+            </div>
+          </section>
         </main>
       </div>
     </div>

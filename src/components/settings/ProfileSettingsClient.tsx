@@ -7,6 +7,9 @@ import { useUploadThing } from "~/lib/uploadthing";
 import { useToast } from "~/components/providers/ToastProvider";
 import { useSession } from "next-auth/react";
 import { ImageUpload } from "~/components/ui/ImageUpload";
+import { useTranslations } from "next-intl";
+
+type Translator = (key: string, values?: Record<string, unknown>) => string;
 
 interface ProfileSettingsClientProps {
   user: {
@@ -19,6 +22,8 @@ interface ProfileSettingsClientProps {
 }
 
 export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
+  const useT = useTranslations as unknown as (namespace: string) => Translator;
+  const t = useT("settings");
   const utils = api.useUtils();
   const toast = useToast();
   const { update: updateSession, status } = useSession();
@@ -166,99 +171,134 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
   const joinedDate = getJoinedDate();
 
   return (
-    <div>
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-accent-primary/15 rounded-lg flex items-center justify-center">
-          <User className="text-accent-primary" size={20} />
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold text-fg-primary">Profile Settings</h2>
-          <p className="text-sm text-fg-secondary">Manage your public profile information</p>
+    <div className="w-full">
+      {/* Profile Picture Row */}
+      <div className="px-12 py-8 border-b border-border-light/[0.01]">
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <label className="text-lg font-medium text-fg-primary block mb-2">Profile Picture</label>
+            <p className="text-base text-fg-tertiary">JPG, PNG or GIF. Max size 4MB.</p>
+          </div>
+          <div className="ml-12">
+            <ImageUpload
+              imagePreview={imagePreview}
+              onImageChange={handleImageUpload}
+              onImagePreviewChange={setImagePreview}
+              isUploading={isUploading}
+              label=""
+              description=""
+            />
+          </div>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <ImageUpload
-          imagePreview={imagePreview}
-          onImageChange={handleImageUpload}
-          onImagePreviewChange={setImagePreview}
-          isUploading={isUploading}
-          label="Profile Picture"
-          description="JPG, PNG or GIF. Max size 4MB."
-        />
-
-        <div>
-          <label className="block text-sm font-semibold text-fg-secondary mb-2">
-            Full Name
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-bg-surface border border-border-light/20 text-fg-primary placeholder:text-fg-tertiary focus:border-accent-primary/60 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 transition-all"
-            placeholder="Enter your full name"
-          />
+      <form onSubmit={handleSubmit} className="w-full">
+        {/* Full Name Row */}
+        <div className="px-12 py-8 border-b border-border-light/[0.01]">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <label className="text-lg font-medium text-fg-primary block mb-2">
+                Full Name
+              </label>
+            </div>
+            <div className="ml-12 w-96">
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full px-6 py-4 bg-transparent border-b border-border-light/[0.05] text-lg text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus:border-border-light/[0.1] transition-all"
+                placeholder="Enter your full name"
+              />
+            </div>
+          </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-semibold text-fg-secondary mb-2">
-            Email Address
-          </label>
-          <input
-            type="email"
-            value={user.email ?? ""}
-            disabled
-            className="w-full px-4 py-3 rounded-xl bg-bg-tertiary border border-border-light/20 text-fg-tertiary cursor-not-allowed"
-            placeholder="your.email@example.com"
-          />
-          <p className="text-xs text-fg-tertiary mt-1">Email cannot be changed</p>
+        {/* Email Address Row */}
+        <div className="px-12 py-8 border-b border-border-light/[0.01]">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <label className="text-lg font-medium text-fg-primary block mb-2">
+                {t("profile.email")}
+              </label>
+              <p className="text-base text-fg-tertiary">{t("profile.emailNote")}</p>
+            </div>
+            <div className="ml-12 w-96">
+              <input
+                type="email"
+                value={user.email ?? ""}
+                disabled
+                className="w-full px-6 py-4 bg-transparent border-b border-border-light/[0.03] text-lg text-fg-tertiary cursor-not-allowed focus:outline-none"
+                placeholder={t("profile.emailPlaceholder")}
+              />
+            </div>
+          </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-semibold text-fg-secondary mb-2">
-            Bio
-          </label>
-          <textarea
-            rows={4}
-            value={bio}
-            onChange={(e) => setBio(e.target.value.slice(0, 100))}
-            maxLength={100}
-            className="w-full px-4 py-3 rounded-xl bg-bg-surface border border-border-light/20 text-fg-primary placeholder:text-fg-tertiary focus:border-accent-primary/60 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 transition-all resize-none"
-            placeholder="Tell us about yourself..."
-          />
-          <p className="text-xs text-fg-tertiary mt-1">
-            {bio.length}/100 characters
-          </p>
+        {/* Bio Row */}
+        <div className="px-12 py-8 border-b border-border-light/[0.01]">
+          <div className="flex items-start justify-between">
+            <div className="flex-1 pt-4">
+              <label className="text-lg font-medium text-fg-primary block mb-2">
+                {t("profile.bio")}
+              </label>
+              <p className="text-base text-fg-tertiary">
+                {bio.length}/100 {t("profile.characters")}
+              </p>
+            </div>
+            <div className="ml-12 w-96">
+              <textarea
+                rows={4}
+                value={bio}
+                onChange={(e) => setBio(e.target.value.slice(0, 100))}
+                maxLength={100}
+                className="w-full px-6 py-4 bg-transparent border-b border-border-light/[0.05] text-lg text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus:border-border-light/[0.1] transition-all resize-none"
+                placeholder={t("profile.bioPlaceholder")}
+              />
+            </div>
+          </div>
         </div>
 
+        {/* Member Since Row */}
         {joinedDate && (
-          <div className="p-4 bg-bg-surface rounded-xl ios-card">
-            <h3 className="font-semibold text-fg-primary mb-2">Member Since</h3>
-            <p className="text-sm text-fg-secondary">
-              {joinedDate}
-            </p>
+          <div className="px-12 py-8 border-b border-border-light/[0.01]">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <label className="text-lg font-medium text-fg-primary block mb-2">{t("profile.memberSince")}</label>
+              </div>
+              <div className="ml-12 w-96">
+                <p className="text-lg text-fg-secondary px-6 py-4">
+                  {joinedDate}
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
-        <div className="pt-4 border-t border-border-light/20">
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="px-8 py-3 bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-accent-primary/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="animate-spin" size={16} />
-                Saving...
-              </>
-            ) : (
-              "Save Changes"
-            )}
-          </button>
+        {/* Save Button Row */}
+        <div className="px-12 py-8">
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="px-8 py-4 bg-accent-primary hover:bg-accent-primary/90 text-white font-medium text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="animate-spin" size={20} />
+                  {t("profile.saving")}
+                </>
+              ) : (
+                t("profile.updateProfile")
+              )}
+            </button>
+          </div>
+          
           {!isSaving && updateProfile.isSuccess && (
-            <p className="text-sm text-success mt-2 flex items-center gap-1">
-              ✓ Changes saved successfully
-            </p>
+            <div className="flex justify-end mt-4">
+              <p className="text-base text-success flex items-center gap-2">
+                ✓ {t("profile.saveSuccess")}
+              </p>
+            </div>
           )}
         </div>
       </form>

@@ -66,30 +66,36 @@ export default async function CreatePage({
       <div className="lg:ml-16 min-h-screen flex flex-col pt-16 lg:pt-0">
         <header className="sticky top-16 lg:top-0 z-30 topbar-solid shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-3 sm:py-4 flex flex-wrap justify-between items-center gap-3">
-            <div className="flex items-center gap-3">
-              <div
-                className={
-                  "w-10 h-10 rounded-xl flex items-center justify-center shadow-sm " +
-                  (shouldShowProjectManagement
-                    ? "bg-accent-primary"
-                    : shouldShowNoteForm
-                      ? "bg-warning"
-                      : "bg-gradient-to-br from-accent-primary to-accent-secondary")
-                }
-              >
-                {shouldShowProjectManagement ? (
-                  <FolderKanban className="text-white" size={22} />
-                ) : null}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
+                <div
+                  className={
+                    "w-10 h-10 rounded-xl flex items-center justify-center shadow-sm " +
+                    (shouldShowProjectManagement
+                      ? "bg-accent-primary"
+                      : shouldShowNoteForm
+                        ? "bg-warning"
+                        : "bg-gradient-to-br from-accent-primary to-accent-secondary")
+                  }
+                >
+                  {shouldShowProjectManagement ? (
+                    <FolderKanban className="text-white" size={22} />
+                  ) : null}
+                </div>
+                <div>
+                  <h1 className="text-xl font-semibold text-fg-primary tracking-[-0.02em] font-display">
+                    {shouldShowProjectManagement
+                      ? tNav("projects")
+                      : shouldShowNoteForm
+                        ? tNav("notes")
+                        : tCreate("title")}
+                  </h1>
+                </div>
               </div>
-              <div>
-                <h1 className="text-xl font-semibold text-fg-primary tracking-[-0.02em] font-display">
-                  {shouldShowProjectManagement
-                    ? tNav("projects")
-                    : shouldShowNoteForm
-                      ? tNav("notes")
-                      : tCreate("title")}
-                </h1>
-              </div>
+              
+              {/* Organization Code - positioned on the left */}
+              <div className="hidden sm:block h-6 w-px bg-border-medium mx-2"></div>
+              <WorkspaceIndicator compact />
             </div>
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
               <NotificationSystem />
@@ -100,8 +106,6 @@ export default async function CreatePage({
 
         <main id="main-content" className="flex-1 w-full px-4 sm:px-6 md:px-8 py-5 sm:py-6 overflow-auto relative">
           <div className="max-w-7xl mx-auto w-full space-y-4">
-            <WorkspaceIndicator />
-
             {shouldShowProjectManagement ? (
               <div className="relative w-full h-full mt-4">
                 <CreateProjectContainer userId={session.user.id} />

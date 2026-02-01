@@ -5,7 +5,7 @@ import { useCallback, useState } from "react";
 import { useTranslations } from "next-intl";
 import { api } from "~/trpc/react";
 
-export function WorkspaceIndicator() {
+export function WorkspaceIndicator({ compact = false }: { compact?: boolean }) {
   const tOrg = useTranslations("org");
   const tCommon = useTranslations("common");
   
@@ -28,57 +28,92 @@ export function WorkspaceIndicator() {
     }
   }, [accessCode]);
   
-  return (
-    <div className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-bg-surface/80 to-bg-elevated/50 backdrop-blur-sm">
-      {/* Workspace Info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className={`text-xs font-semibold uppercase tracking-wider ${
-            isOrganization ? 'text-accent-primary' : 'text-blue-500'
-          }`}>
-            {isOrganization ? tOrg("organization") : tOrg("personalWorkspace")}
-          </span>
-        </div>
+  // Compact mode for header
+  if (compact) {
+    return (
+      <div className="flex items-center gap-3">
+        <span className={`text-xs font-semibold uppercase tracking-wider ${
+          isOrganization ? 'text-accent-primary' : 'text-blue-500'
+        }`}>
+          {isOrganization ? tOrg("organization") : tOrg("personalWorkspace")}
+        </span>
         
-        <h3 className="text-lg font-semibold text-fg-primary truncate tracking-[-0.01em] font-display">
-          {isOrganization ? orgName : tOrg("personalWorkspace")}
-        </h3>
-      </div>
-      
-      {/* Access Code (for organizations) */}
-      {isOrganization && accessCode && (
-        <div className="flex flex-col items-end gap-1">
-          <span className="text-xs text-fg-tertiary">{tOrg("accessCode")}</span>
+        {isOrganization && accessCode && (
           <button
             onClick={() => void copyToClipboard()}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-bg-surface hover:bg-bg-elevated transition-colors group"
+            className="flex items-center gap-2 px-2 py-1 rounded-md bg-bg-surface/80 hover:bg-bg-elevated transition-colors group"
           >
-            <span className="font-mono text-sm font-semibold text-fg-primary tracking-[0.2em]">
+            <span className="font-mono text-xs font-semibold text-fg-primary tracking-[0.15em]">
               {accessCode}
             </span>
             <Copy 
-              size={14} 
+              size={12} 
               className={`transition-colors ${
                 copied ? 'text-success' : 'text-fg-tertiary group-hover:text-fg-secondary'
               }`} 
             />
           </button>
-          {copied && (
-            <span className="text-xs text-success animate-in fade-in slide-in-from-top-1">
-              {tCommon("copied")}
-            </span>
-          )}
-        </div>
-      )}
+        )}
+        
+        {copied && (
+          <span className="text-xs text-success animate-in fade-in slide-in-from-top-1">
+            {tCommon("copied")}
+          </span>
+        )}
+      </div>
+    );
+  }
+  
+  return (
+    <div className="p-4 rounded-2xl bg-gradient-to-r from-bg-surface/80 to-bg-elevated/50 backdrop-blur-sm">
+      {/* Top row - Workspace type and access code */}
+      <div className="flex items-center gap-4 mb-2">
+        <span className={`text-xs font-semibold uppercase tracking-wider ${
+          isOrganization ? 'text-accent-primary' : 'text-blue-500'
+        }`}>
+          {isOrganization ? tOrg("organization") : tOrg("personalWorkspace")}
+        </span>
+        
+        {/* Access Code (for organizations) */}
+        {isOrganization && accessCode && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-fg-tertiary">{tOrg("accessCode")}:</span>
+            <button
+              onClick={() => void copyToClipboard()}
+              className="flex items-center gap-2 px-2 py-1 rounded-md bg-bg-surface hover:bg-bg-elevated transition-colors group"
+            >
+              <span className="font-mono text-xs font-semibold text-fg-primary tracking-[0.2em]">
+                {accessCode}
+              </span>
+              <Copy 
+                size={12} 
+                className={`transition-colors ${
+                  copied ? 'text-success' : 'text-fg-tertiary group-hover:text-fg-secondary'
+                }`} 
+              />
+            </button>
+            {copied && (
+              <span className="text-xs text-success animate-in fade-in slide-in-from-top-1">
+                {tCommon("copied")}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
       
-      {/* Personal workspace hint */}
-      {!isOrganization && (
-        <div className="text-right">
-          <p className="text-xs text-fg-tertiary max-w-[150px]">
+      {/* Workspace name */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-fg-primary truncate tracking-[-0.01em] font-display">
+          {isOrganization ? orgName : tOrg("personalWorkspace")}
+        </h3>
+        
+        {/* Personal workspace hint */}
+        {!isOrganization && (
+          <p className="text-xs text-fg-tertiary max-w-[150px] text-right">
             {tOrg("personalHint")}
           </p>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
