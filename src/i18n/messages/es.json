@@ -7,6 +7,7 @@
     "projects": "Proyectos",
     "notes": "Notas",
     "progress": "Progreso",
+    "events": "Eventos",
     "quickActions": "Acciones rápidas",
     "newProject": "Nuevo proyecto"
   },
@@ -81,7 +82,13 @@
       "subtitle": "Gestiona tu información personal",
       "updateProfile": "Actualizar perfil",
       "uploadImage": "Subir imagen",
-      "removeImage": "Eliminar imagen"
+      "removeImage": "Eliminar imagen",
+      "emailNote": "El correo electrónico no se puede cambiar",
+      "bioPlaceholder": "Cuéntanos un poco sobre ti...",
+      "characters": "caracteres",
+      "memberSince": "Miembro desde",
+      "saving": "Guardando...",
+      "saveSuccess": "¡Perfil actualizado con éxito!"
     },
     "notifications": {
       "title": "Configuración de notificaciones",
@@ -129,7 +136,20 @@
     },
     "appearance": {
       "title": "Apariencia",
-      "subtitle": "Personaliza cómo se ve KAIROS"
+      "subtitle": "Personaliza cómo se ve KAIROS",
+      "theme": "Tema",
+      "themeDesc": "Elige tu tema preferido",
+      "light": "Claro",
+      "dark": "Oscuro",
+      "system": "Sistema",
+      "accent": "Color de acento",
+      "accentDesc": "Personaliza el color principal de la aplicación",
+      "purple": "Púrpura",
+      "pink": "Rosa",
+      "caramel": "Caramelo",
+      "mint": "Menta",
+      "sky": "Cielo",
+      "strawberry": "Fresa"
     },
     "nav": {
       "profile": "Perfil",

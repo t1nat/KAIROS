@@ -84,7 +84,13 @@
       "subtitle": "Manage your personal information",
       "updateProfile": "Update Profile",
       "uploadImage": "Upload Image",
-      "removeImage": "Remove Image"
+      "removeImage": "Remove Image",
+      "emailNote": "Email cannot be changed",
+      "bioPlaceholder": "Tell us about yourself...",
+      "characters": "characters",
+      "memberSince": "Member since",
+      "saving": "Saving...",
+      "saveSuccess": "Profile updated successfully!"
     },
     "notifications": {
       "title": "Notification Settings",
@@ -132,7 +138,20 @@
     },
     "appearance": {
       "title": "Appearance",
-      "subtitle": "Customize how KAIROS looks"
+      "subtitle": "Customize how KAIROS looks",
+      "theme": "Theme",
+      "themeDesc": "Choose your preferred theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System",
+      "accent": "Accent Color",
+      "accentDesc": "Personalize the main color of the app",
+      "purple": "Purple",
+      "pink": "Pink",
+      "caramel": "Caramel",
+      "mint": "Mint",
+      "sky": "Sky",
+      "strawberry": "Strawberry"
     },
     "nav": {
       "profile": "Profile",
