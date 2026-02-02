@@ -22,7 +22,7 @@ const PasswordResetEmailTemplate = {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Reset Your Note Password</title>
           </head>
-          <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #FCFBF9;">
+          <body style="margin: 0; padding: 0; font-family: Kairos, KairosSans, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #FCFBF9;">
             <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
               
               <!-- Header -->

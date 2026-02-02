@@ -5,7 +5,6 @@ import { Palette, Sun, Moon, Monitor, Check } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { api } from "~/trpc/react";
-import { useToast } from "~/components/providers/ToastProvider";
 import { useTranslations } from "next-intl";
 
 type Translator = (key: string, values?: Record<string, unknown>) => string;
@@ -15,7 +14,6 @@ export function AppearanceSettings() {
   const t = useT("settings");
   const { theme, setTheme, systemTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const toast = useToast();
   const utils = api.useUtils();
 
   const { status } = useSession();
@@ -40,20 +38,13 @@ export function AppearanceSettings() {
 
   if (!mounted) {
     return (
-      <div>
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-accent-primary/15 rounded-lg flex items-center justify-center">
-            <Palette className="text-accent-primary" size={20} />
+      <div className="w-full h-full overflow-y-auto bg-gray-50/50 dark:bg-[#0a0a0a]">
+        <div className="max-w-3xl mx-auto">
+          <div className="animate-pulse">
+            <div className="h-[60px] bg-white/20 dark:bg-[#1a1a1a]/30 rounded-lg mx-4 mb-2"></div>
+            <div className="h-[60px] bg-white/20 dark:bg-[#1a1a1a]/30 rounded-lg mx-4 mb-2"></div>
+            <div className="h-[60px] bg-white/20 dark:bg-[#1a1a1a]/30 rounded-lg mx-4"></div>
           </div>
-          <div>
-            <h2 className="text-2xl font-bold text-fg-primary">Appearance</h2>
-            <p className="text-sm text-fg-secondary">Customize how Kairos looks</p>
-          </div>
-        </div>
-        <div className="animate-pulse">
-          <div className="h-20 bg-bg-surface rounded-xl mb-4"></div>
-          <div className="h-20 bg-bg-surface rounded-xl mb-4"></div>
-          <div className="h-20 bg-bg-surface rounded-xl"></div>
         </div>
       </div>
     );
@@ -100,10 +91,8 @@ export function AppearanceSettings() {
     setTheme(nextTheme);
     try {
       await updateAppearance.mutateAsync({ theme: nextTheme });
-      toast.success("Appearance updated");
     } catch (e) {
-      const message = e instanceof Error ? e.message : "Failed to update appearance";
-      toast.error(message);
+      // Error is handled silently
     }
   };
 
@@ -111,10 +100,8 @@ export function AppearanceSettings() {
     document.documentElement.dataset.accent = accent;
     try {
       await updateAppearance.mutateAsync({ accentColor: accent });
-      toast.success("Accent updated");
     } catch (e) {
-      const message = e instanceof Error ? e.message : "Failed to update accent";
-      toast.error(message);
+      // Error is handled silently
     }
   };
 
@@ -122,123 +109,163 @@ export function AppearanceSettings() {
     {
       id: 'light',
       name: t('appearance.light'),
-      description: t('appearance.lightDesc'),
       icon: Sun,
-      preview: 'from-bg-primary to-bg-secondary'
     },
     {
       id: 'dark',
       name: t('appearance.dark'),
-      description: t('appearance.darkDesc'),
       icon: Moon,
-      preview: 'from-bg-secondary to-bg-primary'
     },
     {
       id: 'system',
       name: t('appearance.system'),
-      description: t('appearance.systemDesc'),
       icon: Monitor,
-      preview: 'from-bg-tertiary to-bg-secondary'
     }
   ];
 
   return (
-    <div className="w-full">
-      {/* Theme Selection */}
-      <div className="px-12 py-8 border-b border-border-light/[0.01]">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <label className="text-lg font-medium text-fg-primary block mb-2">{t('appearance.themeLabel')}</label>
-            <p className="text-base text-fg-tertiary">{t('appearance.themeDescription')}</p>
-          </div>
-          <div className="ml-12 w-96">
-            <div className="space-y-1">
-              {themes.map((themeOption) => {
-                const Icon = themeOption.icon;
-                const isActive = theme === themeOption.id;
-                
-                return (
+    <div className="w-full h-full overflow-y-auto bg-gray-50/50 dark:bg-[#0a0a0a]">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6">
+        {/* Header */}
+        <div className="pt-6 pb-4">
+          <h1 className="text-[32px] font-[590] leading-[1.1] tracking-[-0.016em] text-gray-900 dark:text-white font-[system-ui,Kairos,sans-serif] mb-2">
+            {t("appearance.title")}
+          </h1>
+          <p className="text-[15px] leading-[1.4] tracking-[-0.01em] text-gray-500 dark:text-gray-400 font-[system-ui,Kairos,sans-serif]">
+            {t("appearance.subtitle")}
+          </p>
+        </div>
+
+        {/* Theme Selection Section */}
+        <div className="mb-3">
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-xl overflow-hidden border border-gray-200/60 dark:border-gray-800/60">
+            {themes.map((themeOption, index) => {
+              const Icon = themeOption.icon;
+              const isActive = theme === themeOption.id;
+              const isLast = index === themes.length - 1;
+              
+              return (
+                <div key={themeOption.id} className="relative">
                   <button
-                    key={themeOption.id}
                     onClick={() => onSelectTheme(themeOption.id as "light" | "dark" | "system")}
                     disabled={isBusy}
-                    className={`w-full flex items-center gap-4 px-6 py-4 border-b border-border-light/[0.02] transition-all text-left ${
-                      isActive
-                        ? "bg-bg-surface/20 text-fg-primary border-border-light/[0.08]"
-                        : "hover:bg-bg-surface/10 hover:border-border-light/[0.05]"
-                    } ${isBusy ? "opacity-70 cursor-not-allowed" : ""}`}
+                    className={`w-full flex items-center justify-between px-4 py-3.5 active:bg-gray-50/60 dark:active:bg-gray-900/40 transition-colors ${
+                      isBusy ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
                   >
-                    <Icon className={isActive ? "text-accent-primary" : "text-fg-tertiary"} size={20} />
-                    <div className="flex-1">
-                      <div className="text-lg font-medium text-fg-primary">{themeOption.name}</div>
-                      <div className="text-base text-fg-tertiary">{themeOption.description}</div>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                        isActive 
+                          ? "bg-blue-500/10 dark:bg-blue-500/20" 
+                          : "bg-gray-100/60 dark:bg-gray-800/60"
+                      }`}>
+                        <Icon 
+                          size={16} 
+                          className={isActive 
+                            ? "text-blue-600 dark:text-blue-400" 
+                            : "text-gray-500 dark:text-gray-400"
+                          } 
+                          strokeWidth={isActive ? 2.5 : 2}
+                        />
+                      </div>
+                      <span className={`text-[16px] leading-[1.25] tracking-[-0.01em] ${
+                        isActive 
+                          ? "text-blue-600 dark:text-blue-400 font-[510]" 
+                          : "text-gray-900 dark:text-gray-100 font-normal"
+                      } font-[system-ui,Kairos,sans-serif]`}>
+                        {themeOption.name}
+                      </span>
                     </div>
                     {isActive && (
-                      <Check size={18} className="text-accent-primary" />
+                      <Check 
+                        size={18} 
+                        className="text-blue-600 dark:text-blue-400" 
+                        strokeWidth={2.8}
+                      />
                     )}
                   </button>
-                );
-              })}
-            </div>
+                  {!isLast && (
+                    <div className="absolute bottom-0 left-[56px] right-4 h-[0.5px] bg-gray-200/50 dark:bg-gray-800/50" />
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
-      </div>
 
-      {/* Accent Color Selection */}
-      <div className="px-12 py-8 border-b border-border-light/[0.01]">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <label className="text-lg font-medium text-fg-primary block mb-2">{t('appearance.accentLabel')}</label>
-            <p className="text-base text-fg-tertiary">{t('appearance.accentDescription')}</p>
-          </div>
-          <div className="ml-12 w-96">
-            <div className="grid grid-cols-2 gap-1">
-              {accentOptions.map((opt) => {
-                const isActive = currentAccent === opt.id;
-                return (
+        {/* Accent Color Section */}
+        <div className="mb-3">
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-xl overflow-hidden border border-gray-200/60 dark:border-gray-800/60">
+            {accentOptions.map((opt, index) => {
+              const isActive = currentAccent === opt.id;
+              const isLast = index === accentOptions.length - 1;
+              
+              return (
+                <div key={opt.id} className="relative">
                   <button
-                    key={opt.id}
                     type="button"
                     disabled={isBusy}
                     onClick={() => onSelectAccent(opt.id)}
-                    className={`flex items-center gap-4 px-6 py-4 border-b border-border-light/[0.02] transition-all ${
-                      isActive
-                        ? "bg-bg-surface/20 text-fg-primary border-border-light/[0.08]"
-                        : "hover:bg-bg-surface/10 hover:border-border-light/[0.05]"
-                    } ${isBusy ? "opacity-70 cursor-not-allowed" : ""}`}
+                    className={`w-full flex items-center justify-between px-4 py-3.5 active:bg-gray-50/60 dark:active:bg-gray-900/40 transition-colors ${
+                      isBusy ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
                   >
-                    <span
-                      className="h-5 w-5 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: `rgb(var(${opt.swatchVar}))` }}
-                      aria-hidden
-                    />
-                    <span className="text-lg font-medium text-fg-primary flex-1">{opt.name}</span>
-                    {isActive && <Check size={16} className="text-accent-primary" />}
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-7 h-7 rounded-full border border-gray-300/50 dark:border-gray-700/50 shadow-xs"
+                        style={{ backgroundColor: `rgb(var(${opt.swatchVar}))` }}
+                        aria-hidden
+                      />
+                      <span className={`text-[16px] leading-[1.25] tracking-[-0.01em] ${
+                        isActive 
+                          ? "text-blue-600 dark:text-blue-400 font-[510]" 
+                          : "text-gray-900 dark:text-gray-100 font-normal"
+                      } font-[system-ui,Kairos,sans-serif]`}>
+                        {opt.name}
+                      </span>
+                    </div>
+                    {isActive && (
+                      <Check 
+                        size={18} 
+                        className="text-blue-600 dark:text-blue-400" 
+                        strokeWidth={2.8}
+                      />
+                    )}
                   </button>
-                );
-              })}
-            </div>
+                  {!isLast && (
+                    <div className="absolute bottom-0 left-[56px] right-4 h-[0.5px] bg-gray-200/50 dark:bg-gray-800/50" />
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
-      </div>
 
-      {/* Current Settings Display */}
-      <div className="px-12 py-8">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <label className="text-lg font-medium text-fg-primary block mb-2">{t('appearance.currentTheme')}</label>
-          </div>
-          <div className="ml-12 w-96">
-            <div className="flex items-center gap-4 px-6 py-4 border border-border-light/[0.03] bg-bg-surface/10">
-              <Palette size={20} className="text-accent-primary" />
-              <span className="text-lg text-fg-secondary">
-                {theme === 'system' 
-                  ? `${t('appearance.system')} (${currentTheme === 'dark' ? t('appearance.dark') : t('appearance.light')})` 
-                  : theme === 'dark' ? t('appearance.dark') : t('appearance.light')}
-              </span>
+        {/* Current Theme Display */}
+        <div className="mb-3">
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-xl overflow-hidden border border-gray-200/60 dark:border-gray-800/60">
+            <div className="px-4 py-3.5">
+              <div className="flex items-center gap-3">
+                <div className="w-7 h-7 rounded-lg bg-gray-100/60 dark:bg-gray-800/60 flex items-center justify-center">
+                  <Palette size={16} className="text-gray-500 dark:text-gray-400" strokeWidth={2} />
+                </div>
+                <div>
+                  <div className="text-[13px] leading-[1.3] tracking-[-0.006em] text-gray-500 dark:text-gray-400 font-[system-ui,Kairos,sans-serif] mb-[1px]">
+                    Current Theme
+                  </div>
+                  <div className="text-[15px] leading-[1.3] tracking-[-0.012em] text-gray-900 dark:text-gray-100 font-[system-ui,Kairos,sans-serif] font-[510]">
+                    {theme === 'system' 
+                      ? `System (${currentTheme === 'dark' ? 'Dark' : 'Light'})` 
+                      : theme === 'dark' ? 'Dark' : 'Light'}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Bottom Spacing */}
+        <div className="h-6"></div>
       </div>
     </div>
   );
