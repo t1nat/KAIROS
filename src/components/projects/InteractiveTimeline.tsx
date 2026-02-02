@@ -57,6 +57,10 @@ export function InteractiveTimeline({
   const [animatedPercentage, setAnimatedPercentage] = useState(0);
   const [hoveredTaskId, setHoveredTaskId] = useState<number | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<number | null>(null);
+  const [highlightedTaskId, setHighlightedTaskId] = useState<number | null>(null);
+  
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const taskRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   const rafRef = useRef<number | null>(null);
   const animatedPercentageRef = useRef(0);
@@ -131,13 +135,40 @@ export function InteractiveTimeline({
     
     const newStatus = task.status === "completed" ? "pending" : "completed";
     
-    setOptimisticTasks(prev => 
-      prev.map(t => 
+    setOptimisticTasks(prev => {
+      const updated = prev.map(t => 
         t.id === task.id 
           ? { ...t, status: newStatus, completedAt: newStatus === "completed" ? new Date() : null }
           : t
-      )
-    );
+      );
+      
+      // If marking as complete, scroll to the next incomplete task
+      if (newStatus === "completed") {
+        const sortedUpdated = [...updated].sort((a, b) => {
+          if (a.orderIndex !== b.orderIndex) return a.orderIndex - b.orderIndex;
+          if (a.dueDate && b.dueDate) return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+          return 0;
+        });
+        
+        const currentIndex = sortedUpdated.findIndex(t => t.id === task.id);
+        const nextIncomplete = sortedUpdated.find((t, idx) => idx > currentIndex && t.status !== "completed");
+        
+        if (nextIncomplete) {
+          // Highlight the next task briefly
+          setHighlightedTaskId(nextIncomplete.id);
+          setTimeout(() => setHighlightedTaskId(null), 2000);
+          
+          setTimeout(() => {
+            const nextElement = taskRefs.current.get(nextIncomplete.id);
+            if (nextElement && scrollContainerRef.current) {
+              nextElement.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+            }
+          }, 100);
+        }
+      }
+      
+      return updated;
+    });
     
     onTaskStatusChange(task.id, newStatus);
   };
@@ -201,17 +232,22 @@ export function InteractiveTimeline({
           className="pointer-events-none absolute left-0 right-0 top-[40px] h-1 bg-gradient-to-r from-transparent via-accent-primary/70 to-transparent border-y-2 border-accent-primary/40 shadow-md"
         />
 
-        <div className="relative flex items-start gap-6 md:gap-8 overflow-x-auto pb-4 scrollbar-thin scroll-smooth snap-x snap-mandatory">
+        <div ref={scrollContainerRef} className="relative flex items-start gap-6 md:gap-8 overflow-x-auto pb-4 scrollbar-thin scroll-smooth snap-x snap-mandatory">
           {sortedTasks.map((task, index) => {
             const isCompleted = task.status === "completed";
             const isHovered = hoveredTaskId === task.id;
             const isExpanded = expandedTaskId === task.id;
             const isOverdue = !!task.dueDate && !isCompleted && new Date(task.dueDate).getTime() < Date.now();
+            const isHighlighted = highlightedTaskId === task.id;
             
             return (
               <div 
                 key={task.id}
-                className="relative flex-shrink-0 w-72 group animate-fadeInUp snap-start"
+                ref={(el) => {
+                  if (el) taskRefs.current.set(task.id, el);
+                  else taskRefs.current.delete(task.id);
+                }}
+                className={`relative flex-shrink-0 w-72 group animate-fadeInUp snap-start ${isHighlighted ? "animate-pulse-highlight" : ""}`}
                 style={{ 
                   animationDelay: `${index * 100}ms`,
                   animationFillMode: 'both'
@@ -224,7 +260,7 @@ export function InteractiveTimeline({
                   aria-hidden="true"
                   className={`pointer-events-none absolute left-1/2 -translate-x-1/2 top-[41px] h-[52px] w-px transition-opacity duration-300 ${
                     isCompleted
-                      ? "bg-success/40"
+                      ? "bg-[#4E6C50]/30 dark:bg-[#DAE5D0]/20"
                       : isHovered || isExpanded
                         ? "bg-accent-primary/35"
                         : "bg-border-light/20"
@@ -240,7 +276,7 @@ export function InteractiveTimeline({
                     disabled={isReadOnly || task.id < 0}
                     className={`w-8 h-8 rounded-full ring-2 ring-transparent flex items-center justify-center transition-all duration-300 ${
                       isCompleted
-                        ? "bg-success shadow-lg shadow-success/30 scale-110"
+                        ? "bg-[#DAE5D0] text-[#4E6C50] dark:bg-[#3A4D39] dark:text-[#DAE5D0] shadow-lg shadow-[#4E6C50]/20 scale-110"
                         : "bg-bg-primary shadow-sm hover:shadow-md hover:scale-110"
                     } ${isReadOnly || task.id < 0 ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
                     aria-label={isCompleted ? t("timeline.markIncomplete") : t("timeline.markComplete")}
@@ -263,7 +299,7 @@ export function InteractiveTimeline({
                   }}
                   className={`mt-20 bg-bg-surface rounded-xl p-5 transition-all duration-300 outline-none shadow-sm hover:shadow-lg ${
                     isCompleted
-                      ? "bg-success/5"
+                      ? "bg-[#DAE5D0]/10 dark:bg-[#3A4D39]/10"
                       : "hover:bg-bg-elevated hover:shadow-accent-primary/10"
                   } ${(isHovered || isExpanded) ? "scale-[1.03]" : ""}`}
                 >
@@ -275,7 +311,7 @@ export function InteractiveTimeline({
                         ? "bg-orange-500/20 text-orange-400"
                         : task.priority === "medium"
                         ? "bg-warning/15 text-warning"
-                        : "bg-success/15 text-success"
+                        : "bg-[#DAE5D0]/30 text-[#4E6C50] dark:bg-[#3A4D39]/30 dark:text-[#DAE5D0]"
                     }`}>
                       {t(
                         task.priority === "urgent"
@@ -289,7 +325,7 @@ export function InteractiveTimeline({
                     </div>
                     
                     {isCompleted && (
-                      <div className="flex items-center gap-1.5 text-success">
+                      <div className="flex items-center gap-1.5 text-[#4E6C50] dark:text-[#DAE5D0]">
                         <CheckCircle2 size={14} />
                         <span className="text-xs font-semibold">{t("timeline.done")}</span>
                       </div>
@@ -415,6 +451,24 @@ export function InteractiveTimeline({
                           </div>
                         </div>
                       )}
+                      
+                      {/* Mark Complete/Incomplete Button */}
+                      {!isReadOnly && task.id >= 0 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCheckboxToggle(task);
+                          }}
+                          className={`mt-4 py-1.5 px-3 rounded-full text-[10px] font-bold tracking-tight uppercase transition-all duration-300 flex items-center gap-1.5 w-fit ${
+                            isCompleted
+                              ? "bg-[#DAE5D0] text-[#4E6C50] dark:bg-[#3A4D39] dark:text-[#DAE5D0] shadow-sm shadow-[#4E6C50]/10"
+                              : "bg-bg-primary/40 text-fg-tertiary border border-border-light/30 hover:bg-bg-primary hover:text-fg-secondary hover:border-border-medium"
+                          }`}
+                        >
+                          <Check size={11} strokeWidth={3} />
+                          <span>{isCompleted ? t("timeline.done") : t("timeline.markComplete")}</span>
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -469,10 +523,26 @@ export function InteractiveTimeline({
           animation: fadeIn 0.2s ease-out;
         }
 
+        @keyframes pulseHighlight {
+          0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgb(var(--accent-primary) / 0.4);
+          }
+          50% {
+            transform: scale(1.02);
+            box-shadow: 0 0 20px 4px rgb(var(--accent-primary) / 0.3);
+          }
+        }
+
+        .animate-pulse-highlight {
+          animation: pulseHighlight 0.6s ease-in-out 3;
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .animate-fadeInUp,
           .animate-scaleIn,
-          .animate-fadeIn {
+          .animate-fadeIn,
+          .animate-pulse-highlight {
             animation: none !important;
           }
         }
