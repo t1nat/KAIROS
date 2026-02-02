@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { api } from "~/trpc/react";
 import { CreateProjectForm, CreateTaskForm, CollaboratorManager } from "./ProjectManagement";
 import { InteractiveTimeline } from "./InteractiveTimeline";
-import { ChevronDown, RefreshCw, CheckCircle2, ArrowLeft, Folder, Trash2 } from "lucide-react";
+import { ChevronDown, RefreshCw, CheckCircle2, ArrowLeft, Folder, Trash2, Users, Plus } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useToast } from "~/components/providers/ToastProvider";
@@ -73,8 +73,6 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
     projectIdFromUrl ? parseInt(projectIdFromUrl) : null
   );
 
-  // Default to collapsed when the user initially opens the Create page.
-  // If a project is selected via URL, keep the panel state irrelevant (form is hidden anyway).
   const [isCreateProjectExpanded, setIsCreateProjectExpanded] = useState(false);
   const [deleteProjectArmed, setDeleteProjectArmed] = useState(false);
 
@@ -254,188 +252,253 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
     : [];
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 relative w-full h-full max-w-7xl mx-auto">
-      {/* Left Sidebar - Projects List & Create */}
-      <div className="w-full lg:w-80 xl:w-96 lg:flex-shrink-0 space-y-4">
-        {/* Create New Project - Simple inline form */}
-        {!selectedProjectId && (
-          <div className="animate-in slide-in-from-top-2 duration-200">
-            <CreateProjectForm
-              onSubmit={handleCreateProject}
-              currentUser={{ id: userId, name: null, email: "", image: null }}
-              isExpanded={isCreateProjectExpanded}
-              onToggle={() => setIsCreateProjectExpanded((s) => !s)}
-            />
-          </div>
-        )}
+    <div className="w-full h-full overflow-y-auto bg-gradient-to-b from-transparent via-gray-50/20 to-transparent dark:from-transparent dark:via-gray-900/20 dark:to-transparent">
+      <div className="max-w-full px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="pt-8 pb-6">
+          <h1 className="text-[32px] font-[590] leading-[1.1] tracking-[-0.016em] text-gray-900 dark:text-white font-[system-ui,Kairos,sans-serif] mb-2">
+            Create & Manage Projects
+          </h1>
+          <p className="text-[15px] leading-[1.4] tracking-[-0.01em] text-gray-600 dark:text-gray-400 font-[system-ui,Kairos,sans-serif]">
+            Create new projects, manage tasks, and collaborate with your team
+          </p>
+        </div>
 
-        {/* Existing Projects List */}
-        {!selectedProjectId && projects && projects.length > 0 && (
-          <div className="space-y-2 animate-in fade-in duration-300">
-            <div className="space-y-1">
-              {projects.map((project) => (
-                <button
-                  key={project.id}
-                  onClick={() => setSelectedProjectId(project.id)}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-bg-elevated/60 transition-all group text-left"
-                >
-                  <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-accent-primary/20 to-accent-secondary/20 flex items-center justify-center flex-shrink-0 group-hover:from-accent-primary/30 group-hover:to-accent-secondary/30 transition-colors">
-                    <Folder size={18} className="text-accent-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-fg-primary truncate group-hover:text-accent-primary transition-colors">
-                      {project.title || t("project.untitled")}
-                    </p>
-                    <p className="text-xs text-fg-tertiary truncate">
-                      {project.tasks?.length ?? 0} tasks
-                    </p>
-                  </div>
-                  <ChevronDown size={16} className="text-fg-tertiary -rotate-90 group-hover:text-accent-primary transition-colors" />
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {selectedProjectId && projectDetails && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-left-2 duration-300">
-            {/* Project Header */}
-            <div className="p-4 rounded-2xl bg-bg-surface/50">
-              <div className="flex items-start justify-between mb-4">
-                <button
-                  onClick={() => setSelectedProjectId(null)}
-                  className="p-2 hover:bg-bg-elevated rounded-lg transition-colors group"
-                >
-                  <ArrowLeft size={20} className="text-fg-primary group-hover:text-accent-primary" />
-                </button>
-
-                <div className="flex items-center gap-2">
-                  {isOwner && (
-                    <button
-                      onClick={handleDeleteProject}
-                      disabled={deleteProject.isPending}
-                      className={`p-2 rounded-lg transition-all ${
-                        deleteProjectArmed
-                          ? "bg-error/10 text-error"
-                          : "text-fg-secondary hover:text-error hover:bg-bg-elevated"
-                      }`}
-                      aria-label={deleteProjectArmed ? "Confirm delete project" : "Delete project"}
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  )}
-
+        <div className="flex flex-col lg:flex-row gap-6 relative w-full">
+          {/* Left Sidebar - Projects List & Create */}
+          <div className="w-full lg:w-80 xl:w-96 lg:flex-shrink-0 space-y-4">
+            {/* Create New Project Card - iPhone Style */}
+            {!selectedProjectId && (
+              <div className="animate-in slide-in-from-top-2 duration-200">
+                <div className="bg-gray-100/60 dark:bg-gray-900/60 backdrop-blur-lg rounded-2xl overflow-hidden border border-gray-300/30 dark:border-gray-700/30 shadow-sm">
                   <button
-                    onClick={() => void refetchProjectDetails()}
-                    className="p-2 text-fg-primary hover:text-accent-primary hover:bg-bg-elevated rounded-lg transition-all"
-                    aria-label={t("actions.refresh")}
+                    onClick={() => setIsCreateProjectExpanded(!isCreateProjectExpanded)}
+                    className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-200/30 dark:hover:bg-gray-800/30 active:bg-gray-200/40 dark:active:bg-gray-800/40 transition-all duration-200"
                   >
-                    <RefreshCw size={18} />
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-gray-300/50 dark:bg-gray-700/50 flex items-center justify-center backdrop-blur-sm">
+                        <Plus size={18} className="text-gray-700 dark:text-gray-300" strokeWidth={2.5} />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <div className="text-[16px] font-[510] text-gray-900 dark:text-white font-[system-ui,Kairos,sans-serif]">
+                          Create New Project
+                        </div>
+                        <div className="text-[13px] text-gray-600 dark:text-gray-400 font-[system-ui,Kairos,sans-serif]">
+                          Start a new project from scratch
+                        </div>
+                      </div>
+                    </div>
+                    <ChevronDown 
+                      size={20} 
+                      className={`text-gray-500 dark:text-gray-400 transition-all duration-300 ${isCreateProjectExpanded ? "rotate-180" : ""}`}
+                    />
                   </button>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 mb-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center flex-shrink-0 shadow-lg shadow-accent-primary/20">
-                  <Folder className="text-white" size={24} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-xl font-bold text-fg-primary mb-1 leading-tight">{projectDetails.title}</h2>
-                  {projectDetails.description && (
-                    <p className="text-sm text-fg-secondary leading-relaxed">{projectDetails.description}</p>
+                  
+                  {isCreateProjectExpanded && (
+                    <div className="px-5 pb-5 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="pt-4 border-t border-gray-300/20 dark:border-gray-700/20">
+                        <CreateProjectForm
+                          onSubmit={handleCreateProject}
+                          currentUser={{ id: userId, name: null, email: "", image: null }}
+                          isExpanded={isCreateProjectExpanded}
+                          onToggle={() => setIsCreateProjectExpanded((s) => !s)}
+                        />
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>
+            )}
 
-              {!isOwner && (
-                <div className="flex items-center gap-2 pt-3 border-t border-border-light/10">
-                  <span
-                    className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium ${
-                      hasWriteAccess
-                        ? "text-success bg-success/10"
-                        : "text-fg-secondary bg-bg-surface/50"
-                    }`}
-                  >
-                    {hasWriteAccess ? (
-                      <>
-                        <CheckCircle2 size={12} />
-                        {t("team.canEdit")}
-                      </>
-                    ) : (
-                      t("team.viewOnly")
+            {/* Existing Projects List */}
+            {!selectedProjectId && projects && projects.length > 0 && (
+              <div className="space-y-2 animate-in fade-in duration-300">
+                <h2 className="text-[17px] font-[590] text-gray-900 dark:text-white mb-3 font-[system-ui,Kairos,sans-serif] pl-2">
+                  My Projects ({projects.length})
+                </h2>
+                <div className="space-y-3">
+                  {projects.map((project) => (
+                    <button
+                      key={project.id}
+                      onClick={() => setSelectedProjectId(project.id)}
+                      className="w-full flex items-center gap-3 p-4 rounded-2xl bg-gray-100/60 dark:bg-gray-900/60 backdrop-blur-lg hover:bg-gray-200/40 dark:hover:bg-gray-800/40 active:scale-[0.995] transition-all duration-200 group text-left border border-gray-300/30 dark:border-gray-700/30 shadow-sm"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-gray-300/50 dark:bg-gray-700/50 flex items-center justify-center backdrop-blur-sm">
+                        <Folder size={18} className="text-gray-700 dark:text-gray-300" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[15px] font-[510] text-gray-900 dark:text-white truncate">
+                          {project.title || t("project.untitled")}
+                        </p>
+                        <p className="text-[13px] text-gray-600 dark:text-gray-400 truncate">
+                          {project.tasks?.length ?? 0} tasks
+                        </p>
+                      </div>
+                      <ChevronDown size={16} className="text-gray-500 dark:text-gray-400 -rotate-90" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {selectedProjectId && projectDetails && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-left-2 duration-300">
+                {/* Project Header Card */}
+                <div className="bg-gray-100/60 dark:bg-gray-900/60 backdrop-blur-lg rounded-2xl overflow-hidden border border-gray-300/30 dark:border-gray-700/30 shadow-sm">
+                  <div className="p-5">
+                    {/* Back Button & Actions */}
+                    <div className="flex items-center justify-between mb-4">
+                      <button
+                        onClick={() => setSelectedProjectId(null)}
+                        className="flex items-center gap-2 p-2.5 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-300/30 dark:hover:bg-gray-800/30 rounded-xl transition-all duration-200 group"
+                      >
+                        <ArrowLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
+                        <span className="text-[14px] font-medium">All Projects</span>
+                      </button>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => void refetchProjectDetails()}
+                          className="p-2.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-300/30 dark:hover:bg-gray-800/30 rounded-xl transition-all duration-200"
+                          aria-label={t("actions.refresh")}
+                        >
+                          <RefreshCw size={18} />
+                        </button>
+                        
+                        {isOwner && (
+                          <button
+                            onClick={handleDeleteProject}
+                            disabled={deleteProject.isPending}
+                            className={`p-2.5 rounded-xl transition-all duration-200 ${
+                              deleteProjectArmed
+                                ? "bg-red-500/10 dark:bg-red-500/10 text-red-600 dark:text-red-400"
+                                : "text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 dark:hover:bg-red-500/10"
+                            }`}
+                            aria-label={deleteProjectArmed ? "Confirm delete project" : "Delete project"}
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Project Title & Description */}
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className="w-12 h-12 rounded-xl bg-gray-300/50 dark:bg-gray-700/50 flex items-center justify-center backdrop-blur-sm">
+                        <Folder className="text-gray-700 dark:text-gray-300" size={24} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h2 className="text-[20px] font-[590] text-gray-900 dark:text-white mb-1 leading-tight">{projectDetails.title}</h2>
+                        {projectDetails.description && (
+                          <p className="text-[14px] text-gray-600 dark:text-gray-400 leading-relaxed">{projectDetails.description}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Access Indicator */}
+                    {!isOwner && (
+                      <div className="flex items-center gap-2 pt-4 border-t border-gray-300/20 dark:border-gray-700/20">
+                        <span
+                          className={`inline-flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-lg font-medium backdrop-blur-sm ${
+                            hasWriteAccess
+                              ? "text-green-600 dark:text-green-400 bg-green-500/10 dark:bg-green-500/10"
+                              : "text-gray-600 dark:text-gray-400 bg-gray-300/30 dark:bg-gray-700/30"
+                          }`}
+                        >
+                          {hasWriteAccess ? (
+                            <>
+                              <CheckCircle2 size={12} />
+                              Can Edit
+                            </>
+                          ) : (
+                            "View Only"
+                          )}
+                        </span>
+                      </div>
                     )}
-                  </span>
+                    
+                    {/* Team Members Section */}
+                    {isOwner && (
+                      <div className="mt-4 pt-4 border-t border-gray-300/20 dark:border-gray-700/20">
+                        <h3 className="text-[15px] font-[510] text-gray-900 dark:text-white mb-3 flex items-center gap-2 pl-1">
+                          <Users size={16} className="text-gray-600 dark:text-gray-400" />
+                          Team Members
+                        </h3>
+                        <div className="space-y-3">
+                          <CollaboratorManager
+                            projectId={selectedProjectId}
+                            currentCollaborators={(projectDetails.collaborators?.map((c) => ({
+                              user: {
+                                id: c.collaboratorId,
+                                name: c.collaborator?.name ?? null,
+                                email: c.collaborator?.email ?? "",
+                                image: c.collaborator?.image ?? null,
+                              },
+                              permission: c.permission,
+                            })) ?? []) as Collaborator[]}
+                            onAddCollaborator={handleAddCollaborator}
+                            onRemoveCollaborator={handleRemoveCollaborator}
+                            onUpdatePermission={handleUpdatePermission}
+                            isOwner={isOwner}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Add Task Section */}
+                    {hasWriteAccess && (
+                      <div className="mt-4 pt-4 border-t border-gray-300/20 dark:border-gray-700/20">
+                        <div className="space-y-3">
+                          <h3 className="text-[15px] font-[510] text-gray-900 dark:text-white mb-2 pl-1">
+                            Add New Task
+                          </h3>
+                          <CreateTaskForm
+                            projectId={selectedProjectId}
+                            onSubmit={handleCreateTask}
+                            availableUsers={availableUsers}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              )}
-              
-              {/* Team Members Section */}
-              {isOwner && (
-                <div className="mt-4 pt-4 border-t border-border-light/10">
-                  <h3 className="text-sm font-semibold text-fg-primary mb-3 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="9" cy="7" r="4"></circle>
-                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    </svg>
-                    {t("team.title")}
+              </div>
+            )}
+          </div>
+
+          {/* Main Content Area */}
+          <div className="flex-1 min-w-0">
+            {selectedProjectId && projectDetails && (
+              <div className="h-full">
+                <InteractiveTimeline
+                  tasks={projectDetails.tasks as Task[]}
+                  onTaskStatusChange={handleTaskStatusChange}
+                  isReadOnly={!hasWriteAccess}
+                  projectTitle={projectDetails.title}
+                />
+              </div>
+            )}
+
+            {!selectedProjectId && (
+              <div className="h-[320px] flex flex-col items-center justify-center">
+                <div className="w-16 h-16 rounded-2xl bg-accent-primary/20 flex items-center justify-center mb-4">
+                  <Folder size={24} className="text-accent-primary" />
+                </div>
+                <div className="text-center max-w-md px-8">
+                  <h3 className="text-[17px] font-[510] text-fg-primary mb-2">
+                    Select a Project
                   </h3>
-                  <CollaboratorManager
-                    projectId={selectedProjectId}
-                    currentCollaborators={(projectDetails.collaborators?.map((c) => ({
-                      user: {
-                        id: c.collaboratorId,
-                        name: c.collaborator?.name ?? null,
-                        email: c.collaborator?.email ?? "",
-                        image: c.collaborator?.image ?? null,
-                      },
-                      permission: c.permission,
-                    })) ?? []) as Collaborator[]}
-                    onAddCollaborator={handleAddCollaborator}
-                    onRemoveCollaborator={handleRemoveCollaborator}
-                    onUpdatePermission={handleUpdatePermission}
-                    isOwner={isOwner}
-                  />
+                  <p className="text-[14px] text-fg-secondary">
+                    Choose an existing project from the list or create a new one to get started
+                  </p>
                 </div>
-              )}
-
-              {/* Add Task Section */}
-              {hasWriteAccess && (
-                <div className="mt-4 pt-4 border-t border-border-light/10">
-                  <CreateTaskForm
-                    projectId={selectedProjectId}
-                    onSubmit={handleCreateTask}
-                    availableUsers={availableUsers}
-                  />
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 min-w-0">
-        {selectedProjectId && projectDetails && (
-          <div className="h-full">
-            <InteractiveTimeline
-              tasks={projectDetails.tasks as Task[]}
-              onTaskStatusChange={handleTaskStatusChange}
-              isReadOnly={!hasWriteAccess}
-              projectTitle={projectDetails.title}
-            />
-          </div>
-        )}
-
-        {!selectedProjectId && (
-          <div className="h-[320px] flex items-center justify-center rounded-2xl bg-bg-surface/30">
-            <div className="text-center max-w-md px-8">
-              <p className="text-sm text-fg-secondary">
-                {t("selectProjectHint")}
-              </p>
-            </div>
-          </div>
-        )}
+        {/* Bottom Spacing */}
+        <div className="h-10"></div>
       </div>
     </div>
   );

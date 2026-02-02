@@ -44,6 +44,7 @@ export function SideNav() {
 
   const mainNavItems = [
     { href: "/", icon: Home, label: t("home") },
+    { href: "/create", icon: Plus, label: t("create") },
     { href: "/projects", icon: FolderKanban, label: t("projects") },
     { href: "/create?action=new_note", icon: FileEdit, label: t("notes") },
     { href: "/progress", icon: BarChart3, label: t("progress") },
@@ -58,6 +59,9 @@ export function SideNav() {
   const isItemActive = (href: string): boolean => {
     if (href === "/") {
       return pathname === "/";
+    }
+    if (href === "/create") {
+      return pathname === "/create" && !action;
     }
     if (href === "/progress") {
       return pathname === "/progress";

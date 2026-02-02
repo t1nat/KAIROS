@@ -60,10 +60,13 @@ export default async function CreatePage({
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary bg-[radial-gradient(900px_circle_at_10%_10%,rgb(var(--accent-primary)/0.18),transparent_55%),radial-gradient(700px_circle_at_90%_15%,rgb(var(--accent-secondary)/0.14),transparent_55%),radial-gradient(900px_circle_at_50%_92%,rgb(var(--brand-mint)/0.10),transparent_60%)]">
+    <div className="min-h-screen bg-bg-primary relative">
+      {/* Fixed background circles - independent of content */}
+      <div className="fixed inset-0 pointer-events-none z-0 bg-[radial-gradient(900px_circle_at_10%_10%,rgb(var(--accent-primary)/0.22),transparent_55%),radial-gradient(700px_circle_at_90%_15%,rgb(var(--accent-primary)/0.16),transparent_55%),radial-gradient(900px_circle_at_50%_85%,rgb(var(--accent-primary)/0.14),transparent_60%)]" />
+      
       <SideNav />
 
-      <div className="lg:ml-16 min-h-screen flex flex-col pt-16 lg:pt-0">
+      <div className="lg:ml-16 min-h-screen flex flex-col pt-16 lg:pt-0 relative z-10">
         <header className="sticky top-16 lg:top-0 z-30 topbar-solid shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-3 sm:py-4 flex flex-wrap justify-between items-center gap-3">
             <div className="flex items-center gap-4">
