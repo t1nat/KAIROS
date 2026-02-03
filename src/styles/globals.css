@@ -34,7 +34,7 @@
   --fg-quaternary: 148 163 184;
   
   /* Borders - Light */
-  --border-light: 226 232 240;
+  --border-light: 200 200 200;
   --border-medium: 203 213 225;
   --border-strong: 148 163 184;
   
@@ -158,7 +158,7 @@
   --fg-quaternary: 113 113 122;
   
   /* Borders - Dark (Softer, more elegant) */
-  --border-light: 45 45 52;
+  --border-light: 60 60 60;
   --border-medium: 60 60 68;
   --border-strong: 80 80 88;
   
@@ -950,3 +950,129 @@ summary,
   border-bottom: 0.5px solid rgba(var(--border-light) / 0.8);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
+
+/* ============================================================================
+   KAIROS DESIGN SYSTEM - iPhone Settings Style
+   ============================================================================ */
+
+/* Kairos Font Stack - Elegant, clean, modern */
+.kairos-font-display {
+  font-family: 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', sans-serif;
+  font-feature-settings: 'ss01', 'ss02', 'cv01', 'cv02';
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.kairos-font-body {
+  font-family: 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', sans-serif;
+  font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.kairos-font-caption {
+  font-family: 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', sans-serif;
+  font-feature-settings: 'kern' 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Light Theme - Default */
+.kairos-bg-secondary {
+  background-color: #f2f2f7;
+}
+
+.kairos-bg-surface {
+  background-color: #ffffff;
+}
+
+.kairos-bg-tertiary {
+  background-color: #d1d1d6;
+}
+
+.kairos-active-state {
+  background-color: #d1d1d6;
+}
+
+.kairos-fg-primary {
+  color: #000000;
+}
+
+.kairos-fg-secondary {
+  color: #3c3c43;
+  opacity: 0.6;
+}
+
+.kairos-fg-tertiary {
+  color: #3c3c43;
+  opacity: 0.3;
+}
+
+/* Use your existing accent-primary variable */
+.kairos-accent-primary {
+  color: rgb(var(--accent-primary));
+}
+.kairos-accent-primary\/15 {
+  background-color: rgba(var(--accent-primary), 0.15);
+}
+
+.kairos-section-border {
+  border: 0.5px solid #c6c6c8;
+}
+
+.kairos-divider {
+  background-color: #c6c6c8;
+}
+
+.kairos-accent-border {
+  border: 0.5px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Dark Theme - Applied when .dark class is present on parent */
+.dark .kairos-bg-secondary {
+  background-color: #000000;
+}
+
+.dark .kairos-bg-surface {
+  background-color: #1c1c1e;
+}
+
+.dark .kairos-bg-tertiary {
+  background-color: #1a1a1e;
+}
+
+.dark .kairos-active-state {
+  background-color: #2c2c2e;
+}
+
+.dark .kairos-fg-primary {
+  color: #ffffff;
+}
+
+.dark .kairos-fg-secondary {
+  color: #ebebf5;
+  opacity: 0.6;
+}
+
+.dark .kairos-fg-tertiary {
+  color: #ebebf5;
+  opacity: 0.3;
+}
+
+.dark .kairos-section-border {
+  border: 0.5px solid #38383a;
+}
+
+.dark .kairos-divider {
+  background-color: #38383a;
+}
+
+.dark .kairos-accent-border {
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ============================================================================
+   End of Kairos Design System
+   ============================================================================ */

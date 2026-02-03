@@ -121,30 +121,30 @@ export function LanguageSettingsClient() {
   };
 
   return (
-    <div className="w-full h-full overflow-y-auto bg-gray-50/50 dark:bg-[#0a0a0a]">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6">
+    <div className="w-full h-full overflow-y-auto bg-bg-primary">
+      <div className="w-full px-4 sm:px-6">
         {/* Header */}
-        <div className="pt-6 pb-4">
-          <h1 className="text-[32px] font-[590] leading-[1.1] tracking-[-0.016em] text-gray-900 dark:text-white font-[system-ui,Kairos,sans-serif] mb-2">
+        <div className="pt-8 pb-6">
+          <h1 className="text-[34px] font-[700] leading-[1.1] tracking-[-0.022em] kairos-fg-primary kairos-font-display mb-2">
             {t("title")}
           </h1>
-          <p className="text-[15px] leading-[1.4] tracking-[-0.01em] text-gray-500 dark:text-gray-400 font-[system-ui,Kairos,sans-serif]">
+          <p className="text-[15px] leading-[1.4667] tracking-[-0.01em] kairos-fg-tertiary kairos-font-body">
             {t("subtitle")}
           </p>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-8">
           {/* Language Selector Card */}
-          <div className="mb-3">
-            <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-200/60 dark:border-gray-800/60">
-              <div className="px-4 py-3.5">
+          <div className="mb-8">
+            <div className="kairos-bg-surface rounded-[10px] overflow-hidden kairos-section-border">
+              <div className="pl-[16px] pr-[18px] py-[11px]">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-lg bg-gray-100/60 dark:bg-gray-800/60 flex items-center justify-center">
-                      <Globe size={16} className="text-gray-500 dark:text-gray-400" strokeWidth={2} />
+                  <div className="flex items-center gap-[13px]">
+                    <div className="w-[30px] h-[30px] rounded-full kairos-bg-tertiary flex items-center justify-center">
+                      <Globe size={18} className="kairos-fg-secondary" strokeWidth={2.2} />
                     </div>
                     <div className="flex-1">
-                      <div className="text-[13px] leading-[1.3] tracking-[-0.006em] text-gray-500 dark:text-gray-400 font-[system-ui,Kairos,sans-serif] mb-[1px]">
+                      <div className="text-[13px] leading-[1.3846] tracking-[-0.006em] kairos-fg-secondary kairos-font-caption mb-[1px]">
                         {t("displayLanguage")}
                       </div>
                       <div ref={dropdownRef} className="relative">
@@ -157,20 +157,20 @@ export function LanguageSettingsClient() {
                           aria-haspopup="listbox"
                           className="flex items-center gap-2 w-full text-left"
                         >
-                          <span className="text-base">{currentLanguage.flag}</span>
-                          <span className="text-[15px] leading-[1.3] tracking-[-0.012em] text-gray-900 dark:text-gray-100 font-[system-ui,Kairos,sans-serif] font-[510]">
+                          <span className="text-[17px]">{currentLanguage.flag}</span>
+                          <span className="text-[15px] leading-[1.4667] tracking-[-0.012em] kairos-fg-primary kairos-font-body font-[590]">
                             {currentLanguage.name}
                           </span>
                           <ChevronDown
-                            className={`ml-auto text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
-                            size={16}
+                            className={`ml-auto kairos-fg-secondary transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                            size={18}
                           />
                         </button>
 
                         {isOpen && (
                           <div
                             role="listbox"
-                            className="absolute z-50 mt-2 min-w-[180px] w-max bg-white dark:bg-[#1a1a1a] border border-gray-200/60 dark:border-gray-800/60 rounded-xl overflow-hidden shadow-xl"
+                            className="absolute z-50 mt-2 min-w-[200px] w-max kairos-bg-surface border kairos-section-border rounded-[10px] overflow-hidden shadow-xl"
                           >
                             {languages.map((language, index) => (
                               <div key={language.code} className="relative">
@@ -180,26 +180,32 @@ export function LanguageSettingsClient() {
                                   aria-selected={locale === language.code}
                                   onClick={() => handleLanguageChange(language.code)}
                                   disabled={isBusy}
-                                  className={`w-full flex items-center justify-between px-4 py-3 transition-colors ${
-                                    isBusy ? "opacity-50 cursor-not-allowed" : ""
+                                  className={`w-full flex items-center justify-between pl-[16px] pr-[18px] py-[11px] transition-colors duration-200 ${
+                                    isBusy ? "opacity-50 cursor-not-allowed" : "active:kairos-active-state"
                                   } ${
                                     locale === language.code
-                                      ? "bg-blue-500/10 dark:bg-blue-500/20"
-                                      : "hover:bg-gray-50/60 dark:hover:bg-gray-900/40"
+                                      ? "kairos-accent-primary/15"
+                                      : "hover:kairos-bg-tertiary"
                                   }`}
                                 >
-                                  <div className="flex items-center gap-3">
-                                    <span className="text-base">{language.flag}</span>
-                                    <span className="text-[15px] leading-[1.3] tracking-[-0.012em] text-gray-900 dark:text-gray-100 font-[system-ui,Kairos,sans-serif]">
+                                  <div className="flex items-center gap-[13px]">
+                                    <span className="text-[17px]">{language.flag}</span>
+                                    <span className={`text-[17px] leading-[1.235] tracking-[-0.016em] ${
+                                      locale === language.code
+                                        ? "kairos-accent-primary font-[590]"
+                                        : "kairos-fg-primary font-[400]"
+                                    } kairos-font-body`}>
                                       {language.name}
                                     </span>
                                   </div>
                                   {locale === language.code && (
-                                    <Check className="text-blue-600 dark:text-blue-400" size={18} strokeWidth={2.8} />
+                                    <div className="kairos-accent-primary">
+                                      <Check size={20} strokeWidth={3} />
+                                    </div>
                                   )}
                                 </button>
                                 {index < languages.length - 1 && (
-                                  <div className="absolute bottom-0 left-[52px] right-0 h-[0.5px] bg-gray-200/50 dark:bg-gray-800/50" />
+                                  <div className="absolute bottom-0 left-[59px] right-0 h-[0.33px] kairos-divider" />
                                 )}
                               </div>
                             ))}
@@ -214,23 +220,23 @@ export function LanguageSettingsClient() {
           </div>
 
           {/* Timezone Selector Card */}
-          <div className="mb-3">
-            <div className="bg-white dark:bg-[#1a1a1a] rounded-xl overflow-hidden border border-gray-200/60 dark:border-gray-800/60">
-              <div className="px-4 py-3.5">
+          <div className="mb-8">
+            <div className="kairos-bg-surface rounded-[10px] overflow-hidden kairos-section-border">
+              <div className="pl-[16px] pr-[18px] py-[11px]">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-lg bg-gray-100/60 dark:bg-gray-800/60 flex items-center justify-center">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <div className="flex items-center gap-[13px]">
+                    <div className="w-[30px] h-[30px] rounded-full kairos-bg-tertiary flex items-center justify-center">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 20 12 20ZM12.5 7V12.25L17 14.92L16.25 16.15L11 13V7H12.5Z" 
-                          fill="currentColor" className="text-gray-500 dark:text-gray-400"/>
+                          fill="currentColor" className="kairos-fg-secondary"/>
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <div className="text-[13px] leading-[1.3] tracking-[-0.006em] text-gray-500 dark:text-gray-400 font-[system-ui,Kairos,sans-serif] mb-[1px]">
+                      <div className="text-[13px] leading-[1.3846] tracking-[-0.006em] kairos-fg-secondary kairos-font-caption mb-[1px]">
                         {t("timezone")}
                       </div>
                       <select
-                        className="w-full bg-transparent text-[15px] leading-[1.3] tracking-[-0.012em] text-gray-900 dark:text-gray-100 font-[system-ui,Kairos,sans-serif] font-[510] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full bg-transparent text-[15px] leading-[1.4667] tracking-[-0.012em] kairos-fg-primary kairos-font-body font-[590] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed appearance-none"
                         value={timezone}
                         onChange={(e) => {
                           setTimezone(e.target.value);
@@ -239,11 +245,14 @@ export function LanguageSettingsClient() {
                         disabled={isBusy}
                       >
                         {timezones.map((tz) => (
-                          <option key={tz.value} value={tz.value} className="bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-gray-100">
+                          <option key={tz.value} value={tz.value} className="kairos-bg-surface kairos-fg-primary">
                             {tz.label}
                           </option>
                         ))}
                       </select>
+                      <div className="absolute right-[18px] top-1/2 transform -translate-y-1/2 pointer-events-none">
+                        <ChevronDown className="kairos-fg-secondary" size={18} />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -252,23 +261,23 @@ export function LanguageSettingsClient() {
           </div>
 
           {/* Date Format Selector Card */}
-          <div className="mb-3">
-            <div className="bg-white dark:bg-[#1a1a1a] rounded-xl overflow-hidden border border-gray-200/60 dark:border-gray-800/60">
-              <div className="px-4 py-3.5">
+          <div className="mb-8">
+            <div className="kairos-bg-surface rounded-[10px] overflow-hidden kairos-section-border">
+              <div className="pl-[16px] pr-[18px] py-[11px]">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-lg bg-gray-100/60 dark:bg-gray-800/60 flex items-center justify-center">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <div className="flex items-center gap-[13px]">
+                    <div className="w-[30px] h-[30px] rounded-full kairos-bg-tertiary flex items-center justify-center">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M19 4H18V3C18 2.45 17.55 2 17 2C16.45 2 16 2.45 16 3V4H8V3C8 2.45 7.55 2 7 2C6.45 2 6 2.45 6 3V4H5C3.89 4 3.01 4.9 3.01 6L3 20C3 21.1 3.89 22 5 22H19C20.1 22 21 21.1 21 20V6C21 4.9 20.1 4 19 4ZM19 19C19 19.55 18.55 20 18 20H6C5.45 20 5 19.55 5 19V9H19V19Z" 
-                          fill="currentColor" className="text-gray-500 dark:text-gray-400"/>
+                          fill="currentColor" className="kairos-fg-secondary"/>
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <div className="text-[13px] leading-[1.3] tracking-[-0.006em] text-gray-500 dark:text-gray-400 font-[system-ui,Kairos,sans-serif] mb-[1px]">
+                      <div className="text-[13px] leading-[1.3846] tracking-[-0.006em] kairos-fg-secondary kairos-font-caption mb-[1px]">
                         {t("dateFormat")}
                       </div>
                       <select
-                        className="w-full bg-transparent text-[15px] leading-[1.3] tracking-[-0.012em] text-gray-900 dark:text-gray-100 font-[system-ui,Kairos,sans-serif] font-[510] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full bg-transparent text-[15px] leading-[1.4667] tracking-[-0.012em] kairos-fg-primary kairos-font-body font-[590] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed appearance-none"
                         value={dateFormat}
                         onChange={(e) => {
                           setDateFormat(e.target.value as DateFormatOption);
@@ -277,11 +286,14 @@ export function LanguageSettingsClient() {
                         disabled={isBusy}
                       >
                         {dateFormats.map((df) => (
-                          <option key={df.value} value={df.value} className="bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-gray-100">
+                          <option key={df.value} value={df.value} className="kairos-bg-surface kairos-fg-primary">
                             {df.label}
                           </option>
                         ))}
                       </select>
+                      <div className="absolute right-[18px] top-1/2 transform -translate-y-1/2 pointer-events-none">
+                        <ChevronDown className="kairos-fg-secondary" size={18} />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -290,18 +302,19 @@ export function LanguageSettingsClient() {
           </div>
 
           {/* Save Button Card */}
-          <div className="mb-3">
-            <div className="bg-white dark:bg-[#1a1a1a] rounded-xl overflow-hidden border border-gray-200/60 dark:border-gray-800/60">
+          <div className="mb-6">
+            <div className="kairos-bg-surface rounded-[10px] overflow-hidden kairos-section-border">
               <div className="px-4 py-4">
                 <button
                   type="button"
                   onClick={() => void saveRegion()}
                   disabled={isBusy || !dirty}
-                  className={`w-full py-3.5 rounded-lg text-center text-[16px] leading-[1.25] tracking-[-0.01em] font-[510] font-[system-ui,Kairos,sans-serif] transition-all ${
+                  className={`w-full py-3.5 rounded-[10px] text-center text-[17px] leading-[1.235] tracking-[-0.016em] font-[590] kairos-font-body transition-all duration-200 ${
                     isBusy || !dirty
-                      ? "bg-gray-100/60 dark:bg-gray-800/60 text-gray-400 dark:text-gray-500 cursor-not-allowed"
-                      : "bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 dark:active:bg-blue-800"
+                      ? "kairos-bg-tertiary kairos-fg-secondary cursor-not-allowed"
+                      : "kairos-accent-primary text-white active:opacity-80"
                   }`}
+                  style={!isBusy && dirty ? { backgroundColor: `rgb(var(--accent-primary))` } : undefined}
                 >
                   {t("save")}
                 </button>
@@ -311,12 +324,12 @@ export function LanguageSettingsClient() {
 
           {/* Loading Indicator */}
           {isPending && (
-            <div className="mb-3">
-              <div className="bg-white dark:bg-[#1a1a1a] rounded-xl overflow-hidden border border-gray-200/60 dark:border-gray-800/60">
+            <div className="mb-6">
+              <div className="kairos-bg-surface rounded-[10px] overflow-hidden kairos-section-border">
                 <div className="px-4 py-3.5">
                   <div className="flex items-center justify-center gap-3">
-                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                    <span className="text-[15px] leading-[1.3] tracking-[-0.012em] text-gray-900 dark:text-gray-100 font-[system-ui,Kairos,sans-serif]">
+                    <div className="w-4 h-4 border-2 border-transparent border-t-kairos-accent-primary rounded-full animate-spin" />
+                    <span className="text-[15px] leading-[1.4667] tracking-[-0.012em] kairos-fg-primary kairos-font-body">
                       {t("applying")}
                     </span>
                   </div>
@@ -327,10 +340,10 @@ export function LanguageSettingsClient() {
 
           {/* Error Message */}
           {updateLanguageRegion.error && (
-            <div className="mb-3">
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 rounded-xl overflow-hidden">
+            <div className="mb-6">
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 rounded-[10px] overflow-hidden">
                 <div className="px-4 py-3.5">
-                  <p className="text-[15px] leading-[1.3] tracking-[-0.012em] text-red-600 dark:text-red-400 font-[system-ui,Kairos,sans-serif] text-center">
+                  <p className="text-[15px] leading-[1.4667] tracking-[-0.012em] text-red-600 dark:text-red-400 kairos-font-body text-center">
                     {updateLanguageRegion.error.message}
                   </p>
                 </div>
@@ -339,7 +352,7 @@ export function LanguageSettingsClient() {
           )}
 
           {/* Bottom Spacing */}
-          <div className="h-6"></div>
+          <div className="h-8"></div>
         </div>
       </div>
     </div>

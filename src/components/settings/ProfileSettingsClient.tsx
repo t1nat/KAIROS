@@ -162,33 +162,51 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
   const joinedDate = getJoinedDate();
 
   return (
-    <div className="w-full h-full overflow-y-auto bg-gray-50/50 dark:bg-[#0a0a0a]">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6">
+    <div className="w-full h-full overflow-y-auto bg-bg-primary">
+      <div className="w-full px-4 sm:px-6">
         {/* Header */}
-        <div className="pt-6 pb-4">
-          <h1 className="text-[32px] font-[590] leading-[1.1] tracking-[-0.016em] text-gray-900 dark:text-white font-[system-ui,Kairos,sans-serif] mb-2">
-            Profile
+        <div className="pt-8 pb-6">
+          <h1 className="text-[34px] font-[700] leading-[1.1] tracking-[-0.022em] kairos-fg-primary kairos-font-display mb-2">
+            {(() => {
+              try {
+                return t("profile.title");
+              } catch {
+                return "Profile";
+              }
+            })()}
           </h1>
-          <p className="text-[15px] leading-[1.4] tracking-[-0.01em] text-gray-500 dark:text-gray-400 font-[system-ui,Kairos,sans-serif]">
-            Manage your profile and preferences
+          <p className="text-[15px] leading-[1.4667] tracking-[-0.01em] kairos-fg-tertiary kairos-font-body">
+            {(() => {
+              try {
+                return t("profile.subtitle");
+              } catch {
+                return "Manage your profile and preferences";
+              }
+            })()}
           </p>
         </div>
 
         <form onSubmit={handleSubmit}>
           {/* Profile Picture Card */}
-          <div className="mb-3">
-            <div className="bg-white dark:bg-[#1a1a1a] rounded-xl overflow-hidden border border-gray-200/60 dark:border-gray-800/60">
-              <div className="px-4 py-3.5">
+          <div className="mb-8">
+            <div className="kairos-bg-surface rounded-[10px] overflow-hidden kairos-section-border">
+              <div className="pl-[16px] pr-[18px] py-[11px]">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-lg bg-gray-100/60 dark:bg-gray-800/60 flex items-center justify-center">
-                      <User size={16} className="text-gray-500 dark:text-gray-400" strokeWidth={2} />
+                  <div className="flex items-center gap-[13px]">
+                    <div className="w-[30px] h-[30px] rounded-full kairos-bg-tertiary flex items-center justify-center">
+                      <User size={18} className="kairos-fg-secondary" strokeWidth={2.2} />
                     </div>
                     <div className="flex-1">
-                      <div className="text-[13px] leading-[1.3] tracking-[-0.006em] text-gray-500 dark:text-gray-400 font-[system-ui,Kairos,sans-serif] mb-[1px]">
-                        Profile Picture
+                      <div className="text-[13px] leading-[1.3846] tracking-[-0.006em] kairos-fg-secondary kairos-font-caption mb-[1px]">
+                        {(() => {
+                          try {
+                            return t("profile.profilePicture");
+                          } catch {
+                            return "Profile Picture";
+                          }
+                        })()}
                       </div>
-                      <div className="text-[15px] leading-[1.3] tracking-[-0.012em] text-gray-900 dark:text-gray-100 font-[system-ui,Kairos,sans-serif] font-[510]">
+                      <div className="text-[15px] leading-[1.4667] tracking-[-0.012em] kairos-fg-primary kairos-font-body font-[590]">
                         JPG, PNG or GIF. Max size 4MB.
                       </div>
                     </div>
@@ -209,27 +227,39 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
           </div>
 
           {/* Full Name Card */}
-          <div className="mb-3">
-            <div className="bg-white dark:bg-[#1a1a1a] rounded-xl overflow-hidden border border-gray-200/60 dark:border-gray-800/60">
-              <div className="px-4 py-3.5">
+          <div className="mb-8">
+            <div className="kairos-bg-surface rounded-[10px] overflow-hidden kairos-section-border">
+              <div className="pl-[16px] pr-[18px] py-[11px]">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-lg bg-gray-100/60 dark:bg-gray-800/60 flex items-center justify-center">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <div className="flex items-center gap-[13px]">
+                    <div className="w-[30px] h-[30px] rounded-full kairos-bg-tertiary flex items-center justify-center">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" 
-                          fill="currentColor" className="text-gray-500 dark:text-gray-400"/>
+                          fill="currentColor" className="kairos-fg-secondary"/>
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <div className="text-[13px] leading-[1.3] tracking-[-0.006em] text-gray-500 dark:text-gray-400 font-[system-ui,Kairos,sans-serif] mb-[1px]">
-                        Full Name
+                      <div className="text-[13px] leading-[1.3846] tracking-[-0.006em] kairos-fg-secondary kairos-font-caption mb-[1px]">
+                        {(() => {
+                          try {
+                            return t("profile.fullName");
+                          } catch {
+                            return "Full Name";
+                          }
+                        })()}
                       </div>
                       <input
                         type="text"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="w-full bg-transparent text-[15px] leading-[1.3] tracking-[-0.012em] text-gray-900 dark:text-gray-100 font-[system-ui,Kairos,sans-serif] font-[510] focus:outline-none placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                        placeholder="Enter your full name"
+                        className="w-full bg-transparent text-[15px] leading-[1.4667] tracking-[-0.012em] kairos-fg-primary kairos-font-body font-[590] focus:outline-none placeholder:kairos-fg-tertiary"
+                        placeholder={(() => {
+                          try {
+                            return t("profile.namePlaceholder");
+                          } catch {
+                            return "Enter your full name";
+                          }
+                        })()}
                       />
                     </div>
                   </div>
@@ -239,25 +269,31 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
           </div>
 
           {/* Email Address Card */}
-          <div className="mb-3">
-            <div className="bg-white dark:bg-[#1a1a1a] rounded-xl overflow-hidden border border-gray-200/60 dark:border-gray-800/60">
-              <div className="px-4 py-3.5">
+          <div className="mb-8">
+            <div className="kairos-bg-surface rounded-[10px] overflow-hidden kairos-section-border">
+              <div className="pl-[16px] pr-[18px] py-[11px]">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-lg bg-gray-100/60 dark:bg-gray-800/60 flex items-center justify-center">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <div className="flex items-center gap-[13px]">
+                    <div className="w-[30px] h-[30px] rounded-full kairos-bg-tertiary flex items-center justify-center">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M20 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 8L12 13L4 8V6L12 11L20 6V8Z" 
-                          fill="currentColor" className="text-gray-500 dark:text-gray-400"/>
+                          fill="currentColor" className="kairos-fg-secondary"/>
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <div className="text-[13px] leading-[1.3] tracking-[-0.006em] text-gray-500 dark:text-gray-400 font-[system-ui,Kairos,sans-serif] mb-[1px]">
-                        Email Address
+                      <div className="text-[13px] leading-[1.3846] tracking-[-0.006em] kairos-fg-secondary kairos-font-caption mb-[1px]">
+                        {(() => {
+                          try {
+                            return t("profile.emailAddress");
+                          } catch {
+                            return "Email Address";
+                          }
+                        })()}
                       </div>
-                      <div className="text-[15px] leading-[1.3] tracking-[-0.012em] text-gray-900 dark:text-gray-100 font-[system-ui,Kairos,sans-serif] font-[510] opacity-60">
+                      <div className="text-[15px] leading-[1.4667] tracking-[-0.012em] kairos-fg-primary kairos-font-body font-[590] opacity-60">
                         {user.email}
                       </div>
-                      <div className="text-[13px] leading-[1.3] tracking-[-0.006em] text-gray-500 dark:text-gray-400 font-[system-ui,Kairos,sans-serif] mt-1">
+                      <div className="text-[13px] leading-[1.3846] tracking-[-0.006em] kairos-fg-tertiary kairos-font-caption mt-1">
                         {(() => {
                           try {
                             return t("profile.emailNote");
@@ -274,27 +310,33 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
           </div>
 
           {/* Bio Card */}
-          <div className="mb-3">
-            <div className="bg-white dark:bg-[#1a1a1a] rounded-xl overflow-hidden border border-gray-200/60 dark:border-gray-800/60">
-              <div className="px-4 py-3.5">
+          <div className="mb-8">
+            <div className="kairos-bg-surface rounded-[10px] overflow-hidden kairos-section-border">
+              <div className="pl-[16px] pr-[18px] py-[11px]">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-lg bg-gray-100/60 dark:bg-gray-800/60 flex items-center justify-center">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <div className="flex items-center gap-[13px]">
+                    <div className="w-[30px] h-[30px] rounded-full kairos-bg-tertiary flex items-center justify-center">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M18 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V4C20 2.9 19.1 2 18 2ZM9 4H11V9L10 8.25L9 9V4ZM18 20H6V4H7V13L10 10.75L13 13V4H18V20Z" 
-                          fill="currentColor" className="text-gray-500 dark:text-gray-400"/>
+                          fill="currentColor" className="kairos-fg-secondary"/>
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <div className="text-[13px] leading-[1.3] tracking-[-0.006em] text-gray-500 dark:text-gray-400 font-[system-ui,Kairos,sans-serif] mb-[1px]">
-                        Bio
+                      <div className="text-[13px] leading-[1.3846] tracking-[-0.006em] kairos-fg-secondary kairos-font-caption mb-[1px]">
+                        {(() => {
+                          try {
+                            return t("profile.bio");
+                          } catch {
+                            return "Bio";
+                          }
+                        })()}
                       </div>
                       <textarea
                         rows={3}
                         value={bio}
                         onChange={(e) => setBio(e.target.value.slice(0, 100))}
                         maxLength={100}
-                        className="w-full bg-transparent text-[15px] leading-[1.3] tracking-[-0.012em] text-gray-900 dark:text-gray-100 font-[system-ui,Kairos,sans-serif] font-[510] focus:outline-none placeholder:text-gray-400 dark:placeholder:text-gray-500 resize-none"
+                        className="w-full bg-transparent text-[15px] leading-[1.4667] tracking-[-0.012em] kairos-fg-primary kairos-font-body font-[590] focus:outline-none placeholder:kairos-fg-tertiary resize-none"
                         placeholder={(() => {
                           try {
                             return t("profile.bioPlaceholder");
@@ -303,7 +345,7 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
                           }
                         })()}
                       />
-                      <div className="text-[13px] leading-[1.3] tracking-[-0.006em] text-gray-500 dark:text-gray-400 font-[system-ui,Kairos,sans-serif] mt-2">
+                      <div className="text-[13px] leading-[1.3846] tracking-[-0.006em] kairos-fg-tertiary kairos-font-caption mt-2">
                         {bio.length}/100 {(() => {
                           try {
                             return t("profile.characters");
@@ -321,19 +363,19 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
 
           {/* Member Since Card */}
           {joinedDate && (
-            <div className="mb-3">
-              <div className="bg-white dark:bg-[#1a1a1a] rounded-xl overflow-hidden border border-gray-200/60 dark:border-gray-800/60">
-                <div className="px-4 py-3.5">
+            <div className="mb-8">
+              <div className="kairos-bg-surface rounded-[10px] overflow-hidden kairos-section-border">
+                <div className="pl-[16px] pr-[18px] py-[11px]">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-7 h-7 rounded-lg bg-gray-100/60 dark:bg-gray-800/60 flex items-center justify-center">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <div className="flex items-center gap-[13px]">
+                      <div className="w-[30px] h-[30px] rounded-full kairos-bg-tertiary flex items-center justify-center">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M11.99 2C6.47 2 2 6.48 2 12C2 17.52 6.47 22 11.99 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 11.99 2ZM12 20C7.58 20 4 16.42 4 12C4 7.58 7.58 4 12 4C16.42 4 20 7.58 20 12C20 16.42 16.42 20 12 20ZM12.5 7H11V13L16.25 16.15L17 14.92L12.5 12.25V7Z" 
-                            fill="currentColor" className="text-gray-500 dark:text-gray-400"/>
+                            fill="currentColor" className="kairos-fg-secondary"/>
                         </svg>
                       </div>
                       <div className="flex-1">
-                        <div className="text-[13px] leading-[1.3] tracking-[-0.006em] text-gray-500 dark:text-gray-400 font-[system-ui,Kairos,sans-serif] mb-[1px]">
+                        <div className="text-[13px] leading-[1.3846] tracking-[-0.006em] kairos-fg-secondary kairos-font-caption mb-[1px]">
                           {(() => {
                             try {
                               return t("profile.memberSince");
@@ -342,7 +384,7 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
                             }
                           })()}
                         </div>
-                        <div className="text-[15px] leading-[1.3] tracking-[-0.012em] text-gray-900 dark:text-gray-100 font-[system-ui,Kairos,sans-serif] font-[510]">
+                        <div className="text-[15px] leading-[1.4667] tracking-[-0.012em] kairos-fg-primary kairos-font-body font-[590]">
                           {joinedDate}
                         </div>
                       </div>
@@ -354,17 +396,18 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
           )}
 
           {/* Save Button Card */}
-          <div className="mb-3">
-            <div className="bg-white dark:bg-[#1a1a1a] rounded-xl overflow-hidden border border-gray-200/60 dark:border-gray-800/60">
+          <div className="mb-6">
+            <div className="kairos-bg-surface rounded-[10px] overflow-hidden kairos-section-border">
               <div className="px-4 py-4">
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className={`w-full py-3.5 rounded-lg text-center text-[16px] leading-[1.25] tracking-[-0.01em] font-[510] font-[system-ui,Kairos,sans-serif] transition-all flex items-center justify-center gap-3 ${
+                  className={`w-full py-3.5 rounded-[10px] text-center text-[17px] leading-[1.235] tracking-[-0.016em] font-[590] kairos-font-body transition-all duration-200 flex items-center justify-center gap-3 ${
                     isSaving
-                      ? "bg-gray-100/60 dark:bg-gray-800/60 text-gray-400 dark:text-gray-500 cursor-not-allowed"
-                      : "bg-accent-primary text-white hover:bg-accent-hover active:opacity-90"
+                      ? "kairos-bg-tertiary kairos-fg-secondary cursor-not-allowed"
+                      : "text-white active:opacity-80"
                   }`}
+                  style={!isSaving ? { backgroundColor: `rgb(var(--accent-primary))` } : undefined}
                 >
                   {isSaving ? (
                     <>
@@ -393,12 +436,12 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
 
           {/* Success Message */}
           {!isSaving && updateProfile.isSuccess && (
-            <div className="mb-3">
-              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/40 rounded-xl overflow-hidden">
+            <div className="mb-6">
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/40 rounded-[10px] overflow-hidden">
                 <div className="px-4 py-3.5">
                   <div className="flex items-center justify-center gap-2">
-                    <Check size={18} className="text-green-600 dark:text-green-400" strokeWidth={2.5} />
-                    <span className="text-[15px] leading-[1.3] tracking-[-0.012em] text-green-600 dark:text-green-400 font-[system-ui,Kairos,sans-serif]">
+                    <Check size={20} className="text-green-600 dark:text-green-400" strokeWidth={3} />
+                    <span className="text-[15px] leading-[1.4667] tracking-[-0.012em] text-green-600 dark:text-green-400 kairos-font-body">
                       {(() => {
                         try {
                           return t("profile.saveSuccess");
@@ -414,7 +457,7 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
           )}
 
           {/* Bottom Spacing */}
-          <div className="h-6"></div>
+          <div className="h-8"></div>
         </form>
       </div>
     </div>

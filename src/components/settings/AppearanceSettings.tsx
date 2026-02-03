@@ -38,12 +38,12 @@ export function AppearanceSettings() {
 
   if (!mounted) {
     return (
-      <div className="w-full h-full overflow-y-auto bg-gray-50/50 dark:bg-[#0a0a0a]">
-        <div className="max-w-3xl mx-auto">
+      <div className="w-full h-full overflow-y-auto bg-bg-primary">
+        <div className="w-full">
           <div className="animate-pulse">
-            <div className="h-[60px] bg-white/20 dark:bg-[#1a1a1a]/30 rounded-lg mx-4 mb-2"></div>
-            <div className="h-[60px] bg-white/20 dark:bg-[#1a1a1a]/30 rounded-lg mx-4 mb-2"></div>
-            <div className="h-[60px] bg-white/20 dark:bg-[#1a1a1a]/30 rounded-lg mx-4"></div>
+            <div className="h-[60px] kairos-bg-tertiary rounded-[12px] mx-4 mb-2"></div>
+            <div className="h-[60px] kairos-bg-tertiary rounded-[12px] mx-4 mb-2"></div>
+            <div className="h-[60px] kairos-bg-tertiary rounded-[12px] mx-4"></div>
           </div>
         </div>
       </div>
@@ -124,68 +124,68 @@ export function AppearanceSettings() {
   ];
 
   return (
-    <div className="w-full h-full overflow-y-auto bg-gray-50/50 dark:bg-[#0a0a0a]">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6">
+    <div className="w-full h-full overflow-y-auto bg-bg-primary">
+      <div className="w-full px-4 sm:px-6">
         {/* Header */}
-        <div className="pt-6 pb-4">
-          <h1 className="text-[32px] font-[590] leading-[1.1] tracking-[-0.016em] text-gray-900 dark:text-white font-[system-ui,Kairos,sans-serif] mb-2">
+        <div className="pt-8 pb-6">
+          <h1 className="text-[34px] font-[700] leading-[1.1] tracking-[-0.022em] kairos-fg-primary kairos-font-display mb-2">
             {t("appearance.title")}
           </h1>
-          <p className="text-[15px] leading-[1.4] tracking-[-0.01em] text-gray-500 dark:text-gray-400 font-[system-ui,Kairos,sans-serif]">
+          <p className="text-[15px] leading-[1.4667] tracking-[-0.01em] kairos-fg-tertiary kairos-font-body">
             {t("appearance.subtitle")}
           </p>
         </div>
 
         {/* Theme Selection Section */}
-        <div className="mb-3">
-          <div className="bg-white dark:bg-[#1a1a1a] rounded-xl overflow-hidden border border-gray-200/60 dark:border-gray-800/60">
+        <div className="mb-8">
+          <div className="kairos-bg-surface rounded-[10px] overflow-hidden kairos-section-border">
             {themes.map((themeOption, index) => {
               const Icon = themeOption.icon;
               const isActive = theme === themeOption.id;
-              const isLast = index === themes.length - 1;
               
               return (
                 <div key={themeOption.id} className="relative">
                   <button
                     onClick={() => onSelectTheme(themeOption.id as "light" | "dark" | "system")}
                     disabled={isBusy}
-                    className={`w-full flex items-center justify-between px-4 py-3.5 active:bg-gray-50/60 dark:active:bg-gray-900/40 transition-colors ${
+                    className={`w-full flex items-center justify-between pl-[16px] pr-[18px] py-[11px] active:kairos-active-state transition-colors duration-200 ${
                       isBusy ? "opacity-50 cursor-not-allowed" : ""
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                    <div className="flex items-center gap-[13px]">
+                      <div className={`w-[30px] h-[30px] rounded-full flex items-center justify-center transition-colors ${
                         isActive 
-                          ? "bg-blue-500/10 dark:bg-blue-500/20" 
-                          : "bg-gray-100/60 dark:bg-gray-800/60"
+                          ? "kairos-accent-primary/15" 
+                          : "kairos-bg-tertiary"
                       }`}>
                         <Icon 
-                          size={16} 
+                          size={18} 
                           className={isActive 
-                            ? "text-blue-600 dark:text-blue-400" 
-                            : "text-gray-500 dark:text-gray-400"
+                            ? "kairos-accent-primary" 
+                            : "kairos-fg-secondary"
                           } 
-                          strokeWidth={isActive ? 2.5 : 2}
+                          strokeWidth={isActive ? 2.5 : 2.2}
                         />
                       </div>
-                      <span className={`text-[16px] leading-[1.25] tracking-[-0.01em] ${
+                      <span className={`text-[17px] leading-[1.235] tracking-[-0.016em] ${
                         isActive 
-                          ? "text-blue-600 dark:text-blue-400 font-[510]" 
-                          : "text-gray-900 dark:text-gray-100 font-normal"
-                      } font-[system-ui,Kairos,sans-serif]`}>
+                          ? "kairos-accent-primary font-[590]" 
+                          : "kairos-fg-primary font-[400]"
+                      } kairos-font-body`}>
                         {themeOption.name}
                       </span>
                     </div>
                     {isActive && (
-                      <Check 
-                        size={18} 
-                        className="text-blue-600 dark:text-blue-400" 
-                        strokeWidth={2.8}
-                      />
+                      <div className="kairos-accent-primary">
+                        <Check 
+                          size={20} 
+                          strokeWidth={3}
+                        />
+                      </div>
                     )}
                   </button>
-                  {!isLast && (
-                    <div className="absolute bottom-0 left-[56px] right-4 h-[0.5px] bg-gray-200/50 dark:bg-gray-800/50" />
+                  {index !== themes.length - 1 && (
+                    <div className="absolute bottom-0 left-[59px] right-0 h-[0.33px] kairos-divider" />
                   )}
                 </div>
               );
@@ -194,11 +194,10 @@ export function AppearanceSettings() {
         </div>
 
         {/* Accent Color Section */}
-        <div className="mb-3">
-          <div className="bg-white dark:bg-[#1a1a1a] rounded-xl overflow-hidden border border-gray-200/60 dark:border-gray-800/60">
+        <div className="mb-8">
+          <div className="kairos-bg-surface rounded-[10px] overflow-hidden kairos-section-border">
             {accentOptions.map((opt, index) => {
               const isActive = currentAccent === opt.id;
-              const isLast = index === accentOptions.length - 1;
               
               return (
                 <div key={opt.id} className="relative">
@@ -206,34 +205,35 @@ export function AppearanceSettings() {
                     type="button"
                     disabled={isBusy}
                     onClick={() => onSelectAccent(opt.id)}
-                    className={`w-full flex items-center justify-between px-4 py-3.5 active:bg-gray-50/60 dark:active:bg-gray-900/40 transition-colors ${
+                    className={`w-full flex items-center justify-between pl-[16px] pr-[18px] py-[11px] active:kairos-active-state transition-colors duration-200 ${
                       isBusy ? "opacity-50 cursor-not-allowed" : ""
                     }`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-[13px]">
                       <div 
-                        className="w-7 h-7 rounded-full border border-gray-300/50 dark:border-gray-700/50 shadow-xs"
+                        className="w-[30px] h-[30px] rounded-full kairos-accent-border shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
                         style={{ backgroundColor: `rgb(var(${opt.swatchVar}))` }}
                         aria-hidden
                       />
-                      <span className={`text-[16px] leading-[1.25] tracking-[-0.01em] ${
+                      <span className={`text-[17px] leading-[1.235] tracking-[-0.016em] ${
                         isActive 
-                          ? "text-blue-600 dark:text-blue-400 font-[510]" 
-                          : "text-gray-900 dark:text-gray-100 font-normal"
-                      } font-[system-ui,Kairos,sans-serif]`}>
+                          ? "kairos-accent-primary font-[590]" 
+                          : "kairos-fg-primary font-[400]"
+                      } kairos-font-body`}>
                         {opt.name}
                       </span>
                     </div>
                     {isActive && (
-                      <Check 
-                        size={18} 
-                        className="text-blue-600 dark:text-blue-400" 
-                        strokeWidth={2.8}
-                      />
+                      <div className="kairos-accent-primary">
+                        <Check 
+                          size={20} 
+                          strokeWidth={3}
+                        />
+                      </div>
                     )}
                   </button>
-                  {!isLast && (
-                    <div className="absolute bottom-0 left-[56px] right-4 h-[0.5px] bg-gray-200/50 dark:bg-gray-800/50" />
+                  {index !== accentOptions.length - 1 && (
+                    <div className="absolute bottom-0 left-[59px] right-0 h-[0.33px] kairos-divider" />
                   )}
                 </div>
               );
@@ -242,18 +242,18 @@ export function AppearanceSettings() {
         </div>
 
         {/* Current Theme Display */}
-        <div className="mb-3">
-          <div className="bg-white dark:bg-[#1a1a1a] rounded-xl overflow-hidden border border-gray-200/60 dark:border-gray-800/60">
-            <div className="px-4 py-3.5">
-              <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-lg bg-gray-100/60 dark:bg-gray-800/60 flex items-center justify-center">
-                  <Palette size={16} className="text-gray-500 dark:text-gray-400" strokeWidth={2} />
+        <div className="mb-6">
+          <div className="kairos-bg-surface rounded-[10px] overflow-hidden kairos-section-border">
+            <div className="pl-[16px] pr-[18px] py-[11px]">
+              <div className="flex items-center gap-[13px]">
+                <div className="w-[30px] h-[30px] rounded-full kairos-bg-tertiary flex items-center justify-center">
+                  <Palette size={18} className="kairos-fg-secondary" strokeWidth={2.2} />
                 </div>
                 <div>
-                  <div className="text-[13px] leading-[1.3] tracking-[-0.006em] text-gray-500 dark:text-gray-400 font-[system-ui,Kairos,sans-serif] mb-[1px]">
+                  <div className="text-[13px] leading-[1.3846] tracking-[-0.006em] kairos-fg-secondary kairos-font-caption mb-[1px]">
                     Current Theme
                   </div>
-                  <div className="text-[15px] leading-[1.3] tracking-[-0.012em] text-gray-900 dark:text-gray-100 font-[system-ui,Kairos,sans-serif] font-[510]">
+                  <div className="text-[15px] leading-[1.4667] tracking-[-0.012em] kairos-fg-primary kairos-font-body font-[590]">
                     {theme === 'system' 
                       ? `System (${currentTheme === 'dark' ? 'Dark' : 'Light'})` 
                       : theme === 'dark' ? 'Dark' : 'Light'}
@@ -265,7 +265,7 @@ export function AppearanceSettings() {
         </div>
 
         {/* Bottom Spacing */}
-        <div className="h-6"></div>
+        <div className="h-8"></div>
       </div>
     </div>
   );
