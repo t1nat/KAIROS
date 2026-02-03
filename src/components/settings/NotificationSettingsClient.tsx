@@ -107,7 +107,7 @@ export function NotificationSettingsClient() {
   ];
 
   return (
-    <div className="w-full h-full overflow-y-auto bg-gray-50/50 dark:bg-[#0a0a0a]">
+    <div className="w-full bg-gray-50/50 dark:bg-[#0a0a0a]">
       <div className="max-w-3xl mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="pt-6 pb-4">

@@ -34,7 +34,7 @@ export default async function SettingsPage({
   const activeSection = typeof sectionParam === 'string' ? sectionParam : "profile";
 
   return (
-    <div className="w-full h-screen bg-gray-50/50 dark:bg-[#0a0a0a]">
+    <div className="w-full min-h-screen bg-gray-50/50 dark:bg-[#0a0a0a]">
       <SideNav />
 
       <Link
@@ -46,7 +46,7 @@ export default async function SettingsPage({
         <Settings size={20} />
       </Link>
 
-      <div className="lg:ml-16 h-screen flex flex-col">
+      <div className="lg:ml-16 min-h-screen flex flex-col">
         {/* Header */}
         <header className="sticky top-0 z-30 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-gray-200/60 dark:border-gray-800/60">
           <div className="px-4 sm:px-6 py-4 flex justify-between items-center">
@@ -78,10 +78,10 @@ export default async function SettingsPage({
           </aside>
 
           {/* Content Area */}
-          <section className="flex-1 overflow-hidden bg-gray-50/50 dark:bg-[#0a0a0a]">
-            <div className="w-full h-full">
+          <section className="flex-1 overflow-y-auto bg-gray-50/50 dark:bg-[#0a0a0a]">
+            <div className="w-full">
               {/* Settings Content */}
-              <div className="h-full">
+              <div className="pb-8">
                 {activeSection === "profile" && <ProfileSettingsClient user={session.user} />}
                 {activeSection === "notifications" && <NotificationSettingsClient />}
                 {activeSection === "security" && <SecuritySettingsClient />}
