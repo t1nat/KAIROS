@@ -71,6 +71,13 @@
       "when": 1769688663406,
       "tag": "0009_steady_freak",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1770108558046,
+      "tag": "0010_majestic_karma",
+      "breakpoints": true
     }
   ]
 }

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { api } from "~/trpc/react";
 import { CreateProjectForm, CreateTaskForm, CollaboratorManager } from "./ProjectManagement";
 import { InteractiveTimeline } from "./InteractiveTimeline";
+import { ProjectPlanningAgentButton } from "./ProjectPlanningAgentButton";
 import { ChevronDown, RefreshCw, CheckCircle2, ArrowLeft, Folder, Trash2, Users, Plus } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -448,7 +449,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                     {/* Add Task Section */}
                     {hasWriteAccess && (
                       <div className="mt-4 pt-4 border-t border-gray-300/20 dark:border-gray-700/20">
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                           <h3 className="text-[15px] font-[510] text-gray-900 dark:text-white mb-2 pl-1">
                             Add New Task
                           </h3>
@@ -457,6 +458,8 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                             onSubmit={handleCreateTask}
                             availableUsers={availableUsers}
                           />
+
+                          <ProjectPlanningAgentButton projectId={selectedProjectId} />
                         </div>
                       </div>
                     )}

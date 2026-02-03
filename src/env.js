@@ -11,6 +11,9 @@ export const env = createEnv({
     AUTH_GOOGLE_SECRET: z.string().optional(),
     DATABASE_URL: z.string().optional(),
 
+    // LLM (OpenAI)
+    OPENAI_API_KEY: z.string().optional(),
+
     // Email (Resend)
     RESEND_API_KEY: z.string().optional(),
     RESEND_FROM_EMAIL: z.string().optional(),
@@ -35,6 +38,8 @@ export const env = createEnv({
     AUTH_GOOGLE_ID: process.env.AUTH_GOOGLE_ID,
     AUTH_GOOGLE_SECRET: process.env.AUTH_GOOGLE_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
+
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
 
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
