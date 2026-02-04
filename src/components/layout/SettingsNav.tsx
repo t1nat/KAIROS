@@ -35,12 +35,18 @@ export function SettingsNav({ activeSection, variant = "card" }: SettingsNavProp
               key={section.id}
               href={`/settings?section=${section.id}`}
               aria-current={isActive ? "page" : undefined}
-              className={`group flex items-center gap-4 px-8 py-6 transition-all duration-200 ${
+              className={`settingsNavItem group flex items-center gap-4 px-8 py-6 transition-all duration-300 relative ${
                 isActive
-                  ? "bg-bg-tertiary text-fg-primary border-l-2 border-accent-primary"
-                  : "text-fg-tertiary hover:bg-bg-tertiary hover:text-gray-900 dark:hover:text-white"
+                  ? "bg-bg-tertiary text-fg-primary"
+                  : "text-fg-tertiary hover:bg-bg-tertiary hover:text-fg-secondary focus-visible:outline-none"
               }`}
+              data-active={isActive}
             >
+              {/* Animated left indicator - appears on hover/focus, becomes accent on active */}
+              <span 
+                className="settingsNavIndicator absolute left-0 top-0 bottom-0 w-1"
+                aria-hidden="true"
+              />
               <Icon 
                 size={20} 
                 className={`transition-colors ${

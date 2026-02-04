@@ -89,7 +89,12 @@
       "characters": "Zeichen",
       "memberSince": "Mitglied seit",
       "saving": "Speichern...",
-      "saveSuccess": "Profil erfolgreich aktualisiert!"
+      "saveSuccess": "Profil erfolgreich aktualisiert!",
+      "profilePicture": "Profilbild",
+      "fullName": "Vollständiger Name",
+      "namePlaceholder": "Geben Sie Ihren vollständigen Namen ein",
+      "emailAddress": "E-Mail-Adresse",
+      "bio": "Biografie"
     },
     "notifications": {
       "title": "Benachrichtigungseinstellungen",

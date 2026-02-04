@@ -10,21 +10,17 @@ import { settingsRouter } from "~/server/api/routers/settings";
 import { authRouter } from "~/server/api/routers/auth";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 import { chatRouter } from "~/server/api/routers/chat";
-import { agentRouter } from "~/server/api/routers/agent";
-
-
 export const appRouter = createTRPCRouter({
   event: eventRouter,
   settings: settingsRouter,
   note: noteRouter,
   project: projectRouter,
   task: taskRouter,
-  organization: organizationRouter, 
-  user: userRouter, 
+  organization: organizationRouter,
+  user: userRouter,
   auth: authRouter,
   notification: notificationRouter,
   chat: chatRouter,
-  agent: agentRouter,
 });
 
 export type AppRouter = typeof appRouter;

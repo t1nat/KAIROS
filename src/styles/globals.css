@@ -1074,5 +1074,89 @@ summary,
 }
 
 /* ============================================================================
-   End of Kairos Design System
+   Settings Navigation - Animated Left Indicator
+   ============================================================================ */
+
+/* Settings nav item container */
+.settingsNavItem {
+  position: relative;
+  /* Smooth transitions for background and text color changes */
+  transition: background-color 300ms ease, color 300ms ease;
+}
+
+/* Focus visible styling for keyboard navigation */
+.settingsNavItem:focus-visible {
+  outline: none;
+}
+
+/* ============================================================================
+   Settings Navigation Indicator
+   ============================================================================ */
+
+/* The clickable item (usually a Link/a) */
+.settingsNavItem {
+  position: relative;
+  display: block;
+}
+
+/* The left indicator line */
+.settingsNavIndicator {
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+
+  width: 3px;
+  border-radius: 9999px;
+
+  /* hidden by default */
+  opacity: 0;
+  transform: scaleY(0);
+  transform-origin: top;
+
+  /* neutral line color on hover (fallback-friendly) */
+  background-color: rgba(148, 163, 184, 0.9); /* slate-400-ish */
+
+  /* Smooth animation for state changes */
+  transition:
+    transform 300ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover state: indicator appears (neutral color) */
+.settingsNavItem:hover .settingsNavIndicator {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+/* Focus-visible should be on the focusable element (the link itself) */
+.settingsNavItem:focus-visible .settingsNavIndicator,
+.settingsNavItem:focus-within .settingsNavIndicator {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+/* Active state: indicator visible with accent color */
+.settingsNavItem[data-active="true"] .settingsNavIndicator {
+  opacity: 1;
+  transform: scaleY(1);
+
+  /* Use your CSS var if present, otherwise fallback */
+  background-color: rgb(var(--accent-primary, 59 130 246)); /* fallback: blue-500 */
+}
+
+/* Ensure indicator doesn't interfere with content */
+.settingsNavIndicator {
+  pointer-events: none;
+  z-index: 0;
+}
+
+.settingsNavItem > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================================================
+   End of Settings Navigation Indicator
    ============================================================================ */

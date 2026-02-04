@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Shield, Check } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -30,6 +30,13 @@ export function SecuritySettingsClient() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
+
+  // Load existing reset pin hint when data is available
+  useEffect(() => {
+    if (data?.resetPinHint) {
+      setHint(data.resetPinHint);
+    }
+  }, [data?.resetPinHint]);
 
   const updateSecurity = api.settings.updateSecurity.useMutation({
     onSuccess: async () => {
@@ -377,24 +384,24 @@ export function SecuritySettingsClient() {
                       type="button"
                       onClick={() => setShowDeleteConfirm(true)}
                       disabled={isBusy}
-                      className={`px-4 py-2 rounded-[8px] text-[15px] leading-[1.4667] tracking-[-0.012em] font-[590] kairos-font-body transition-all duration-200 ${
+                      className={`w-full sm:w-auto px-4 py-2 rounded-[8px] text-[15px] leading-[1.4667] tracking-[-0.012em] font-[590] kairos-font-body transition-all duration-200 ${
                         isBusy
-                          ? "kairos-bg-tertiary kairos-fg-secondary cursor-not-allowed"
-                          : "bg-red-600 text-white hover:bg-red-700 active:opacity-90"
+                          ? "bg-red-400 text-red-100 cursor-not-allowed"
+                          : "bg-red-500 dark:bg-red-600 text-white dark:text-white hover:bg-red-600 dark:hover:bg-red-700 active:opacity-90"
                       }`}
                     >
                       Delete
                     </button>
                   ) : (
-                    <div className="flex items-center gap-2">
+                    <div className="flex w-full flex-col sm:w-auto sm:flex-row items-stretch sm:items-center gap-2">
                       <button
                         type="button"
                         onClick={onDeleteAccount}
                         disabled={isBusy}
-                        className={`px-4 py-2 rounded-[8px] text-[15px] leading-[1.4667] tracking-[-0.012em] font-[590] kairos-font-body transition-all duration-200 ${
+                        className={`w-full sm:w-auto px-4 py-2 rounded-[8px] text-[15px] leading-[1.4667] tracking-[-0.012em] font-[590] kairos-font-body transition-all duration-200 ${
                           isBusy
-                            ? "kairos-bg-tertiary kairos-fg-secondary cursor-not-allowed"
-                            : "bg-red-600 text-white hover:bg-red-700 active:opacity-90"
+                            ? "bg-red-400 text-red-100 cursor-not-allowed"
+                            : "bg-red-500 dark:bg-red-600 text-white dark:text-white hover:bg-red-600 dark:hover:bg-red-700 active:opacity-90"
                         }`}
                       >
                         Confirm
@@ -403,7 +410,7 @@ export function SecuritySettingsClient() {
                         type="button"
                         onClick={() => setShowDeleteConfirm(false)}
                         disabled={isBusy}
-                        className={`px-4 py-2 rounded-[8px] text-[15px] leading-[1.4667] tracking-[-0.012em] font-[590] kairos-font-body transition-all duration-200 ${
+                        className={`w-full sm:w-auto px-4 py-2 rounded-[8px] text-[15px] leading-[1.4667] tracking-[-0.012em] font-[590] kairos-font-body transition-all duration-200 ${
                           isBusy
                             ? "kairos-bg-tertiary kairos-fg-secondary cursor-not-allowed"
                             : "kairos-bg-tertiary kairos-fg-primary hover:kairos-bg-tertiary/80 active:opacity-90"

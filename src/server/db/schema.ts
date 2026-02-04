@@ -29,7 +29,6 @@ export const languageEnum = pgEnum("language", ["en", "bg", "es", "fr", "de", "i
 export const dateFormatEnum = pgEnum("date_format", ["MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"]);
 export const notificationTypeEnum = pgEnum("notification_type", ["event", "task", "project", "system"]);
 export const rsvpStatusEnum = pgEnum("rsvp_status", ["going", "maybe", "not_going"]);
-export const agentRunStatusEnum = pgEnum("agent_run_status", ["pending", "running", "succeeded", "failed", "cancelled"]);
 export const regionEnum = pgEnum("region", [
   "sofia", 
   "plovdiv", 
@@ -342,52 +341,6 @@ export const taskActivityLog = createTable(
   ]
 );
 
-// Agent runs and events
-
-export const agentRuns = createTable(
-  "agent_runs",
-  (d) => ({
-    id: serial("id").primaryKey(),
-    agentId: varchar("agent_id", { length: 128 }).notNull(),
-    userId: d
-      .varchar("user_id", { length: 255 })
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    status: agentRunStatusEnum("status").notNull().default("pending"),
-    summary: text("summary"),
-    error: text("error"),
-    createdAt: timestamp("created_at")
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    updatedAt: timestamp("updated_at")
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-  }),
-  (t) => [
-    index("agent_runs_agent_id_idx").on(t.agentId),
-    index("agent_runs_user_id_idx").on(t.userId),
-    index("agent_runs_status_idx").on(t.status),
-  ]
-);
-
-export const agentRunEvents = createTable(
-  "agent_run_events",
-  (d) => ({
-    id: serial("id").primaryKey(),
-    runId: integer("run_id")
-      .notNull()
-      .references(() => agentRuns.id, { onDelete: "cascade" }),
-    type: varchar("type", { length: 128 }).notNull(),
-    payload: text("payload").notNull(),
-    createdAt: timestamp("created_at")
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-  }),
-  (t) => [
-    index("agent_run_events_run_id_idx").on(t.runId),
-    index("agent_run_events_type_idx").on(t.type),
-  ]
-);
 
 export const directConversations = createTable(
   "direct_conversations",
@@ -661,14 +614,6 @@ export const taskActivityLogRelations = relations(taskActivityLog, ({ one }) => 
   user: one(users, { fields: [taskActivityLog.userId], references: [users.id] }),
 }));
 
-export const agentRunsRelations = relations(agentRuns, ({ one, many }) => ({
-  user: one(users, { fields: [agentRuns.userId], references: [users.id] }),
-  events: many(agentRunEvents),
-}));
-
-export const agentRunEventsRelations = relations(agentRunEvents, ({ one }) => ({
-  run: one(agentRuns, { fields: [agentRunEvents.runId], references: [agentRuns.id] }),
-}));
 
 export const directConversationsRelations = relations(directConversations, ({ one, many }) => ({
   project: one(projects, { fields: [directConversations.projectId], references: [projects.id] }),
@@ -755,10 +700,6 @@ export type NewOrganizationMember = InferInsertModel<typeof organizationMembers>
 export type Notification = InferSelectModel<typeof notifications>;
 export type NewNotification = InferInsertModel<typeof notifications>;
 
-export type AgentRun = InferSelectModel<typeof agentRuns>;
-export type NewAgentRun = InferInsertModel<typeof agentRuns>;
-export type AgentRunEvent = InferSelectModel<typeof agentRunEvents>;
-export type NewAgentRunEvent = InferInsertModel<typeof agentRunEvents>;
 
 export type EventRsvp = InferSelectModel<typeof eventRsvps>;
 export type NewEventRsvp = InferInsertModel<typeof eventRsvps>;

@@ -91,7 +91,12 @@
       "characters": "characters",
       "memberSince": "Member since",
       "saving": "Saving...",
-      "saveSuccess": "Profile updated successfully!"
+      "saveSuccess": "Profile updated successfully!",
+      "profilePicture": "Profile Picture",
+      "fullName": "Full Name",
+      "namePlaceholder": "Enter your full name",
+      "emailAddress": "Email Address",
+      "bio": "Bio"
     },
     "notifications": {
       "title": "Notification Settings",

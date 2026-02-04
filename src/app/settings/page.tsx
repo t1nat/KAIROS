@@ -71,7 +71,7 @@ export default async function SettingsPage({
 
         <main className="flex-1 flex overflow-hidden">
           {/* Settings Navigation */}
-          <aside className="w-64 bg-transparent border-r border-border-light">
+          <aside className="w-64 bg-transparent border-r border-border-light/20 dark:border-border-light/15">
             <div className="h-full py-2">
               <SettingsNav activeSection={activeSection} variant="embedded" />
             </div>

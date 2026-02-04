@@ -399,37 +399,46 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
           <div className="mb-6">
             <div className="kairos-bg-surface rounded-[10px] overflow-hidden kairos-section-border">
               <div className="px-4 py-4">
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className={`w-full py-3.5 rounded-[10px] text-center text-[17px] leading-[1.235] tracking-[-0.016em] font-[590] kairos-font-body transition-all duration-200 flex items-center justify-center gap-3 ${
-                    isSaving
-                      ? "kairos-bg-tertiary kairos-fg-secondary cursor-not-allowed"
-                      : "text-white active:opacity-80"
-                  }`}
-                  style={!isSaving ? { backgroundColor: `rgb(var(--accent-primary))` } : undefined}
-                >
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="animate-spin" size={20} />
-                      {(() => {
+                <div className="flex items-center gap-2">
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className={`px-4 py-2 rounded-[8px] text-[14px] leading-[1.4286] tracking-[-0.012em] font-[590] kairos-font-body transition-all duration-200 flex items-center justify-center gap-2 ${
+                      isSaving
+                        ? "kairos-bg-tertiary kairos-fg-secondary cursor-not-allowed"
+                        : "text-white active:opacity-80 hover:opacity-90"
+                    }`}
+                    style={!isSaving ? { backgroundColor: `rgb(var(--accent-primary))` } : undefined}
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="animate-spin" size={16} />
+                        {(() => {
+                          try {
+                            return t("profile.saving");
+                          } catch {
+                            return "Saving...";
+                          }
+                        })()}
+                      </>
+                    ) : (
+                      (() => {
                         try {
-                          return t("profile.saving");
+                          return t("profile.updateProfile");
                         } catch {
-                          return "Saving...";
+                          return "Update Profile";
                         }
-                      })()}
-                    </>
-                  ) : (
-                    (() => {
-                      try {
-                        return t("profile.updateProfile");
-                      } catch {
-                        return "Update Profile";
-                      }
-                    })()
-                  )}
-                </button>
+                      })()
+                    )}
+                  </button>
+                  <button
+                    type="reset"
+                    disabled={isSaving}
+                    className="ml-auto px-4 py-2 rounded-[8px] text-[14px] leading-[1.4286] tracking-[-0.012em] font-[590] kairos-font-body transition-all duration-200 kairos-bg-tertiary kairos-fg-primary hover:kairos-bg-tertiary/80 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Abort Changes
+                  </button>
+                </div>
               </div>
             </div>
           </div>

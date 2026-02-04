@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { api } from "~/trpc/react";
 import { CreateProjectForm, CreateTaskForm, CollaboratorManager } from "./ProjectManagement";
 import { InteractiveTimeline } from "./InteractiveTimeline";
-import { ProjectPlanningAgentButton } from "./ProjectPlanningAgentButton";
 import { ChevronDown, RefreshCw, CheckCircle2, ArrowLeft, Folder, Trash2, Users, Plus } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -459,7 +458,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                             availableUsers={availableUsers}
                           />
 
-                          <ProjectPlanningAgentButton projectId={selectedProjectId} />
+                          {/* Agent features removed */}
                         </div>
                       </div>
                     )}

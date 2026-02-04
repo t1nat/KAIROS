@@ -571,12 +571,12 @@ function LockedNoteContent(props: LockedNoteContentProps) {
           onChange={(e) => onPasswordChange(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && onSubmit()}
           placeholder={t("notes.password.placeholder")}
-          className="w-full bg-bg-elevated/40 text-fg-primary text-base rounded-2xl px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 shadow-sm"
+          className="w-full bg-bg-surface/60 text-fg-primary text-base rounded-2xl px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-accent-primary/40 focus:bg-bg-surface border border-border-light/30 focus:border-accent-primary/50 shadow-sm transition-all"
         />
         <button
           type="button"
           onClick={onTogglePasswordVisibility}
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-fg-tertiary hover:text-fg-primary"
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-fg-tertiary hover:text-fg-primary transition-colors"
           aria-label={showPassword ? "Hide password" : "Show password"}
         >
           {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
