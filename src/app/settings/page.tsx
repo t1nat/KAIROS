@@ -34,31 +34,31 @@ export default async function SettingsPage({
   const activeSection = typeof sectionParam === 'string' ? sectionParam : "profile";
 
   return (
-    <div className="w-full min-h-screen bg-gray-50/50 dark:bg-[#0a0a0a]">
+    <div className="w-full min-h-screen bg-bg-secondary">
       <SideNav />
 
       <Link
         href="/settings?section=profile"
         aria-label={t("title")}
         title={t("title")}
-        className="fixed bottom-4 left-4 z-40 w-11 h-11 rounded-xl bg-white/80 dark:bg-[#1a1a1a]/80 backdrop-blur-sm shadow-lg flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 lg:hidden border border-gray-200/60 dark:border-gray-800/60"
+        className="fixed bottom-4 left-4 z-40 w-11 h-11 rounded-xl bg-bg-surface/80 backdrop-blur-sm shadow-lg flex items-center justify-center text-fg-secondary hover:text-accent-primary lg:hidden border border-border-light"
       >
         <Settings size={20} />
       </Link>
 
       <div className="lg:ml-16 min-h-screen flex flex-col">
         {/* Header */}
-        <header className="sticky top-0 z-30 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-gray-200/60 dark:border-gray-800/60">
+        <header className="sticky top-0 z-30 bg-bg-primary/80 backdrop-blur-xl border-b border-border-light">
           <div className="px-4 sm:px-6 py-4 flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <div className="hidden sm:flex w-10 h-10 flex-shrink-0 items-center justify-center rounded-xl bg-gray-100/80 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 shadow-sm">
-                <Settings size={20} className="text-gray-500 dark:text-gray-400" />
+              <div className="hidden sm:flex w-10 h-10 flex-shrink-0 items-center justify-center rounded-xl bg-bg-tertiary border border-border-light shadow-sm">
+                <Settings size={20} className="text-fg-tertiary" />
               </div>
               <div>
-                <h1 className="text-[22px] font-[590] leading-[1.1] tracking-[-0.016em] text-gray-900 dark:text-white font-[system-ui,Kairos,sans-serif]">
+                <h1 className="text-[22px] font-[590] leading-[1.1] tracking-[-0.016em] text-fg-primary font-[system-ui,Kairos,sans-serif]">
                   {t("title")}
                 </h1>
-                <p className="text-[13px] leading-[1.3] tracking-[-0.006em] text-gray-500 dark:text-gray-400 font-[system-ui,Kairos,sans-serif] mt-[2px]">
+                <p className="text-[13px] leading-[1.3] tracking-[-0.006em] text-fg-tertiary font-[system-ui,Kairos,sans-serif] mt-[2px]">
                   {t("subtitle")}
                 </p>
               </div>
@@ -71,15 +71,15 @@ export default async function SettingsPage({
 
         <main className="flex-1 flex overflow-hidden">
           {/* Settings Navigation */}
-          <aside className="w-64 bg-transparent border-r border-gray-200/60 dark:border-gray-800/60">
+          <aside className="w-64 bg-transparent border-r border-border-light">
             <div className="h-full py-2">
               <SettingsNav activeSection={activeSection} variant="embedded" />
             </div>
           </aside>
 
           {/* Content Area */}
-          <section className="flex-1 overflow-y-auto bg-gray-50/50 dark:bg-[#0a0a0a]">
-            <div className="w-full">
+          <section className="flex-1 overflow-hidden bg-bg-primary">
+            <div className="w-full h-full">
               {/* Settings Content */}
               <div className="pb-8">
                 {activeSection === "profile" && <ProfileSettingsClient user={session.user} />}

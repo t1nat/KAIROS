@@ -132,10 +132,11 @@ export function InteractiveTimeline({
 
   const handleCheckboxToggle = (task: Task) => {
     if (isReadOnly || task.id < 0) return;
-    
-    const newStatus: Task["status"] = task.status === "completed" ? "pending" : "completed";
-    
-    setOptimisticTasks(prev => {
+
+    const newStatus: Task["status"] =
+      task.status === "completed" ? "pending" : "completed";
+
+    setOptimisticTasks((prev) => {
       const updated = prev.map(t => 
         t.id === task.id 
           ? { ...t, status: newStatus, completedAt: newStatus === "completed" ? new Date() : null }
