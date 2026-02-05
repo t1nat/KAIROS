@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useRef, useEffect, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import { UserDisplay } from "~/components/layout/UserDisplay";
 import { SignInModal } from "~/components/auth/SignInModal";
@@ -29,14 +29,13 @@ interface SessionData {
     user?: { name?: string | null; id?: string } | null;
 }
 
-// Hook to watch for theme/accent changes on document element
 function useThemeColorTick(): number {
     const [tick, setTick] = useState(0);
 
     useEffect(() => {
         const el = document.documentElement;
 
-        const obs = new MutationObserver(() => setTick((t) => t + 1));
+        const obs = new MutationObserver(() => setTick((t: number) => t + 1));
         obs.observe(el, {
             attributes: true,
             attributeFilter: ["class", "data-accent", "style"],
@@ -48,7 +47,6 @@ function useThemeColorTick(): number {
     return tick;
 }
 
-// Parse RGB triplet from CSS variable value like "139 92 246"
 function parseRgbTriplet(raw: string): [number, number, number] | null {
     const cleaned = raw.trim();
     if (!cleaned) return null;
@@ -64,14 +62,12 @@ function parseRgbTriplet(raw: string): [number, number, number] | null {
     return [r, g, b];
 }
 
-// Get RGB triplet from CSS variable
 function getCssVarRgb(varName: string): [number, number, number] | null {
     if (typeof document === "undefined") return null;
     const value = getComputedStyle(document.documentElement).getPropertyValue(varName);
     return parseRgbTriplet(value);
 }
 
-// Rotate hue of an RGB color
 function rotateHue(rgb: [number, number, number], degrees: number): [number, number, number] {
     const r = rgb[0] / 255;
     const g = rgb[1] / 255;
@@ -125,7 +121,6 @@ const DEFAULT_PRIMARY: [number, number, number] = [139, 92, 246];
 export function HomeClient({ session }: {
     session: SessionData | null;
 }) {
-    const router = useRouter();
     const searchParams = useSearchParams();
     const isSwitchingAccount = searchParams?.get("switchAccount") === "1";
     const { resolvedTheme } = useTheme();
@@ -148,8 +143,34 @@ export function HomeClient({ session }: {
 
     useEffect(() => {
         if (session?.user && userProfile !== undefined && !isProfileLoading) {
-            // Show role selection ONLY for first-time users, not when switching accounts
-            if (!isSwitchingAccount && !userProfile?.usageMode) {
+            // Show role selection ONLY for true first-time users, not when switching accounts
+            // Treat null/undefined usageMode consistently and avoid race conditions.
+            const hasUsageMode = userProfile?.usageMode != null;
+            const hasOrganizations = (userProfile?.organizations?.length ?? 0) > 0;
+            let isFirstTimeUser = !hasUsageMode && !hasOrganizations;
+
+            // If we have a createdAt timestamp, only treat accounts created very recently
+            // as first-time. This prevents showing the modal for existing users whose
+            // profile may temporarily appear without usageMode during loading.
+            const createdAtRaw = userProfile?.createdAt;
+
+            // If we have a createdAt timestamp, only treat accounts created very recently
+            // as first-time. This prevents showing the modal for existing users whose
+            // profile may temporarily appear without usageMode during loading.
+            if (isFirstTimeUser && createdAtRaw) {
+                const createdAt = typeof createdAtRaw === "string" ? new Date(createdAtRaw) : createdAtRaw;
+                const ageMs = Date.now() - createdAt.getTime();
+                const FIVE_MINUTES = 5 * 60 * 1000;
+                // Consider account "new" only if created within last 5 minutes
+                isFirstTimeUser = ageMs >= 0 && ageMs < FIVE_MINUTES;
+            }
+
+            // Respect a client-side flag so the modal doesn't keep reappearing
+            const hasShownFlag = typeof window !== "undefined" && window.localStorage?.getItem("kairos_role_selection_shown") === "1";
+
+            if (!isSwitchingAccount && isFirstTimeUser && !hasShownFlag) {
+                // Mark as shown so we don't repeatedly show it
+                try { window.localStorage?.setItem("kairos_role_selection_shown", "1"); } catch {}
                 setShowRoleSelection(true);
             }
         }
@@ -254,6 +275,7 @@ export function HomeClient({ session }: {
 
     const handleRoleSelectionComplete = async () => {
         setShowRoleSelection(false);
+        try { window.localStorage?.setItem("kairos_role_selection_shown", "1"); } catch {}
         await refetchUserProfile();
         window.location.href = "/create";
     };
@@ -261,12 +283,9 @@ export function HomeClient({ session }: {
     const handleSignInClose = () => {
         setIsModalOpen(false);
 
-        if (session?.user && userProfile !== undefined && !userProfile?.usageMode && !isSwitchingAccount) {
-            setTimeout(() => {
-                setShowRoleSelection(true);
-            }, 300);
-        } else if (session?.user) {
+        if (session?.user) {
             // Auto-scroll to project space button after successful login
+            // Role selection modal will be shown by useEffect once profile data loads
             setTimeout(() => {
                 projectSpaceButtonRef.current?.scrollIntoView({
                     behavior: 'smooth',
@@ -324,8 +343,7 @@ export function HomeClient({ session }: {
 
     return (
         <main id="main-content" className="min-h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary relative overflow-hidden">
-            {/* Global styles for floating circle animations */}
-            <style jsx global>{`
+            <style dangerouslySetInnerHTML={{ __html: `
                 @keyframes circle-drift-1 {
                     0%, 100% { 
                         transform: translate(0, 0) scale(1);
@@ -400,7 +418,7 @@ export function HomeClient({ session }: {
                     animation: gentle-fade-in 1.2s ease-out forwards, circle-drift-4 14s ease-in-out infinite;
                     animation-delay: 0.2s, 0s;
                 }
-            `}</style>
+            ` }} />
 
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
                 {/* Primary accent - top left */}

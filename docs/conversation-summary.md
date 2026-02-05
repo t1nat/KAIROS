@@ -1,146 +1,138 @@
 # Conversation summary (chronological)
 
-## 1) Environment-variable documentation work
+## 1) Agent 1 (A1) Workspace Concierge: implementation plan → initial implementation
 
-- Goal evolved from: create a Markdown doc listing only the required environment variables and where to get them.
-- Constraint clarified by user: they will not host anything themselves and wanted to use a hosted, OpenAI-compatible endpoint.
-- Follow-up user question: whether they can use a key from Hugging Face, and what token permissions (fine-grained token checkboxes) are required.
+### Primary request and intent
 
-### Hugging Face Inference Providers decision
+- Create a precise, step-by-step implementation plan for **Agent 1 (A1) Workspace Concierge** and place it under [`docs/agents/1-workspace-concierge-implementation-plan.md`](docs/agents/1-workspace-concierge-implementation-plan.md).
+- Then start implementing A1 following that plan:
+  - Add server scaffolding (tRPC router + orchestrator).
+  - Add A1 schemas and agent profile.
+  - Implement A1 read tools (projects/tasks/orgs/notifications/events).
+  - Implement an initial “draft flow” with read-tool allowlist enforcement and JSON validation (LLM wiring deferred).
+  - Run checks (repo has no `npm test`, so used lint/typecheck/build).
 
-- Chosen hosted backend approach: Hugging Face Inference Providers OpenAI-compatible router.
-- Connection details captured in the doc:
-  - Base URL: `https://router.huggingface.co/v1`
-  - Auth: `Authorization: Bearer $HF_TOKEN`
-  - Permission guidance: only the token capability to **make calls to Inference Providers** is needed for API usage; no extra repo/org/billing permissions for this use case.
+### Work delivered (docs + backend scaffolding)
 
-### Model selection and links
+- Created the plan doc: [`docs/agents/1-workspace-concierge-implementation-plan.md`](docs/agents/1-workspace-concierge-implementation-plan.md)
 
-- User requested explicit links for the default and fallback models.
-- Default model: `Qwen/Qwen2.5-7B-Instruct`
-- Fallback model: `microsoft/Phi-3.5-mini-instruct`
-- The env var doc was then simplified further to **Hugging Face-only** model names so the user can copy/paste model IDs directly into env vars.
+- Added the agent router and mounted it:
+  - Created [`src/server/api/routers/agent.ts`](src/server/api/routers/agent.ts)
+    - Added `draft` mutation using [`protectedProcedure`](src/server/api/trpc.ts:130) and calls orchestrator:
+      ```ts
+      export const agentRouter = createTRPCRouter({
+        draft: protectedProcedure
+          .input(
+            z.object({
+              agentId: z.literal("workspace_concierge"),
+              message: z.string().min(1).max(20_000),
+              scope: z
+                .object({
+                  orgId: z.union([z.string(), z.number()]).optional(),
+                  projectId: z.union([z.string(), z.number()]).optional(),
+                })
+                .optional(),
+            }),
+          )
+          .mutation(async ({ ctx, input }) => {
+            return agentOrchestrator.draft({
+              ctx,
+              agentId: input.agentId,
+              message: input.message,
+              scope: input.scope,
+            });
+          }),
+      });
+      ```
+  - Modified [`src/server/api/root.ts`](src/server/api/root.ts)
+    - Mounted `agent: agentRouter`.
 
-## 2) Documentation changes made
+- Added strict A1 output schemas + profile wiring:
+  - Created [`src/server/agents/schemas/a1WorkspaceConciergeSchemas.ts`](src/server/agents/schemas/a1WorkspaceConciergeSchemas.ts)
+    - `ConciergeIntentSchema`, `HandoffPlanSchema`, `ActionPlanDraftSchema`, `A1OutputSchema`.
+  - Created/modified [`src/server/agents/profiles/a1WorkspaceConcierge.ts`](src/server/agents/profiles/a1WorkspaceConcierge.ts)
+    - Added `outputSchema: A1OutputSchema`.
 
-### Modified
+- Implemented A1 read tools (partial; some placeholders remain):
+  - Created [`src/server/agents/tools/a1/readTools.ts`](src/server/agents/tools/a1/readTools.ts)
+    - Implemented: `getSessionContext`, `listProjects`, `listTasks`, `listNotifications`.
+    - Placeholders (return empty/null): `listOrganizations`, `getProjectDetail`, `getTaskDetail`, `listEventsPublic`.
 
-- [`docs/agent-env-vars.md`](docs/agent-env-vars.md)
-  - Updated to include Hugging Face Inference Providers OpenAI-compatible routing details.
-  - Added model card links for Qwen and Phi.
-  - Simplified to HF-only model IDs (removing OpenRouter-specific model ID sections) so the user can paste the HF model names directly into env vars.
+- Implemented a real minimal draft flow in orchestrator (no LLM yet):
+  - Created/modified [`src/server/agents/orchestrator/agentOrchestrator.ts`](src/server/agents/orchestrator/agentOrchestrator.ts)
+    - Enforces allowlisted read tools.
+    - Validates tool inputs/outputs via Zod schemas.
+    - Builds `readQueries` based on the provided `scope`.
 
-### Read/used as baseline
+### Notable errors/fixes during implementation
 
-- [`docs/agent-implementation-plan.md`](docs/agent-implementation-plan.md) (used to determine which env vars are required and to align docs)
+- `npm test` failed (“Missing script: test”). Switched to:
+  - `npm run lint`
+  - `npm run typecheck`
+  - `npm run build`
 
-## 3) New major request: agent-architecture research + multi-agent plan for this repo
+- ESLint/TS issues in [`src/server/agents/tools/a1/readTools.ts`](src/server/agents/tools/a1/readTools.ts):
+  - `no-explicit-any` due to `satisfies Record<..., any>`.
+  - Attempted `unknown`, ran into TS variance issues around function parameter types.
+  - Resolved by loosening export typing for `A1_READ_TOOLS` (plain object), and fixing:
+    - nullable session usage (`ctx.session` can be null)
+    - nullable DB fields (e.g. project `description: string | null`).
 
-User asked for a new deliverable:
-- Research best-practice agent architectures and tool usage patterns (via Firecrawl MCP).
-- Then design a multi-agent plan tailored to this repository.
+- `apply_diff` failed twice due to diff payload containing `=======` markers; workaround used re-read + full rewrite via `write_to_file` once, and later a corrected `apply_diff`.
 
-Key constraints from the request:
-- Schema-first; JSON-only outputs.
-- Server-side Zod validation.
-- Two-pass safety for writes (draft → confirm → apply).
-- Default model Qwen, fallback Phi.
-- OpenAI-compatible serving but vendor-agnostic.
-- Deliverable: a single detailed Markdown doc under `docs/` containing:
-  - Repo system map
-  - Best-practices checklist with quotes + links
-  - Recommended architecture
-  - 3–6 agent specs
-  - Roadmap and risks
-  - Sources consulted
+- Next build lock error: `.next/lock` occurred when a build was already running in another terminal.
 
-## 4) Repo analysis started (system map)
+## 2) UI bug fix: Role selection modal showing while logged in
 
-To prepare the repo-tailored architecture, analysis began by mapping backend routers, database schema, and key UI pages/components.
+- User issue: “What will you be using Kairos for?” modal appeared on the homepage even when already logged in.
+- Fix implemented in [`src/components/homepage/HomeClient.tsx`](src/components/homepage/HomeClient.tsx):
+  - Treat `usageMode` null/undefined consistently.
+  - Determine first-time user via:
+    ```ts
+    const hasUsageMode = userProfile?.usageMode != null;
+    const hasOrganizations = (userProfile?.organizations?.length ?? 0) > 0;
+    const isFirstTimeUser = !hasUsageMode && !hasOrganizations;
+    ```
+  - Applied both in the initial effect and the “sign-in close” handling.
 
-### Backend API wiring
+## 3) New feature request (in progress): Rename Projects → Dashboard
 
-- [`src/server/api/root.ts`](src/server/api/root.ts)
-  - Router mount points identified: `event`, `settings`, `note`, `project`, `task`, `organization`, `user`, `auth`, `notification`, `chat`.
+### Request
 
-- [`src/server/api/trpc.ts`](src/server/api/trpc.ts)
-  - Context includes `{ db, session, headers }`.
-  - `protectedProcedure` enforces session user and (notably) creates the DB user row if missing.
-  - Timing middleware logs in dev.
+- Rename the Projects page to Dashboard:
+  - Create a new `/dashboard` route.
+  - Redirect `/projects` → `/dashboard`.
+  - Dashboard should show:
+    - a user’s projects
+    - the organizations they’re in / admin for
+  - UI should look professional.
 
-### Database schema
+### Work performed so far (investigation/reading)
 
-- [`src/server/db/schema.ts`](src/server/db/schema.ts)
-  - Key domain areas identified:
-    - Users + settings + security flags
-    - Organizations + membership roles/capabilities
-    - Projects + collaborators
-    - Tasks + comments + activity log
-    - Sticky notes with password/locking metadata
-    - Direct chat conversations/messages
-    - Events + RSVPs + comments + likes
-    - Notifications
+- Reviewed current Projects page wrapper: [`src/app/projects/page.tsx`](src/app/projects/page.tsx)
+- Reviewed navigation: [`src/components/layout/SideNav.tsx`](src/components/layout/SideNav.tsx)
+  - Main nav includes `{ href: "/projects", ... }` and active checks for `pathname === "/projects"`.
+- Reviewed i18n labels: [`src/i18n/messages/en.json`](src/i18n/messages/en.json)
+  - Found `nav.projects: "Projects"` (similar keys exist in other locales).
+- Reviewed projects UI: [`src/components/projects/ProjectsListClient.tsx`](src/components/projects/ProjectsListClient.tsx)
+  - Uses `api.project.getMyProjects.useQuery()`.
+  - Currently shows “My Projects”; does not display organization info.
+- Reviewed user profile API: [`src/server/api/routers/user.ts`](src/server/api/routers/user.ts)
+  - `getProfile` returns organization memberships + roles (useful for Dashboard).
 
-### Routers reviewed
+### Next intended implementation steps
 
-- [`src/server/api/routers/project.ts`](src/server/api/routers/project.ts)
-  - Project create/list/get and org vs personal scoping.
-  - Collaborator handling.
+- Add [`src/app/dashboard/page.tsx`](src/app/dashboard/page.tsx) (new) with a professional dashboard layout.
+- Change [`src/app/projects/page.tsx`](src/app/projects/page.tsx) to redirect using `redirect("/dashboard")`.
+- Update [`src/components/layout/SideNav.tsx`](src/components/layout/SideNav.tsx) nav item to `/dashboard` and adjust active logic.
+- Update i18n to display “Dashboard” (e.g. add `nav.dashboard` and update locale JSON files).
 
-- [`src/server/api/routers/task.ts`](src/server/api/routers/task.ts)
-  - CRUD + status updates.
-  - Access checks based on ownership/org membership/collaborator permissions.
-  - Writes to `taskActivityLog`.
+## 4) All user messages (non-tool)
 
-- [`src/server/api/routers/note.ts`](src/server/api/routers/note.ts)
-  - Locked note flows; password verification/reset flows.
-  - Ensures locked content is not returned where inappropriate.
-
-- [`src/server/api/routers/event.ts`](src/server/api/routers/event.ts)
-  - Public event feed and engagement (RSVP/likes/comments).
-
-- [`src/server/api/routers/chat.ts`](src/server/api/routers/chat.ts)
-  - Project access assertion; conversations/messages.
-
-- Also inspected at a high level:
-  - [`src/server/api/routers/settings.ts`](src/server/api/routers/settings.ts)
-  - [`src/server/api/routers/organization.ts`](src/server/api/routers/organization.ts)
-  - [`src/server/api/routers/notification.ts`](src/server/api/routers/notification.ts)
-  - [`src/server/api/routers/user.ts`](src/server/api/routers/user.ts)
-
-### UI pages/components reviewed
-
-- App Router pages:
-  - [`src/app/projects/page.tsx`](src/app/projects/page.tsx)
-  - [`src/app/chat/page.tsx`](src/app/chat/page.tsx)
-  - [`src/app/create/page.tsx`](src/app/create/page.tsx)
-  - [`src/app/settings/page.tsx`](src/app/settings/page.tsx)
-  - [`src/app/orgs/page.tsx`](src/app/orgs/page.tsx)
-  - [`src/app/progress/page.tsx`](src/app/progress/page.tsx)
-
-- Key client components:
-  - [`src/components/projects/ProjectManagement.tsx`](src/components/projects/ProjectManagement.tsx)
-  - [`src/components/events/EventFeed.tsx`](src/components/events/EventFeed.tsx)
-  - [`src/components/notes/NotesList.tsx`](src/components/notes/NotesList.tsx)
-  - [`src/components/chat/ChatClient.tsx`](src/components/chat/ChatClient.tsx)
-
-## 5) Notable errors/events during analysis
-
-- Tooling enforcement issue occurred earlier in the broader thread (assistant responded without a tool call); subsequently corrected by using the appropriate edit tool flow.
-
-- File read error: attempted to read an events page at a path that does not exist (ENOENT) for `src/app/events/page.tsx`.
-  - Conclusion: events UI appears to live under the publish route instead (see existing file [`src/app/publish/page.tsx`](src/app/publish/page.tsx)), and the events feed UI is implemented via [`src/components/events/EventFeed.tsx`](src/components/events/EventFeed.tsx).
-
-## 6) Current status and next intended steps (at the moment of this summary request)
-
-- Status: In the middle of building a repo “system map” (routes/pages/routers/db) as the foundation for the multi-agent architecture plan.
-
-- Next steps planned:
-  1. Continue repo analysis by reading remaining relevant UI pages (notably [`src/app/publish/page.tsx`](src/app/publish/page.tsx)) and any remaining router/service patterns.
-  2. Run Firecrawl MCP research queries on best-practice agent architectures, tool safety, JSON/schema-first patterns, prompt-injection defenses, and human-in-the-loop write approvals.
-  3. Compile the requested single Markdown deliverable under `docs/` with:
-     - repo map
-     - sourced best practices (quotes + links)
-     - recommended multi-agent architecture
-     - 3–6 agent specifications
-     - roadmap, risks, and sources.
+- “create a precise implementation plan for agent 1 and put it in docs/agents/. make it step by step and amke it from start to end”
+- “now start implementing Agent 1 (A1) — Workspace Concierge from the implementation plan file follow it”
+- “fix the problems from readTools then run tests”
+- “fix the what will you be using kairos for hat appears in th ehome page even though im logged into my account”
+- “// Minimal draft flow (read-only): fetch a small workspace snapshot. // Next step: build a real context pack + LLM call + tool allowlist enforcement. in agentOrchestrator can you implement it”
+- “rename the proejcts page to dashboard where a person can see his projects and the organizations they are in or ad admins in. m,ake the ui professional”
+- “Create a new `/dashboard` route and redirect `/projects` → `/dashboard` (preferred).”
