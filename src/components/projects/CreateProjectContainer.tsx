@@ -76,6 +76,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
 
   const [isCreateProjectExpanded, setIsCreateProjectExpanded] = useState(false);
   const [deleteProjectArmed, setDeleteProjectArmed] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const utils = api.useUtils();
 
@@ -90,6 +91,10 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
       staleTime: 1000 * 60,
     }
   );
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (projectIdFromUrl) {
@@ -252,52 +257,65 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
       ]
     : [];
 
+  if (!mounted) {
+    return (
+      <div className="w-full h-full overflow-y-auto bg-bg-primary">
+        <div className="animate-pulse">
+          <div className="h-12 bg-bg-tertiary rounded-[12px] mx-4 mb-2"></div>
+          <div className="h-32 bg-bg-tertiary rounded-[12px] mx-4 mb-2"></div>
+          <div className="h-32 bg-bg-tertiary rounded-[12px] mx-4"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full h-full overflow-y-auto bg-gradient-to-b from-transparent via-gray-50/20 to-transparent dark:from-transparent dark:via-gray-900/20 dark:to-transparent">
-      <div className="max-w-full px-4 sm:px-6 lg:px-8">
+    <div className="w-full h-full overflow-y-auto bg-bg-primary">
+      <div className="max-w-full px-4 sm:px-6">
         {/* Header */}
         <div className="pt-8 pb-6">
-          <h1 className="text-[32px] font-[590] leading-[1.1] tracking-[-0.016em] text-gray-900 dark:text-white font-[system-ui,Kairos,sans-serif] mb-2">
-            Create & Manage Projects
+          <h1 className="text-[34px] font-[700] leading-[1.1] tracking-[-0.022em] kairos-fg-primary kairos-font-display mb-2">
+            {t("projectForm.title")}
           </h1>
-          <p className="text-[15px] leading-[1.4] tracking-[-0.01em] text-gray-600 dark:text-gray-400 font-[system-ui,Kairos,sans-serif]">
-            Create new projects, manage tasks, and collaborate with your team
+          <p className="text-[15px] leading-[1.4667] tracking-[-0.01em] kairos-fg-tertiary kairos-font-body">
+            {t("subtitle")}
           </p>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-6 relative w-full">
-          {/* Left Sidebar - Projects List & Create */}
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 relative w-full">
+          {/* Left Sidebar — Projects List & Create */}
           <div className="w-full lg:w-80 xl:w-96 lg:flex-shrink-0 space-y-4">
-            {/* Create New Project Card - iPhone Style */}
+            {/* Create New Project Card */}
             {!selectedProjectId && (
               <div className="animate-in slide-in-from-top-2 duration-200">
-                <div className="bg-gray-100/60 dark:bg-gray-900/60 backdrop-blur-lg rounded-2xl overflow-hidden border border-gray-300/30 dark:border-gray-700/30 shadow-sm">
+                <div className="kairos-bg-surface rounded-[10px] overflow-hidden kairos-section-border">
                   <button
                     onClick={() => setIsCreateProjectExpanded(!isCreateProjectExpanded)}
-                    className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-200/30 dark:hover:bg-gray-800/30 active:bg-gray-200/40 dark:active:bg-gray-800/40 transition-all duration-200"
+                    className="w-full flex items-center justify-between pl-4 pr-[18px] py-[11px] active:kairos-active-state transition-colors"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-xl bg-gray-300/50 dark:bg-gray-700/50 flex items-center justify-center backdrop-blur-sm">
-                        <Plus size={18} className="text-gray-700 dark:text-gray-300" strokeWidth={2.5} />
+                      <div className="w-[30px] h-[30px] rounded-full kairos-accent-primary/15 flex items-center justify-center">
+                        <Plus size={18} className="kairos-accent-primary" strokeWidth={2.2} />
                       </div>
                       <div className="flex-1 text-left">
-                        <div className="text-[16px] font-[510] text-gray-900 dark:text-white font-[system-ui,Kairos,sans-serif]">
-                          Create New Project
+                        <div className="text-[17px] leading-[1.235] tracking-[-0.016em] kairos-fg-primary kairos-font-body font-[590]">
+                          {t("projectForm.title")}
                         </div>
-                        <div className="text-[13px] text-gray-600 dark:text-gray-400 font-[system-ui,Kairos,sans-serif]">
-                          Start a new project from scratch
+                        <div className="text-[13px] leading-[1.3846] tracking-[-0.006em] kairos-fg-secondary kairos-font-caption">
+                          {t("projectForm.descriptionPlaceholder")}
                         </div>
                       </div>
                     </div>
-                    <ChevronDown 
-                      size={20} 
-                      className={`text-gray-500 dark:text-gray-400 transition-all duration-300 ${isCreateProjectExpanded ? "rotate-180" : ""}`}
+                    <ChevronDown
+                      size={20}
+                      className={`kairos-fg-tertiary transition-all duration-300 ${isCreateProjectExpanded ? "rotate-180" : ""}`}
+                      strokeWidth={2.5}
                     />
                   </button>
-                  
+
                   {isCreateProjectExpanded && (
-                    <div className="px-5 pb-5 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <div className="pt-4 border-t border-gray-300/20 dark:border-gray-700/20">
+                    <div className="px-4 pb-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="pt-4 border-t kairos-divider">
                         <CreateProjectForm
                           onSubmit={handleCreateProject}
                           currentUser={{ id: userId, name: null, email: "", image: null }}
@@ -314,28 +332,34 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
             {/* Existing Projects List */}
             {!selectedProjectId && projects && projects.length > 0 && (
               <div className="space-y-2 animate-in fade-in duration-300">
-                <h2 className="text-[17px] font-[590] text-gray-900 dark:text-white mb-3 font-[system-ui,Kairos,sans-serif] pl-2">
-                  My Projects ({projects.length})
+                <h2 className="text-[13px] leading-[1.3846] tracking-[-0.006em] kairos-fg-secondary kairos-font-caption mb-3 px-1 uppercase tracking-wide">
+                  {t("projects.myProjects")} ({projects.length})
                 </h2>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {projects.map((project) => (
                     <button
                       key={project.id}
                       onClick={() => setSelectedProjectId(project.id)}
-                      className="w-full flex items-center gap-3 p-4 rounded-2xl bg-gray-100/60 dark:bg-gray-900/60 backdrop-blur-lg hover:bg-gray-200/40 dark:hover:bg-gray-800/40 active:scale-[0.995] transition-all duration-200 group text-left border border-gray-300/30 dark:border-gray-700/30 shadow-sm"
+                      className="w-full flex items-center justify-between pl-4 pr-[18px] py-[11px] kairos-bg-surface rounded-[10px] kairos-section-border active:kairos-active-state transition-colors group"
                     >
-                      <div className="w-10 h-10 rounded-xl bg-gray-300/50 dark:bg-gray-700/50 flex items-center justify-center backdrop-blur-sm">
-                        <Folder size={18} className="text-gray-700 dark:text-gray-300" />
+                      <div className="flex items-center gap-3">
+                        <div className="w-[30px] h-[30px] rounded-full kairos-bg-tertiary flex items-center justify-center">
+                          <Folder size={18} className="kairos-fg-secondary" strokeWidth={2.2} />
+                        </div>
+                        <div className="flex-1 min-w-0 text-left">
+                          <p className="text-[17px] leading-[1.235] tracking-[-0.016em] kairos-fg-primary kairos-font-body font-[590] truncate">
+                            {project.title || t("projects.untitled")}
+                          </p>
+                          <p className="text-[13px] leading-[1.3846] tracking-[-0.006em] kairos-fg-secondary kairos-font-caption truncate">
+                            {project.tasks?.length ?? 0} {t("taskForm.taskName")}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[15px] font-[510] text-gray-900 dark:text-white truncate">
-                          {project.title || t("project.untitled")}
-                        </p>
-                        <p className="text-[13px] text-gray-600 dark:text-gray-400 truncate">
-                          {project.tasks?.length ?? 0} tasks
-                        </p>
-                      </div>
-                      <ChevronDown size={16} className="text-gray-500 dark:text-gray-400 -rotate-90" />
+                      <ChevronDown 
+                        size={20} 
+                        className="kairos-fg-tertiary group-hover:kairos-accent-primary -rotate-90 transition-colors" 
+                        strokeWidth={2.5}
+                      />
                     </button>
                   ))}
                 </div>
@@ -345,145 +369,151 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
             {selectedProjectId && projectDetails && (
               <div className="space-y-4 animate-in fade-in slide-in-from-left-2 duration-300">
                 {/* Project Header Card */}
-                <div className="bg-gray-100/60 dark:bg-gray-900/60 backdrop-blur-lg rounded-2xl overflow-hidden border border-gray-300/30 dark:border-gray-700/30 shadow-sm">
-                  <div className="p-5">
-                    {/* Back Button & Actions */}
-                    <div className="flex items-center justify-between mb-4">
+                <div className="kairos-bg-surface rounded-[10px] overflow-hidden kairos-section-border">
+                  {/* Back Button & Actions */}
+                  <div className="flex items-center justify-between px-4 pt-4 pb-3">
+                    <button
+                      onClick={() => setSelectedProjectId(null)}
+                      className="flex items-center gap-2 p-2 kairos-fg-secondary hover:kairos-accent-primary hover:bg-accent-primary/10 rounded-xl transition-all duration-200 group"
+                    >
+                      <ArrowLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" strokeWidth={2.2} />
+                      <span className="text-[13px] font-medium">{t("projects.allProjects")}</span>
+                    </button>
+
+                    <div className="flex items-center gap-1">
                       <button
-                        onClick={() => setSelectedProjectId(null)}
-                        className="flex items-center gap-2 p-2.5 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-300/30 dark:hover:bg-gray-800/30 rounded-xl transition-all duration-200 group"
+                        onClick={() => void refetchProjectDetails()}
+                        className="p-2.5 kairos-fg-tertiary hover:kairos-accent-primary hover:bg-accent-primary/10 rounded-xl transition-all duration-200"
+                        aria-label={t("actions.refresh")}
                       >
-                        <ArrowLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
-                        <span className="text-[14px] font-medium">All Projects</span>
+                        <RefreshCw size={16} strokeWidth={2.2} />
                       </button>
 
-                      <div className="flex items-center gap-1">
+                      {isOwner && (
                         <button
-                          onClick={() => void refetchProjectDetails()}
-                          className="p-2.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-300/30 dark:hover:bg-gray-800/30 rounded-xl transition-all duration-200"
-                          aria-label={t("actions.refresh")}
-                        >
-                          <RefreshCw size={18} />
-                        </button>
-                        
-                        {isOwner && (
-                          <button
-                            onClick={handleDeleteProject}
-                            disabled={deleteProject.isPending}
-                            className={`p-2.5 rounded-xl transition-all duration-200 ${
-                              deleteProjectArmed
-                                ? "bg-red-500/10 dark:bg-red-500/10 text-red-600 dark:text-red-400"
-                                : "text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 dark:hover:bg-red-500/10"
-                            }`}
-                            aria-label={deleteProjectArmed ? "Confirm delete project" : "Delete project"}
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Project Title & Description */}
-                    <div className="flex items-start gap-3 mb-4">
-                      <div className="w-12 h-12 rounded-xl bg-gray-300/50 dark:bg-gray-700/50 flex items-center justify-center backdrop-blur-sm">
-                        <Folder className="text-gray-700 dark:text-gray-300" size={24} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h2 className="text-[20px] font-[590] text-gray-900 dark:text-white mb-1 leading-tight">{projectDetails.title}</h2>
-                        {projectDetails.description && (
-                          <p className="text-[14px] text-gray-600 dark:text-gray-400 leading-relaxed">{projectDetails.description}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Access Indicator */}
-                    {!isOwner && (
-                      <div className="flex items-center gap-2 pt-4 border-t border-gray-300/20 dark:border-gray-700/20">
-                        <span
-                          className={`inline-flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-lg font-medium backdrop-blur-sm ${
-                            hasWriteAccess
-                              ? "text-green-600 dark:text-green-400 bg-green-500/10 dark:bg-green-500/10"
-                              : "text-gray-600 dark:text-gray-400 bg-gray-300/30 dark:bg-gray-700/30"
+                          onClick={handleDeleteProject}
+                          disabled={deleteProject.isPending}
+                          className={`p-2.5 rounded-xl transition-all duration-200 ${
+                            deleteProjectArmed
+                              ? "bg-error/10 text-error"
+                              : "kairos-fg-tertiary hover:text-error hover:bg-error/10"
                           }`}
+                          aria-label={deleteProjectArmed ? "Confirm delete project" : "Delete project"}
                         >
-                          {hasWriteAccess ? (
-                            <>
-                              <CheckCircle2 size={12} />
-                              Can Edit
-                            </>
-                          ) : (
-                            "View Only"
-                          )}
-                        </span>
+                          <Trash2 size={16} strokeWidth={2.2} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="h-[0.33px] kairos-divider mx-4 mb-4" />
+
+                  {/* Project Title & Description */}
+                  <div className="flex items-start gap-3 px-4 mb-4">
+                    <div className="w-[44px] h-[44px] rounded-full kairos-accent-primary/15 flex items-center justify-center">
+                      <Folder className="kairos-accent-primary" size={22} strokeWidth={2.2} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-[20px] font-[590] kairos-fg-primary mb-1 leading-tight">{projectDetails.title}</h2>
+                      {projectDetails.description && (
+                        <p className="text-[13px] leading-[1.3846] tracking-[-0.006em] kairos-fg-secondary kairos-font-caption">
+                          {projectDetails.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Access Indicator */}
+                  {!isOwner && (
+                    <div className="flex items-center gap-2 pt-4 px-4 border-t kairos-divider">
+                      <span
+                        className={`inline-flex items-center gap-1.5 text-[13px] px-3 py-1.5 rounded-lg font-medium ${
+                          hasWriteAccess
+                            ? "text-success bg-success/10"
+                            : "kairos-fg-tertiary kairos-bg-tertiary/50"
+                        }`}
+                      >
+                        {hasWriteAccess ? (
+                          <>
+                            <CheckCircle2 size={12} strokeWidth={2.2} />
+                            {t("team.canEdit")}
+                          </>
+                        ) : (
+                          t("team.viewOnly")
+                        )}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Team Members Section */}
+                  {isOwner && (
+                    <div className="mt-4 pt-4 px-4 border-t kairos-divider">
+                      <h3 className="text-[13px] leading-[1.3846] tracking-[-0.006em] kairos-fg-secondary kairos-font-caption mb-3 flex items-center gap-2 px-1 uppercase tracking-wide">
+                        <Users size={14} className="kairos-accent-primary" strokeWidth={2.2} />
+                        {t("team.title")}
+                      </h3>
+                      <div className="space-y-3">
+                        <CollaboratorManager
+                          projectId={selectedProjectId}
+                          currentCollaborators={(projectDetails.collaborators?.map((c) => ({
+                            user: {
+                              id: c.collaboratorId,
+                              name: c.collaborator?.name ?? null,
+                              email: c.collaborator?.email ?? "",
+                              image: c.collaborator?.image ?? null,
+                            },
+                            permission: c.permission,
+                          })) ?? []) as Collaborator[]}
+                          onAddCollaborator={handleAddCollaborator}
+                          onRemoveCollaborator={handleRemoveCollaborator}
+                          onUpdatePermission={handleUpdatePermission}
+                          isOwner={isOwner}
+                        />
                       </div>
-                    )}
-                    
-                    {/* Team Members Section */}
-                    {isOwner && (
-                      <div className="mt-4 pt-4 border-t border-gray-300/20 dark:border-gray-700/20">
-                        <h3 className="text-[15px] font-[510] text-gray-900 dark:text-white mb-3 flex items-center gap-2 pl-1">
-                          <Users size={16} className="text-gray-600 dark:text-gray-400" />
-                          Team Members
+                    </div>
+                  )}
+
+                  {/* Add Task Section */}
+                  {hasWriteAccess && (
+                    <div className="mt-4 pt-4 px-4 border-t kairos-divider">
+                      <div className="space-y-4">
+                        <h3 className="text-[13px] leading-[1.3846] tracking-[-0.006em] kairos-fg-secondary kairos-font-caption mb-2 pl-1 uppercase tracking-wide flex items-center gap-2">
+                          <Plus size={14} className="kairos-accent-primary" strokeWidth={2.2} />
+                          {t("taskForm.add")}
                         </h3>
-                        <div className="space-y-3">
-                          <CollaboratorManager
-                            projectId={selectedProjectId}
-                            currentCollaborators={(projectDetails.collaborators?.map((c) => ({
-                              user: {
-                                id: c.collaboratorId,
-                                name: c.collaborator?.name ?? null,
-                                email: c.collaborator?.email ?? "",
-                                image: c.collaborator?.image ?? null,
-                              },
-                              permission: c.permission,
-                            })) ?? []) as Collaborator[]}
-                            onAddCollaborator={handleAddCollaborator}
-                            onRemoveCollaborator={handleRemoveCollaborator}
-                            onUpdatePermission={handleUpdatePermission}
-                            isOwner={isOwner}
-                          />
-                        </div>
-                      </div>
-                    )}
 
-                    {/* Add Task Section */}
-                    {hasWriteAccess && (
-                      <div className="mt-4 pt-4 border-t border-gray-300/20 dark:border-gray-700/20">
-                        <div className="space-y-4">
-                          <h3 className="text-[15px] font-[510] text-gray-900 dark:text-white mb-2 pl-1">
-                            Add New Task
-                          </h3>
-
-                          {/* AI Task Generation */}
-                          <AiTaskDraftPanel
-                            projectId={selectedProjectId}
-                            projectTitle={projectDetails.title}
-                            projectDescription={projectDetails.description ?? null}
-                            onAddTask={(task) => {
+                        {/* AI Task Generation */}
+                        <AiTaskDraftPanel
+                          projectId={selectedProjectId}
+                          projectTitle={projectDetails.title}
+                          projectDescription={projectDetails.description ?? null}
+                          onAddTask={(task: { title: string; description: string; priority: "low" | "medium" | "high" | "urgent"; dueDate?: Date }) => {
+                            createTask.mutate({
+                              ...task,
+                              projectId: selectedProjectId,
+                            });
+                          }}
+                          onAddAllTasks={(draftTasks: Array<{ title: string; description: string; priority: "low" | "medium" | "high" | "urgent"; dueDate?: Date }>) => {
+                            for (const task of draftTasks) {
                               createTask.mutate({
                                 ...task,
                                 projectId: selectedProjectId,
                               });
-                            }}
-                            onAddAllTasks={(draftTasks) => {
-                              for (const task of draftTasks) {
-                                createTask.mutate({
-                                  ...task,
-                                  projectId: selectedProjectId,
-                                });
-                              }
-                            }}
-                          />
+                            }
+                          }}
+                        />
 
-                          <CreateTaskForm
-                            projectId={selectedProjectId}
-                            onSubmit={handleCreateTask}
-                            availableUsers={availableUsers}
-                          />
-                        </div>
+                        <CreateTaskForm
+                          projectId={selectedProjectId}
+                          onSubmit={handleCreateTask}
+                          availableUsers={availableUsers}
+                        />
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
+
+                  {/* Bottom spacing */}
+                  <div className="h-4" />
                 </div>
               </div>
             )}
@@ -504,15 +534,15 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
 
             {!selectedProjectId && (
               <div className="h-[320px] flex flex-col items-center justify-center">
-                <div className="w-16 h-16 rounded-2xl bg-accent-primary/20 flex items-center justify-center mb-4">
-                  <Folder size={24} className="text-accent-primary" />
+                <div className="w-[60px] h-[60px] rounded-full kairos-bg-tertiary flex items-center justify-center mb-4">
+                  <Folder size={26} className="kairos-fg-secondary" strokeWidth={2.2} />
                 </div>
                 <div className="text-center max-w-md px-8">
-                  <h3 className="text-[17px] font-[510] text-fg-primary mb-2">
-                    Select a Project
+                  <h3 className="text-[17px] font-[590] kairos-fg-primary kairos-font-body mb-2">
+                    {t("projects.selectProject")}
                   </h3>
-                  <p className="text-[14px] text-fg-secondary">
-                    Choose an existing project from the list or create a new one to get started
+                  <p className="text-[15px] leading-[1.4667] tracking-[-0.01em] kairos-fg-tertiary kairos-font-body">
+                    {t("projects.selectProjectDesc")}
                   </p>
                 </div>
               </div>
@@ -521,7 +551,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
         </div>
 
         {/* Bottom Spacing */}
-        <div className="h-10"></div>
+        <div className="h-8" />
       </div>
     </div>
   );

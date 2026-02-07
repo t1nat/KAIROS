@@ -91,7 +91,7 @@ export function AppearanceSettings() {
     setTheme(nextTheme);
     try {
       await updateAppearance.mutateAsync({ theme: nextTheme });
-    } catch (e) {
+    } catch {
       // Error is handled silently
     }
   };
@@ -100,7 +100,7 @@ export function AppearanceSettings() {
     document.documentElement.dataset.accent = accent;
     try {
       await updateAppearance.mutateAsync({ accentColor: accent });
-    } catch (e) {
+    } catch {
       // Error is handled silently
     }
   };

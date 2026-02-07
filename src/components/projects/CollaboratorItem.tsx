@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { Trash2 } from "lucide-react";
+import { ChevronDown } from "lucide-react";
+import { useState } from "react";
 
 interface User {
   id: string;
@@ -27,56 +28,96 @@ export function CollaboratorItem({
   onRemove,
   showControls = true,
 }: CollaboratorItemProps) {
+  const [isPermissionOpen, setIsPermissionOpen] = useState(false);
+
   return (
-    <div className="flex items-center justify-between p-3 bg-bg-surface/50 rounded-lg ios-card hover:bg-bg-elevated transition-all">
-      <div className="flex items-center gap-3 flex-1 min-w-0">
-        {user.image ? (
-          <Image
-            src={user.image}
-            alt={user.name ?? "User"}
-            width={32}
-            height={32}
-            className="rounded-full object-cover ring-2 ring-white/10"
-          />
-        ) : (
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center text-white font-semibold text-xs">
-            {user.name?.[0] ?? user.email[0]?.toUpperCase() ?? "?"}
+    <div className="relative">
+      <div className="flex items-center justify-between pl-4 pr-[18px] py-[11px] active:kairos-active-state transition-colors">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          {user.image ? (
+            <Image
+              src={user.image}
+              alt={user.name ?? "User"}
+              width={30}
+              height={30}
+              className="rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-[30px] h-[30px] rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center">
+              <span className="text-[13px] font-[590] text-white">
+                {user.name?.[0]?.toUpperCase() ?? user.email[0]?.toUpperCase() ?? "?"}
+              </span>
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="text-[17px] leading-[1.235] tracking-[-0.016em] kairos-fg-primary kairos-font-body font-[590] truncate">
+              {user.name ?? user.email}
+            </p>
+            {user.name && (
+              <p className="text-[13px] leading-[1.3846] tracking-[-0.006em] kairos-fg-secondary kairos-font-caption truncate">
+                {user.email}
+              </p>
+            )}
           </div>
-        )}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-fg-primary truncate">
-            {user.name ?? user.email}
-          </p>
-          {user.name && (
-            <p className="text-xs text-fg-secondary truncate">{user.email}</p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {isOwner && showControls && onUpdatePermission && onRemove ? (
+            <div className="relative">
+              <button
+                onClick={() => setIsPermissionOpen(!isPermissionOpen)}
+                className="flex items-center gap-1 px-3 py-1.5 text-[13px] kairos-bg-tertiary/30 rounded-lg kairos-fg-primary hover:kairos-bg-tertiary/50 transition-colors"
+              >
+                <span className="font-medium">
+                  {permission === "read" ? "View" : "Edit"}
+                </span>
+                <ChevronDown 
+                  size={12} 
+                  className={`transition-transform ${isPermissionOpen ? "rotate-180" : ""}`}
+                  strokeWidth={2.5}
+                />
+              </button>
+
+              {isPermissionOpen && (
+                <div className="absolute right-0 top-full mt-1 z-10 kairos-bg-surface rounded-[10px] kairos-section-border shadow-lg min-w-[120px] overflow-hidden">
+                  <button
+                    onClick={() => {
+                      onUpdatePermission(user.id, "read");
+                      setIsPermissionOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-[11px] text-[17px] kairos-fg-primary hover:kairos-active-state transition-colors"
+                  >
+                    View
+                  </button>
+                  <div className="h-[0.33px] kairos-divider" />
+                  <button
+                    onClick={() => {
+                      onUpdatePermission(user.id, "write");
+                      setIsPermissionOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-[11px] text-[17px] kairos-fg-primary hover:kairos-active-state transition-colors"
+                  >
+                    Edit
+                  </button>
+                  <div className="h-[0.33px] kairos-divider" />
+                  <button
+                    onClick={() => {
+                      onRemove(user.id);
+                      setIsPermissionOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-[11px] text-[17px] text-error hover:bg-error/10 transition-colors"
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <span className="px-3 py-1.5 text-[13px] font-medium kairos-bg-tertiary/30 kairos-fg-tertiary rounded-lg">
+              {permission === "read" ? "View" : "Edit"}
+            </span>
           )}
         </div>
-      </div>
-
-      <div className="flex items-center gap-2">
-        {isOwner && showControls && onUpdatePermission && onRemove ? (
-          <>
-            <select
-              value={permission}
-              onChange={(e) => onUpdatePermission(user.id, e.target.value as "read" | "write")}
-              className="px-3 py-1.5 text-xs shadow-sm bg-bg-surface/50 rounded-lg text-fg-primary hover:bg-bg-elevated transition-all"
-            >
-              <option value="read" className="bg-bg-secondary text-fg-primary">View</option>
-              <option value="write" className="bg-bg-secondary text-fg-primary">Edit</option>
-            </select>
-            <button
-              onClick={() => onRemove(user.id)}
-              className="p-2 text-error hover:bg-error/10 rounded-lg transition-colors"
-              title="Remove collaborator"
-            >
-              <Trash2 size={14} />
-            </button>
-          </>
-        ) : (
-          <span className="px-3 py-1.5 text-xs font-medium bg-bg-surface/50 text-fg-secondary rounded-lg shadow-sm">
-            {permission === "read" ? "View" : "Edit"}
-          </span>
-        )}
       </div>
     </div>
   );

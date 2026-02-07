@@ -51,6 +51,7 @@ export function CreateProjectForm({
 }: ProjectFormProps) {
   const useT = useTranslations as unknown as (namespace: string) => Translator;
   const t = useT("create");
+  const tAi = useT("ai");
   const toast = useToast();
   const utils = api.useUtils();
   const [title, setTitle] = useState("");
@@ -204,9 +205,9 @@ export function CreateProjectForm({
                 disabled={isSubmitting}
               />
               {description.trim().length > 20 && (
-                <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-purple-500 dark:text-purple-400 animate-in fade-in duration-300">
+                <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-accent-primary animate-in fade-in duration-300">
                   <Sparkles size={11} />
-                  <span>AI can use this description to auto-generate tasks after you create the project</span>
+                  <span>{tAi("sparklesHint")}</span>
                 </div>
               )}
             </div>
