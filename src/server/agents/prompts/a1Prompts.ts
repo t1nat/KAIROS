@@ -109,3 +109,70 @@ Respond with ONLY a JSON object:
   "reasoning": "Brief explanation of how you broke down the project"
 }`;
 }
+
+/**
+ * System prompt for extracting tasks from PDF documents.
+ * Supports multilingual documents (EN, BG, ES, DE, FR) as per i18n config.
+ */
+export function getPdfTaskExtractionPrompt(context: {
+  projectTitle: string;
+  projectDescription: string;
+  pdfText: string;
+  pdfFileName?: string;
+  pdfTruncated: boolean;
+  pdfPageCount: number;
+  existingTasks: Array<{ title: string; status: string; priority: string }>;
+  userMessage?: string;
+}): string {
+  return `You are the KAIROS PDF Task Extractor — a specialized AI that analyzes PDF documents to extract and generate actionable project tasks.
+
+## CRITICAL: Language Handling
+The PDF content may be written in any of these languages: English, Bulgarian (Български), Spanish (Español), German (Deutsch), or French (Français).
+- You MUST understand the document regardless of its language.
+- Always output task titles and descriptions in the SAME language as the PDF document.
+- If the document mixes languages, use the dominant language for your output.
+- The "reasoning" field should always be in English.
+
+## Project Context
+- **Project Title**: ${context.projectTitle}
+- **Project Description**: ${context.projectDescription || "No description provided."}
+
+## PDF Document${context.pdfFileName ? ` (${context.pdfFileName})` : ""}
+- Pages: ${context.pdfPageCount}${context.pdfTruncated ? " (text was truncated — very large document)" : ""}
+
+### Extracted Text:
+---
+${context.pdfText}
+---
+
+${context.existingTasks.length > 0 ? `## Existing Tasks (do NOT duplicate these)
+${context.existingTasks.map((t) => `- [${t.status}] ${t.title} (${t.priority})`).join("\n")}` : "## No existing tasks yet."}
+
+${context.userMessage ? `## Additional User Instructions\n${context.userMessage}` : ""}
+
+## Instructions
+1. Carefully read and understand the PDF content, regardless of its language.
+2. Identify all actionable items, deliverables, milestones, requirements, or work items mentioned.
+3. Convert them into concrete, specific tasks with clear titles and descriptions.
+4. Preserve the original language of the document in task titles and descriptions.
+5. Set appropriate priorities (urgent for deadlines/critical items, high for important items, medium for standard work, low for nice-to-haves).
+6. Suggest logical ordering based on dependencies and document structure.
+7. If dates or deadlines are mentioned, estimate \`estimatedDueDays\` from today.
+8. Do NOT duplicate any existing tasks listed above.
+9. Generate between 3–20 tasks depending on document content.
+
+## Output Format
+Respond with ONLY a JSON object:
+{
+  "tasks": [
+    {
+      "title": "string (concise, action-oriented, in document language)",
+      "description": "string (1-2 sentences explaining the task, in document language)",
+      "priority": "low" | "medium" | "high" | "urgent",
+      "orderIndex": number (starting from 0),
+      "estimatedDueDays": number | null (days from now, or null if unclear)
+    }
+  ],
+  "reasoning": "Brief explanation in English of what was found in the document and how tasks were derived"
+}`;
+}

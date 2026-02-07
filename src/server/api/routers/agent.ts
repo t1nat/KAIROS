@@ -2,7 +2,10 @@ import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { agentOrchestrator } from "~/server/agents/orchestrator/agentOrchestrator";
-import { GenerateTaskDraftsInputSchema } from "~/server/agents/schemas/taskGenerationSchemas";
+import {
+  GenerateTaskDraftsInputSchema,
+  ExtractTasksFromPdfInputSchema,
+} from "~/server/agents/schemas/taskGenerationSchemas";
 
 export const agentRouter = createTRPCRouter({
   /**
@@ -41,6 +44,22 @@ export const agentRouter = createTRPCRouter({
       return agentOrchestrator.generateTaskDrafts({
         ctx,
         projectId: input.projectId,
+        message: input.message,
+      });
+    }),
+
+  /**
+   * Extract tasks from an uploaded PDF document.
+   * Supports documents in EN, BG, ES, DE, FR.
+   */
+  extractTasksFromPdf: protectedProcedure
+    .input(ExtractTasksFromPdfInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      return agentOrchestrator.extractTasksFromPdf({
+        ctx,
+        projectId: input.projectId,
+        pdfBase64: input.pdfBase64,
+        fileName: input.fileName,
         message: input.message,
       });
     }),

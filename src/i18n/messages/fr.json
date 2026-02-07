@@ -211,6 +211,9 @@
       }
     },
     "projects": {
+      "myProjects": "Mes projets",
+      "allProjects": "Tous les projets",
+      "untitled": "Projet sans titre",
       "otherProjects": "Autres projets",
       "selectProject": "Sélectionner un projet",
       "selectProjectDesc": "Choisissez un projet pour voir les tâches, gérer les collaborateurs et suivre la progression."
@@ -361,5 +364,42 @@
     "roleAdmin": "Admin",
     "roleWorker": "Membre",
     "roleMentor": "Mentor"
+  },
+  "ai": {
+    "title": "Générateur de tâches IA",
+    "subtitle": "Générer des tâches à partir d'une description ou d'un PDF",
+    "tabDescription": "Depuis la description",
+    "tabPdf": "Depuis un PDF",
+    "noDescription": "Votre projet n'a pas encore de description. Ajoutez une description pour obtenir les meilleures tâches générées par l'IA, ou fournissez des instructions ci-dessous.",
+    "dropPdf": "Déposez un PDF ici ou",
+    "browse": "parcourir",
+    "supportedFormats": "Prend en charge EN, BG, ES, DE, FR · Max {max} Mo",
+    "removeFile": "Supprimer le fichier",
+    "errorNotPdf": "Veuillez télécharger un fichier PDF.",
+    "errorTooLarge": "Le PDF doit être inférieur à {max} Mo.",
+    "readFailed": "Impossible de lire le fichier PDF.",
+    "instructions": "Instructions supplémentaires",
+    "optional": "facultatif",
+    "placeholderPdf": "ex. Concentrez-vous sur les actions, ignorez l'annexe, extrayez uniquement les échéances...",
+    "placeholderDescription": "ex. Commencez par l'API backend, incluez les tâches de test, divisez en sprints de 2 semaines...",
+    "analyzing": "Analyse du projet...",
+    "generateButton": "Générer le découpage des tâches",
+    "extracting": "Extraction des tâches du PDF...",
+    "extractButton": "Extraire les tâches du PDF",
+    "tasksGenerated": "{count} tâches générées",
+    "addAll": "Tout ajouter",
+    "reasoning": "Raisonnement de l'IA :",
+    "estimatedDays": "~{days}j",
+    "added": "Ajoutée",
+    "addTask": "Ajouter cette tâche",
+    "close": "Fermer",
+    "errorGeneric": "Une erreur est survenue",
+    "sparklesHint": "L'IA peut utiliser cette description pour générer automatiquement des tâches après la création du projet",
+    "priority": {
+      "low": "Basse",
+      "medium": "Moyenne",
+      "high": "Haute",
+      "urgent": "Urgente"
+    }
   }
 }

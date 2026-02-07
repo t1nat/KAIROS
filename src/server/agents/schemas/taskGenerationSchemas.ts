@@ -42,3 +42,18 @@ export const GenerateTaskDraftsOutputSchema = z.object({
 });
 
 export type GenerateTaskDraftsOutput = z.infer<typeof GenerateTaskDraftsOutputSchema>;
+
+/**
+ * Input for the agent.extractTasksFromPdf procedure.
+ */
+export const ExtractTasksFromPdfInputSchema = z.object({
+  projectId: z.number().int().positive(),
+  /** Base64-encoded PDF file content */
+  pdfBase64: z.string().min(1),
+  /** Original file name (for context) */
+  fileName: z.string().max(256).optional(),
+  /** Optional extra message/instructions from the user */
+  message: z.string().max(5000).optional(),
+});
+
+export type ExtractTasksFromPdfInput = z.infer<typeof ExtractTasksFromPdfInputSchema>;

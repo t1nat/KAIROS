@@ -16,9 +16,11 @@ import { buildA1Context } from "~/server/agents/context/a1ContextBuilder";
 import {
   getA1SystemPrompt,
   getTaskGenerationPrompt,
+  getPdfTaskExtractionPrompt,
 } from "~/server/agents/prompts/a1Prompts";
 import { chatCompletion } from "~/server/agents/llm/modelClient";
 import { parseAndValidate } from "~/server/agents/llm/jsonRepair";
+import { extractTextFromPdf } from "~/server/agents/pdf/pdfExtractor";
 import { projects, tasks, projectCollaborators, users } from "~/server/db/schema";
 
 // ---------------------------------------------------------------------------
@@ -45,6 +47,14 @@ export interface AgentDraftResult {
 export interface TaskDraftInput {
   ctx: TRPCContext;
   projectId: number;
+  message?: string;
+}
+
+export interface PdfTaskInput {
+  ctx: TRPCContext;
+  projectId: number;
+  pdfBase64: string;
+  fileName?: string;
   message?: string;
 }
 
@@ -273,6 +283,144 @@ export const agentOrchestrator = {
           err instanceof Error
             ? `Agent error: ${err.message}`
             : "An unexpected error occurred while generating tasks",
+      });
+    }
+  },
+
+  /**
+   * Extract tasks from a PDF document using the LLM.
+   * Supports documents in EN, BG, ES, DE, FR (matching i18n config).
+   */
+  async extractTasksFromPdf(input: PdfTaskInput): Promise<GenerateTaskDraftsOutput> {
+    const userId = input.ctx.session?.user?.id;
+    if (!userId) {
+      throw new TRPCError({ code: "UNAUTHORIZED" });
+    }
+
+    // 1. Fetch project details
+    const [project] = await input.ctx.db
+      .select({
+        id: projects.id,
+        title: projects.title,
+        description: projects.description,
+        createdById: projects.createdById,
+      })
+      .from(projects)
+      .where(eq(projects.id, input.projectId))
+      .limit(1);
+
+    if (!project) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Project not found" });
+    }
+
+    // 2. Authorization check
+    if (project.createdById !== userId) {
+      const [collab] = await input.ctx.db
+        .select({ collaboratorId: projectCollaborators.collaboratorId })
+        .from(projectCollaborators)
+        .where(eq(projectCollaborators.projectId, input.projectId))
+        .limit(1);
+
+      if (!collab || collab.collaboratorId !== userId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have access to this project",
+        });
+      }
+    }
+
+    // 3. Extract text from PDF
+    let pdfResult: Awaited<ReturnType<typeof extractTextFromPdf>>;
+    try {
+      pdfResult = await extractTextFromPdf(input.pdfBase64);
+    } catch (err) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message:
+          err instanceof Error
+            ? err.message
+            : "Failed to extract text from the PDF",
+      });
+    }
+
+    // 4. Fetch existing tasks to avoid duplication
+    const existingTasks = await input.ctx.db
+      .select({
+        title: tasks.title,
+        status: tasks.status,
+        priority: tasks.priority,
+      })
+      .from(tasks)
+      .where(eq(tasks.projectId, input.projectId))
+      .orderBy(desc(tasks.createdAt))
+      .limit(50);
+
+    // 5. Build the PDF-aware prompt
+    const systemPrompt = getPdfTaskExtractionPrompt({
+      projectTitle: project.title,
+      projectDescription: project.description ?? "",
+      pdfText: pdfResult.text,
+      pdfFileName: input.fileName,
+      pdfTruncated: pdfResult.truncated,
+      pdfPageCount: pdfResult.numPages,
+      existingTasks,
+      userMessage: input.message,
+    });
+
+    // 6. Call LLM
+    const draftId = createDraftId();
+
+    try {
+      const llmResponse = await chatCompletion({
+        messages: [
+          { role: "system", content: systemPrompt },
+          {
+            role: "user",
+            content:
+              input.message ??
+              `Extract actionable tasks from this PDF document for the project "${project.title}".`,
+          },
+        ],
+        temperature: 0.3,
+        jsonMode: true,
+        maxTokens: 4096,
+      });
+
+      // 7. Parse + validate
+      const parseResult = await parseAndValidate(
+        llmResponse.content,
+        TaskGenerationOutputSchema,
+      );
+
+      if (!parseResult.success) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to parse PDF task extraction output: ${parseResult.error}`,
+        });
+      }
+
+      return {
+        draftId,
+        tasks: parseResult.data.tasks.map((t) => ({
+          title: t.title,
+          description: t.description ?? "",
+          priority: t.priority ?? "medium",
+          orderIndex: t.orderIndex ?? 0,
+          estimatedDueDays: t.estimatedDueDays ?? null,
+        })),
+        reasoning: parseResult.data.reasoning ?? "",
+        projectTitle: project.title,
+        projectDescription: project.description ?? "",
+      };
+    } catch (err) {
+      if (err instanceof TRPCError) throw err;
+
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message:
+          err instanceof Error
+            ? `Agent error: ${err.message}`
+            : "An unexpected error occurred while extracting tasks from the PDF",
       });
     }
   },

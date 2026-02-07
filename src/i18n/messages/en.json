@@ -213,6 +213,9 @@
       }
     },
     "projects": {
+      "myProjects": "My Projects",
+      "allProjects": "All Projects",
+      "untitled": "Untitled Project",
       "otherProjects": "Other Projects",
       "selectProject": "Select a Project",
       "selectProjectDesc": "Pick a project to see tasks, manage collaborators, and track progress."
@@ -378,5 +381,42 @@
     "organization": "Organization",
     "personalWorkspace": "Personal Workspace",
     "personalHint": "Join an organization to collaborate with a team"
+  },
+  "ai": {
+    "title": "AI Task Generator",
+    "subtitle": "Generate tasks from description or PDF",
+    "tabDescription": "From Description",
+    "tabPdf": "From PDF",
+    "noDescription": "Your project doesn't have a description yet. Add a description to get the best AI-generated tasks, or provide instructions below.",
+    "dropPdf": "Drop a PDF here or",
+    "browse": "browse",
+    "supportedFormats": "Supports EN, BG, ES, DE, FR · Max {max}MB",
+    "removeFile": "Remove file",
+    "errorNotPdf": "Please upload a PDF file.",
+    "errorTooLarge": "PDF must be smaller than {max}MB.",
+    "readFailed": "Failed to read the PDF file.",
+    "instructions": "Additional Instructions",
+    "optional": "optional",
+    "placeholderPdf": "e.g., Focus on the action items, ignore the appendix, extract only the deadlines...",
+    "placeholderDescription": "e.g., Focus on the backend API first, include testing tasks, break into 2-week sprints...",
+    "analyzing": "Analyzing project...",
+    "generateButton": "Generate Task Breakdown",
+    "extracting": "Extracting tasks from PDF...",
+    "extractButton": "Extract Tasks from PDF",
+    "tasksGenerated": "{count} tasks generated",
+    "addAll": "Add All",
+    "reasoning": "AI reasoning:",
+    "estimatedDays": "~{days}d",
+    "added": "Added",
+    "addTask": "Add this task",
+    "close": "Close",
+    "errorGeneric": "An error occurred",
+    "sparklesHint": "AI can use this description to auto-generate tasks after you create the project",
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "urgent": "Urgent"
+    }
   }
 }

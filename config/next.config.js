@@ -4,6 +4,9 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/config.ts');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Keep pdfjs-dist out of the webpack/turbopack bundle — its legacy build
+  // references worker files that bundlers cannot statically resolve.
+  serverExternalPackages: ["pdfjs-dist"],
   images: {
     remotePatterns: [
       {

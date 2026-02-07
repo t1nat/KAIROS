@@ -211,6 +211,9 @@
       }
     },
     "projects": {
+      "myProjects": "Meine Projekte",
+      "allProjects": "Alle Projekte",
+      "untitled": "Unbenanntes Projekt",
       "otherProjects": "Weitere Projekte",
       "selectProject": "Projekt auswählen",
       "selectProjectDesc": "Wähle ein Projekt, um Aufgaben zu sehen, Mitarbeitende zu verwalten und Fortschritt zu verfolgen."
@@ -361,5 +364,42 @@
     "roleAdmin": "Admin",
     "roleWorker": "Mitglied",
     "roleMentor": "Mentor"
+  },
+  "ai": {
+    "title": "KI-Aufgabengenerator",
+    "subtitle": "Aufgaben aus Beschreibung oder PDF generieren",
+    "tabDescription": "Aus Beschreibung",
+    "tabPdf": "Aus PDF",
+    "noDescription": "Dein Projekt hat noch keine Beschreibung. Füge eine Beschreibung hinzu, um die besten KI-generierten Aufgaben zu erhalten, oder gib unten Anweisungen ein.",
+    "dropPdf": "PDF hier ablegen oder",
+    "browse": "durchsuchen",
+    "supportedFormats": "Unterstützt EN, BG, ES, DE, FR · Max {max}MB",
+    "removeFile": "Datei entfernen",
+    "errorNotPdf": "Bitte lade eine PDF-Datei hoch.",
+    "errorTooLarge": "Die PDF-Datei muss kleiner als {max}MB sein.",
+    "readFailed": "Die PDF-Datei konnte nicht gelesen werden.",
+    "instructions": "Zusätzliche Anweisungen",
+    "optional": "optional",
+    "placeholderPdf": "z. B. Fokus auf Maßnahmen, Anhang ignorieren, nur Fristen extrahieren...",
+    "placeholderDescription": "z. B. Zuerst Backend-API, Testaufgaben einbeziehen, in 2-Wochen-Sprints aufteilen...",
+    "analyzing": "Projekt wird analysiert...",
+    "generateButton": "Aufgabenübersicht generieren",
+    "extracting": "Aufgaben aus PDF extrahieren...",
+    "extractButton": "Aufgaben aus PDF extrahieren",
+    "tasksGenerated": "{count} Aufgaben generiert",
+    "addAll": "Alle hinzufügen",
+    "reasoning": "KI-Begründung:",
+    "estimatedDays": "~{days}T",
+    "added": "Hinzugefügt",
+    "addTask": "Diese Aufgabe hinzufügen",
+    "close": "Schließen",
+    "errorGeneric": "Ein Fehler ist aufgetreten",
+    "sparklesHint": "KI kann diese Beschreibung nutzen, um nach Erstellung des Projekts automatisch Aufgaben zu generieren",
+    "priority": {
+      "low": "Niedrig",
+      "medium": "Mittel",
+      "high": "Hoch",
+      "urgent": "Dringend"
+    }
   }
 }

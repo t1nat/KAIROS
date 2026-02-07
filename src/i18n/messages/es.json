@@ -211,6 +211,9 @@
       }
     },
     "projects": {
+      "myProjects": "Mis proyectos",
+      "allProjects": "Todos los proyectos",
+      "untitled": "Proyecto sin título",
       "otherProjects": "Otros proyectos",
       "selectProject": "Selecciona un proyecto",
       "selectProjectDesc": "Elige un proyecto para ver tareas, gestionar colaboradores y seguir el progreso."
@@ -361,5 +364,42 @@
     "roleAdmin": "Admin",
     "roleWorker": "Miembro",
     "roleMentor": "Mentor"
+  },
+  "ai": {
+    "title": "Generador de tareas con IA",
+    "subtitle": "Genera tareas desde descripción o PDF",
+    "tabDescription": "Desde descripción",
+    "tabPdf": "Desde PDF",
+    "noDescription": "Tu proyecto aún no tiene descripción. Añade una descripción para obtener las mejores tareas generadas por IA, o proporciona instrucciones a continuación.",
+    "dropPdf": "Suelta un PDF aquí o",
+    "browse": "explora",
+    "supportedFormats": "Admite EN, BG, ES, DE, FR · Máx {max}MB",
+    "removeFile": "Eliminar archivo",
+    "errorNotPdf": "Por favor, sube un archivo PDF.",
+    "errorTooLarge": "El PDF debe ser menor de {max}MB.",
+    "readFailed": "No se pudo leer el archivo PDF.",
+    "instructions": "Instrucciones adicionales",
+    "optional": "opcional",
+    "placeholderPdf": "p. ej., Enfócate en los puntos de acción, ignora el apéndice, extrae solo los plazos...",
+    "placeholderDescription": "p. ej., Enfócate primero en la API del backend, incluye tareas de prueba, divide en sprints de 2 semanas...",
+    "analyzing": "Analizando proyecto...",
+    "generateButton": "Generar desglose de tareas",
+    "extracting": "Extrayendo tareas del PDF...",
+    "extractButton": "Extraer tareas del PDF",
+    "tasksGenerated": "{count} tareas generadas",
+    "addAll": "Añadir todas",
+    "reasoning": "Razonamiento de la IA:",
+    "estimatedDays": "~{days}d",
+    "added": "Añadida",
+    "addTask": "Añadir esta tarea",
+    "close": "Cerrar",
+    "errorGeneric": "Se produjo un error",
+    "sparklesHint": "La IA puede usar esta descripción para generar tareas automáticamente después de crear el proyecto",
+    "priority": {
+      "low": "Baja",
+      "medium": "Media",
+      "high": "Alta",
+      "urgent": "Urgente"
+    }
   }
 }
