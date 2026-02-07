@@ -14,6 +14,12 @@ export const env = createEnv({
     // LLM (OpenAI)
     OPENAI_API_KEY: z.string().optional(),
 
+    // LLM Agent System (OpenAI-compatible — can point to HuggingFace, OpenAI, etc.)
+    LLM_BASE_URL: z.string().url().optional(),
+    LLM_API_KEY: z.string().optional(),
+    LLM_DEFAULT_MODEL: z.string().optional(),
+    LLM_FALLBACK_MODEL: z.string().optional(),
+
     // Email (Resend)
     RESEND_API_KEY: z.string().optional(),
     RESEND_FROM_EMAIL: z.string().optional(),
@@ -40,6 +46,11 @@ export const env = createEnv({
     DATABASE_URL: process.env.DATABASE_URL,
 
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+
+    LLM_BASE_URL: process.env.LLM_BASE_URL,
+    LLM_API_KEY: process.env.LLM_API_KEY,
+    LLM_DEFAULT_MODEL: process.env.LLM_DEFAULT_MODEL,
+    LLM_FALLBACK_MODEL: process.env.LLM_FALLBACK_MODEL,
 
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,

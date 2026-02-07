@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { FolderPlus, CheckCircle2, Plus, Loader2, ChevronDown, ChevronUp, User as UserIcon } from "lucide-react";
+import { FolderPlus, CheckCircle2, Plus, Loader2, ChevronDown, ChevronUp, User as UserIcon, Sparkles } from "lucide-react";
 import Image from "next/image";
 import { api } from "~/trpc/react";
 import { useTranslations } from "next-intl";
@@ -203,6 +203,12 @@ export function CreateProjectForm({
                 className="w-full px-4 py-3 bg-bg-elevated/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary placeholder:text-fg-tertiary transition-all resize-none"
                 disabled={isSubmitting}
               />
+              {description.trim().length > 20 && (
+                <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-purple-500 dark:text-purple-400 animate-in fade-in duration-300">
+                  <Sparkles size={11} />
+                  <span>AI can use this description to auto-generate tasks after you create the project</span>
+                </div>
+              )}
             </div>
 
             {!projectId && (

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { api } from "~/trpc/react";
 import { CreateProjectForm, CreateTaskForm, CollaboratorManager } from "./ProjectManagement";
 import { InteractiveTimeline } from "./InteractiveTimeline";
+import { AiTaskDraftPanel } from "./AiTaskDraftPanel";
 import { ChevronDown, RefreshCw, CheckCircle2, ArrowLeft, Folder, Trash2, Users, Plus } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -452,13 +453,33 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                           <h3 className="text-[15px] font-[510] text-gray-900 dark:text-white mb-2 pl-1">
                             Add New Task
                           </h3>
+
+                          {/* AI Task Generation */}
+                          <AiTaskDraftPanel
+                            projectId={selectedProjectId}
+                            projectTitle={projectDetails.title}
+                            projectDescription={projectDetails.description ?? null}
+                            onAddTask={(task) => {
+                              createTask.mutate({
+                                ...task,
+                                projectId: selectedProjectId,
+                              });
+                            }}
+                            onAddAllTasks={(draftTasks) => {
+                              for (const task of draftTasks) {
+                                createTask.mutate({
+                                  ...task,
+                                  projectId: selectedProjectId,
+                                });
+                              }
+                            }}
+                          />
+
                           <CreateTaskForm
                             projectId={selectedProjectId}
                             onSubmit={handleCreateTask}
                             availableUsers={availableUsers}
                           />
-
-                          {/* Agent features removed */}
                         </div>
                       </div>
                     )}
