@@ -186,7 +186,7 @@ export function CreateProjectForm({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder={t("projectForm.projectNamePlaceholder")}
-                className="w-full px-4 py-3 bg-bg-elevated/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary placeholder:text-fg-tertiary transition-all"
+                className="w-full px-4 py-3 bg-bg-secondary rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary placeholder:text-fg-tertiary transition-all"
                 disabled={isSubmitting}
                 required
               />
@@ -201,7 +201,7 @@ export function CreateProjectForm({
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder={t("projectForm.descriptionPlaceholder")}
                 rows={3}
-                className="w-full px-4 py-3 bg-bg-elevated/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary placeholder:text-fg-tertiary transition-all resize-none"
+                className="w-full px-4 py-3 bg-bg-secondary rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary placeholder:text-fg-tertiary transition-all resize-none"
                 disabled={isSubmitting}
               />
               {description.trim().length > 20 && (
@@ -234,9 +234,10 @@ export function CreateProjectForm({
           </form>
 
           {projectId && isOwner && onAddCollaborator && (
-            <div className="mt-6 pt-6">
-              <h3 className="text-sm font-semibold text-fg-primary mb-4 flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+            <div className="mt-4 pt-4">
+              {/* Add Team Member Container - Component: CreateProjectForm in ProjectManagement.tsx */}
+              <h3 className="text-[13px] leading-[1.3846] tracking-[-0.006em] kairos-fg-secondary kairos-font-caption mb-2 pl-1 uppercase tracking-wide flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 kairos-accent-primary">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                   <circle cx="9" cy="7" r="4"></circle>
                   <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -256,7 +257,7 @@ export function CreateProjectForm({
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder={t("team.emailPlaceholder")}
-                      className="w-full px-4 py-3 bg-bg-surface/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary placeholder:text-fg-tertiary transition-all"
+                      className="w-full px-4 py-3 bg-bg-secondary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary placeholder:text-fg-tertiary transition-all"
                       disabled={isAdding}
                     />
                     {isSearching && (
@@ -302,7 +303,7 @@ export function CreateProjectForm({
                   <select
                     value={permission}
                     onChange={(e) => setPermission(e.target.value as "read" | "write")}
-                    className="flex-1 px-4 py-3 bg-bg-surface/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary transition-all"
+                    className="flex-1 px-4 py-3 bg-bg-secondary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary transition-all"
                     disabled={isAdding}
                   >
                     <option value="read" className="bg-bg-secondary text-fg-primary">{t("team.canView")}</option>
@@ -312,9 +313,21 @@ export function CreateProjectForm({
                   <button
                     type="submit"
                     disabled={isAdding || !searchedUser || isSearching}
-                    className="px-6 py-3 bg-success text-white font-semibold rounded-lg hover:bg-success/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-success/20"
+                    className="btn-primary flex items-center justify-center gap-2 px-4 py-3"
                   >
-                    {isAdding ? t("team.adding") : t("team.add")}
+                    <span className="relative z-10 flex items-center justify-center gap-2">
+                      {isAdding ? (
+                        <>
+                          <Loader2 className="animate-spin" size={18} />
+                          {t("team.adding")}
+                        </>
+                      ) : (
+                        <>
+                          <Plus size={18} />
+                          {t("team.add")}
+                        </>
+                      )}
+                    </span>
                   </button>
                 </div>
               </form>
@@ -437,7 +450,7 @@ export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskForm
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder={t("taskForm.taskNamePlaceholder")}
-          className="w-full px-4 py-3 bg-bg-surface/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary placeholder:text-fg-tertiary transition-all"
+          className="w-full px-4 py-3 bg-bg-secondary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary placeholder:text-fg-tertiary transition-all"
           disabled={isSubmitting}
           required
         />
@@ -452,7 +465,7 @@ export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskForm
           onChange={(e) => setDescription(e.target.value)}
           placeholder={t("taskForm.descriptionPlaceholder")}
           rows={2}
-          className="w-full px-4 py-3 bg-bg-surface/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary placeholder:text-fg-tertiary transition-all resize-none"
+          className="w-full px-4 py-3 bg-bg-secondary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary placeholder:text-fg-tertiary transition-all resize-none"
           disabled={isSubmitting}
         />
       </div>
@@ -466,7 +479,7 @@ export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskForm
           <button
             type="button"
             onClick={() => !isSubmitting && setShowAssignDropdown(!showAssignDropdown)}
-            className="w-full px-4 py-3 bg-bg-surface/60 rounded-lg text-left flex items-center justify-between hover:bg-bg-elevated transition-all disabled:opacity-50"
+            className="w-full px-4 py-3 bg-bg-secondary rounded-lg text-left flex items-center justify-between hover:bg-bg-elevated transition-all disabled:opacity-50"
             disabled={isSubmitting}
           >
             <div className="flex items-center gap-2 min-w-0">
@@ -522,7 +535,7 @@ export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskForm
           <button
             type="button"
             onClick={() => !isSubmitting && setShowPriorityDropdown(!showPriorityDropdown)}
-            className="w-full px-4 py-3 bg-bg-surface/60 rounded-lg text-left flex items-center justify-between hover:bg-bg-elevated transition-all disabled:opacity-50"
+            className="w-full px-4 py-3 bg-bg-secondary rounded-lg text-left flex items-center justify-between hover:bg-bg-elevated transition-all disabled:opacity-50"
             disabled={isSubmitting}
           >
             <div className="flex items-center gap-2">
@@ -563,7 +576,7 @@ export function CreateTaskForm({ projectId, availableUsers, onSubmit }: TaskForm
           type="datetime-local"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
-          className="w-full px-4 py-3 bg-bg-surface/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary transition-all"
+          className="w-full px-4 py-3 bg-bg-secondary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary transition-all"
           disabled={isSubmitting}
         />
       </div>

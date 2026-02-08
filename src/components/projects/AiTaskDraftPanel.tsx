@@ -78,7 +78,7 @@ export function AiTaskDraftPanel({
   // ---- tRPC mutations ---------------------------------------------------
   const generateFromDesc = api.agent.generateTaskDrafts.useMutation({
     onSuccess(data) {
-      setDraftTasks(data.tasks as GeneratedTask[]);
+      setDraftTasks(data.tasks);
       setReasoning(data.reasoning);
       setAddedTaskIndices(new Set());
     },
@@ -86,7 +86,7 @@ export function AiTaskDraftPanel({
 
   const generateFromPdf = api.agent.extractTasksFromPdf.useMutation({
     onSuccess(data) {
-      setDraftTasks(data.tasks as GeneratedTask[]);
+      setDraftTasks(data.tasks);
       setReasoning(data.reasoning);
       setAddedTaskIndices(new Set());
     },

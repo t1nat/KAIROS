@@ -315,7 +315,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
 
                   {isCreateProjectExpanded && (
                     <div className="px-4 pb-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <div className="pt-4 border-t kairos-divider">
+                      <div className="pt-4">
                         <CreateProjectForm
                           onSubmit={handleCreateProject}
                           currentUser={{ id: userId, name: null, email: "", image: null }}
@@ -475,7 +475,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
 
                   {/* Add Task Section */}
                   {hasWriteAccess && (
-                    <div className="mt-4 pt-4 px-4 border-t kairos-divider">
+                    <div className="mt-4 pt-4 px-4">
                       <div className="space-y-4">
                         <h3 className="text-[13px] leading-[1.3846] tracking-[-0.006em] kairos-fg-secondary kairos-font-caption mb-2 pl-1 uppercase tracking-wide flex items-center gap-2">
                           <Plus size={14} className="kairos-accent-primary" strokeWidth={2.2} />

@@ -136,7 +136,7 @@ export function LanguageSettingsClient() {
         <div className="space-y-8">
           {/* Language Selector Card */}
           <div className="mb-8">
-            <div className="kairos-bg-surface rounded-[10px] overflow-hidden kairos-section-border">
+            <div className="kairos-bg-surface rounded-[10px] kairos-section-border">
               <div className="pl-[16px] pr-[18px] py-[11px]">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-[13px]">
