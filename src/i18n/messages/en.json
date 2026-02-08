@@ -287,11 +287,19 @@
         "content": "Note Content"
       },
       "placeholders": {
-        "content": "Write your note here..."
+        "content": "Write your note here...",
+        "password": "Set a password (optional)"
       },
       "validation": {
         "contentRequired": "Please add some content to your note."
       },
+      "success": {
+        "created": "Note created successfully!"
+      },
+      "labels": {
+        "password": "Password"
+      },
+      "optional": "optional",
       "errors": {
         "createFailed": "Failed to create note: {message}"
       },

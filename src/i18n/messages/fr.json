@@ -285,11 +285,19 @@
         "content": "Contenu de la note"
       },
       "placeholders": {
-        "content": "Écrivez votre note ici..."
+        "content": "Écrivez votre note ici...",
+        "password": "Définir un mot de passe (optionnel)"
       },
       "validation": {
         "contentRequired": "Veuillez ajouter du contenu à votre note."
       },
+      "success": {
+        "created": "Note créée avec succès !"
+      },
+      "labels": {
+        "password": "Mot de passe"
+      },
+      "optional": "optionnel",
       "errors": {
         "createFailed": "Impossible de créer la note : {message}"
       },

@@ -285,11 +285,19 @@
         "content": "Contenido de la nota"
       },
       "placeholders": {
-        "content": "Escribe tu nota aquí..."
+        "content": "Escribe tu nota aquí...",
+        "password": "Introduce una contraseña (opcional)"
       },
       "validation": {
         "contentRequired": "Añade contenido a tu nota."
       },
+      "success": {
+        "created": "¡Nota creada con éxito!"
+      },
+      "labels": {
+        "password": "Contraseña"
+      },
+      "optional": "opcional",
       "errors": {
         "createFailed": "No se pudo crear la nota: {message}"
       },

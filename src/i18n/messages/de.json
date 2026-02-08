@@ -285,11 +285,19 @@
         "content": "Notizinhalt"
       },
       "placeholders": {
-        "content": "Schreibe deine Notiz hier..."
+        "content": "Schreibe deine Notiz hier...",
+        "password": "Passwort festlegen (optional)"
       },
       "validation": {
         "contentRequired": "Bitte füge Inhalt zu deiner Notiz hinzu."
       },
+      "success": {
+        "created": "Notiz erfolgreich erstellt!"
+      },
+      "labels": {
+        "password": "Passwort"
+      },
+      "optional": "optional",
       "errors": {
         "createFailed": "Notiz konnte nicht erstellt werden: {message}"
       },
