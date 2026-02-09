@@ -1,138 +1,132 @@
-# Conversation summary (chronological)
+# Conversation Summary
 
-## 1) Agent 1 (A1) Workspace Concierge: implementation plan → initial implementation
+This summary is chronological and focuses on user intent, key technical details, files read/created/modified, notable errors/fixes, and the current in-progress state.
 
-### Primary request and intent
+## 1) Analyze Agent 1 (A1) and produce a detailed A2 plan
 
-- Create a precise, step-by-step implementation plan for **Agent 1 (A1) Workspace Concierge** and place it under [`docs/agents/1-workspace-concierge-implementation-plan.md`](docs/agents/1-workspace-concierge-implementation-plan.md).
-- Then start implementing A1 following that plan:
-  - Add server scaffolding (tRPC router + orchestrator).
-  - Add A1 schemas and agent profile.
-  - Implement A1 read tools (projects/tasks/orgs/notifications/events).
-  - Implement an initial “draft flow” with read-tool allowlist enforcement and JSON validation (LLM wiring deferred).
-  - Run checks (repo has no `npm test`, so used lint/typecheck/build).
+### User intent
+- User asked to **analyze all new project contents**, view **Agent 1 (A1) Workspace Concierge** “in detail”, and create a **very detailed implementation plan for Agent 2 (A2) Task Planner**.
+- Constraint: A2 must have **no overlap** with A1, with **clear syncing/handoff** between them.
+- Plan location requirement: save under `docs/plans/` (implemented in this repo under `docs/agents/plans/`).
 
-### Work delivered (docs + backend scaffolding)
+### Work performed (reading + planning)
+- Read A1/A2 docs to establish responsibilities and non-overlap:
+  - [`docs/agents/1-workspace-concierge.md`](docs/agents/1-workspace-concierge.md)
+  - [`docs/agents/2-task-planner.md`](docs/agents/2-task-planner.md)
+  - Used the A1 plan format as a detail baseline:
+    - [`docs/agents/plans/1-workspace-concierge-implementation-plan.md`](docs/agents/plans/1-workspace-concierge-implementation-plan.md)
 
-- Created the plan doc: [`docs/agents/1-workspace-concierge-implementation-plan.md`](docs/agents/1-workspace-concierge-implementation-plan.md)
+### Output delivered
+- Created the A2 implementation plan:
+  - [`docs/agents/plans/2-task-planner-implementation-plan.md`](docs/agents/plans/2-task-planner-implementation-plan.md)
+  - Key design points included:
+    - Explicit A1→A2 handoff protocol and non-overlap boundaries
+    - Zod-first strict JSON outputs
+    - Draft → Confirm → Apply lifecycle
+    - `planHash` + confirmation token concept
+    - Idempotency via `clientRequestId`
+    - Persistence/audit expectations
+    - UI plan + tests + rollout steps
 
-- Added the agent router and mounted it:
-  - Created [`src/server/api/routers/agent.ts`](src/server/api/routers/agent.ts)
-    - Added `draft` mutation using [`protectedProcedure`](src/server/api/trpc.ts:130) and calls orchestrator:
-      ```ts
-      export const agentRouter = createTRPCRouter({
-        draft: protectedProcedure
-          .input(
-            z.object({
-              agentId: z.literal("workspace_concierge"),
-              message: z.string().min(1).max(20_000),
-              scope: z
-                .object({
-                  orgId: z.union([z.string(), z.number()]).optional(),
-                  projectId: z.union([z.string(), z.number()]).optional(),
-                })
-                .optional(),
-            }),
-          )
-          .mutation(async ({ ctx, input }) => {
-            return agentOrchestrator.draft({
-              ctx,
-              agentId: input.agentId,
-              message: input.message,
-              scope: input.scope,
-            });
-          }),
-      });
-      ```
-  - Modified [`src/server/api/root.ts`](src/server/api/root.ts)
-    - Mounted `agent: agentRouter`.
+## 2) Operational: terminate extra dev process / free port
 
-- Added strict A1 output schemas + profile wiring:
-  - Created [`src/server/agents/schemas/a1WorkspaceConciergeSchemas.ts`](src/server/agents/schemas/a1WorkspaceConciergeSchemas.ts)
-    - `ConciergeIntentSchema`, `HandoffPlanSchema`, `ActionPlanDraftSchema`, `A1OutputSchema`.
-  - Created/modified [`src/server/agents/profiles/a1WorkspaceConcierge.ts`](src/server/agents/profiles/a1WorkspaceConcierge.ts)
-    - Added `outputSchema: A1OutputSchema`.
+### User intent
+- User asked to:
+  - “terminate the other next dev process running”
+  - “kill the port running”
 
-- Implemented A1 read tools (partial; some placeholders remain):
-  - Created [`src/server/agents/tools/a1/readTools.ts`](src/server/agents/tools/a1/readTools.ts)
-    - Implemented: `getSessionContext`, `listProjects`, `listTasks`, `listNotifications`.
-    - Placeholders (return empty/null): `listOrganizations`, `getProjectDetail`, `getTaskDetail`, `listEventsPublic`.
+### Work performed
+- Used Windows process/port inspection and termination (e.g., `netstat`, `wmic`, `taskkill`) to stop extra Next dev processes and free the port.
 
-- Implemented a real minimal draft flow in orchestrator (no LLM yet):
-  - Created/modified [`src/server/agents/orchestrator/agentOrchestrator.ts`](src/server/agents/orchestrator/agentOrchestrator.ts)
-    - Enforces allowlisted read tools.
-    - Validates tool inputs/outputs via Zod schemas.
-    - Builds `readQueries` based on the provided `scope`.
+## 3) Fix Next.js build error: pdfjs-dist legacy import
 
-### Notable errors/fixes during implementation
+### User intent
+- User reported build/runtime error:
+  - `Module not found: Can't resolve 'pdfjs-dist/legacy/build/pdf.mjs'`
 
-- `npm test` failed (“Missing script: test”). Switched to:
-  - `npm run lint`
-  - `npm run typecheck`
-  - `npm run build`
+### Work performed
+- Investigated the import usage in:
+  - [`src/server/agents/pdf/pdfExtractor.ts`](src/server/agents/pdf/pdfExtractor.ts)
+- Verified dependency situation and restored missing modules by reinstalling dependencies.
+  - Root cause observed: `node_modules` / installed package state was missing/inconsistent.
+  - Fix: ran package install (pnpm), which installed `pdfjs-dist@5.4.624` and restored the `legacy/build` entrypoints.
 
-- ESLint/TS issues in [`src/server/agents/tools/a1/readTools.ts`](src/server/agents/tools/a1/readTools.ts):
-  - `no-explicit-any` due to `satisfies Record<..., any>`.
-  - Attempted `unknown`, ran into TS variance issues around function parameter types.
-  - Resolved by loosening export typing for `A1_READ_TOOLS` (plain object), and fixing:
-    - nullable session usage (`ctx.session` can be null)
-    - nullable DB fields (e.g. project `description: string | null`).
+## 4) Product clarification: A1 vs A2 overlap
 
-- `apply_diff` failed twice due to diff payload containing `=======` markers; workaround used re-read + full rewrite via `write_to_file` once, and later a corrected `apply_diff`.
+### User intent
+- User asked: what’s the difference between the already integrated A1 agent and the A2 plan, because “A1 already does tasks planning”.
 
-- Next build lock error: `.next/lock` occurred when a build was already running in another terminal.
+### Clarification provided (conceptual)
+- A1 is positioned as a **read-first workspace concierge** that can suggest drafts and route execution.
+- A2 is positioned as the **authoritative task planner** with:
+  - stricter plan schema
+  - confirmation/apply controls
+  - persistence/audit + idempotency
+  - “apply” capability gated behind explicit confirmation
 
-## 2) UI bug fix: Role selection modal showing while logged in
+## 5) Start implementing Agent A2 + build all UI (current main thread)
 
-- User issue: “What will you be using Kairos for?” modal appeared on the homepage even when already logged in.
-- Fix implemented in [`src/components/homepage/HomeClient.tsx`](src/components/homepage/HomeClient.tsx):
-  - Treat `usageMode` null/undefined consistently.
-  - Determine first-time user via:
-    ```ts
-    const hasUsageMode = userProfile?.usageMode != null;
-    const hasOrganizations = (userProfile?.organizations?.length ?? 0) > 0;
-    const isFirstTimeUser = !hasUsageMode && !hasOrganizations;
-    ```
-  - Applied both in the initial effect and the “sign-in close” handling.
+### User intent
+- “Start implementing Agent a2 BASED on `2-task-planner-implementation-plan.md` and create all UI for it. Break it down into pieces…”
 
-## 3) New feature request (in progress): Rename Projects → Dashboard
+### Work completed so far (A2 backend groundwork)
+Created:
+- A2 schemas:
+  - [`src/server/agents/schemas/a2TaskPlannerSchemas.ts`](src/server/agents/schemas/a2TaskPlannerSchemas.ts)
+    - Canonical Zod schemas for priorities/status
+    - Draft item types: create/update/status change/delete
+    - Plan container schema (`TaskPlanDraftSchema`)
+    - Draft/confirm/apply IO schemas
+- A2 agent profile:
+  - [`src/server/agents/profiles/a2TaskPlanner.ts`](src/server/agents/profiles/a2TaskPlanner.ts)
+    - Draft allowlist: session/project/task read tools
+    - Apply allowlist: create/update/status/delete tools (to be wired)
+- A2 prompts:
+  - [`src/server/agents/prompts/a2Prompts.ts`](src/server/agents/prompts/a2Prompts.ts)
+    - JSON-only, no invented IDs, dedupe guidance, diffPreview requirement
+- A2 context builder:
+  - [`src/server/agents/context/a2ContextBuilder.ts`](src/server/agents/context/a2ContextBuilder.ts)
+    - Builds `A2ContextPack` (session/scope/project/collaborators/existingTasks/handoffContext)
+    - Includes authorization checks for project access
 
-### Request
+### In-progress work (not finished)
+- Orchestrator extension for A2:
+  - Modified (partially) [`src/server/agents/orchestrator/agentOrchestrator.ts`](src/server/agents/orchestrator/agentOrchestrator.ts)
+    - `AgentId` expanded to include `"task_planner"`
+    - Added helpers: stable JSON hashing (`planHash`) and confirmation token encode/decode
+    - Added branching for context/system prompt selection (A1 vs A2)
+    - **Still unfinished:** parsing/validation is still A1-only (`A1OutputSchema` used unconditionally), and confirm/apply endpoints are not implemented.
 
-- Rename the Projects page to Dashboard:
-  - Create a new `/dashboard` route.
-  - Redirect `/projects` → `/dashboard`.
-  - Dashboard should show:
-    - a user’s projects
-    - the organizations they’re in / admin for
-  - UI should look professional.
+### Not started yet
+- A2 tRPC endpoints (draft/confirm/apply) additions in:
+  - [`src/server/api/routers/agent.ts`](src/server/api/routers/agent.ts)
+- Persistence/audit for A2 drafts/applies (and optional idempotency columns/indexes)
+- A2 UI implementation (panel/modal + diff preview + confirm/apply UX)
+- A1→A2 handoff UI wiring
+- Tests
 
-### Work performed so far (investigation/reading)
+## 6) Files inspected for alignment (tasks + UI patterns)
 
-- Reviewed current Projects page wrapper: [`src/app/projects/page.tsx`](src/app/projects/page.tsx)
-- Reviewed navigation: [`src/components/layout/SideNav.tsx`](src/components/layout/SideNav.tsx)
-  - Main nav includes `{ href: "/projects", ... }` and active checks for `pathname === "/projects"`.
-- Reviewed i18n labels: [`src/i18n/messages/en.json`](src/i18n/messages/en.json)
-  - Found `nav.projects: "Projects"` (similar keys exist in other locales).
-- Reviewed projects UI: [`src/components/projects/ProjectsListClient.tsx`](src/components/projects/ProjectsListClient.tsx)
-  - Uses `api.project.getMyProjects.useQuery()`.
-  - Currently shows “My Projects”; does not display organization info.
-- Reviewed user profile API: [`src/server/api/routers/user.ts`](src/server/api/routers/user.ts)
-  - `getProfile` returns organization memberships + roles (useful for Dashboard).
+Backend:
+- [`src/server/api/routers/task.ts`](src/server/api/routers/task.ts) (status/priority enums + mutations/queries patterns)
+- [`src/server/db/schema.ts`](src/server/db/schema.ts) (task status/priority enums and task fields)
 
-### Next intended implementation steps
+Frontend:
+- [`src/components/projects/AiTaskDraftPanel.tsx`](src/components/projects/AiTaskDraftPanel.tsx) (existing AI draft panel patterns)
+- [`src/components/projects/CreateProjectContainer.tsx`](src/components/projects/CreateProjectContainer.tsx)
+- [`src/components/projects/InteractiveTimeline.tsx`](src/components/projects/InteractiveTimeline.tsx)
+- [`src/components/projects/ProjectManagement.tsx`](src/components/projects/ProjectManagement.tsx)
 
-- Add [`src/app/dashboard/page.tsx`](src/app/dashboard/page.tsx) (new) with a professional dashboard layout.
-- Change [`src/app/projects/page.tsx`](src/app/projects/page.tsx) to redirect using `redirect("/dashboard")`.
-- Update [`src/components/layout/SideNav.tsx`](src/components/layout/SideNav.tsx) nav item to `/dashboard` and adjust active logic.
-- Update i18n to display “Dashboard” (e.g. add `nav.dashboard` and update locale JSON files).
+## 7) Current status / next step
 
-## 4) All user messages (non-tool)
+### Completed
+- A2 plan doc created.
+- A2 schemas/profile/prompts/context builder created.
+- PDF import error resolved via dependency install.
+- Dev process/port cleanup performed.
 
-- “create a precise implementation plan for agent 1 and put it in docs/agents/. make it step by step and amke it from start to end”
-- “now start implementing Agent 1 (A1) — Workspace Concierge from the implementation plan file follow it”
-- “fix the problems from readTools then run tests”
-- “fix the what will you be using kairos for hat appears in th ehome page even though im logged into my account”
-- “// Minimal draft flow (read-only): fetch a small workspace snapshot. // Next step: build a real context pack + LLM call + tool allowlist enforcement. in agentOrchestrator can you implement it”
-- “rename the proejcts page to dashboard where a person can see his projects and the organizations they are in or ad admins in. m,ake the ui professional”
-- “Create a new `/dashboard` route and redirect `/projects` → `/dashboard` (preferred).”
+### Immediate next step
+- Finish orchestrator branching so that:
+  - A1 draft continues to parse with `A1OutputSchema`
+  - A2 draft parses with `TaskPlanDraftSchema`, computes `planHash`, and returns A2 draft shape
+- Then add dedicated A2 tRPC endpoints for draft/confirm/apply.

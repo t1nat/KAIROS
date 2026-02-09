@@ -240,6 +240,8 @@ export const tasks = createTable(
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
     orderIndex: integer("order_index").notNull().default(0),
+    /** Idempotency key for agent-driven changes (A2 Task Planner). */
+    clientRequestId: varchar("client_request_id", { length: 128 }),
   }),
   (t) => [
     index("task_project_idx").on(t.projectId),
@@ -247,10 +249,77 @@ export const tasks = createTable(
     index("task_created_by_idx").on(t.createdById),
     index("task_completed_by_idx").on(t.completedById),
     index("task_last_edited_by_idx").on(t.lastEditedById),
+    index("task_client_request_id_idx").on(t.clientRequestId),
   ]
 );
 
 
+
+// ---------------------------------------------------------------------------
+// Agent A2 Task Planner persistence
+// ---------------------------------------------------------------------------
+
+export const agentTaskPlannerDraftStatusEnum = pgEnum(
+  "agent_task_planner_draft_status",
+  ["draft", "confirmed", "applied", "expired"] as const,
+);
+
+export const agentTaskPlannerDrafts = createTable(
+  "agent_task_planner_drafts",
+  (d) => ({
+    id: varchar("id", { length: 80 }).primaryKey(),
+    userId: d
+      .varchar("user_id", { length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    projectId: integer("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    message: text("message").notNull(),
+    /** Raw JSON string of TaskPlanDraft */
+    planJson: text("plan_json").notNull(),
+    planHash: varchar("plan_hash", { length: 64 }).notNull(),
+    status: agentTaskPlannerDraftStatusEnum("status").notNull().default("draft"),
+    confirmationToken: text("confirmation_token"),
+    confirmedAt: timestamp("confirmed_at", { mode: "date", withTimezone: true }),
+    appliedAt: timestamp("applied_at", { mode: "date", withTimezone: true }),
+    createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+    updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+    expiresAt: timestamp("expires_at", { mode: "date", withTimezone: true }),
+  }),
+  (t) => [
+    index("a2_draft_user_idx").on(t.userId),
+    index("a2_draft_project_idx").on(t.projectId),
+    index("a2_draft_status_idx").on(t.status),
+    index("a2_draft_plan_hash_idx").on(t.planHash),
+  ],
+);
+
+export const agentTaskPlannerApplies = createTable(
+  "agent_task_planner_applies",
+  (d) => ({
+    id: serial("id").primaryKey(),
+    draftId: varchar("draft_id", { length: 80 })
+      .notNull()
+      .references(() => agentTaskPlannerDrafts.id, { onDelete: "cascade" }),
+    userId: d
+      .varchar("user_id", { length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    projectId: integer("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    planHash: varchar("plan_hash", { length: 64 }).notNull(),
+    resultJson: text("result_json").notNull(),
+    createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  }),
+  (t) => [
+    index("a2_apply_draft_idx").on(t.draftId),
+    index("a2_apply_user_idx").on(t.userId),
+    index("a2_apply_project_idx").on(t.projectId),
+    index("a2_apply_plan_hash_idx").on(t.planHash),
+  ],
+);
 
 export const stickyNotes = createTable(
   "sticky_notes",

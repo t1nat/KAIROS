@@ -6,6 +6,11 @@ import {
   GenerateTaskDraftsInputSchema,
   ExtractTasksFromPdfInputSchema,
 } from "~/server/agents/schemas/taskGenerationSchemas";
+import {
+  TaskPlannerDraftInputSchema,
+  TaskPlannerConfirmInputSchema,
+  TaskPlannerApplyInputSchema,
+} from "~/server/agents/schemas/a2TaskPlannerSchemas";
 
 export const agentRouter = createTRPCRouter({
   /**
@@ -30,6 +35,40 @@ export const agentRouter = createTRPCRouter({
         agentId: input.agentId,
         message: input.message,
         scope: input.scope,
+      });
+    }),
+
+  // -------------------------------------------------------------------------
+  // A2 Task Planner
+  // -------------------------------------------------------------------------
+
+  taskPlannerDraft: protectedProcedure
+    .input(TaskPlannerDraftInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      return agentOrchestrator.taskPlannerDraft({
+        ctx,
+        message: input.message,
+        scope: input.scope,
+        handoffContext: input.handoffContext,
+      });
+    }),
+
+  taskPlannerConfirm: protectedProcedure
+    .input(TaskPlannerConfirmInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      return agentOrchestrator.taskPlannerConfirm({
+        ctx,
+        draftId: input.draftId,
+      });
+    }),
+
+  taskPlannerApply: protectedProcedure
+    .input(TaskPlannerApplyInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      return agentOrchestrator.taskPlannerApply({
+        ctx,
+        draftId: input.draftId,
+        confirmationToken: input.confirmationToken,
       });
     }),
 

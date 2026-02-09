@@ -1,8 +1,10 @@
 import { TRPCError } from "@trpc/server";
-import { eq, desc } from "drizzle-orm";
+import crypto from "node:crypto";
+import { eq, desc, and } from "drizzle-orm";
 
 import type { TRPCContext } from "~/server/api/trpc";
 import { a1WorkspaceConciergeProfile } from "~/server/agents/profiles/a1WorkspaceConcierge";
+import { a2TaskPlannerProfile } from "~/server/agents/profiles/a2TaskPlanner";
 import {
   A1OutputSchema,
   type A1Output,
@@ -11,23 +13,36 @@ import {
   TaskGenerationOutputSchema,
   type GenerateTaskDraftsOutput,
 } from "~/server/agents/schemas/taskGenerationSchemas";
+import {
+  TaskPlanDraftSchema,
+  type TaskPlanDraft,
+} from "~/server/agents/schemas/a2TaskPlannerSchemas";
 import { A1_READ_TOOLS } from "~/server/agents/tools/a1/readTools";
 import { buildA1Context } from "~/server/agents/context/a1ContextBuilder";
+import { buildA2Context } from "~/server/agents/context/a2ContextBuilder";
 import {
   getA1SystemPrompt,
   getTaskGenerationPrompt,
   getPdfTaskExtractionPrompt,
 } from "~/server/agents/prompts/a1Prompts";
+import { getA2SystemPrompt } from "~/server/agents/prompts/a2Prompts";
 import { chatCompletion } from "~/server/agents/llm/modelClient";
 import { parseAndValidate } from "~/server/agents/llm/jsonRepair";
 import { extractTextFromPdf } from "~/server/agents/pdf/pdfExtractor";
-import { projects, tasks, projectCollaborators, users } from "~/server/db/schema";
+import {
+  projects,
+  tasks,
+  projectCollaborators,
+  users,
+  agentTaskPlannerDrafts,
+  agentTaskPlannerApplies,
+} from "~/server/db/schema";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export type AgentId = "workspace_concierge";
+export type AgentId = "workspace_concierge" | "task_planner";
 
 export interface AgentDraftInput {
   ctx: TRPCContext;
@@ -41,7 +56,7 @@ export interface AgentDraftInput {
 
 export interface AgentDraftResult {
   draftId: string;
-  outputJson: A1Output;
+  outputJson: A1Output | TaskPlanDraft;
 }
 
 export interface TaskDraftInput {
@@ -62,11 +77,313 @@ function createDraftId() {
   return `draft_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
+function requireUserId(ctx: TRPCContext): string {
+  const userId = ctx.session?.user?.id;
+  if (!userId) throw new TRPCError({ code: "UNAUTHORIZED" });
+  return userId;
+}
+
+function requireProjectId(scope?: { projectId?: string | number }): number {
+  const pid = scope?.projectId;
+  if (typeof pid === "number") return pid;
+  throw new TRPCError({ code: "BAD_REQUEST", message: "projectId is required" });
+}
+
+function stableJson(value: unknown): string {
+  if (value === null || typeof value !== "object") return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  const obj = value as Record<string, unknown>;
+  const keys = Object.keys(obj).sort();
+  return `{${keys.map((k) => `${JSON.stringify(k)}:${stableJson(obj[k])}`).join(",")}}`;
+}
+
+function computePlanHash(plan: unknown): string {
+  return crypto.createHash("sha256").update(stableJson(plan)).digest("hex");
+}
+
+type ConfirmationTokenPayload = {
+  userId: string;
+  draftId: string;
+  planHash: string;
+  expiresAt: number;
+};
+
+function mintConfirmationToken(payload: ConfirmationTokenPayload): string {
+  return Buffer.from(JSON.stringify(payload), "utf8").toString("base64");
+}
+
+function readConfirmationToken(token: string): ConfirmationTokenPayload {
+  try {
+    const raw = Buffer.from(token, "base64").toString("utf8");
+    return JSON.parse(raw) as ConfirmationTokenPayload;
+  } catch {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid confirmation token" });
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Orchestrator
 // ---------------------------------------------------------------------------
 
 export const agentOrchestrator = {
+  // ---------------------------------------------------------------------------
+  // A2 Task Planner API
+  // ---------------------------------------------------------------------------
+
+  async taskPlannerDraft(input: {
+    ctx: TRPCContext;
+    message: string;
+    scope?: { orgId?: string | number; projectId?: number };
+    handoffContext?: Record<string, unknown>;
+  }): Promise<{ draftId: string; plan: TaskPlanDraft }> {
+    const userId = requireUserId(input.ctx);
+    if (!input.scope?.projectId) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "projectId is required" });
+    }
+
+    const draftId = createDraftId();
+
+    const contextPack = await buildA2Context({
+      ctx: input.ctx,
+      scope: { orgId: input.scope.orgId, projectId: input.scope.projectId },
+      handoffContext: input.handoffContext,
+    });
+
+    const systemPrompt = getA2SystemPrompt(contextPack);
+
+    const llmResponse = await chatCompletion({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: input.message },
+      ],
+      temperature: 0.2,
+      jsonMode: true,
+    });
+
+    const parseResult = await parseAndValidate(llmResponse.content, TaskPlanDraftSchema);
+    if (!parseResult.success) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: `Invalid A2 plan JSON: ${parseResult.error}`,
+      });
+    }
+
+    const planHash = computePlanHash(parseResult.data);
+    const plan: TaskPlanDraft = { ...parseResult.data, planHash };
+
+    await input.ctx.db.insert(agentTaskPlannerDrafts).values({
+      id: draftId,
+      userId,
+      projectId: input.scope.projectId,
+      message: input.message,
+      planJson: JSON.stringify(plan),
+      planHash,
+      status: "draft",
+    });
+
+    return { draftId, plan };
+  },
+
+  async taskPlannerConfirm(input: {
+    ctx: TRPCContext;
+    draftId: string;
+  }): Promise<{ confirmationToken: string; summary: { creates: number; updates: number; statusChanges: number; deletes: number } }> {
+    const userId = requireUserId(input.ctx);
+
+    const [draft] = await input.ctx.db
+      .select({
+        id: agentTaskPlannerDrafts.id,
+        userId: agentTaskPlannerDrafts.userId,
+        planJson: agentTaskPlannerDrafts.planJson,
+        planHash: agentTaskPlannerDrafts.planHash,
+        status: agentTaskPlannerDrafts.status,
+      })
+      .from(agentTaskPlannerDrafts)
+      .where(eq(agentTaskPlannerDrafts.id, input.draftId))
+      .limit(1);
+
+    if (!draft) throw new TRPCError({ code: "NOT_FOUND", message: "Draft not found" });
+    if (draft.userId !== userId) throw new TRPCError({ code: "FORBIDDEN" });
+    if (draft.status !== "draft") {
+      throw new TRPCError({ code: "BAD_REQUEST", message: `Draft is not confirmable (status=${draft.status})` });
+    }
+
+    const plan = TaskPlanDraftSchema.parse(JSON.parse(draft.planJson) as unknown);
+    const confirmationToken = mintConfirmationToken({
+      userId,
+      draftId: draft.id,
+      planHash: draft.planHash,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    });
+
+    await input.ctx.db
+      .update(agentTaskPlannerDrafts)
+      .set({
+        status: "confirmed",
+        confirmationToken,
+        confirmedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(agentTaskPlannerDrafts.id, draft.id));
+
+    return {
+      confirmationToken,
+      summary: {
+        creates: plan.creates.length,
+        updates: plan.updates.length,
+        statusChanges: plan.statusChanges.length,
+        deletes: plan.deletes.length,
+      },
+    };
+  },
+
+  async taskPlannerApply(input: {
+    ctx: TRPCContext;
+    draftId: string;
+    confirmationToken: string;
+  }): Promise<{ applied: true; results: { createdTaskIds: number[]; updatedTaskIds: number[]; statusChangedTaskIds: number[]; deletedTaskIds: number[] } }> {
+    const userId = requireUserId(input.ctx);
+
+    const payload = readConfirmationToken(input.confirmationToken);
+    if (payload.userId !== userId || payload.draftId !== input.draftId) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Confirmation token does not match user/draft" });
+    }
+    if (Date.now() > payload.expiresAt) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "Confirmation token expired" });
+    }
+
+    const [draft] = await input.ctx.db
+      .select({
+        id: agentTaskPlannerDrafts.id,
+        userId: agentTaskPlannerDrafts.userId,
+        projectId: agentTaskPlannerDrafts.projectId,
+        planJson: agentTaskPlannerDrafts.planJson,
+        planHash: agentTaskPlannerDrafts.planHash,
+        status: agentTaskPlannerDrafts.status,
+        confirmationToken: agentTaskPlannerDrafts.confirmationToken,
+      })
+      .from(agentTaskPlannerDrafts)
+      .where(eq(agentTaskPlannerDrafts.id, input.draftId))
+      .limit(1);
+
+    if (!draft) throw new TRPCError({ code: "NOT_FOUND", message: "Draft not found" });
+    if (draft.userId !== userId) throw new TRPCError({ code: "FORBIDDEN" });
+    if (draft.status !== "confirmed") {
+      throw new TRPCError({ code: "BAD_REQUEST", message: `Draft is not applicable (status=${draft.status})` });
+    }
+    if (draft.planHash !== payload.planHash) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "Plan hash mismatch" });
+    }
+    if (draft.confirmationToken !== input.confirmationToken) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "Confirmation token mismatch" });
+    }
+
+    const plan = TaskPlanDraftSchema.parse(JSON.parse(draft.planJson) as unknown);
+
+    const createdTaskIds: number[] = [];
+    const updatedTaskIds: number[] = [];
+    const statusChangedTaskIds: number[] = [];
+    const deletedTaskIds: number[] = [];
+
+    // Apply creates with idempotency.
+    for (const c of plan.creates) {
+      // idempotency: if a task already exists with this clientRequestId, skip create.
+      const existing = await input.ctx.db
+        .select({ id: tasks.id })
+        .from(tasks)
+        .where(and(eq(tasks.projectId, plan.scope.projectId), eq(tasks.clientRequestId, c.clientRequestId)))
+        .limit(1);
+
+      if (existing[0]?.id) {
+        createdTaskIds.push(existing[0].id);
+        continue;
+      }
+
+      const inserted = await input.ctx.db
+        .insert(tasks)
+        .values({
+          title: c.title,
+          description: c.description,
+          projectId: plan.scope.projectId,
+          priority: c.priority,
+          assignedToId: c.assignedToId ?? null,
+          dueDate: c.dueDate ? new Date(c.dueDate) : null,
+          orderIndex: c.orderIndex ?? 0,
+          createdById: userId,
+          lastEditedById: userId,
+          lastEditedAt: new Date(),
+          clientRequestId: c.clientRequestId,
+        })
+        .returning({ id: tasks.id });
+
+      if (inserted[0]?.id) createdTaskIds.push(inserted[0].id);
+    }
+
+    // Apply updates/status changes/deletes (best-effort). These operations are not idempotent via clientRequestId
+    // right now; they rely on taskId.
+    for (const u of plan.updates) {
+      await input.ctx.db
+        .update(tasks)
+        .set({
+          ...u.patch,
+          assignedToId:
+            "assignedToId" in u.patch
+              ? (u.patch.assignedToId ?? null)
+              : undefined,
+          dueDate:
+            "dueDate" in u.patch
+              ? (u.patch.dueDate ? new Date(u.patch.dueDate) : null)
+              : undefined,
+          lastEditedById: userId,
+          lastEditedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(and(eq(tasks.id, u.taskId), eq(tasks.projectId, plan.scope.projectId)));
+      updatedTaskIds.push(u.taskId);
+    }
+
+    for (const s of plan.statusChanges) {
+      await input.ctx.db
+        .update(tasks)
+        .set({
+          status: s.status,
+          lastEditedById: userId,
+          lastEditedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(and(eq(tasks.id, s.taskId), eq(tasks.projectId, plan.scope.projectId)));
+      statusChangedTaskIds.push(s.taskId);
+    }
+
+    for (const d of plan.deletes) {
+      if (!d.dangerous) continue;
+      await input.ctx.db
+        .delete(tasks)
+        .where(and(eq(tasks.id, d.taskId), eq(tasks.projectId, plan.scope.projectId)));
+      deletedTaskIds.push(d.taskId);
+    }
+
+    const resultJson = JSON.stringify({ createdTaskIds, updatedTaskIds, statusChangedTaskIds, deletedTaskIds });
+
+    await input.ctx.db.insert(agentTaskPlannerApplies).values({
+      draftId: draft.id,
+      userId,
+      projectId: draft.projectId,
+      planHash: draft.planHash,
+      resultJson,
+    });
+
+    await input.ctx.db
+      .update(agentTaskPlannerDrafts)
+      .set({ status: "applied", appliedAt: new Date(), updatedAt: new Date() })
+      .where(eq(agentTaskPlannerDrafts.id, draft.id));
+
+    return {
+      applied: true as const,
+      results: { createdTaskIds, updatedTaskIds, statusChangedTaskIds, deletedTaskIds },
+    };
+  },
+
   /**
    * General A1 draft — answers workspace questions with LLM.
    */
@@ -74,7 +391,9 @@ export const agentOrchestrator = {
     const profile =
       input.agentId === "workspace_concierge"
         ? a1WorkspaceConciergeProfile
-        : null;
+        : input.agentId === "task_planner"
+          ? a2TaskPlannerProfile
+          : null;
 
     if (!profile) {
       throw new TRPCError({
@@ -85,14 +404,29 @@ export const agentOrchestrator = {
 
     const draftId = createDraftId();
 
-    // 1. Build context pack from DB (read-only tools)
-    const contextPack = await buildA1Context(input.ctx, input.scope);
+    // 1. Build context pack
+    const contextPack =
+      input.agentId === "workspace_concierge"
+        ? await buildA1Context(input.ctx, input.scope)
+        : await buildA2Context({
+            ctx: input.ctx,
+            scope: {
+              orgId: input.scope?.orgId,
+              projectId:
+                typeof input.scope?.projectId === "number"
+                  ? input.scope.projectId
+                  : undefined,
+            },
+          });
 
-    // 2. Build system prompt with full workspace context
-    const systemPrompt = getA1SystemPrompt(contextPack);
+    // 2. Build system prompt
+    const systemPrompt =
+      input.agentId === "workspace_concierge"
+        ? getA1SystemPrompt(contextPack as Parameters<typeof getA1SystemPrompt>[0])
+        : getA2SystemPrompt(contextPack as Parameters<typeof getA2SystemPrompt>[0]);
 
     // 3. Call LLM
-    let outputJson: A1Output;
+    let outputJson: A1Output | TaskPlanDraft;
     try {
       const llmResponse = await chatCompletion({
         messages: [
@@ -103,26 +437,68 @@ export const agentOrchestrator = {
         jsonMode: true,
       });
 
-      // 4. Parse + validate with repair loop
-      const parseResult = await parseAndValidate(llmResponse.content, A1OutputSchema);
+      if (input.agentId === "workspace_concierge") {
+        // 4a. Parse + validate with repair loop (A1)
+        const parseResult = await parseAndValidate(llmResponse.content, A1OutputSchema);
 
-      if (!parseResult.success) {
-        // Fallback: return a structured error as a valid A1Output
-        const safeScope = input.scope ?? {};
-        outputJson = {
-          intent: { type: "answer" as const, scope: { orgId: safeScope.orgId, projectId: safeScope.projectId } },
-          answer: {
-            summary: "I encountered an error processing your request. Please try rephrasing.",
-            details: [parseResult.error],
-          },
-        };
+        if (!parseResult.success) {
+          const safeScope = input.scope ?? {};
+          outputJson = {
+            intent: {
+              type: "answer" as const,
+              scope: { orgId: safeScope.orgId, projectId: safeScope.projectId },
+            },
+            answer: {
+              summary: "I encountered an error processing your request. Please try rephrasing.",
+              details: [parseResult.error],
+            },
+          };
+        } else {
+          outputJson = parseResult.data;
+        }
       } else {
-        outputJson = parseResult.data;
+        // 4b. Parse + validate with repair loop (A2)
+        const parseResult = await parseAndValidate(llmResponse.content, TaskPlanDraftSchema);
+
+        if (!parseResult.success) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Invalid A2 plan JSON: ${parseResult.error}`,
+          });
+        }
+
+        const userId = requireUserId(input.ctx);
+        const projectId = requireProjectId(input.scope);
+
+        const computedPlanHash = computePlanHash(parseResult.data);
+        const plan: TaskPlanDraft = {
+          ...parseResult.data,
+          planHash: computedPlanHash,
+        };
+
+        await input.ctx.db.insert(agentTaskPlannerDrafts).values({
+          id: draftId,
+          userId,
+          projectId,
+          message: input.message,
+          planJson: JSON.stringify(plan),
+          planHash: computedPlanHash,
+          status: "draft",
+        });
+
+        outputJson = plan;
       }
     } catch (err) {
       // LLM call failed — return a safe fallback using context pack
-      const contextFallback = await buildFallbackResponse(contextPack, input);
-      outputJson = contextFallback;
+      if (input.agentId === "workspace_concierge") {
+        const contextFallback = await buildFallbackResponse(
+          contextPack as Parameters<typeof buildFallbackResponse>[0],
+          input,
+        );
+        outputJson = contextFallback;
+      } else {
+        throw err;
+      }
     }
 
     return { draftId, outputJson };

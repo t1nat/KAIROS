@@ -5,6 +5,7 @@ import { api } from "~/trpc/react";
 import { CreateProjectForm, CreateTaskForm, CollaboratorManager } from "./ProjectManagement";
 import { InteractiveTimeline } from "./InteractiveTimeline";
 import { AiTaskDraftPanel } from "./AiTaskDraftPanel";
+import { AiTaskPlannerPanel } from "./AiTaskPlannerPanel";
 import { ChevronDown, RefreshCw, CheckCircle2, ArrowLeft, Folder, Trash2, Users, Plus } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -482,7 +483,16 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                           {t("taskForm.add")}
                         </h3>
 
-                        {/* AI Task Generation */}
+                        {/* AI Task Planner (A2) */}
+                        <AiTaskPlannerPanel
+                          projectId={selectedProjectId}
+                          orgId={projectDetails.organizationId ?? undefined}
+                          onApplied={() => {
+                            void utils.project.getById.invalidate({ id: selectedProjectId });
+                          }}
+                        />
+
+                        {/* AI Task Generation (legacy drafts) */}
                         <AiTaskDraftPanel
                           projectId={selectedProjectId}
                           projectTitle={projectDetails.title}

@@ -5,20 +5,6 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1765395334112,
-      "tag": "0000_cynical_zarek",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1767278685573,
-      "tag": "0001_steep_firedrake",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
       "when": 1767225600000,
       "tag": "0002_user_image_text",
       "breakpoints": true
@@ -76,7 +62,14 @@
       "idx": 10,
       "version": "7",
       "when": 1770108558046,
-      "tag": "0010_majestic_karma",
+      "tag": "0010_reset_pin_and_remove_email_reset",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1770621715447,
+      "tag": "0011_a2_task_planner_persistence",
       "breakpoints": true
     }
   ]
