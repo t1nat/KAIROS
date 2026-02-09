@@ -84,7 +84,7 @@ export async function buildA2Context(input: {
       .where(eq(projectCollaborators.projectId, projectId))
       .limit(1);
 
-    if (!collab || collab.collaboratorId !== userId) {
+    if (collab?.collaboratorId !== userId) {
       throw new Error("You do not have access to this project");
     }
   }

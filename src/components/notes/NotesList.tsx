@@ -270,7 +270,7 @@ export function NotesList() {
                       {/* Note icon */}
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary/80 flex items-center justify-center border border-border-light/20 shadow-sm">
                         <span className="text-[15px] font-semibold text-white">
-                          {firstLine?.[0]?.toUpperCase() || "N"}
+                          {firstLine?.[0]?.toUpperCase() ?? "N"}
                         </span>
                       </div>
 

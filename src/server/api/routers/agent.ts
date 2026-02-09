@@ -29,12 +29,32 @@ export const agentRouter = createTRPCRouter({
           .optional(),
       }),
     )
-    .mutation(async ({ ctx, input }: any) => {
+    .mutation(async ({ ctx, input }) => {
       return agentOrchestrator.draft({
         ctx,
         agentId: input.agentId,
         message: input.message,
         scope: input.scope,
+      });
+    }),
+
+  /**
+   * A1 Project Chatbot — can run either project-scoped or workspace-scoped.
+   * Used by the Project Intelligence UI with a project picker.
+   */
+  projectChatbot: protectedProcedure
+    .input(
+      z.object({
+        projectId: z.number().optional(),
+        message: z.string().min(1).max(20_000),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return agentOrchestrator.draft({
+        ctx,
+        agentId: "workspace_concierge",
+        message: input.message,
+        scope: input.projectId ? { projectId: input.projectId } : undefined,
       });
     }),
 

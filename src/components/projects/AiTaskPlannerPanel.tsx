@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
-import { AlertCircle, CheckCircle2, Loader2, Shield, Sparkles, X } from "lucide-react";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { AlertCircle, CheckCircle2, Loader2, Shield, Sparkles, Upload, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 import { api } from "~/trpc/react";
@@ -50,6 +50,15 @@ export function AiTaskPlannerPanel(props: {
   const [confirmationToken, setConfirmationToken] = useState<string | null>(null);
   const [confirmSummary, setConfirmSummary] = useState<PlanSummary | null>(null);
 
+  // Optional PDF context (feature-light): we extract tasks via existing endpoint and prepend
+  // the extracted requirements into the next A2 draft message.
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
+  const [pdfInstructions, setPdfInstructions] = useState<string>("");
+  const [pdfResult, setPdfResult] = useState<null | { tasks: Array<{ title: string; description: string; priority?: string }>; reasoning?: string }>(null);
+  const [approvedPdfTaskIndices, setApprovedPdfTaskIndices] = useState<Set<number>>(() => new Set());
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   const draftMutation = api.agent.taskPlannerDraft.useMutation({
     onSuccess(data) {
       setDraftId(data.draftId);
@@ -72,7 +81,24 @@ export function AiTaskPlannerPanel(props: {
     },
   });
 
-  const isPending = draftMutation.isPending || confirmMutation.isPending || applyMutation.isPending;
+  const pdfExtractMutation = api.agent.extractTasksFromPdf.useMutation({
+    onSuccess(data) {
+      setPdfResult({ tasks: data.tasks, reasoning: data.reasoning });
+      setApprovedPdfTaskIndices(new Set(data.tasks.map((_, idx) => idx)));
+    },
+  });
+
+  const createTaskMutation = api.task.create.useMutation({
+    onSuccess() {
+      onApplied?.();
+    },
+  });
+
+  const isPending =
+    draftMutation.isPending ||
+    confirmMutation.isPending ||
+    applyMutation.isPending ||
+    pdfExtractMutation.isPending;
 
   const hasDeletes = useMemo(() => {
     const del = plan?.deletes ?? [];
@@ -82,11 +108,23 @@ export function AiTaskPlannerPanel(props: {
   const handleDraft = useCallback(() => {
     const trimmed = message.trim();
     if (!trimmed) return;
+
+    const approvedTasks = pdfResult?.tasks
+      ?.map((t, idx) => ({ t, idx }))
+      .filter(({ idx }) => approvedPdfTaskIndices.has(idx))
+      .slice(0, 30);
+
+    const pdfContextBlock = approvedTasks?.length
+      ? `\n\nPDF extracted requirements (approved by user):\n${approvedTasks
+          .map(({ t }, i) => `- ${i + 1}. ${t.title}${t.description ? ` — ${t.description}` : ""}`)
+          .join("\n")}\n\nNotes: ${pdfInstructions.trim() || "(none)"}`
+      : "";
+
     draftMutation.mutate({
-      message: trimmed,
+      message: `${trimmed}${pdfContextBlock}`,
       scope: { orgId, projectId },
     });
-  }, [draftMutation, message, orgId, projectId]);
+  }, [approvedPdfTaskIndices, draftMutation, message, orgId, pdfInstructions, pdfResult, projectId]);
 
   const handleConfirm = useCallback(() => {
     if (!draftId) return;
@@ -178,6 +216,187 @@ export function AiTaskPlannerPanel(props: {
             Apply
           </button>
         </div>
+
+        {/* PDF extractor (legacy endpoint) */}
+        <div className="space-y-2 p-3 rounded-lg kairos-bg-base border border-border-light/20">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-[12px] uppercase tracking-wide kairos-fg-secondary">PDF extractor</div>
+              <div className="text-[12px] kairos-fg-tertiary">Upload a PDF to extract requirements/tasks and include them in the next draft.</div>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setSelectedFile(file);
+                setPdfResult(null);
+                setApprovedPdfTaskIndices(new Set());
+
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                  const res = ev.target?.result;
+                  if (typeof res === "string") {
+                    const base64 = res.split(",")[1];
+                    setPdfBase64(base64 ?? null);
+                  }
+                };
+                reader.readAsDataURL(file);
+              }}
+            />
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-[13px] font-medium transition kairos-bg-surface kairos-fg-primary border border-border-light/20 hover:opacity-95"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isPending}
+            >
+              <Upload size={16} />
+              {selectedFile ? "Replace" : "Upload"}
+            </button>
+          </div>
+
+          {selectedFile && (
+            <div className="text-[12px] kairos-fg-secondary">
+              Selected: <span className="kairos-fg-primary">{selectedFile.name}</span>
+            </div>
+          )}
+
+          <div className="space-y-1">
+            <label className="text-[12px] kairos-fg-secondary">Optional instructions for extraction</label>
+            <input
+              type="text"
+              value={pdfInstructions}
+              onChange={(e) => setPdfInstructions(e.target.value)}
+              placeholder="e.g., focus on deliverables, milestones, acceptance criteria"
+              className="w-full rounded-lg px-3 py-2 text-[13px] outline-none kairos-bg-surface kairos-fg-primary border border-border-light/20 focus:border-accent-primary/40"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                if (!pdfBase64) return;
+                pdfExtractMutation.mutate({
+                  projectId,
+                  pdfBase64,
+                  fileName: selectedFile?.name ?? "",
+                  message: pdfInstructions.trim() || undefined,
+                });
+              }}
+              disabled={isPending || !pdfBase64}
+              className={cn(
+                "inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-[13px] font-semibold transition",
+                "bg-accent-primary text-white hover:opacity-95 disabled:opacity-50",
+                "shadow-lg shadow-accent-primary/20",
+              )}
+            >
+              {pdfExtractMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+              Extract tasks
+            </button>
+
+            {pdfResult?.tasks?.length ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const approved = pdfResult.tasks
+                    .map((t, idx) => ({ t, idx }))
+                    .filter(({ idx }) => approvedPdfTaskIndices.has(idx));
+
+                  for (const { t } of approved) {
+                    createTaskMutation.mutate({
+                      projectId,
+                      title: t.title,
+                      description: t.description ?? "",
+                      assignedToId: undefined,
+                      priority: (t.priority ?? "medium") as "low" | "medium" | "high" | "urgent",
+                      dueDate: undefined,
+                    });
+                  }
+                }}
+                disabled={isPending || approvedPdfTaskIndices.size === 0}
+                className={cn(
+                  "inline-flex items-center gap-2 px-3 py-2 rounded-lg text-[13px] font-medium transition",
+                  "kairos-bg-surface kairos-fg-primary border border-border-light/20 hover:opacity-95 disabled:opacity-50",
+                )}
+              >
+                <CheckCircle2 size={16} />
+                Add approved to timeline
+              </button>
+            ) : null}
+
+            {pdfResult && (
+              <div className="text-[12px] kairos-fg-secondary">
+                Extracted <span className="kairos-fg-primary">{pdfResult.tasks.length}</span> tasks. Approved:{" "}
+                <span className="kairos-fg-primary">{approvedPdfTaskIndices.size}</span>.
+              </div>
+            )}
+          </div>
+
+          {pdfResult?.tasks?.length ? (
+            <div className="mt-2 space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-[12px] uppercase tracking-wide kairos-fg-secondary">Extracted tasks</div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="px-2 py-1 rounded-md text-[12px] kairos-bg-surface kairos-fg-primary border border-border-light/20 hover:opacity-95"
+                    onClick={() => {
+                      setApprovedPdfTaskIndices(new Set());
+                    }}
+                    disabled={isPending}
+                  >
+                    None
+                  </button>
+                  <button
+                    type="button"
+                    className="px-2 py-1 rounded-md text-[12px] kairos-bg-surface kairos-fg-primary border border-border-light/20 hover:opacity-95"
+                    onClick={() => {
+                      setApprovedPdfTaskIndices(new Set(pdfResult.tasks.map((_, idx) => idx)));
+                    }}
+                    disabled={isPending}
+                  >
+                    All
+                  </button>
+                </div>
+              </div>
+
+              <ul className="space-y-2 text-[13px] kairos-fg-primary">
+                {pdfResult.tasks.slice(0, 12).map((t, idx) => {
+                  const checked = approvedPdfTaskIndices.has(idx);
+                  return (
+                    <li key={idx} className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        className="mt-1"
+                        checked={checked}
+                        disabled={isPending}
+                        onChange={(e) => {
+                          const next = new Set(approvedPdfTaskIndices);
+                          if (e.target.checked) next.add(idx);
+                          else next.delete(idx);
+                          setApprovedPdfTaskIndices(next);
+                        }}
+                      />
+                      <div className="min-w-0">
+                        <div className="font-medium break-words">{t.title}</div>
+                        {t.description ? <div className="kairos-fg-secondary break-words">{t.description}</div> : null}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              {pdfResult.tasks.length > 12 && (
+                <div className="text-[12px] kairos-fg-secondary">Showing first 12 tasks. Draft will include approved tasks only (up to 30).</div>
+              )}
+            </div>
+          ) : null}
+        </div>
+
 
         <AnimatePresence>
           {(draftMutation.error ?? confirmMutation.error ?? applyMutation.error) && (

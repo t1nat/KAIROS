@@ -542,7 +542,7 @@ export const agentOrchestrator = {
         .where(eq(projectCollaborators.projectId, input.projectId))
         .limit(1);
 
-      if (!collab || collab.collaboratorId !== userId) {
+      if (collab?.collaboratorId !== userId) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You do not have access to this project",
@@ -697,7 +697,7 @@ export const agentOrchestrator = {
         .where(eq(projectCollaborators.projectId, input.projectId))
         .limit(1);
 
-      if (!collab || collab.collaboratorId !== userId) {
+      if (collab?.collaboratorId !== userId) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You do not have access to this project",

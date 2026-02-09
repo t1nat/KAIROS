@@ -1,4 +1,4 @@
-import type { A2ContextPack } from "~/server/agents/context/a2ContextBuilder";
+import type { A2ContextPack } from "../context/a2ContextBuilder";
 
 export function getA2SystemPrompt(context: A2ContextPack): string {
   return `You are the KAIROS Task Planner (A2) — a specialized AI embedded in the KAIROS project management platform.
@@ -38,12 +38,12 @@ ${JSON.stringify(context, null, 2)}
 Return ONLY a JSON object matching:
 {
   "agentId": "task_planner",
-  "scope": { "orgId?": string|number, "projectId": number },
+  "scope": { "orgId?": string | number, "projectId": number },
   "creates": [
     {
       "title": "string",
       "description": "string",
-      "priority": "low"|"medium"|"high"|"urgent",
+      "priority": "low" | "medium" | "high" | "urgent",
       "assignedToId?": "string",
       "acceptanceCriteria": ["string"],
       "orderIndex?": number,
@@ -54,16 +54,24 @@ Return ONLY a JSON object matching:
   "updates": [
     {
       "taskId": number,
-      "patch": { "title?": "string", "description?": "string", "priority?": "low"|"medium"|"high"|"urgent", "assignedToId?": "string"|null, "dueDate?": "ISO"|null },
+      "patch": {
+        "title?": "string",
+        "description?": "string",
+        "priority?": "low" | "medium" | "high" | "urgent",
+        "assignedToId?": "string" | null,
+        "dueDate?": "ISO" | null
+      },
       "reason?": "string"
     }
   ],
   "statusChanges": [
-    { "taskId": number, "status": "pending"|"in_progress"|"completed"|"blocked", "reason?": "string" }
+    {
+      "taskId": number,
+      "status": "pending" | "in_progress" | "completed" | "blocked",
+      "reason?": "string"
+    }
   ],
-  "deletes": [
-    { "taskId": number, "reason": "string", "dangerous": true }
-  ],
+  "deletes": [{ "taskId": number, "reason": "string", "dangerous": true }],
   "orderingRationale?": "string",
   "assigneeRationale?": "string",
   "risks": ["string"],

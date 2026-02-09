@@ -40,15 +40,19 @@ interface Task {
 interface InteractiveTimelineProps {
   tasks: Task[];
   onTaskStatusChange: (taskId: number, newStatus: Task["status"]) => void;
+  onTaskUpdate?: (taskId: number, patch: { title?: string; description?: string; assignedToId?: string | null; dueDate?: Date | null }) => void;
+  availableUsers?: Array<{ id: string; name: string | null; image: string | null }>;
   isReadOnly?: boolean;
   projectTitle?: string;
 }
 
-export function InteractiveTimeline({ 
-  tasks, 
+export function InteractiveTimeline({
+  tasks,
   onTaskStatusChange,
+  onTaskUpdate,
+  availableUsers = [],
   isReadOnly = false,
-  projectTitle 
+  projectTitle
 }: InteractiveTimelineProps) {
   const t = useTranslations("create");
   const locale = useLocale();
@@ -59,6 +63,12 @@ export function InteractiveTimeline({
   const [_hoveredTaskId, setHoveredTaskId] = useState<number | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<number | null>(null);
   const [highlightedTaskId, setHighlightedTaskId] = useState<number | null>(null);
+
+  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+  const [editTitle, setEditTitle] = useState<string>("");
+  const [editDescription, setEditDescription] = useState<string>("");
+  const [editAssignedToId, setEditAssignedToId] = useState<string>("unassigned");
+  const [editDueDate, setEditDueDate] = useState<string>("");
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const taskRefs = useRef<Map<number, HTMLDivElement>>(new Map());
@@ -376,6 +386,111 @@ export function InteractiveTimeline({
                         <p className="text-[15px] leading-[1.4667] tracking-[-0.01em] kairos-fg-secondary kairos-font-body mb-4">
                           {task.description}
                         </p>
+                      )}
+
+                      {!isReadOnly && task.id >= 0 && onTaskUpdate && (
+                        <div className="p-3 rounded-lg kairos-bg-base border border-border-light/20">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="text-[12px] uppercase tracking-wide kairos-fg-secondary">Admin edit</div>
+                            <button
+                              type="button"
+                              className="px-2 py-1 rounded-md text-[12px] kairos-bg-surface kairos-fg-primary border border-border-light/20 hover:opacity-95"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const next = editingTaskId === task.id ? null : task.id;
+                                setEditingTaskId(next);
+                                if (next === task.id) {
+                                  setEditTitle(task.title);
+                                  setEditDescription(task.description ?? "");
+                                  setEditAssignedToId(task.assignedTo?.id ?? "unassigned");
+                                  setEditDueDate(task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : "");
+                                }
+                              }}
+                            >
+                              {editingTaskId === task.id ? "Close" : "Edit"}
+                            </button>
+                          </div>
+
+                          {editingTaskId === task.id && (
+                            <div className="mt-3 space-y-2">
+                              <div className="space-y-1">
+                                <label className="text-[12px] kairos-fg-secondary">Title</label>
+                                <input
+                                  value={editTitle}
+                                  onChange={(e) => setEditTitle(e.target.value)}
+                                  className="w-full rounded-lg px-3 py-2 text-[13px] outline-none kairos-bg-surface kairos-fg-primary border border-border-light/20 focus:border-accent-primary/40"
+                                />
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="text-[12px] kairos-fg-secondary">Description</label>
+                                <textarea
+                                  value={editDescription}
+                                  onChange={(e) => setEditDescription(e.target.value)}
+                                  rows={3}
+                                  className="w-full rounded-lg px-3 py-2 text-[13px] outline-none kairos-bg-surface kairos-fg-primary border border-border-light/20 focus:border-accent-primary/40"
+                                />
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div className="space-y-1">
+                                  <label className="text-[12px] kairos-fg-secondary">Assign to</label>
+                                  <select
+                                    value={editAssignedToId}
+                                    onChange={(e) => setEditAssignedToId(e.target.value)}
+                                    className="w-full rounded-lg px-3 py-2 text-[13px] outline-none kairos-bg-surface kairos-fg-primary border border-border-light/20 focus:border-accent-primary/40"
+                                  >
+                                    <option value="unassigned">Unassigned</option>
+                                    {availableUsers.map((u) => (
+                                      <option key={u.id} value={u.id}>
+                                        {u.name ?? u.id}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+
+                                <div className="space-y-1">
+                                  <label className="text-[12px] kairos-fg-secondary">Due date</label>
+                                  <input
+                                    type="date"
+                                    value={editDueDate}
+                                    onChange={(e) => setEditDueDate(e.target.value)}
+                                    className="w-full rounded-lg px-3 py-2 text-[13px] outline-none kairos-bg-surface kairos-fg-primary border border-border-light/20 focus:border-accent-primary/40"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2 pt-1">
+                                <button
+                                  type="button"
+                                  className="px-3 py-2 rounded-lg text-[13px] font-medium bg-accent-primary text-white hover:opacity-95"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onTaskUpdate(task.id, {
+                                      title: editTitle.trim() || undefined,
+                                      description: editDescription,
+                                      assignedToId: editAssignedToId === "unassigned" ? null : editAssignedToId,
+                                      dueDate: editDueDate ? new Date(`${editDueDate}T00:00:00.000Z`) : null,
+                                    });
+                                    setEditingTaskId(null);
+                                  }}
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  type="button"
+                                  className="px-3 py-2 rounded-lg text-[13px] font-medium kairos-bg-surface kairos-fg-primary border border-border-light/20 hover:opacity-95"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingTaskId(null);
+                                  }}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       )}
 
                       <div className="space-y-3">

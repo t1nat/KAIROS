@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { api } from "~/trpc/react";
 import { CreateProjectForm, CreateTaskForm, CollaboratorManager } from "./ProjectManagement";
 import { InteractiveTimeline } from "./InteractiveTimeline";
-import { AiTaskDraftPanel } from "./AiTaskDraftPanel";
 import { AiTaskPlannerPanel } from "./AiTaskPlannerPanel";
 import { ChevronDown, RefreshCw, CheckCircle2, ArrowLeft, Folder, Trash2, Users, Plus } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -164,6 +163,16 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
     },
   });
 
+  const updateTask = api.task.update.useMutation({
+    onSuccess: () => {
+      void utils.project.getById.invalidate({ id: selectedProjectId! });
+      void utils.project.getMyProjects.invalidate();
+      void utils.task.getOrgActivity.invalidate();
+      toast.success("Task updated");
+    },
+    onError: (error) => toast.error(t("errors.generic", { message: error.message })),
+  });
+
   const addCollaborator = api.project.addCollaborator.useMutation({
     onSuccess: () => void utils.project.getById.invalidate({ id: selectedProjectId! }),
     onError: (e) => toast.error(t("errors.generic", { message: e.message })),
@@ -198,6 +207,9 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
 
   const handleTaskStatusChange = (taskId: number, status: Task["status"]) =>
     updateTaskStatus.mutate({ taskId, status });
+
+  const handleTaskUpdate = (taskId: number, patch: { title?: string; description?: string; assignedToId?: string | null; dueDate?: Date | null }) =>
+    updateTask.mutate({ taskId, ...patch });
 
   const handleAddCollaborator = async (email: string, permission: "read" | "write") => {
     if (selectedProjectId) {
@@ -492,26 +504,6 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                           }}
                         />
 
-                        {/* AI Task Generation (legacy drafts) */}
-                        <AiTaskDraftPanel
-                          projectId={selectedProjectId}
-                          projectTitle={projectDetails.title}
-                          projectDescription={projectDetails.description ?? null}
-                          onAddTask={(task: { title: string; description: string; priority: "low" | "medium" | "high" | "urgent"; dueDate?: Date }) => {
-                            createTask.mutate({
-                              ...task,
-                              projectId: selectedProjectId,
-                            });
-                          }}
-                          onAddAllTasks={(draftTasks: Array<{ title: string; description: string; priority: "low" | "medium" | "high" | "urgent"; dueDate?: Date }>) => {
-                            for (const task of draftTasks) {
-                              createTask.mutate({
-                                ...task,
-                                projectId: selectedProjectId,
-                              });
-                            }
-                          }}
-                        />
 
                         <CreateTaskForm
                           projectId={selectedProjectId}
@@ -536,6 +528,8 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                 <InteractiveTimeline
                   tasks={projectDetails.tasks as Task[]}
                   onTaskStatusChange={handleTaskStatusChange}
+                  onTaskUpdate={handleTaskUpdate}
+                  availableUsers={availableUsers}
                   isReadOnly={!hasWriteAccess}
                   projectTitle={projectDetails.title}
                 />
