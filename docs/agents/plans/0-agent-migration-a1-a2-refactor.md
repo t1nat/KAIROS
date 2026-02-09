@@ -207,36 +207,99 @@
 
 ### **Phase 3: UI / API Integration**
 
-**Goal:** Move A1 from global assistant to `/projects` page chatbot; enable PDF upload in task planner (A2).
+**Goal:** Move A1 from global assistant to `/projects` as an embedded project chatbot; make A2 the authoritative task planner (draft → confirm → apply) with optional PDF upload; provide clear handoff between A1→A2; ensure UX is safe (confirm before writes), resilient (schema defaults + retries), and debuggable.
 
-**Tasks:**
+**Deliverables:**
+- Project sidebar chatbot UI (A1)
+- Task Planner UI (A2): message box, plan preview, confirm/apply, audit trail
+- Optional PDF upload (A2) with extraction preview
+- tRPC endpoints + streaming (optional) + proper caching/invalidation
 
-1. **Create A1 chatbot component for `/projects` page:**
-   - [ ] `src/components/projects/ProjectIntelligenceChat.tsx`
-   - [ ] Input: `projectId`, `userId`
-   - [ ] Query: `api.agent.projectChatbot.useQuery({ projectId, message })`
-   - [ ] Sidebar placement on `/projects/[id]` (or projects list page)
+**Tasks (UI + UX requirements):**
 
-   **File:** `src/components/projects/ProjectIntelligenceChat.tsx` (NEW)
+1. **Create A1 Project Intelligence Chat UI (embedded):**
+   - [ ] New component: [`src/components/projects/ProjectIntelligenceChat.tsx`](src/components/projects/ProjectIntelligenceChat.tsx)
+   - [ ] Must render inside `/projects` context (project selected) and accept `projectId`
+   - [ ] Must support:
+     - [ ] Conversation transcript (user + agent messages)
+     - [ ] “Data sources” / “Assumptions” expandable section (to reduce hallucination impact)
+     - [ ] “Confidence” indicator (0–1) for predictions
+     - [ ] “Suggested actions” chips that can trigger A2 handoff (e.g. “Turn this into a task plan”)
+   - [ ] Loading / error states:
+     - [ ] Visible “thinking” indicator
+     - [ ] Retry button on failure
+     - [ ] Copy error details (for support)
 
-2. **Add tRPC endpoints for A1 and A2:**
-   - [ ] `agent.projectChatbot(projectId, message)` → calls A1 with project scope
-   - [ ] `agent.taskPlannerWithPdf(projectId, message, pdfContent)` → calls A2 with PDF
-   - [ ] Keep existing `agent.taskPlannerDraft` for text-only input
+2. **A1 → A2 handoff UX (must be explicit and frictionless):**
+   - [ ] In A1 chat, add CTA buttons:
+     - [ ] “Create task plan” → opens A2 Task Planner panel prefilled with:
+       - [ ] summarized intent
+       - [ ] projectId
+       - [ ] optional constraints (deadline, team members)
+     - [ ] “Ask clarifying questions” → routes to A2 draft but in “questions-first” mode
+   - [ ] Handoff payload requirements:
+     - [ ] Include `handoffContext` text block (short, < 1k chars)
+     - [ ] Include current `projectId` + `projectName`
+     - [ ] Include top-N relevant tasks (titles + ids) as context anchors
 
-   **File:** `src/server/api/routers/agent.ts` (extend)
+3. **A2 Task Planner UI requirements (draft/confirm/apply):**
+   - [ ] Primary UI surface in projects area (either side panel or modal):
+     - [ ] Message input textarea must remain editable even while requests are pending (disable only action buttons)
+     - [ ] “Draft plan” action triggers `agent.taskPlannerDraft`
+     - [ ] “Confirm” action triggers `agent.taskPlannerConfirm`
+     - [ ] “Apply” action triggers `agent.taskPlannerApply`
+   - [ ] Draft preview requirements:
+     - [ ] Render human-readable plan summary
+     - [ ] Render diff preview grouped by: Creates / Updates / Status changes / Deletes
+     - [ ] Show destructive warnings when deletes exist
+     - [ ] Show potential duplicates (title similarity) with “merge/skip” suggestions (if available)
+   - [ ] Confirmation UX requirements:
+     - [ ] Require explicit confirmation step before any writes
+     - [ ] Show immutable `planHash` and a short “what will happen” summary
+     - [ ] Confirm returns a `confirmationToken` (expires) and UI must display “token expires in X minutes”
+   - [ ] Apply UX requirements:
+     - [ ] Apply uses `confirmationToken` only; never reuses raw plan JSON
+     - [ ] Show progress + final result summary:
+       - [ ] how many tasks created/updated/deleted
+       - [ ] list of created task IDs with links
+     - [ ] Idempotency: UI generates a stable `clientRequestId` per apply attempt; retries must reuse it
+   - [ ] Audit/history UX (persistence is required):
+     - [ ] Add “History” tab showing last N drafts and applies for the project (timestamp, user, status, planHash)
+     - [ ] Clicking a history entry rehydrates and shows the plan preview (read-only)
 
-3. **Add PDF upload handler for A2:**
-   - [ ] Allow file input in task planner UI
-   - [ ] Extract text using existing PDF library (pdfjs or similar)
-   - [ ] Pass `pdfContent` to A2 context builder
-   - [ ] Show extracted tasks in diff preview
+4. **PDF upload UI requirements (A2 optional, but designed now):**
+   - [ ] In A2 panel, add file picker / drag-drop for PDF
+   - [ ] Show file name + size, allow remove/replace
+   - [ ] Extraction preview step:
+     - [ ] show extracted text snippet (first ~1–2 pages) or structured extracted tasks
+     - [ ] show “include in next draft” toggle
+     - [ ] warn if extraction is truncated due to token limits
+   - [ ] Security requirements:
+     - [ ] Never persist raw PDF text unless explicitly required; store only derived tasks + minimal metadata
+     - [ ] Redact secrets patterns (API keys) from displayed extracted text (best-effort)
 
-   **File:** `src/components/projects/CreateProjectContainer.tsx` (extend)
+5. **tRPC endpoints + client integration requirements:**
+   - [ ] Add/confirm endpoints in [`src/server/api/routers/agent.ts`](src/server/api/routers/agent.ts):
+     - [ ] `agent.projectChatbot` (A1 project-scoped)
+     - [ ] `agent.taskPlannerDraft` / `agent.taskPlannerConfirm` / `agent.taskPlannerApply` (A2)
+     - [ ] `agent.taskPlannerWithPdf` (optional wrapper)
+   - [ ] Cache/invalidation requirements:
+     - [ ] After apply, invalidate [`utils.project.getById.invalidate()`](src/components/projects/CreateProjectContainer.tsx:1) so tasks refresh
+     - [ ] If tasks have separate query, invalidate it too (keep UI consistent)
 
-4. **Update page routes:**
-   - [ ] `/projects` or `/projects/[id]`: embed A1 chatbot sidebar
-   - [ ] Task planner: add PDF upload button
+6. **Accessibility + responsiveness requirements:**
+   - [ ] Keyboard navigation for chat input and action buttons
+   - [ ] Focus management when opening panels/modals
+   - [ ] Proper aria labels for upload and “dangerous” actions (deletes)
+   - [ ] Mobile: panel collapses into full-screen sheet
+
+7. **Observability & guardrails (dev + production):**
+   - [ ] Show request IDs in UI error display (draft/confirm/apply)
+   - [ ] Server logs include: projectId, userId, planHash, confirmationToken status (valid/expired)
+   - [ ] Add feature flags:
+     - [ ] `AGENT_A1_CHATBOT_PROJECTS`
+     - [ ] `AGENT_A2_TASK_PLANNER`
+     - [ ] `AGENT_A2_PDF_UPLOAD`
 
 ---
 
