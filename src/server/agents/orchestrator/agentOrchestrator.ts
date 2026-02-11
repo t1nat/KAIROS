@@ -347,6 +347,10 @@ export const agentOrchestrator = {
         .update(tasks)
         .set({
           status: s.status,
+          completedAt: s.status === "completed" ? new Date() : null,
+          completedById: s.status === "completed" ? userId : null,
+          // When a task is un-completed by the planner, clear any completion note.
+          completionNote: s.status === "completed" ? undefined : null,
           lastEditedById: userId,
           lastEditedAt: new Date(),
           updatedAt: new Date(),
