@@ -120,6 +120,8 @@ export const taskRouter = createTRPCRouter({
       z.object({
         taskId: z.number(),
         status: z.enum(["pending", "in_progress", "completed", "blocked"]),
+        /** Optional short summary/note when completing. */
+        completionNote: z.string().max(2000).optional().nullable(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -185,6 +187,7 @@ export const taskRouter = createTRPCRouter({
         updatedAt: Date;
         completedAt?: Date | null;
         completedById?: string | null;
+        completionNote?: string | null;
         lastEditedById: string;
         lastEditedAt: Date;
       } = {
@@ -198,11 +201,16 @@ export const taskRouter = createTRPCRouter({
       if (input.status === "completed" && oldStatus !== "completed") {
         updateData.completedAt = new Date();
         updateData.completedById = ctx.session.user.id;
+        if (input.completionNote !== undefined) {
+          updateData.completionNote = input.completionNote;
+        }
       }
       
       else if (input.status !== "completed" && oldStatus === "completed") {
         updateData.completedAt = null;
         updateData.completedById = null;
+        // Clearing completion resets the note unless caller explicitly wants to keep it.
+        updateData.completionNote = null;
       }
 
       await ctx.db
@@ -385,6 +393,122 @@ export const taskRouter = createTRPCRouter({
       }
 
       await ctx.db.delete(tasks).where(eq(tasks.id, input.taskId));
+
+      return { success: true };
+    }),
+
+  /**
+   * Hard-remove a task even after it exists on the timeline.
+   * Intended for admins/org owners / project owners.
+   */
+  adminDiscard: protectedProcedure
+    .input(z.object({ taskId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const [task] = await ctx.db.select().from(tasks).where(eq(tasks.id, input.taskId));
+      if (!task) throw new Error("Task not found");
+
+      const [project] = await ctx.db
+        .select()
+        .from(projects)
+        .where(eq(projects.id, task.projectId));
+
+      if (!project) throw new Error("Project not found");
+
+      const isProjectOwner = project.createdById === ctx.session.user.id;
+
+      // Org admins/owner can discard tasks.
+      let isOrgOwnerOrAdmin = false;
+      if (project.organizationId) {
+        const [org] = await ctx.db
+          .select()
+          .from(organizations)
+          .where(eq(organizations.id, project.organizationId));
+
+        const [membership] = await ctx.db
+          .select()
+          .from(organizationMembers)
+          .where(
+            and(
+              eq(organizationMembers.organizationId, project.organizationId),
+              eq(organizationMembers.userId, ctx.session.user.id),
+            ),
+          );
+
+        const isOrgOwner = org?.createdById === ctx.session.user.id;
+        const isOrgAdmin = membership?.role === "admin";
+        isOrgOwnerOrAdmin = !!isOrgOwner || !!isOrgAdmin;
+      }
+
+      if (!isProjectOwner && !isOrgOwnerOrAdmin) {
+        throw new Error("Only project owner or org admin/owner can discard tasks");
+      }
+
+      await ctx.db.delete(tasks).where(eq(tasks.id, input.taskId));
+      return { success: true };
+    }),
+
+  /**
+   * Set/update the completion note.
+   * Allowed for: the completer, project owner, org owner/admin.
+   */
+  setCompletionNote: protectedProcedure
+    .input(z.object({ taskId: z.number(), completionNote: z.string().max(2000).nullable() }))
+    .mutation(async ({ ctx, input }) => {
+      const [task] = await ctx.db.select().from(tasks).where(eq(tasks.id, input.taskId));
+      if (!task) throw new Error("Task not found");
+
+      const [project] = await ctx.db
+        .select()
+        .from(projects)
+        .where(eq(projects.id, task.projectId));
+
+      if (!project) throw new Error("Project not found");
+
+      const isProjectOwner = project.createdById === ctx.session.user.id;
+      const isCompleter = task.completedById === ctx.session.user.id;
+
+      let isOrgOwnerOrAdmin = false;
+      if (project.organizationId) {
+        const [org] = await ctx.db
+          .select()
+          .from(organizations)
+          .where(eq(organizations.id, project.organizationId));
+
+        const [membership] = await ctx.db
+          .select()
+          .from(organizationMembers)
+          .where(
+            and(
+              eq(organizationMembers.organizationId, project.organizationId),
+              eq(organizationMembers.userId, ctx.session.user.id),
+            ),
+          );
+
+        const isOrgOwner = org?.createdById === ctx.session.user.id;
+        const isOrgAdmin = membership?.role === "admin";
+        isOrgOwnerOrAdmin = !!isOrgOwner || !!isOrgAdmin;
+      }
+
+      if (!isCompleter && !isProjectOwner && !isOrgOwnerOrAdmin) {
+        throw new Error("Not allowed to edit completion note");
+      }
+
+      await ctx.db
+        .update(tasks)
+        .set({
+          completionNote: input.completionNote,
+          updatedAt: new Date(),
+          lastEditedById: ctx.session.user.id,
+          lastEditedAt: new Date(),
+        })
+        .where(eq(tasks.id, input.taskId));
+
+      await ctx.db.insert(taskActivityLog).values({
+        taskId: input.taskId,
+        userId: ctx.session.user.id,
+        action: "completion_note_set",
+        newValue: input.completionNote ?? "",
+      });
 
       return { success: true };
     }),

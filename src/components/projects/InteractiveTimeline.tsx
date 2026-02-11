@@ -18,6 +18,7 @@ interface Task {
     image: string | null;
   } | null;
   completedAt?: Date | null;
+  completionNote?: string | null;
   orderIndex: number;
   createdBy?: {
     id: string;
@@ -41,6 +42,10 @@ interface InteractiveTimelineProps {
   tasks: Task[];
   onTaskStatusChange: (taskId: number, newStatus: Task["status"]) => void;
   onTaskUpdate?: (taskId: number, patch: { title?: string; description?: string; assignedToId?: string | null; dueDate?: Date | null }) => void;
+  onTaskCompletionNoteSave?: (taskId: number, completionNote: string | null) => void;
+  onTaskDiscard?: (taskId: number) => void;
+  canEditCompletionNote?: (task: Task) => boolean;
+  canDiscardTask?: (task: Task) => boolean;
   availableUsers?: Array<{ id: string; name: string | null; image: string | null }>;
   isReadOnly?: boolean;
   projectTitle?: string;
@@ -50,6 +55,10 @@ export function InteractiveTimeline({
   tasks,
   onTaskStatusChange,
   onTaskUpdate,
+  onTaskCompletionNoteSave,
+  onTaskDiscard,
+  canEditCompletionNote,
+  canDiscardTask,
   availableUsers = [],
   isReadOnly = false,
   projectTitle
@@ -69,6 +78,9 @@ export function InteractiveTimeline({
   const [editDescription, setEditDescription] = useState<string>("");
   const [editAssignedToId, setEditAssignedToId] = useState<string>("unassigned");
   const [editDueDate, setEditDueDate] = useState<string>("");
+
+  const [editingCompletionNoteTaskId, setEditingCompletionNoteTaskId] = useState<number | null>(null);
+  const [editCompletionNote, setEditCompletionNote] = useState<string>("");
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const taskRefs = useRef<Map<number, HTMLDivElement>>(new Map());
@@ -392,23 +404,37 @@ export function InteractiveTimeline({
                         <div className="p-3 rounded-lg kairos-bg-base border border-border-light/20">
                           <div className="flex items-center justify-between gap-3">
                             <div className="text-[12px] uppercase tracking-wide kairos-fg-secondary">Admin edit</div>
-                            <button
-                              type="button"
-                              className="px-2 py-1 rounded-md text-[12px] kairos-bg-surface kairos-fg-primary border border-border-light/20 hover:opacity-95"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const next = editingTaskId === task.id ? null : task.id;
-                                setEditingTaskId(next);
-                                if (next === task.id) {
-                                  setEditTitle(task.title);
-                                  setEditDescription(task.description ?? "");
-                                  setEditAssignedToId(task.assignedTo?.id ?? "unassigned");
-                                  setEditDueDate(task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : "");
-                                }
-                              }}
-                            >
-                              {editingTaskId === task.id ? "Close" : "Edit"}
-                            </button>
+                            <div className="flex items-center gap-2">
+                              {onTaskDiscard && (canDiscardTask?.(task) ?? false) && (
+                                <button
+                                  type="button"
+                                  className="px-2 py-1 rounded-md text-[12px] bg-error/10 text-error border border-border-light/20 hover:opacity-95"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onTaskDiscard(task.id);
+                                  }}
+                                >
+                                  Discard
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                className="px-2 py-1 rounded-md text-[12px] kairos-bg-surface kairos-fg-primary border border-border-light/20 hover:opacity-95"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const next = editingTaskId === task.id ? null : task.id;
+                                  setEditingTaskId(next);
+                                  if (next === task.id) {
+                                    setEditTitle(task.title);
+                                    setEditDescription(task.description ?? "");
+                                    setEditAssignedToId(task.assignedTo?.id ?? "unassigned");
+                                    setEditDueDate(task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : "");
+                                  }
+                                }}
+                              >
+                                {editingTaskId === task.id ? "Close" : "Edit"}
+                              </button>
+                            </div>
                           </div>
 
                           {editingTaskId === task.id && (
@@ -553,8 +579,8 @@ export function InteractiveTimeline({
                             <span className="opacity-70">{t("timeline.completedBy")}</span>
                             <div className="flex items-center gap-1.5">
                               {task.completedBy.image ? (
-                                <Image 
-                                  src={task.completedBy.image} 
+                                <Image
+                                  src={task.completedBy.image}
                                   alt={task.completedBy.name ?? "User"}
                                   width={20}
                                   height={20}
@@ -569,6 +595,77 @@ export function InteractiveTimeline({
                               )}
                               <span className="font-semibold">{task.completedBy.name ?? t("team.unknownUser")}</span>
                             </div>
+                          </div>
+                        )}
+
+                        {(
+                          // show the completion note section inside the expanded task panel
+                          // (only meaningful when completed, but visible here as requested)
+                          isCompleted
+                        ) && (
+                          <div className="mt-2 p-3 rounded-lg kairos-bg-base border border-border-light/20">
+                            <div className="flex items-center justify-between gap-3 mb-2">
+                              <div className="text-[12px] uppercase tracking-wide kairos-fg-secondary">Completion note</div>
+                              {!isReadOnly && onTaskCompletionNoteSave && (canEditCompletionNote?.(task) ?? false) && (
+                                <button
+                                  type="button"
+                                  className="px-2 py-1 rounded-md text-[12px] kairos-bg-surface kairos-fg-primary border border-border-light/20 hover:opacity-95"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const next = editingCompletionNoteTaskId === task.id ? null : task.id;
+                                    setEditingCompletionNoteTaskId(next);
+                                    if (next === task.id) {
+                                      setEditCompletionNote(task.completionNote ?? "");
+                                    }
+                                  }}
+                                >
+                                  {editingCompletionNoteTaskId === task.id ? "Close" : "Edit"}
+                                </button>
+                              )}
+                            </div>
+
+                            {editingCompletionNoteTaskId === task.id ? (
+                              <div className="space-y-2">
+                                <textarea
+                                  value={editCompletionNote}
+                                  onChange={(e) => setEditCompletionNote(e.target.value)}
+                                  rows={3}
+                                  placeholder="Short summary..."
+                                  className="w-full rounded-lg px-3 py-2 text-[13px] outline-none kairos-bg-surface kairos-fg-primary border border-border-light/20 focus:border-accent-primary/40"
+                                />
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    className="px-3 py-2 rounded-lg text-[13px] font-medium bg-accent-primary text-white hover:opacity-95"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (!onTaskCompletionNoteSave) return;
+                                      onTaskCompletionNoteSave(
+                                        task.id,
+                                        editCompletionNote.trim() ? editCompletionNote.trim() : null,
+                                      );
+                                      setEditingCompletionNoteTaskId(null);
+                                    }}
+                                  >
+                                    Save note
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="px-3 py-2 rounded-lg text-[13px] font-medium kairos-bg-surface kairos-fg-primary border border-border-light/20 hover:opacity-95"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingCompletionNoteTaskId(null);
+                                    }}
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-[13px] kairos-fg-secondary whitespace-pre-wrap">
+                                {task.completionNote?.trim() ? task.completionNote : "—"}
+                              </div>
+                            )}
                           </div>
                         )}
                         

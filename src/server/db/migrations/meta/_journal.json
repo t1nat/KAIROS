@@ -71,6 +71,13 @@
       "when": 1770621715447,
       "tag": "0011_a2_task_planner_persistence",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1770801080413,
+      "tag": "0012_0012_task_completion_note",
+      "breakpoints": true
     }
   ]
 }

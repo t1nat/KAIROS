@@ -52,8 +52,28 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
       });
     },
     onSuccess: (data) => {
-      // agentOrchestrator.draft returns { message, actions?, ... } (A1 schema)
-      const agentText = (data as unknown as { message?: string }).message ?? "(no response)";
+      // agentOrchestrator.draft returns: { draftId, outputJson }
+      // We render a human-readable answer from A1Output.
+      const output = (data as unknown as { outputJson?: unknown }).outputJson as
+        | {
+            answer?: { summary: string; details?: string[] };
+            handoff?: { targetAgent: string; userIntent: string };
+            draftPlan?: { proposedChanges?: Array<{ summary: string }> };
+          }
+        | undefined;
+
+      const agentText =
+        output?.answer?.summary
+          ? [
+              output.answer.summary,
+              ...(output.answer.details ?? []).map((d) => `• ${d}`),
+            ].join("\n")
+          : output?.handoff
+            ? `I can hand this off to ${output.handoff.targetAgent}: ${output.handoff.userIntent}`
+            : output?.draftPlan?.proposedChanges?.length
+              ? output.draftPlan.proposedChanges.map((c) => `• ${c.summary}`).join("\n")
+              : "(no response)";
+
       setMessages((prev) => {
         const next = [...prev];
         for (let i = next.length - 1; i >= 0; i--) {

@@ -129,7 +129,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
   });
 
   const updateTaskStatus = api.task.updateStatus.useMutation({
-    onMutate: async ({ taskId, status }) => {
+    onMutate: async ({ taskId, status, completionNote }) => {
       if (!selectedProjectId) return;
       await utils.project.getById.cancel({ id: selectedProjectId });
       const previousProject = utils.project.getById.getData({ id: selectedProjectId });
@@ -138,11 +138,20 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
         if (!old) return old;
         return {
           ...old,
-          tasks: old.tasks?.map((t) =>
-            t.id === taskId
-              ? { ...t, status, completedAt: status === "completed" ? new Date() : null }
-              : t
-          ),
+          tasks: old.tasks?.map((t) => {
+            if (t.id !== taskId) return t;
+            return {
+              ...t,
+              status,
+              completedAt: status === "completed" ? new Date() : null,
+              // If caller supplies a completion note at the same time, reflect it optimistically.
+              // Otherwise keep whatever note we already had.
+              completionNote:
+                status === "completed"
+                  ? completionNote ?? t.completionNote ?? null
+                  : null,
+            };
+          }),
         };
       });
 
@@ -172,6 +181,22 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
     },
     onError: (error) => toast.error(t("errors.generic", { message: error.message })),
   });
+
+  const adminDiscardTask = api.task.adminDiscard.useMutation({
+    onSuccess: () => {
+      void utils.project.getById.invalidate({ id: selectedProjectId! });
+      void utils.project.getMyProjects.invalidate();
+      void utils.task.getOrgActivity.invalidate();
+      toast.success("Task discarded");
+    },
+    onError: (error) => toast.error(t("errors.generic", { message: error.message })),
+  });
+
+  const handleTaskDiscard = (taskId: number) => {
+    // Avoid browser confirm() (shows localhost alerts). If you want a custom modal,
+    // we can replace this with a proper dialog component.
+    adminDiscardTask.mutate({ taskId });
+  };
 
   const addCollaborator = api.project.addCollaborator.useMutation({
     onSuccess: () => void utils.project.getById.invalidate({ id: selectedProjectId! }),
@@ -207,6 +232,17 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
 
   const handleTaskStatusChange = (taskId: number, status: Task["status"]) =>
     updateTaskStatus.mutate({ taskId, status });
+
+  const setCompletionNote = api.task.setCompletionNote.useMutation({
+    onSuccess: () => {
+      void utils.project.getById.invalidate({ id: selectedProjectId! });
+      void utils.task.getOrgActivity.invalidate();
+    },
+    onError: (error) => toast.error(t("errors.generic", { message: error.message })),
+  });
+
+  const handleTaskCompletionNoteSave = (taskId: number, completionNote: string | null) =>
+    setCompletionNote.mutate({ taskId, completionNote });
 
   const handleTaskUpdate = (taskId: number, patch: { title?: string; description?: string; assignedToId?: string | null; dueDate?: Date | null }) =>
     updateTask.mutate({ taskId, ...patch });
@@ -529,6 +565,13 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
                   tasks={projectDetails.tasks as Task[]}
                   onTaskStatusChange={handleTaskStatusChange}
                   onTaskUpdate={handleTaskUpdate}
+                  onTaskCompletionNoteSave={handleTaskCompletionNoteSave}
+                  onTaskDiscard={handleTaskDiscard}
+                  canEditCompletionNote={(task) => {
+                    const completerId = task.completedBy?.id ?? null;
+                    return completerId === userId || isOwner;
+                  }}
+                  canDiscardTask={() => isOwner}
                   availableUsers={availableUsers}
                   isReadOnly={!hasWriteAccess}
                   projectTitle={projectDetails.title}

@@ -225,6 +225,13 @@ export const tasks = createTable(
     completedById: d
       .varchar("completed_by_id", { length: 255 })
       .references(() => users.id, { onDelete: "set null" }),
+
+    /**
+     * Short completion summary/note, usually filled when a task is marked completed.
+     * Editable by the completer and admins/org owner.
+     */
+    completionNote: text("completion_note"),
+
     createdById: d
       .varchar({ length: 255 })
       .notNull()
