@@ -338,6 +338,7 @@ summary,
 :where(a, button, input, textarea, select, summary, [role="button"], [tabindex]):focus-visible {
   outline: 2px solid rgb(var(--accent-primary));
   outline-offset: 2px;
+  border-radius: 9999px;
 }
 
 /* Skip link for keyboard and screen readers */
