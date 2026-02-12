@@ -4,25 +4,28 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { 
-  Home, 
-  FolderKanban, 
-  FileEdit, 
+import {
+  Home,
+  FolderKanban,
+  FileEdit,
   BarChart3,
   Users,
   Settings,
   Menu,
   X,
   Plus,
-  //MessageCircle,
-  Calendar
+  MessageCircle,
+  Calendar,
 } from "lucide-react";
+
+import { A1ChatWidgetOverlay } from "~/components/chat/A1ChatWidgetOverlay";
 
 export function SideNav() {
   const t = useTranslations("nav");
   const tCommon = useTranslations("common");
   const tOrg = useTranslations("org");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isA1WidgetOpen, setIsA1WidgetOpen] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const mobileNavId = "mobile-nav-menu";
@@ -48,7 +51,7 @@ export function SideNav() {
     { href: "/projects", icon: FolderKanban, label: t("projects") },
     { href: "/create?action=new_note", icon: FileEdit, label: t("notes") },
     { href: "/progress", icon: BarChart3, label: t("progress") },
-   // { href: "/chat", icon: MessageCircle, label: "Chat" },
+    { href: "/chat", icon: MessageCircle, label: "Chat" },
     { href: "/publish", icon: Calendar, label: t("events") },
   ];
 
@@ -89,6 +92,8 @@ export function SideNav() {
 
   return (
     <>
+      <A1ChatWidgetOverlay isOpen={isA1WidgetOpen} onClose={() => setIsA1WidgetOpen(false)} />
+
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-bg-primary/95 backdrop-blur-md shadow-sm px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center shadow-lg shadow-accent-primary/25">
@@ -132,7 +137,9 @@ export function SideNav() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                    }}
                     className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-colors font-medium ${
                       isActive
                         ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 dark:bg-fg-primary dark:text-bg-primary dark:ring-0 shadow-sm"
@@ -192,6 +199,30 @@ export function SideNav() {
         <div className="flex flex-col items-center gap-6">
           {mainNavItems.map((item) => {
             const isActive = isItemActive(item.href);
+
+            if (item.href === "/chat") {
+              return (
+                <button
+                  key={item.href}
+                  type="button"
+                  aria-label={item.label}
+                  onClick={() => setIsA1WidgetOpen(true)}
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors group relative ${
+                    isActive
+                      ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 dark:bg-fg-primary dark:text-bg-primary dark:ring-0 shadow-sm"
+                      : "text-fg-secondary hover:bg-bg-secondary/60 hover:text-fg-primary"
+                  }`}
+                  title={item.label}
+                >
+                  <item.icon size={20} />
+
+                  <span className="absolute left-full ml-4 px-3 py-1.5 ios-card text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
+                    {item.label}
+                  </span>
+                </button>
+              );
+            }
+
             return (
               <Link
                 key={item.href}
@@ -205,7 +236,7 @@ export function SideNav() {
                 title={item.label}
               >
                 <item.icon size={20} />
-                
+
                 <span className="absolute left-full ml-4 px-3 py-1.5 ios-card text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
                   {item.label}
                 </span>

@@ -87,15 +87,7 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
     },
   });
 
-  const suggestedActions = useMemo(
-    () => [
-      "How far along is this project?",
-      "What are the biggest risks right now?",
-      "Will we hit our deadline?",
-      "Summarize what to do next week.",
-    ],
-    [],
-  );
+  const suggestedActions: string[] = [];
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const scrollToBottom = useCallback(() => {
@@ -120,91 +112,97 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
   );
 
   return (
-    <div className="surface-card overflow-hidden flex flex-col h-full min-h-[420px] shadow-lg">
-      <div className="px-4 py-3 border-b border-border-light/20 flex items-center justify-between gap-3 bg-gradient-to-r from-bg-elevated to-bg-surface">
+    <div className="h-full w-full flex flex-col bg-bg-primary">
+      <div className="px-4 py-3 flex items-center justify-between gap-3 border-b border-white/10 bg-bg-primary/80 backdrop-blur">
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-fg-primary">Project / Workspace Intelligence</p>
-          <p className="text-xs text-fg-tertiary truncate">Ask about progress, risks, deadlines, and next steps.</p>
+          <p className="text-sm font-semibold text-fg-primary">A1 Assistant</p>
+          <p className="text-xs text-fg-tertiary truncate">Workspace Concierge</p>
         </div>
+
         <button
           type="button"
-          className="text-xs px-2 py-1 rounded-md border border-border-light/30 hover:bg-bg-surface text-fg-secondary"
+          className="text-xs px-2.5 py-1.5 rounded-lg bg-bg-elevated hover:bg-bg-secondary/60 text-fg-secondary transition-colors"
           onClick={() => setShowAssumptions((v) => !v)}
         >
-          {showAssumptions ? "Hide" : "Show"} assumptions
+          {showAssumptions ? "Hide" : "Show"} info
         </button>
       </div>
 
       {showAssumptions && (
-        <div className="px-4 py-3 border-b border-border-light/20 bg-bg-elevated/40">
-          <p className="text-xs text-fg-tertiary">
-            This chat is project-scoped. Predictions are best-effort; treat them as guidance and verify against task
-            data.
-          </p>
-          <p className="text-xs text-fg-tertiary mt-1">Confidence: not yet implemented (placeholder).</p>
-          <p className="text-xs text-fg-tertiary mt-1">Data sources: tasks + project metadata (as available).</p>
+        <div className="px-4 py-3 border-b border-white/10 bg-bg-primary/60 backdrop-blur">
+          <div className="w-full max-w-3xl">
+            <p className="text-xs text-fg-tertiary leading-relaxed">
+              This chat is project-scoped. Predictions are best-effort; treat them as guidance and verify against task data.
+            </p>
+            <p className="text-xs text-fg-tertiary mt-1">Confidence: not yet implemented (placeholder).</p>
+            <p className="text-xs text-fg-tertiary mt-1">Data sources: tasks + project metadata (as available).</p>
+          </div>
         </div>
       )}
 
-      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 py-3 bg-gradient-to-b from-bg-surface/20 to-bg-primary">
-        {messages.length === 0 ? (
-          <div className="space-y-2">
-            <p className="text-sm text-fg-tertiary">Try one of these:</p>
-            <div className="flex flex-wrap gap-2">
-              {suggestedActions.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  className="text-xs px-3 py-1.5 rounded-full border border-border-light/30 hover:bg-bg-surface text-fg-secondary"
-                  onClick={() => handleSend(s)}
-                  disabled={sendMutation.isPending}
-                >
-                  {s}
-                </button>
-              ))}
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 py-6">
+        <div className="w-full max-w-3xl space-y-4">
+          {messages.length === 0 ? (
+            <div className="py-12 text-center">
+              <p className="text-sm text-fg-tertiary">Ask a question about your workspace or projects.</p>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {messages.map((m, idx) => (
-              <div key={`${m.createdAt.toISOString()}-${idx}`} className={m.role === "user" ? "text-right" : "text-left"}>
+          ) : (
+            messages.map((m, idx) => (
+              <div key={`${m.createdAt.toISOString()}-${idx}`} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
                 <div
                   className={
                     m.role === "user"
-                      ? "inline-block max-w-[85%] px-3 py-2 rounded-2xl bg-accent-primary/20 text-fg-primary"
-                      : "inline-block max-w-[85%] px-3 py-2 rounded-2xl bg-bg-elevated/70 text-fg-primary"
+                      ? "max-w-[85%] rounded-2xl rounded-br-md bg-accent-primary text-white px-4 py-2.5 shadow-sm"
+                      : "max-w-[85%] rounded-2xl rounded-bl-md bg-bg-elevated text-fg-primary px-4 py-2.5 shadow-sm"
                   }
                 >
-                  <div className="whitespace-pre-wrap text-sm">{m.text}</div>
-                  <div className="text-[10px] mt-1 text-fg-tertiary">{m.createdAt.toLocaleTimeString()}</div>
+                  <div className="whitespace-pre-wrap text-sm leading-relaxed">{m.text}</div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            ))
+          )}
+          <div className="h-2" />
+        </div>
       </div>
 
       <form
-        className="p-3 border-t border-border-light/20 flex items-center gap-2 bg-bg-elevated/50"
+        className="shrink-0 border-t border-white/10 bg-bg-primary/80 backdrop-blur"
         onSubmit={(e) => {
           e.preventDefault();
           handleSend(draft);
         }}
       >
-        <input
-          type="text"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="Ask about this project…"
-          className="flex-1 px-3 py-2 rounded-lg bg-bg-surface border border-border-light/30 text-fg-primary focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
-        />
-        <button
-          type="submit"
-          className="px-3 py-2 rounded-lg bg-accent-primary text-white text-sm font-medium disabled:opacity-60"
-          disabled={sendMutation.isPending || !draft.trim()}
-        >
-          Send
-        </button>
+        <div className="w-full max-w-3xl px-4 py-4 lg:pl-8">
+          <div className="flex items-end gap-2 rounded-[999px] bg-bg-elevated px-3 py-2 shadow-sm">
+            <input
+              type="text"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Message A1…"
+              className="flex-1 bg-transparent px-2 py-2 text-sm text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus-visible:outline-none"
+            />
+            <button
+              type="submit"
+              className={
+                "h-10 shrink-0 px-4 rounded-full text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed " +
+                (!sendMutation.isPending && draft.trim()
+                  ? "text-white hover:opacity-90"
+                  : "bg-bg-secondary/40 text-fg-tertiary")
+              }
+              disabled={sendMutation.isPending || !draft.trim()}
+              style={
+                !sendMutation.isPending && draft.trim()
+                  ? { backgroundColor: `rgb(var(--accent-primary))` }
+                  : { backgroundColor: "rgba(255,255,255,0.06)" }
+              }
+            >
+              Send
+            </button>
+          </div>
+          <p className="mt-2 text-[11px] text-fg-tertiary text-center">
+            A1 answers are best-effort. Verify critical decisions.
+          </p>
+        </div>
       </form>
     </div>
   );
