@@ -3,11 +3,21 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { api } from "~/trpc/react";
 
-type ChatMsg = {
-  role: "user" | "agent";
-  text: string;
-  createdAt: Date;
-};
+type ChatMsg =
+  | {
+      role: "user";
+      text: string;
+      createdAt: Date;
+    }
+  | {
+      role: "agent";
+      text: string;
+      createdAt: Date;
+      actions?: Array<
+        | { type: "notes_confirm"; draftId: string }
+        | { type: "notes_apply"; draftId: string; confirmationToken: string }
+      >;
+    };
 
 function clampText(s: string, max = 20_000): string {
   if (s.length <= max) return s;
@@ -21,7 +31,7 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [showAssumptions, setShowAssumptions] = useState(false);
 
-  const sendMutation = api.agent.projectChatbot.useMutation({
+  const a1Mutation = api.agent.projectChatbot.useMutation({
     onMutate: ({ message }) => {
       const userText = message.trim();
       if (!userText) return;
@@ -37,14 +47,9 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
     onError: (err) => {
       setMessages((prev) => {
         const next = [...prev];
-        // Replace the last placeholder agent message if it exists
         for (let i = next.length - 1; i >= 0; i--) {
           if (next[i]?.role === "agent" && next[i]?.text === "Thinking…") {
-            next[i] = {
-              role: "agent",
-              text: `Request failed: ${err.message}`,
-              createdAt: new Date(),
-            };
+            next[i] = { role: "agent", text: `Request failed: ${err.message}`, createdAt: new Date() };
             return next;
           }
         }
@@ -52,8 +57,6 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
       });
     },
     onSuccess: (data) => {
-      // agentOrchestrator.draft returns: { draftId, outputJson }
-      // We render a human-readable answer from A1Output.
       const output = (data as unknown as { outputJson?: unknown }).outputJson as
         | {
             answer?: { summary: string; details?: string[] };
@@ -64,10 +67,7 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
 
       const agentText =
         output?.answer?.summary
-          ? [
-              output.answer.summary,
-              ...(output.answer.details ?? []).map((d) => `• ${d}`),
-            ].join("\n")
+          ? [output.answer.summary, ...(output.answer.details ?? []).map((d) => `• ${d}`)].join("\n")
           : output?.handoff
             ? `I can hand this off to ${output.handoff.targetAgent}: ${output.handoff.userIntent}`
             : output?.draftPlan?.proposedChanges?.length
@@ -87,6 +87,22 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
     },
   });
 
+  const notesDraftMutation = api.agent.notesVaultDraft.useMutation();
+  const notesConfirmMutation = api.agent.notesVaultConfirm.useMutation();
+  const notesApplyMutation = api.agent.notesVaultApply.useMutation();
+
+  const isNotesIntent = useCallback((text: string) => {
+    const t = text.toLowerCase();
+    return (
+      t.includes("note") ||
+      t.includes("notes") ||
+      t.includes("sticky") ||
+      t.includes("vault") ||
+      t.includes("summarize my notes") ||
+      t.includes("organize my notes")
+    );
+  }, []);
+
   const suggestedActions: string[] = [];
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -100,15 +116,76 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
     (text: string) => {
       const msg = text.trim();
       if (!msg) return;
+
+      // Immediately push the user's message + a thinking placeholder,
+      // and clear the composer so the text appears as a chat bubble.
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", text: msg, createdAt: new Date() },
+        { role: "agent", text: "Thinking…", createdAt: new Date() },
+      ]);
+      setDraft("");
+
+      const run = async () => {
+        if (isNotesIntent(msg)) {
+          // Notes Vault runs workspace-scoped; no projectId required.
+          const res = await notesDraftMutation.mutateAsync({ message: clampText(msg) });
+
+          const plan = (res as unknown as { plan?: { summary?: string; operations?: unknown[]; blocked?: unknown[] } }).plan;
+          const draftId = (res as unknown as { draftId?: string }).draftId ?? "";
+
+          const operationsCount = Array.isArray(plan?.operations) ? plan!.operations.length : 0;
+          const blockedCount = Array.isArray(plan?.blocked) ? plan!.blocked.length : 0;
+
+          const agentText = [
+            plan?.summary ?? "Notes Vault response.",
+            `Ops: ${operationsCount} (blocked: ${blockedCount})`,
+          ].join("\n");
+
+          const shouldShowConfirm = operationsCount > 0;
+
+          setMessages((prev) => {
+            const next = [...prev];
+            for (let i = next.length - 1; i >= 0; i--) {
+              if (next[i]?.role === "agent" && next[i]?.text === "Thinking…") {
+                next[i] = {
+                  role: "agent",
+                  text: agentText,
+                  createdAt: new Date(),
+                  actions: shouldShowConfirm && draftId ? [{ type: "notes_confirm", draftId }] : undefined,
+                };
+                return next;
+              }
+            }
+            return [
+              ...next,
+              {
+                role: "agent",
+                text: agentText,
+                createdAt: new Date(),
+                actions: shouldShowConfirm && draftId ? [{ type: "notes_confirm", draftId }] : undefined,
+              },
+            ];
+          });
+
+          return;
+        }
+
+        await a1Mutation.mutateAsync({ projectId, message: clampText(msg) });
+      };
+
       // Keep the input editable; only the send button is disabled while pending
-      void sendMutation
-        .mutateAsync({ projectId, message: clampText(msg) })
-        .finally(() => {
-        // Best-effort scroll
+      void run().finally(() => {
         setTimeout(scrollToBottom, 0);
       });
     },
-    [projectId, sendMutation, scrollToBottom],
+    [
+      projectId,
+      a1Mutation,
+      isNotesIntent,
+      notesDraftMutation,
+      scrollToBottom,
+    ],
   );
 
   return (
@@ -156,7 +233,100 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
                       : "max-w-[85%] rounded-2xl rounded-bl-md bg-bg-elevated text-fg-primary px-4 py-2.5 shadow-sm"
                   }
                 >
-                  <div className="whitespace-pre-wrap text-sm leading-relaxed">{m.text}</div>
+                  <button
+                    type="button"
+                    className="w-full text-left"
+                    title="Click to copy"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(m.text);
+                        setMessages((prev) => [
+                          ...prev,
+                          {
+                            role: "agent",
+                            text: "Copied to clipboard.",
+                            createdAt: new Date(),
+                          },
+                        ]);
+                      } catch {
+                        setMessages((prev) => [
+                          ...prev,
+                          {
+                            role: "agent",
+                            text: "Copy failed (clipboard permission denied).",
+                            createdAt: new Date(),
+                          },
+                        ]);
+                      }
+                    }}
+                  >
+                    <div className="whitespace-pre-wrap text-sm leading-relaxed">{m.text}</div>
+                  </button>
+
+                  {m.role === "agent" && m.actions?.length ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {m.actions.map((a, aIdx) => {
+                        if (a.type === "notes_confirm") {
+                          return (
+                            <button
+                              key={`${a.type}-${a.draftId}-${aIdx}`}
+                              type="button"
+                              className="text-xs px-3 py-1.5 rounded-lg bg-bg-secondary/60 hover:bg-bg-secondary text-fg-primary border border-white/10"
+                              disabled={notesConfirmMutation.isPending}
+                              onClick={async () => {
+                                const res = await notesConfirmMutation.mutateAsync({ draftId: a.draftId });
+                                const token = (res as unknown as { confirmationToken: string }).confirmationToken;
+
+                                setMessages((prev) => {
+                                  const next = [...prev];
+                                  next.push({
+                                    role: "agent",
+                                    text: "Confirm OK. Ready to apply.",
+                                    createdAt: new Date(),
+                                    actions: [{ type: "notes_apply", draftId: a.draftId, confirmationToken: token }],
+                                  });
+                                  return next;
+                                });
+                              }}
+                            >
+                              Confirm
+                            </button>
+                          );
+                        }
+
+                        if (a.type === "notes_apply") {
+                          return (
+                            <button
+                              key={`${a.type}-${a.draftId}-${aIdx}`}
+                              type="button"
+                              className="text-xs px-3 py-1.5 rounded-lg bg-accent-primary/90 hover:bg-accent-primary text-white"
+                              disabled={notesApplyMutation.isPending}
+                              onClick={async () => {
+                                const res = await notesApplyMutation.mutateAsync({
+                                  draftId: a.draftId,
+                                  confirmationToken: a.confirmationToken,
+                                });
+
+                                const results = (res as unknown as { results?: unknown }).results;
+                                setMessages((prev) => [
+                                  ...prev,
+                                  {
+                                    role: "agent",
+                                    text: `Applied. Result: ${JSON.stringify(results)}`,
+                                    createdAt: new Date(),
+                                  },
+                                ]);
+                              }}
+                            >
+                              Apply
+                            </button>
+                          );
+                        }
+
+                        return null;
+                      })}
+                    </div>
+                  ) : null}
                 </div>
               </div>
             ))
@@ -185,13 +355,19 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
               type="submit"
               className={
                 "h-10 shrink-0 px-4 rounded-full text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed " +
-                (!sendMutation.isPending && draft.trim()
+                (!a1Mutation.isPending && !notesDraftMutation.isPending && draft.trim()
                   ? "text-white hover:opacity-90"
                   : "bg-bg-secondary/40 text-fg-tertiary")
               }
-              disabled={sendMutation.isPending || !draft.trim()}
+              disabled={
+                a1Mutation.isPending ||
+                notesDraftMutation.isPending ||
+                notesConfirmMutation.isPending ||
+                notesApplyMutation.isPending ||
+                !draft.trim()
+              }
               style={
-                !sendMutation.isPending && draft.trim()
+                !a1Mutation.isPending && !notesDraftMutation.isPending && draft.trim()
                   ? { backgroundColor: `rgb(var(--accent-primary))` }
                   : { backgroundColor: "rgba(255,255,255,0.06)" }
               }

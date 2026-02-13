@@ -17,15 +17,22 @@ import {
   TaskPlanDraftSchema,
   type TaskPlanDraft,
 } from "~/server/agents/schemas/a2TaskPlannerSchemas";
+import {
+  NotesVaultDraftSchema,
+  type NotesVaultDraft,
+  type NotesVaultApplyOutput,
+} from "~/server/agents/schemas/a3NotesVaultSchemas";
 import { A1_READ_TOOLS } from "~/server/agents/tools/a1/readTools";
 import { buildA1Context } from "~/server/agents/context/a1ContextBuilder";
 import { buildA2Context } from "~/server/agents/context/a2ContextBuilder";
+import { buildA3Context } from "~/server/agents/context/a3ContextBuilder";
 import {
   getA1SystemPrompt,
   getTaskGenerationPrompt,
   getPdfTaskExtractionPrompt,
 } from "~/server/agents/prompts/a1Prompts";
 import { getA2SystemPrompt } from "~/server/agents/prompts/a2Prompts";
+import { getA3SystemPrompt } from "~/server/agents/prompts/a3Prompts";
 import { chatCompletion } from "~/server/agents/llm/modelClient";
 import { parseAndValidate } from "~/server/agents/llm/jsonRepair";
 import { extractTextFromPdf } from "~/server/agents/pdf/pdfExtractor";
@@ -34,6 +41,9 @@ import {
   tasks,
   projectCollaborators,
   users,
+  stickyNotes,
+  agentNotesVaultDrafts,
+  agentNotesVaultApplies,
   agentTaskPlannerDrafts,
   agentTaskPlannerApplies,
 } from "~/server/db/schema";
@@ -42,7 +52,7 @@ import {
 // Types
 // ---------------------------------------------------------------------------
 
-export type AgentId = "workspace_concierge" | "task_planner";
+export type AgentId = "workspace_concierge" | "task_planner" | "notes_vault";
 
 export interface AgentDraftInput {
   ctx: TRPCContext;
@@ -56,7 +66,7 @@ export interface AgentDraftInput {
 
 export interface AgentDraftResult {
   draftId: string;
-  outputJson: A1Output | TaskPlanDraft;
+  outputJson: A1Output | TaskPlanDraft | NotesVaultDraft;
 }
 
 export interface TaskDraftInput {
@@ -126,6 +136,243 @@ function readConfirmationToken(token: string): ConfirmationTokenPayload {
 // ---------------------------------------------------------------------------
 
 export const agentOrchestrator = {
+  // ---------------------------------------------------------------------------
+  // A3 Notes Vault API
+  // ---------------------------------------------------------------------------
+
+  async notesVaultDraft(input: {
+    ctx: TRPCContext;
+    message: string;
+    handoffContext?: Record<string, unknown>;
+  }): Promise<{ draftId: string; plan: NotesVaultDraft }> {
+    const userId = requireUserId(input.ctx);
+    const draftId = createDraftId();
+
+    const contextPack = await buildA3Context({
+      ctx: input.ctx,
+      handoffContext: input.handoffContext,
+    });
+
+    const systemPrompt = getA3SystemPrompt(contextPack);
+
+    const llmResponse = await chatCompletion({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: input.message },
+      ],
+      temperature: 0.2,
+      jsonMode: true,
+    });
+
+    const parseResult = await parseAndValidate(llmResponse.content, NotesVaultDraftSchema);
+    if (!parseResult.success) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: `Invalid A3 plan JSON: ${parseResult.error}`,
+      });
+    }
+
+    // Server-side guardrails: enforce requiresUnlocked for password-protected notes.
+    const lockedIds = new Set(
+      contextPack.notes.filter((n) => n.isLocked).map((n) => n.id),
+    );
+
+    const guardedPlan: NotesVaultDraft = {
+      ...parseResult.data,
+      operations: parseResult.data.operations.map((op) => {
+        if (op.type !== "update") return op;
+        const requiresUnlocked = lockedIds.has(op.noteId) ? true : op.requiresUnlocked;
+        return { ...op, requiresUnlocked };
+      }),
+    };
+
+    const planHash = computePlanHash(guardedPlan);
+    const plan: NotesVaultDraft = { ...guardedPlan, planHash };
+
+    await input.ctx.db.insert(agentNotesVaultDrafts).values({
+      id: draftId,
+      userId,
+      message: input.message,
+      planJson: JSON.stringify(plan),
+      planHash,
+      status: "draft",
+    });
+
+    return { draftId, plan };
+  },
+
+  async notesVaultConfirm(input: {
+    ctx: TRPCContext;
+    draftId: string;
+  }): Promise<{ confirmationToken: string; summary: { creates: number; updates: number; deletes: number; blocked: number } }> {
+    const userId = requireUserId(input.ctx);
+
+    const [draft] = await input.ctx.db
+      .select({
+        id: agentNotesVaultDrafts.id,
+        userId: agentNotesVaultDrafts.userId,
+        planJson: agentNotesVaultDrafts.planJson,
+        planHash: agentNotesVaultDrafts.planHash,
+        status: agentNotesVaultDrafts.status,
+      })
+      .from(agentNotesVaultDrafts)
+      .where(eq(agentNotesVaultDrafts.id, input.draftId))
+      .limit(1);
+
+    if (!draft) throw new TRPCError({ code: "NOT_FOUND", message: "Draft not found" });
+    if (draft.userId !== userId) throw new TRPCError({ code: "FORBIDDEN" });
+    if (draft.status !== "draft") {
+      throw new TRPCError({ code: "BAD_REQUEST", message: `Draft is not confirmable (status=${draft.status})` });
+    }
+
+    const plan = NotesVaultDraftSchema.parse(JSON.parse(draft.planJson) as unknown);
+
+    const confirmationToken = mintConfirmationToken({
+      userId,
+      draftId: draft.id,
+      planHash: draft.planHash,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    });
+
+    await input.ctx.db
+      .update(agentNotesVaultDrafts)
+      .set({
+        status: "confirmed",
+        confirmationToken,
+        confirmedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(agentNotesVaultDrafts.id, draft.id));
+
+    const creates = plan.operations.filter((o) => o.type === "create").length;
+    const updates = plan.operations.filter((o) => o.type === "update").length;
+    const deletes = plan.operations.filter((o) => o.type === "delete").length;
+
+    return {
+      confirmationToken,
+      summary: {
+        creates,
+        updates,
+        deletes,
+        blocked: plan.blocked.length,
+      },
+    };
+  },
+
+  async notesVaultApply(input: {
+    ctx: TRPCContext;
+    draftId: string;
+    confirmationToken: string;
+    handoffContext?: Record<string, unknown>;
+  }): Promise<NotesVaultApplyOutput> {
+    const userId = requireUserId(input.ctx);
+
+    const payload = readConfirmationToken(input.confirmationToken);
+    if (payload.userId !== userId || payload.draftId !== input.draftId) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Confirmation token does not match user/draft" });
+    }
+    if (Date.now() > payload.expiresAt) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "Confirmation token expired" });
+    }
+
+    const [draft] = await input.ctx.db
+      .select({
+        id: agentNotesVaultDrafts.id,
+        userId: agentNotesVaultDrafts.userId,
+        planJson: agentNotesVaultDrafts.planJson,
+        planHash: agentNotesVaultDrafts.planHash,
+        status: agentNotesVaultDrafts.status,
+        confirmationToken: agentNotesVaultDrafts.confirmationToken,
+      })
+      .from(agentNotesVaultDrafts)
+      .where(eq(agentNotesVaultDrafts.id, input.draftId))
+      .limit(1);
+
+    if (!draft) throw new TRPCError({ code: "NOT_FOUND", message: "Draft not found" });
+    if (draft.userId !== userId) throw new TRPCError({ code: "FORBIDDEN" });
+    if (draft.status !== "confirmed") {
+      throw new TRPCError({ code: "BAD_REQUEST", message: `Draft is not applicable (status=${draft.status})` });
+    }
+    if (draft.planHash !== payload.planHash) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "Plan hash mismatch" });
+    }
+    if (draft.confirmationToken !== input.confirmationToken) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "Confirmation token mismatch" });
+    }
+
+    const plan = NotesVaultDraftSchema.parse(JSON.parse(draft.planJson) as unknown);
+
+    // Apply-time guard: only allow locked-note updates if the plaintext is present in handoffContext.
+    const contextPack = await buildA3Context({ ctx: input.ctx, handoffContext: input.handoffContext });
+    const unlockedIds = new Set(
+      contextPack.notes.filter((n) => n.isLocked && n.unlockedContent).map((n) => n.id),
+    );
+
+    const createdNoteIds: number[] = [];
+    const updatedNoteIds: number[] = [];
+    const deletedNoteIds: number[] = [];
+    const blockedNoteIds: number[] = [];
+
+    for (const op of plan.operations) {
+      if (op.type === "create") {
+        const inserted = await input.ctx.db
+          .insert(stickyNotes)
+          .values({
+            content: op.content,
+            createdById: userId,
+            shareStatus: "private",
+          })
+          .returning({ id: stickyNotes.id });
+        if (inserted[0]?.id) createdNoteIds.push(inserted[0].id);
+        continue;
+      }
+
+      if (op.type === "update") {
+        if (op.requiresUnlocked && !unlockedIds.has(op.noteId)) {
+          blockedNoteIds.push(op.noteId);
+          continue;
+        }
+
+        await input.ctx.db
+          .update(stickyNotes)
+          .set({ content: op.nextContent })
+          .where(and(eq(stickyNotes.id, op.noteId), eq(stickyNotes.createdById, userId)));
+        updatedNoteIds.push(op.noteId);
+        continue;
+      }
+
+      if (op.type === "delete") {
+        if (!op.dangerous) {
+          blockedNoteIds.push(op.noteId);
+          continue;
+        }
+        await input.ctx.db
+          .delete(stickyNotes)
+          .where(and(eq(stickyNotes.id, op.noteId), eq(stickyNotes.createdById, userId)));
+        deletedNoteIds.push(op.noteId);
+      }
+    }
+
+    await input.ctx.db
+      .insert(agentNotesVaultApplies)
+      .values({
+        draftId: draft.id,
+        userId,
+        planHash: draft.planHash,
+        resultJson: JSON.stringify({ createdNoteIds, updatedNoteIds, deletedNoteIds, blockedNoteIds }),
+      });
+
+    await input.ctx.db
+      .update(agentNotesVaultDrafts)
+      .set({ status: "applied", appliedAt: new Date(), updatedAt: new Date() })
+      .where(eq(agentNotesVaultDrafts.id, draft.id));
+
+    return {
+      applied: true as const,
+      results: { createdNoteIds, updatedNoteIds, deletedNoteIds, blockedNoteIds },
+    };
+  },
+
   // ---------------------------------------------------------------------------
   // A2 Task Planner API
   // ---------------------------------------------------------------------------

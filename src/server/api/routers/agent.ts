@@ -11,6 +11,11 @@ import {
   TaskPlannerConfirmInputSchema,
   TaskPlannerApplyInputSchema,
 } from "~/server/agents/schemas/a2TaskPlannerSchemas";
+import {
+  NotesVaultDraftInputSchema,
+  NotesVaultConfirmInputSchema,
+  NotesVaultApplyInputSchema,
+} from "~/server/agents/schemas/a3NotesVaultSchemas";
 
 export const agentRouter = createTRPCRouter({
   /**
@@ -89,6 +94,40 @@ export const agentRouter = createTRPCRouter({
         ctx,
         draftId: input.draftId,
         confirmationToken: input.confirmationToken,
+      });
+    }),
+
+  // -------------------------------------------------------------------------
+  // A3 Notes Vault
+  // -------------------------------------------------------------------------
+
+  notesVaultDraft: protectedProcedure
+    .input(NotesVaultDraftInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      return agentOrchestrator.notesVaultDraft({
+        ctx,
+        message: input.message,
+        handoffContext: input.handoffContext,
+      });
+    }),
+
+  notesVaultConfirm: protectedProcedure
+    .input(NotesVaultConfirmInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      return agentOrchestrator.notesVaultConfirm({
+        ctx,
+        draftId: input.draftId,
+      });
+    }),
+
+  notesVaultApply: protectedProcedure
+    .input(NotesVaultApplyInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      return agentOrchestrator.notesVaultApply({
+        ctx,
+        draftId: input.draftId,
+        confirmationToken: input.confirmationToken,
+        handoffContext: input.handoffContext,
       });
     }),
 

@@ -328,6 +328,60 @@ export const agentTaskPlannerApplies = createTable(
   ],
 );
 
+export const agentNotesVaultDraftStatusEnum = pgEnum(
+  "agent_notes_vault_draft_status",
+  ["draft", "confirmed", "applied", "expired"] as const,
+);
+
+export const agentNotesVaultDrafts = createTable(
+  "agent_notes_vault_drafts",
+  (d) => ({
+    id: varchar("id", { length: 80 }).primaryKey(),
+    userId: d
+      .varchar("user_id", { length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    message: text("message").notNull(),
+    /** Raw JSON string of NotesVaultDraft */
+    planJson: text("plan_json").notNull(),
+    planHash: varchar("plan_hash", { length: 64 }).notNull(),
+    status: agentNotesVaultDraftStatusEnum("status").notNull().default("draft"),
+    confirmationToken: text("confirmation_token"),
+    confirmedAt: timestamp("confirmed_at", { mode: "date", withTimezone: true }),
+    appliedAt: timestamp("applied_at", { mode: "date", withTimezone: true }),
+    createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+    updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+    expiresAt: timestamp("expires_at", { mode: "date", withTimezone: true }),
+  }),
+  (t) => [
+    index("a3_draft_user_idx").on(t.userId),
+    index("a3_draft_status_idx").on(t.status),
+    index("a3_draft_plan_hash_idx").on(t.planHash),
+  ],
+);
+
+export const agentNotesVaultApplies = createTable(
+  "agent_notes_vault_applies",
+  (d) => ({
+    id: serial("id").primaryKey(),
+    draftId: varchar("draft_id", { length: 80 })
+      .notNull()
+      .references(() => agentNotesVaultDrafts.id, { onDelete: "cascade" }),
+    userId: d
+      .varchar("user_id", { length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    planHash: varchar("plan_hash", { length: 64 }).notNull(),
+    resultJson: text("result_json").notNull(),
+    createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  }),
+  (t) => [
+    index("a3_apply_draft_idx").on(t.draftId),
+    index("a3_apply_user_idx").on(t.userId),
+    index("a3_apply_plan_hash_idx").on(t.planHash),
+  ],
+);
+
 export const stickyNotes = createTable(
   "sticky_notes",
   (d) => ({

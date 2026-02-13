@@ -1,245 +1,284 @@
 # A3 — Notes Vault Agent: Implementation Plan (KAIROS)
 
-> Goal: implement the third agent (A3) that manages notes **safely** with KAIROS’ note-locking semantics, integrated into the existing agent orchestrator + TRPC + UI. This plan is written to match the current repo structure and conventions.
+> Goal: implement agent **A3 (Notes Vault)** that can help users organize and edit their **sticky notes** while respecting KAIROS’ existing password-lock semantics.
+>
+> Integration requirement (project-specific): **there will be no Notes page AI panel**. Notes Vault must be invoked **through the existing A1 chatbot UX** (both the widget overlay and `/chat` page), routed via the **same TRPC endpoint**, with UI changes limited to rendering/confirm flows.
 
-## 0. Key constraints / non-goals
+## 0) Scope, constraints, and non-goals
 
-- **Never exfiltrate locked content**: A3 must not read or summarize locked note content unless the app already unlocked it via existing UI flow.
-- **No passwords**: A3 must not request, store, log, or process note passwords.
-- **No new UI theme**: reuse existing KAIROS styling tokens/classes (e.g. `kairos-bg-*`, `kairos-fg-*`, `kairos-section-border`, `kairos-divider`) and interaction patterns used in notes + projects UIs.
-- **Model provider**: A3 must work with the existing model client but configured for **HuggingFace Qwen** as primary and **Phi** as fallback (not OpenAI-specific).
+### Hard constraints (must-haves)
 
-## 1. Current repo touchpoints (what already exists)
+- **No password handling**: A3 must never ask for, store, log, or process note passwords or reset PINs.
+- **No exfiltration of locked note content**:
+  - When a note is password-protected, A3 can only use metadata (e.g. note id, createdAt, shareStatus).
+  - A3 must not request unlocking by prompting for a password.
+  - A3 may only use plaintext content for a locked note if that content was already unlocked in the UI and explicitly provided via `handoffContext` (see section 2).
+- **Write operations require HITL**: create/update/delete must be behind a confirm/apply step (same pattern as A2).
+
+### Non-goals (for this iteration)
+
+- **No new note fields** (e.g. title/tags) in the DB. Notes are currently just `content` plus lock fields in [`stickyNotes`](src/server/db/schema.ts:331).
+- **No new Notes page UI** for the agent. All interactions happen through A1 chat.
+- **No cross-user/org sharing changes**. Notes are currently scoped to the owning user via [`noteRouter.getAll`](src/server/api/routers/note.ts:68).
+
+## 1) Current project realities (what exists today)
 
 ### Notes backend
-- Notes router exists at [`src/server/api/routers/note.ts`](src/server/api/routers/note.ts:1)
-- Notes locking UI exists at [`src/components/notes/NotesList.tsx`](src/components/notes/NotesList.tsx:1)
-- Notes create UI exists at [`src/components/notes/CreateNoteForm.tsx`](src/components/notes/CreateNoteForm.tsx:1)
 
-### Agents platform (A1/A2 patterns to mirror)
-- Orchestrator: [`src/server/agents/orchestrator/agentOrchestrator.ts`](src/server/agents/orchestrator/agentOrchestrator.ts:1)
-- Context builder patterns: [`src/server/agents/context/a2ContextBuilder.ts`](src/server/agents/context/a2ContextBuilder.ts:1)
-- Prompt patterns: [`src/server/agents/prompts/a2Prompts.ts`](src/server/agents/prompts/a2Prompts.ts:1)
-- Schema validation + repair: [`src/server/agents/llm/jsonRepair.ts`](src/server/agents/llm/jsonRepair.ts:1)
-- Agent API router: [`src/server/api/routers/agent.ts`](src/server/api/routers/agent.ts:1)
+- Notes are stored in [`stickyNotes`](src/server/db/schema.ts:331) and exposed via [`noteRouter`](src/server/api/routers/note.ts:9).
+- `getAll` returns `content: null` for password-protected notes (guardrail) in [`noteRouter.getAll`](src/server/api/routers/note.ts:68).
+- `verifyPassword` returns plaintext content when correct password is provided in [`noteRouter.verifyPassword`](src/server/api/routers/note.ts:184).
+- `update` currently does not enforce password checks (ownership-only) in [`noteRouter.update`](src/server/api/routers/note.ts:137).
 
-## 2. Deliverables
+### Notes UI lock/unlock semantics (client-side)
 
-### 2.1 Backend
-1. A3 profile
-2. A3 prompt
-3. A3 Zod schemas (draft/confirm/apply)
-4. A3 context builder (notes-scoped)
-5. Orchestrator endpoints for A3 (draft/confirm/apply)
-6. Persistence tables for A3 drafts/applies (optional but recommended for parity with A2)
+- Notes UI maintains an `unlockedNotes` map in [`NotesList`](src/components/notes/NotesList.tsx:10).
+- Unlocking is done by calling `api.note.verifyPassword` and caching returned content in component state in [`NotesList`](src/components/notes/NotesList.tsx:80).
 
-### 2.2 UI
-1. Add “Notes Vault Agent” panel in **Notes page** (positioned in the notes page layout, above the list or beside create form depending on current layout)
-2. Panel supports:
-   - Draft generation (agent proposes creates/updates/deletes)
-   - Confirmation step (shows counts + preview)
-   - Apply step (executes writes)
-3. The panel must not display locked note content; it may display note metadata only.
+### Agents platform patterns to mirror
 
-## 3. Data model & persistence
+- A2 draft/confirm/apply pattern in [`agentOrchestrator.taskPlannerDraft()`](src/server/agents/orchestrator/agentOrchestrator.ts:133).
+- TRPC exposure via [`agentRouter`](src/server/api/routers/agent.ts:15).
+- JSON output validation via [`parseAndValidate()`](src/server/agents/llm/jsonRepair.ts:1).
 
-### 3.1 Minimal viable approach (no new tables)
-- A3 can be stateless: draft result returned to UI only.
-- Downside: no audit trail / retry safety.
+## 2) Design: safe access to unlocked content (no passwords)
 
-### 3.2 Recommended approach (A2 parity)
-Create persistence similar to `agent_task_planner_drafts/applies`:
+The server does not currently have a concept of “unlocked-in-session”. Unlocked note content is held in React state in [`NotesList`](src/components/notes/NotesList.tsx:17).
 
+To allow Notes Vault to summarize or edit content **without ever handling passwords**, we use an explicit UI → orchestrator handoff.
+
+### 2.1 `handoffContext` contract
+
+Reuse the existing A2-style optional `handoffContext?: Record<string, unknown>` (already present on [`taskPlannerDraft`](src/server/agents/orchestrator/agentOrchestrator.ts:133)).
+
+For Notes Vault, define a supported handoff shape:
+
+```ts
+{
+  unlockedNotes: Array<{ noteId: number; content: string }>
+}
+```
+
+Rules:
+
+- The UI must only send content it already has in memory (i.e. after `verifyPassword` succeeded).
+- The orchestrator must treat this handoff as the only permitted source of plaintext for locked notes.
+- If a note is locked and not present in `handoffContext.unlockedNotes`, it must be treated as locked.
+
+### 2.2 Where the handoff is gathered (A1 chat surfaces)
+
+Because we are not adding a Notes page panel, the A1 chat UI must be able to provide `handoffContext`.
+
+Minimum viable approach:
+
+- When the user is on a Notes-related surface that already has access to `unlockedNotes` (e.g. the notes page), A1 chat can be given access to that map via a shared store/context.
+- When A1 chat is used elsewhere (widget overlay from another page), `handoffContext.unlockedNotes` can be empty; locked-note edits will be blocked.
+
+## 3) Deliverables (what to implement)
+
+### 3.1 Backend (A3 Notes Vault)
+
+1) **A3 Zod schemas** (plan output + draft/confirm/apply inputs).
+2) **A3 prompt(s)** (system prompt + strict JSON contract).
+3) **A3 context builder** (notes metadata + optional unlocked content from handoff).
+4) **A3 orchestrator methods**:
+   - `notesVaultDraft`
+   - `notesVaultConfirm`
+   - `notesVaultApply`
+5) **TRPC router endpoints** under [`agentRouter`](src/server/api/routers/agent.ts:15).
+6) **(Recommended) Persistence tables** for drafts/applies (A2 parity).
+
+### 3.2 A1 chatbot integration (no new notes UI)
+
+1) Add A1 routing so note-related user messages can invoke A3.
+2) Ensure both A1 chat surfaces (widget overlay and `/chat`) call the same TRPC endpoint and render the same response types.
+3) Implement confirm/apply UX in chat (buttons or explicit user confirmation messages), but do not create a notes-specific panel.
+
+## 4) Data model & persistence (align with A2 approach)
+
+A2 persists drafts/applies in [`agentTaskPlannerDrafts`](src/server/db/schema.ts:274) and [`agentTaskPlannerApplies`](src/server/db/schema.ts:305). For auditability and retries, A3 should do the same.
+
+### 4.1 Recommended tables
+
+Add:
+
+- `agent_notes_vault_draft_status` enum: `draft | confirmed | applied | expired`
 - `agent_notes_vault_drafts`
 - `agent_notes_vault_applies`
 
-**Files affected**
-- DB schema: [`src/server/db/schema.ts`](src/server/db/schema.ts:1)
-- New migration in [`src/server/db/migrations/`](src/server/db/migrations:1)
+Privacy rule:
 
-**Drafts table fields (recommended)**
-- `id` (string)
-- `user_id` (uuid/varchar)
-- `message`
-- `plan_json`
-- `plan_hash`
-- `status` enum: `draft | confirmed | applied | expired`
-- `confirmation_token`
-- `confirmed_at`, `applied_at`, `expires_at`, `created_at`, `updated_at`
+- Avoid storing raw note content in DB.
+- Store:
+  - ids
+  - operation types
+  - reasons
+  - hashes
+  - timestamps
 
-**Applies table fields (recommended)**
-- `id` serial
-- `draft_id`
-- `user_id`
-- `plan_hash`
-- `result_json`
-- `created_at`
+If literal `nextContent` is stored, treat it as sensitive and confirm this is acceptable.
 
-## 4. A3 plan format (schemas)
+## 5) A3 plan format (schemas)
 
-Create a new schema file:
+Create:
+
 - [`src/server/agents/schemas/a3NotesVaultSchemas.ts`](src/server/agents/schemas/a3NotesVaultSchemas.ts:1)
 
-### 4.1 Scope schema
-- `agentId`: literal `"notes_vault"`
-- `scope`: object
-  - `orgId?`: string | number
-  - `projectId?`: string | number (optional, notes may be workspace-scoped)
+### 5.1 Draft output schema (model → app)
 
-### 4.2 Draft output schema (core)
-`NotesVaultPlanDraft` (JSON mode output from model):
+Notes are currently `content`-only (no title column). Proposed JSON schema:
+
 - `agentId: "notes_vault"`
-- `scope`
-- `creates: Array<{ title: string; content: string; shareStatus?: "private"|"shared_read"|"shared_write" }>`
-- `updates: Array<{ noteId: number; patch: { title?: string; content?: string; shareStatus?: ... } }>`
-- `deletes: Array<{ noteId: number; dangerous: boolean; reason: string }>`
-- `blockedLockedEdits: Array<{ noteId: number; reason: string }>`
+- `planHash?: string` (server-added)
+- `operations: Array<Operation>`
+- `blocked: Array<{ noteId: number; reason: string }>`
 - `summary: string`
 
-### 4.3 Hard validation rules
-- `content` in updates must only be allowed if the note is **unlocked in current session** (see tool guard below)
-- Deletes must require `dangerous: true` and require UI confirmation (HITL)
+`Operation` union:
 
-## 5. A3 tooling + guardrails
+- Create: `{ type: "create"; content: string; reason?: string }`
+- Update: `{ type: "update"; noteId: number; nextContent: string; reason?: string; requiresUnlocked: boolean }`
+- Delete: `{ type: "delete"; noteId: number; reason: string; dangerous: true }`
 
-A3 should not directly query DB tables; it should call **allowed tools** that wrap existing note router logic.
+### 5.2 Server-side validation rules
 
-### 5.1 Read tools (draft allowed)
-- `listNotesMetadata`
-  - returns: `{ id, title, createdAt, updatedAt, shareStatus, isLocked }[]`
-- `getNoteContentIfUnlocked`
-  - input: `{ noteId }`
-  - returns:
-    - if locked: `{ noteId, isLocked: true }`
-    - if unlocked: `{ noteId, isLocked: false, content }`
+- Any update targeting a password-protected note must set `requiresUnlocked: true`.
+- Apply-time guard:
+  - If `requiresUnlocked` is true and the note is not present in apply-time `handoffContext.unlockedNotes`, do not apply that operation.
+- Deletes require `dangerous: true` and a valid confirmation token.
 
-### 5.2 Write tools (apply only)
-- `createNote`
-- `updateNote`
-- `deleteNote` (dangerous)
+## 6) Prompts (provider-agnostic)
 
-### 5.3 Where to implement tools
-Add a new tools module similar to A1/A2 patterns:
-- [`src/server/agents/tools/a3/notesTools.ts`](src/server/agents/tools/a3/notesTools.ts:1)
+Create:
 
-It should call the same business rules used by [`noteRouter`](src/server/api/routers/note.ts:1) (or extract shared helpers if needed).
-
-## 6. Prompts (provider-agnostic; HF Qwen + Phi fallback)
-
-### 6.1 Prompt file
 - [`src/server/agents/prompts/a3Prompts.ts`](src/server/agents/prompts/a3Prompts.ts:1)
 
-### 6.2 Prompt requirements
-- Must explicitly state:
-  - never request passwords
-  - never output locked content
-  - if user asks to modify a locked note, add entry to `blockedLockedEdits` and propose alternatives
-  - keep outputs strict JSON that matches `NotesVaultPlanDraft`
+Prompt requirements:
 
-### 6.3 Model client compatibility
-The prompt must not rely on OpenAI-specific features. It must work with the repo’s `chatCompletion()` abstraction in [`src/server/agents/llm/modelClient.ts`](src/server/agents/llm/modelClient.ts:1).
+- Never ask for passwords/PINs.
+- Locked notes are unreadable.
+- Only use unlocked note content if it is present in context.
+- Output strict JSON matching the schema.
+- Compatible with [`chatCompletion()`](src/server/agents/llm/modelClient.ts:1).
 
-Implementation note:
-- Ensure `chatCompletion()` supports:
-  - Qwen as primary
-  - Phi as fallback
-  - `jsonMode` behavior for providers that don’t strictly support JSON mode:
-    - if provider doesn’t support JSON mode, enforce JSON through prompt + post-parse repair loop via [`parseAndValidate()`](src/server/agents/llm/jsonRepair.ts:1)
+## 7) Context builder (A3)
 
-## 7. Orchestrator implementation
+Create:
 
-### 7.1 Add agent id
-Extend orchestrator types:
-- `AgentId` should include `"notes_vault"` in [`src/server/agents/orchestrator/agentOrchestrator.ts`](src/server/agents/orchestrator/agentOrchestrator.ts:45)
+- [`src/server/agents/context/a3ContextBuilder.ts`](src/server/agents/context/a3ContextBuilder.ts:1)
 
-### 7.2 Add A3 endpoints
-Add methods analogous to A2:
-- `notesVaultDraft()`
-- `notesVaultConfirm()`
-- `notesVaultApply()`
+Context includes:
 
-These should:
-1. build A3 context pack
-2. call model
-3. parse/validate
-4. (optional) persist draft
-5. confirm step mints token
-6. apply step executes tools/writes
+- user id
+- notes list with:
+  - `id`, `createdAt`, `shareStatus`, `isLocked`
+  - optional `unlockedContent` for notes included in `handoffContext.unlockedNotes`
 
-### 7.3 Expose via TRPC agent router
-In [`src/server/api/routers/agent.ts`](src/server/api/routers/agent.ts:1) add:
+Do not include `passwordHash` or `passwordSalt` in LLM context.
+
+## 8) Orchestrator + TRPC integration (A3)
+
+Update [`AgentId`](src/server/agents/orchestrator/agentOrchestrator.ts:45) to include `notes_vault`.
+
+Add A3 methods analogous to A2:
+
+- `notesVaultDraft({ ctx, message, handoffContext? })`
+- `notesVaultConfirm({ ctx, draftId })`
+- `notesVaultApply({ ctx, draftId, confirmationToken, handoffContext? })`
+
+Expose via [`agentRouter`](src/server/api/routers/agent.ts:15):
+
 - `notesVaultDraft`
 - `notesVaultConfirm`
 - `notesVaultApply`
 
-## 8. Context builder (A3)
+## 9) A1 chatbot integration plan (routing Notes Vault through A1)
 
-Create:
-- [`src/server/agents/context/a3ContextBuilder.ts`](src/server/agents/context/a3ContextBuilder.ts:1)
+### 9.1 Single TRPC endpoint strategy (shared by widget + `/chat`)
 
-Context should include:
-- session user basics
-- active org context (if any)
-- **notes metadata list** (never include content for locked notes)
+Target behavior:
 
-Use patterns from [`buildA2Context()`](src/server/agents/context/a2ContextBuilder.ts:35).
+- Both A1 chat UIs call the same backend route(s).
+- UI is responsible only for rendering and sending user messages + optional `handoffContext`.
 
-## 9. UI implementation (Notes page placement)
+Implementation options:
 
-### 9.1 Where to place
-Notes page route:
-- [`src/app/notes/page.tsx`](src/app/notes/page.tsx:1)
+1) **Preferred (minimal change to existing architecture)**
+   - Add new TRPC endpoints (`notesVaultDraft/Confirm/Apply`) under [`agentRouter`](src/server/api/routers/agent.ts:15).
+   - Update the A1 chat client to call these endpoints when the user intent is “notes management”.
 
-Add a new panel component:
-- [`src/components/notes/AiNotesVaultPanel.tsx`](src/components/notes/AiNotesVaultPanel.tsx:1)
+2) Alternate
+   - Extend existing A1 `draft` endpoint to accept an `agentId` union including `notes_vault`, and route internally.
 
-Place it at the top of notes page content ("positioned in the notes page"):
-- Above the notes list, near create note form.
+### 9.2 A1 intent routing
 
-### 9.2 UI behaviors
-- Input textarea: “What do you want to do with your notes?”
-- Draft button: calls `api.agent.notesVaultDraft`
-- Shows plan preview:
-  - counts + list of operations
-  - for updates/deletes: show note title + id (metadata) and reason
-  - do **not** show locked note content
-- Confirm button: calls `api.agent.notesVaultConfirm`
-- Apply button: calls `api.agent.notesVaultApply`
-- Show toasts using existing patterns from project/task planner panels.
+Add lightweight classification in the A1 chat path:
 
-### 9.3 Styling
-Match existing panels:
-- Use the same container classes used in [`src/components/projects/AiTaskPlannerPanel.tsx`](src/components/projects/AiTaskPlannerPanel.tsx:1)
-- Use existing typography sizes and `kairos-*` classes.
+- If user message clearly targets notes (keywords like note, notes, sticky note, vault, lock/unlock, summarize my notes), route to Notes Vault.
+- Otherwise, use existing A1 behavior.
 
-## 10. Testing / verification checklist
+Keep classification deterministic and transparent (e.g., include in logs/telemetry, but never include note content).
 
-1. Locked note cannot be summarized (only metadata appears)
-2. Attempt to edit locked note results in `blockedLockedEdits` entry
-3. Deletes require explicit confirmation token + UI user action
-4. Qwen primary works; Phi fallback works when Qwen errors/timeouts
-5. No note content is logged in DB audit tables; only IDs + summaries
+### 9.3 HITL inside chat
 
-## 11. Files & folders to create (summary)
+Since there is no notes panel, HITL is performed in-chat:
+
+- Draft response renders a preview of operations (counts + per-op note ids + reasons).
+- Confirm action:
+  - user clicks a Confirm button or types a confirm phrase
+  - client calls `notesVaultConfirm`
+- Apply action:
+  - user clicks Apply
+  - client calls `notesVaultApply`
+
+## 10) UI work required (rendering only)
+
+Do not add a Notes page panel.
+
+Instead:
+
+- Extend the A1 chat message renderer to handle:
+  - a Notes Vault draft payload
+  - a Notes Vault confirmation payload (token + summary)
+  - an apply result payload
+- Add generic confirm/apply UI controls that work in both:
+  - [`src/components/chat/A1ChatWidgetOverlay.tsx`](src/components/chat/A1ChatWidgetOverlay.tsx:1)
+  - [`src/app/chat/page.tsx`](src/app/chat/page.tsx:1)
+
+The controls should be agent-agnostic where possible (reusable for future agents).
+
+## 11) Testing / verification checklist
+
+- Locked notes never appear with plaintext in LLM context.
+- Notes Vault never requests passwords or reset PINs.
+- Notes Vault cannot update a locked note unless that note’s content was provided in apply-time `handoffContext.unlockedNotes`.
+- Deletes require explicit confirmation token and expire correctly.
+- Both A1 chat surfaces (overlay + `/chat`) can draft/confirm/apply Notes Vault plans through the same TRPC endpoint.
+
+## 12) Files to create / modify (concrete list)
 
 Backend:
-- [`src/server/agents/profiles/a3NotesVault.ts`](src/server/agents/profiles/a3NotesVault.ts:1)
-- [`src/server/agents/schemas/a3NotesVaultSchemas.ts`](src/server/agents/schemas/a3NotesVaultSchemas.ts:1)
-- [`src/server/agents/prompts/a3Prompts.ts`](src/server/agents/prompts/a3Prompts.ts:1)
-- [`src/server/agents/context/a3ContextBuilder.ts`](src/server/agents/context/a3ContextBuilder.ts:1)
-- [`src/server/agents/tools/a3/notesTools.ts`](src/server/agents/tools/a3/notesTools.ts:1)
 
-Optional persistence:
-- migration + schema additions in [`src/server/db/schema.ts`](src/server/db/schema.ts:1)
-- new SQL migration in [`src/server/db/migrations/`](src/server/db/migrations:1)
+- Create [`src/server/agents/schemas/a3NotesVaultSchemas.ts`](src/server/agents/schemas/a3NotesVaultSchemas.ts:1)
+- Create [`src/server/agents/prompts/a3Prompts.ts`](src/server/agents/prompts/a3Prompts.ts:1)
+- Create [`src/server/agents/context/a3ContextBuilder.ts`](src/server/agents/context/a3ContextBuilder.ts:1)
+- Modify [`src/server/agents/orchestrator/agentOrchestrator.ts`](src/server/agents/orchestrator/agentOrchestrator.ts:1) (add A3 methods + AgentId)
+- Modify [`src/server/api/routers/agent.ts`](src/server/api/routers/agent.ts:1) (add TRPC endpoints)
 
-TRPC:
-- extend [`src/server/api/routers/agent.ts`](src/server/api/routers/agent.ts:1)
+DB (recommended):
 
-UI:
-- [`src/components/notes/AiNotesVaultPanel.tsx`](src/components/notes/AiNotesVaultPanel.tsx:1)
-- wire into [`src/app/notes/page.tsx`](src/app/notes/page.tsx:1)
+- Modify [`src/server/db/schema.ts`](src/server/db/schema.ts:1) (add A3 drafts/applies tables)
+- Add new migration under [`src/server/db/migrations/`](src/server/db/migrations:1)
 
-## 12. Update existing doc to remove OpenAI-specific references
+UI (A1 chat only):
 
-Replace the old notes vault doc with provider-agnostic phrasing and reference the repo abstraction at [`chatCompletion()`](src/server/agents/llm/modelClient.ts:1) rather than OpenAI docs.
+- Modify chat rendering/actions in [`src/components/chat/A1ChatWidgetOverlay.tsx`](src/components/chat/A1ChatWidgetOverlay.tsx:1)
+- Modify chat rendering/actions in [`src/app/chat/page.tsx`](src/app/chat/page.tsx:1)
+
+---
+
+### Notes on adjustments vs prior plan versions
+
+- Removed the Notes page AI panel entirely; all interaction is routed through A1 chat.
+- Explicitly added the A1 routing + in-chat HITL confirm/apply workflow.
+- Kept the locked-note boundary by using UI → server `handoffContext` for unlocked content instead of any password handling.
