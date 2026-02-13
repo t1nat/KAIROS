@@ -326,11 +326,13 @@ export const agentOrchestrator = {
 
     const plan = NotesVaultDraftSchema.parse(JSON.parse(draft.planJson) as unknown);
 
-    // Apply-time guard: only allow locked-note updates if the plaintext is present in handoffContext.
+    // Apply-time guard: only allow locked-note updates/deletes if the plaintext is present in handoffContext.
     const contextPack = await buildA3Context({ ctx: input.ctx, handoffContext: input.handoffContext });
     const unlockedIds = new Set(
       contextPack.notes.filter((n) => n.isLocked && n.unlockedContent).map((n) => n.id),
     );
+
+    const lockedIds = new Set(contextPack.notes.filter((n) => n.isLocked).map((n) => n.id));
 
     const createdNoteIds: number[] = [];
     const updatedNoteIds: number[] = [];
@@ -370,6 +372,13 @@ export const agentOrchestrator = {
           blockedNoteIds.push(op.noteId);
           continue;
         }
+
+        // Require unlocked handoff content for locked note deletes.
+        if (lockedIds.has(op.noteId) && !unlockedIds.has(op.noteId)) {
+          blockedNoteIds.push(op.noteId);
+          continue;
+        }
+
         await input.ctx.db
           .delete(stickyNotes)
           .where(and(eq(stickyNotes.id, op.noteId), eq(stickyNotes.createdById, userId)));

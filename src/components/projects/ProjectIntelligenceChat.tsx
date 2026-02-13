@@ -420,3 +420,4 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
     </div>
   );
 }
+
