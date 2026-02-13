@@ -32,12 +32,12 @@ export function A1ChatWidgetOverlay(props: {
       <button
         type="button"
         aria-label="Close chat"
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/40"
         onClick={onClose}
       />
 
       <div className="absolute right-4 bottom-4 w-[min(420px,calc(100vw-2rem))] h-[min(560px,calc(100vh-2rem))] rounded-2xl overflow-hidden bg-bg-primary shadow-xl border border-white/10 flex flex-col">
-        <div className="h-[52px] px-3 flex items-center justify-between gap-2 border-b border-white/10 bg-bg-primary/80 backdrop-blur">
+        <div className="h-[52px] px-3 flex items-center justify-between gap-2 border-b border-white/10 bg-bg-primary/80">
           <div className="min-w-0">
             <p className="text-sm font-semibold text-fg-primary truncate">A1 Assistant</p>
             <p className="text-[11px] text-fg-tertiary truncate">Workspace Concierge</p>
