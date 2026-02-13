@@ -117,13 +117,8 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
       const msg = text.trim();
       if (!msg) return;
 
-      // Immediately push the user's message + a thinking placeholder,
-      // and clear the composer so the text appears as a chat bubble.
-      setMessages((prev) => [
-        ...prev,
-        { role: "user", text: msg, createdAt: new Date() },
-        { role: "agent", text: "Thinking…", createdAt: new Date() },
-      ]);
+      // Note: user bubble insertion happens in `a1Mutation.onMutate` for the A1 flow,
+      // and in the Notes Vault branch below for A3. Avoid double-inserting.
       setDraft("");
 
       const run = async () => {
@@ -131,18 +126,38 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
           // Notes Vault runs workspace-scoped; no projectId required.
           const res = await notesDraftMutation.mutateAsync({ message: clampText(msg) });
 
-          const plan = (res as unknown as { plan?: { summary?: string; operations?: unknown[]; blocked?: unknown[] } }).plan;
+          const plan = (res as unknown as {
+            plan?: {
+              summary?: string;
+              operations?: unknown[];
+              blocked?: unknown[];
+            };
+          }).plan;
           const draftId = (res as unknown as { draftId?: string }).draftId ?? "";
 
-          const operationsCount = Array.isArray(plan?.operations) ? plan!.operations.length : 0;
-          const blockedCount = Array.isArray(plan?.blocked) ? plan!.blocked.length : 0;
+          const operations = Array.isArray(plan?.operations) ? (plan!.operations as unknown[]) : [];
+          const blocked = Array.isArray(plan?.blocked) ? (plan!.blocked as unknown[]) : [];
+
+          const creates = operations.filter((o) => (o as any)?.type === "create").length;
+          const updates = operations.filter((o) => (o as any)?.type === "update").length;
+          const deletes = operations.filter((o) => (o as any)?.type === "delete").length;
+
+          const chatbotSummary =
+            creates > 0
+              ? "Okay — I’ll create the note now."
+              : updates > 0
+                ? "Okay — I’ll update your note."
+                : deletes > 0
+                  ? "Okay — I’ll delete the note."
+                  : "Okay — there’s nothing to change.";
 
           const agentText = [
-            plan?.summary ?? "Notes Vault response.",
-            `Ops: ${operationsCount} (blocked: ${blockedCount})`,
+            chatbotSummary,
+            `Create ${creates} (blocked: ${blocked.length}) | Update ${updates} | Delete ${deletes}`,
+            "Click Confirm to proceed.",
           ].join("\n");
 
-          const shouldShowConfirm = operationsCount > 0;
+          const shouldShowConfirm = operations.length > 0;
 
           setMessages((prev) => {
             const next = [...prev];
@@ -274,19 +289,41 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
                               className="text-xs px-3 py-1.5 rounded-lg bg-bg-secondary/60 hover:bg-bg-secondary text-fg-primary border border-white/10"
                               disabled={notesConfirmMutation.isPending}
                               onClick={async () => {
-                                const res = await notesConfirmMutation.mutateAsync({ draftId: a.draftId });
-                                const token = (res as unknown as { confirmationToken: string }).confirmationToken;
+                                try {
+                                  const res = await notesConfirmMutation.mutateAsync({ draftId: a.draftId });
+                                  const token = (res as unknown as { confirmationToken: string }).confirmationToken;
+                                  const summary = (res as unknown as { summary?: unknown }).summary;
 
-                                setMessages((prev) => {
-                                  const next = [...prev];
-                                  next.push({
-                                    role: "agent",
-                                    text: "Confirm OK. Ready to apply.",
-                                    createdAt: new Date(),
-                                    actions: [{ type: "notes_apply", draftId: a.draftId, confirmationToken: token }],
+                                  setMessages((prev) => {
+                                    const next = [...prev];
+                                    next.push({
+                                      role: "agent",
+                                      text: `Confirmed. Summary: ${JSON.stringify(summary)}`,
+                                      createdAt: new Date(),
+                                      actions: [{ type: "notes_apply", draftId: a.draftId, confirmationToken: token }],
+                                    });
+                                    return next;
                                   });
-                                  return next;
-                                });
+                                } catch (err) {
+                                  const msg =
+                                    err instanceof Error
+                                      ? err.message
+                                      : typeof err === "string"
+                                        ? err
+                                        : "Confirm failed";
+
+                                  setMessages((prev) => {
+                                    const next = [...prev];
+                                    next.push({
+                                      role: "agent",
+                                      text: msg.includes("status=confirmed")
+                                        ? "This draft was already confirmed. Use Apply."
+                                        : `Confirm failed: ${msg}`,
+                                      createdAt: new Date(),
+                                    });
+                                    return next;
+                                  });
+                                }
                               }}
                             >
                               Confirm

@@ -214,6 +214,7 @@ export const agentOrchestrator = {
         planJson: agentNotesVaultDrafts.planJson,
         planHash: agentNotesVaultDrafts.planHash,
         status: agentNotesVaultDrafts.status,
+        confirmationToken: agentNotesVaultDrafts.confirmationToken,
       })
       .from(agentNotesVaultDrafts)
       .where(eq(agentNotesVaultDrafts.id, input.draftId))
@@ -221,18 +222,41 @@ export const agentOrchestrator = {
 
     if (!draft) throw new TRPCError({ code: "NOT_FOUND", message: "Draft not found" });
     if (draft.userId !== userId) throw new TRPCError({ code: "FORBIDDEN" });
+    if (draft.status === "confirmed") {
+      // Idempotent confirm: allow the UI to recover if the user clicks Confirm twice.
+      return {
+        confirmationToken: draft.confirmationToken ?? mintConfirmationToken({
+          userId,
+          draftId: draft.id,
+          planHash: draft.planHash,
+          expiresAt: Date.now() + 10 * 60 * 1000,
+        }),
+        summary: {
+          creates: 0,
+          updates: 0,
+          deletes: 0,
+          blocked: 0,
+        },
+      };
+    }
+
     if (draft.status !== "draft") {
-      throw new TRPCError({ code: "BAD_REQUEST", message: `Draft is not confirmable (status=${draft.status})` });
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: `Draft is not confirmable (status=${draft.status})`,
+      });
     }
 
     const plan = NotesVaultDraftSchema.parse(JSON.parse(draft.planJson) as unknown);
 
-    const confirmationToken = mintConfirmationToken({
-      userId,
-      draftId: draft.id,
-      planHash: draft.planHash,
-      expiresAt: Date.now() + 10 * 60 * 1000,
-    });
+    const confirmationToken =
+      draft.confirmationToken ??
+      mintConfirmationToken({
+        userId,
+        draftId: draft.id,
+        planHash: draft.planHash,
+        expiresAt: Date.now() + 10 * 60 * 1000,
+      });
 
     await input.ctx.db
       .update(agentNotesVaultDrafts)
