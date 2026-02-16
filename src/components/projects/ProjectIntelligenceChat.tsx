@@ -204,10 +204,9 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
   );
 
   return (
-    <div className="h-full w-full flex flex-col bg-bg-primary">
-      <div className="px-4 py-3 flex items-center justify-between gap-3 border-b border-white/10 bg-bg-primary/80 backdrop-blur">
+    <div className="h-full w-full flex flex-col bg-zinc-900">
+      <div className="px-4 py-3 flex items-center justify-between gap-3 border-b border-white/10 bg-zinc-900">
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-fg-primary">A1 Assistant</p>
           <p className="text-xs text-fg-tertiary truncate">Workspace Concierge</p>
         </div>
 
@@ -221,7 +220,7 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
       </div>
 
       {showAssumptions && (
-        <div className="px-4 py-3 border-b border-white/10 bg-bg-primary/60 backdrop-blur">
+        <div className="px-4 py-3 border-b border-white/10 bg-zinc-800">
           <div className="w-full max-w-3xl">
             <p className="text-xs text-fg-tertiary leading-relaxed">
               This chat is project-scoped. Predictions are best-effort; treat them as guidance and verify against task data.
@@ -373,7 +372,7 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
       </div>
 
       <form
-        className="shrink-0 border-t border-white/10 bg-bg-primary/80 backdrop-blur"
+        className="shrink-0 border-t border-white/10 bg-zinc-800"
         onSubmit={(e) => {
           e.preventDefault();
           handleSend(draft);
@@ -394,7 +393,7 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
                 "h-10 shrink-0 px-4 rounded-full text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed " +
                 (!a1Mutation.isPending && !notesDraftMutation.isPending && draft.trim()
                   ? "text-white hover:opacity-90"
-                  : "bg-bg-secondary/40 text-fg-tertiary")
+                  : "bg-bg-secondary text-fg-tertiary")
               }
               disabled={
                 a1Mutation.isPending ||

@@ -167,10 +167,9 @@ export function ChatClient({ userId }: { userId: string }) {
   };
 
   return (
-    <div className="flex flex-col sm:flex-row h-full w-full">
-      {/* New Chat Modal */}
+<div className="flex flex-col sm:flex-row h-full w-full bg-gray-900">      
       {showNewChatModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-bg-secondary rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in fade-in slide-in-from-bottom-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-fg-primary">Start New Chat</h3>
@@ -232,7 +231,7 @@ export function ChatClient({ userId }: { userId: string }) {
       )}
 
       {/* Conversations Sidebar */}
-      <div className={`${selectedConversationId ? 'hidden sm:flex' : 'flex'} w-full sm:w-72 lg:w-80 xl:w-96 shadow-lg flex-col bg-bg-surface/40`}>
+      <div className={`${selectedConversationId ? 'hidden sm:flex' : 'flex'} w-full sm:w-72 lg:w-80 xl:w-96 shadow-lg flex-col bg-bg-surface`}>
         <div className="p-3 sm:p-4 shadow-sm">
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
@@ -329,7 +328,7 @@ export function ChatClient({ userId }: { userId: string }) {
       </div>
 
       {/* Main Chat Area */}
-      <div className={`${selectedConversationId ? 'flex' : 'hidden sm:flex'} flex-1 flex-col bg-gradient-to-b from-bg-surface/20 to-bg-primary`}>
+      <div className={`${selectedConversationId ? 'flex' : 'hidden sm:flex'} flex-1 flex-col bg-bg-primary`}>
         {selectedConversationId && selectedUser ? (
           <>
             {/* Chat Header */}
@@ -470,9 +469,9 @@ export function ChatClient({ userId }: { userId: string }) {
             </div>
 
             {/* Message Input */}
-            <form onSubmit={handleSubmit} className="p-3 sm:p-4 shadow-sm bg-bg-elevated/50">
+            <form onSubmit={handleSubmit} className="p-3 sm:p-4 shadow-sm bg-gray-800">
               {attachments.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-3 p-2 bg-bg-surface/50 rounded-lg">
+                <div className="flex flex-wrap gap-2 mb-3 p-2 bg-bg-surface rounded-lg">
                   {attachments.map((file, idx) => (
                     <div key={idx} className="relative group">
                       <div className="flex items-center gap-2 px-3 py-1.5 bg-bg-elevated rounded-lg shadow-sm">
