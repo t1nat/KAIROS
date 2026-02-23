@@ -2,7 +2,7 @@ import "~/styles/globals.css";
 import "react-chat-elements/dist/main.css";
 
 import { type Metadata } from "next";
-import { Cinzel, Newsreader, Uncial_Antiqua, Faustina, Space_Grotesk } from "next/font/google";
+import { Inter, Cinzel, Newsreader, Uncial_Antiqua, Faustina } from "next/font/google";
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   icons: [{ rel: "icon", url: "/logo_white.png" }],
 };
 
-const sans = Space_Grotesk({
+const sans = Inter({
   subsets: ["latin"],
   variable: "--font-geist-sans",
   display: "swap",

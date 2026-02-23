@@ -92,7 +92,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
   if (!isOpen) return null;
 
   return (
-    <div className="w-full max-w-2xl mx-auto animate-slideUp mt-16">
+    <div className="w-full max-w-2xl mx-auto kairos-page-enter mt-16">
       <div className="p-8">
         {step === "choose" && (
           <>
@@ -103,7 +103,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
             <div className="space-y-3">
               <button
                 onClick={() => setStep("admin-setup")}
-                className="w-full p-4 bg-bg-surface shadow-sm rounded-xl hover:bg-bg-elevated hover:shadow-md transition-all duration-200 text-left group flex items-center justify-between"
+                className="w-full p-4 bg-bg-surface shadow-sm rounded-2xl hover:bg-bg-elevated hover:shadow-md transition-all duration-200 text-left group flex items-center justify-between border border-white/[0.06] kairos-card"
               >
                 <span className="text-fg-primary font-medium">Organization Admin</span>
                 <ChevronRight className="text-fg-tertiary group-hover:text-accent-primary transition-colors" size={20} />
@@ -111,7 +111,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
 
               <button
                 onClick={() => setStep("worker-join")}
-                className="w-full p-4 bg-bg-surface shadow-sm rounded-xl hover:bg-bg-elevated hover:shadow-md transition-all duration-200 text-left group flex items-center justify-between"
+                className="w-full p-4 bg-bg-surface shadow-sm rounded-2xl hover:bg-bg-elevated hover:shadow-md transition-all duration-200 text-left group flex items-center justify-between border border-white/[0.06] kairos-card"
               >
                 <span className="text-fg-primary font-medium">Join Organization</span>
                 <ChevronRight className="text-fg-tertiary group-hover:text-accent-primary transition-colors" size={20} />
@@ -120,7 +120,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
               <button
                 onClick={() => setPersonalMode.mutate()}
                 disabled={setPersonalMode.isPending}
-                className="w-full p-4 bg-bg-surface shadow-sm rounded-xl hover:bg-bg-elevated hover:shadow-md transition-all duration-200 text-left group disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between"
+                className="w-full p-4 bg-bg-surface shadow-sm rounded-2xl hover:bg-bg-elevated hover:shadow-md transition-all duration-200 text-left group disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between border border-white/[0.06] kairos-card"
               >
                 <span className="text-fg-primary font-medium">Personal Use</span>
                 <ChevronRight className="text-fg-tertiary group-hover:text-accent-primary transition-colors" size={20} />
@@ -151,7 +151,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
                   onChange={(e) => setOrganizationName(e.target.value)}
                   onKeyDown={handleOrgNameKeyDown}
                   placeholder="e.g., Acme Corporation"
-                  className="w-full px-4 py-3 bg-bg-surface shadow-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary placeholder:text-fg-tertiary"
+                  className="w-full px-4 py-3 bg-bg-surface shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary placeholder:text-fg-tertiary border border-white/[0.06] kairos-input"
                   autoFocus
                 />
               </div>
@@ -159,7 +159,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
               <button
                 onClick={handleCreateOrganization}
                 disabled={createOrganization.isPending}
-                className="w-full px-6 py-3 bg-accent-primary text-white font-medium rounded-lg hover:bg-accent-hover transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-6 py-3 bg-accent-primary text-white font-medium rounded-xl hover:bg-accent-hover transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed kairos-btn"
               >
                 {createOrganization.isPending ? "Creating..." : "Create Organization"}
               </button>
@@ -187,7 +187,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
 
             <button
               onClick={onComplete}
-              className="w-full px-6 py-3 bg-accent-primary text-white font-medium rounded-lg hover:bg-accent-hover transition-all duration-200"
+              className="w-full px-6 py-3 bg-accent-primary text-white font-medium rounded-xl hover:bg-accent-hover transition-all duration-200 kairos-btn"
             >
               Continue to Dashboard
             </button>
@@ -216,7 +216,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
                   onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
                   onKeyDown={handleAccessCodeKeyDown}
                   placeholder="XXXX-XXXX-XXXX"
-                  className="w-full px-4 py-3 bg-bg-surface shadow-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary font-mono text-center text-xl tracking-wider placeholder:text-fg-tertiary"
+                  className="w-full px-4 py-3 bg-bg-surface shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary font-mono text-center text-xl tracking-wider placeholder:text-fg-tertiary border border-white/[0.06] kairos-input"
                   maxLength={14}
                   autoFocus
                 />
@@ -225,7 +225,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
               <button
                 onClick={handleJoinOrganization}
                 disabled={joinOrganization.isPending}
-                className="w-full px-6 py-3 bg-accent-primary text-white font-medium rounded-lg hover:bg-accent-hover transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-6 py-3 bg-accent-primary text-white font-medium rounded-xl hover:bg-accent-hover transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed kairos-btn"
               >
                 {joinOrganization.isPending ? "Joining..." : "Join Organization"}
               </button>

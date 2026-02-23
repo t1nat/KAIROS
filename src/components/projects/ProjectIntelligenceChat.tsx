@@ -274,7 +274,11 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
                       }
                     }}
                   >
-                    <div className="whitespace-pre-wrap text-sm leading-relaxed">{m.text}</div>
+                    <div className={
+                      m.role === "agent"
+                        ? "kairos-chat-response text-sm leading-relaxed"
+                        : "whitespace-pre-wrap text-sm leading-relaxed"
+                    }>{m.text}</div>
                   </button>
 
                   {m.role === "agent" && m.actions?.length ? (

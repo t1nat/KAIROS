@@ -46,7 +46,7 @@ export default async function SettingsPage({
         <Settings size={20} />
       </Link>
 
-      <div className="lg:ml-16 min-h-screen flex flex-col">
+      <div className="lg:ml-16 min-h-screen flex flex-col kairos-page-enter">
         {/* Header */}
         <header className="sticky top-0 z-30 bg-bg-primary/80 backdrop-blur-xl border-b border-border-light">
           <div className="px-4 sm:px-6 py-4 flex justify-between items-center">
