@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { A1ChatWidgetOverlay } from "~/components/chat/A1ChatWidgetOverlay";
 
@@ -69,7 +69,7 @@ describe("A1ChatWidgetOverlay", () => {
 
     // After minimise, panel height should be 48px (title bar only)
     await waitFor(() => {
-      expect(panel?.style.height).toBe("48px");
+      expect((panel as HTMLElement | null)?.style.height).toBe("48px");
     });
   });
 
@@ -80,9 +80,10 @@ describe("A1ChatWidgetOverlay", () => {
     await user.click(screen.getByLabelText("Open AI assistant"));
     await user.click(screen.getByLabelText("Maximise"));
 
-    const panel = screen.getByText("A1 Intelligence").closest(".fixed");
-    expect(panel?.style.width).toBe("100vw");
-    expect(panel?.style.height).toBe("100vh");
+    const panelEl = screen.getByText("A1 Intelligence").closest(".fixed");
+    const panel = panelEl as unknown as HTMLElement;
+    expect(panel.style.width).toBe("100vw");
+    expect(panel.style.height).toBe("100vh");
   });
 
   it("restores from maximise to previous size", async () => {
@@ -91,14 +92,14 @@ describe("A1ChatWidgetOverlay", () => {
 
     await user.click(screen.getByLabelText("Open AI assistant"));
 
-    const panel = screen.getByText("A1 Intelligence").closest(".fixed") as HTMLElement;
-    const originalWidth = panel.style.width;
+    const panel = screen.getByText("A1 Intelligence").closest(".fixed")!;
+    const originalWidth = (panel as HTMLElement).style.width;
 
     await user.click(screen.getByLabelText("Maximise"));
-    expect(panel.style.width).toBe("100vw");
+    expect((panel as HTMLElement).style.width).toBe("100vw");
 
     await user.click(screen.getByLabelText("Restore"));
-    expect(panel.style.width).toBe(originalWidth);
+    expect((panel as HTMLElement).style.width).toBe(originalWidth);
   });
 
   it("saves position to localStorage", async () => {
@@ -109,7 +110,7 @@ describe("A1ChatWidgetOverlay", () => {
 
     const stored = localStorage.getItem("kairos-chat-widget-rect");
     expect(stored).toBeTruthy();
-    const parsed = JSON.parse(stored!);
+    const parsed = JSON.parse(stored!) as Record<string, unknown>;
     expect(parsed).toHaveProperty("x");
     expect(parsed).toHaveProperty("y");
     expect(parsed).toHaveProperty("w");
@@ -125,7 +126,8 @@ describe("A1ChatWidgetOverlay", () => {
 
     await user.click(screen.getByLabelText("Open AI assistant"));
 
-    const panel = screen.getByText("A1 Intelligence").closest(".fixed") as HTMLElement;
+    const panelEl = screen.getByText("A1 Intelligence").closest(".fixed");
+    const panel = panelEl as unknown as HTMLElement;
     expect(panel.style.left).toBe("100px");
     expect(panel.style.top).toBe("200px");
   });
@@ -138,14 +140,15 @@ describe("A1ChatWidgetOverlay", () => {
     expect(screen.getByText("A1 Intelligence")).toBeInTheDocument();
   });
 
-  it("renders with glassmorphism styling", async () => {
+  it("renders with solid background styling", async () => {
     const user = userEvent.setup();
     render(<A1ChatWidgetOverlay />);
 
     await user.click(screen.getByLabelText("Open AI assistant"));
 
     const panel = screen.getByText("A1 Intelligence").closest(".fixed");
-    expect(panel?.className).toContain("kairos-glass");
+    expect(panel?.className).toContain("bg-bg-primary");
+    expect(panel?.className).not.toContain("kairos-glass");
   });
 
   it("shows resize indicator in normal mode", async () => {
