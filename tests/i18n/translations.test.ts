@@ -48,7 +48,7 @@ describe("i18n locale files", () => {
       it("is valid JSON", () => {
         const filePath = path.join(localesDir, `${locale}.json`);
         const raw = fs.readFileSync(filePath, "utf-8");
-        expect(() => JSON.parse(raw)).not.toThrow();
+        expect(() => JSON.parse(raw) as unknown).not.toThrow();
         data = JSON.parse(raw) as Record<string, unknown>;
       });
 

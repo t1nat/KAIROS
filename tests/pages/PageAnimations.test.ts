@@ -15,7 +15,6 @@ const pageFiles = [
   "progress/page.tsx",
   "publish/page.tsx",
   "orgs/page.tsx",
-  "settings/page.tsx",
   "chat/page.tsx",
   "not-found.tsx",
 ];
