@@ -14,7 +14,7 @@ export default async function ChatPage() {
     <div className="h-[100dvh] bg-bg-primary overflow-hidden">
       <SideNav />
 
-      <main id="main-content" className="lg:ml-16 h-[100dvh] overflow-hidden">
+      <main id="main-content" className="lg:ml-16 h-[100dvh] overflow-hidden kairos-page-enter">
         <ProjectIntelligenceChat />
       </main>
     </div>

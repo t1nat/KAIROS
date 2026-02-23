@@ -1,74 +1,333 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Expand, X } from "lucide-react";
-
+import { useCallback, useEffect, useRef, useState } from "react";
+import { MessageCircle, Minus, X, Maximize2, Minimize2, GripVertical } from "lucide-react";
 import { ProjectIntelligenceChat } from "~/components/projects/ProjectIntelligenceChat";
 
+/* ────────────── types ────────────── */
+interface Rect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+const STORAGE_KEY = "kairos-chat-widget-rect";
+const MIN_W = 340;
+const MIN_H = 380;
+
+function clamp(v: number, lo: number, hi: number) {
+  return Math.max(lo, Math.min(hi, v));
+}
+
+function loadRect(): Rect | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as Rect;
+  } catch {
+    return null;
+  }
+}
+
+function saveRect(r: Rect) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(r));
+  } catch {
+    /* noop */
+  }
+}
+
+function defaultRect(): Rect {
+  const w = Math.min(420, window.innerWidth - 32);
+  const h = Math.min(560, window.innerHeight - 32);
+  return {
+    x: window.innerWidth - w - 16,
+    y: window.innerHeight - h - 16,
+    w,
+    h,
+  };
+}
+
+/* ────────────── resize edge helpers ────────────── */
+type Edge = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw" | null;
+
+function edgeCursor(e: Edge): string {
+  switch (e) {
+    case "n":
+    case "s":
+      return "ns-resize";
+    case "e":
+    case "w":
+      return "ew-resize";
+    case "ne":
+    case "sw":
+      return "nesw-resize";
+    case "nw":
+    case "se":
+      return "nwse-resize";
+    default:
+      return "default";
+  }
+}
+
+function detectEdge(el: HTMLElement, cx: number, cy: number, margin = 8): Edge {
+  const r = el.getBoundingClientRect();
+  const top = cy - r.top < margin;
+  const bottom = r.bottom - cy < margin;
+  const left = cx - r.left < margin;
+  const right = r.right - cx < margin;
+
+  if (top && left) return "nw";
+  if (top && right) return "ne";
+  if (bottom && left) return "sw";
+  if (bottom && right) return "se";
+  if (top) return "n";
+  if (bottom) return "s";
+  if (left) return "w";
+  if (right) return "e";
+  return null;
+}
+
+/* ────────────── component ────────────── */
 export function A1ChatWidgetOverlay(props: {
-  isOpen: boolean;
-  onClose: () => void;
   projectId?: number;
+  isOpen?: boolean;
+  onClose?: () => void;
 }) {
-  const { isOpen, onClose, projectId } = props;
-  const router = useRouter();
+  const [selfOpen, setSelfOpen] = useState(false);
+  const controlled = props.isOpen !== undefined;
+  const open = controlled ? props.isOpen! : selfOpen;
+  const setOpen = controlled
+    ? (v: boolean) => { if (!v && props.onClose) props.onClose(); }
+    : setSelfOpen;
+  const [minimised, setMinimised] = useState(false);
+  const [maximised, setMaximised] = useState(false);
+  const [rect, setRect] = useState<Rect>(defaultRect);
+  const [prevRect, setPrevRect] = useState<Rect | null>(null);
 
+  const panelRef = useRef<HTMLDivElement>(null);
+  const dragging = useRef(false);
+  const resizing = useRef<Edge>(null);
+  const origin = useRef({ mx: 0, my: 0, rect: rect });
+
+  /* restore persisted position once */
   useEffect(() => {
-    if (!isOpen) return;
+    const saved = loadRect();
+    if (saved) setRect(saved);
+  }, []);
 
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+  /* persist on change */
+  useEffect(() => {
+    if (open && !maximised) saveRect(rect);
+  }, [rect, open, maximised]);
+
+  /* constrain on window resize */
+  useEffect(() => {
+    const handler = () => {
+      setRect((r) => ({
+        ...r,
+        x: clamp(r.x, 0, window.innerWidth - r.w),
+        y: clamp(r.y, 0, window.innerHeight - r.h),
+        w: Math.min(r.w, window.innerWidth),
+        h: Math.min(r.h, window.innerHeight),
+      }));
     };
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
 
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isOpen, onClose]);
+  /* ─── drag / resize pointer handlers ─── */
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (maximised) return;
+      const el = panelRef.current;
+      if (!el) return;
 
-  if (!isOpen) return null;
+      const edge = detectEdge(el, e.clientX, e.clientY);
+      if (edge) {
+        resizing.current = edge;
+        origin.current = { mx: e.clientX, my: e.clientY, rect: { ...rect } };
+        (e.target as HTMLElement).setPointerCapture(e.pointerId);
+        e.preventDefault();
+      }
+    },
+    [rect, maximised],
+  );
 
-  return (
-    <div className="fixed inset-0 z-[60] bg-bg-primary opacity-100">
+  const handleHeaderPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (maximised) return;
+      /* don't start drag if clicking a button */
+      if ((e.target as HTMLElement).closest("button")) return;
+      dragging.current = true;
+      origin.current = { mx: e.clientX, my: e.clientY, rect: { ...rect } };
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+      e.preventDefault();
+    },
+    [rect, maximised],
+  );
+
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      const el = panelRef.current;
+      if (!el) return;
+
+      /* cursor feedback for resize edges */
+      if (!dragging.current && !resizing.current) {
+        const edge = detectEdge(el, e.clientX, e.clientY);
+        el.style.cursor = edge ? edgeCursor(edge) : "default";
+      }
+
+      const dx = e.clientX - origin.current.mx;
+      const dy = e.clientY - origin.current.my;
+      const o = origin.current.rect;
+
+      if (dragging.current) {
+        setRect({
+          ...o,
+          x: clamp(o.x + dx, 0, window.innerWidth - o.w),
+          y: clamp(o.y + dy, 0, window.innerHeight - o.h),
+        });
+        return;
+      }
+
+      if (resizing.current) {
+        let { x, y, w, h } = o;
+        const edge = resizing.current;
+
+        if (edge.includes("e")) w = clamp(o.w + dx, MIN_W, window.innerWidth - o.x);
+        if (edge.includes("w")) {
+          const newW = clamp(o.w - dx, MIN_W, o.x + o.w);
+          x = o.x + (o.w - newW);
+          w = newW;
+        }
+        if (edge.includes("s")) h = clamp(o.h + dy, MIN_H, window.innerHeight - o.y);
+        if (edge.includes("n")) {
+          const newH = clamp(o.h - dy, MIN_H, o.y + o.h);
+          y = o.y + (o.h - newH);
+          h = newH;
+        }
+
+        setRect({ x, y, w, h });
+      }
+    },
+    [],
+  );
+
+  const handlePointerUp = useCallback(() => {
+    dragging.current = false;
+    resizing.current = null;
+  }, []);
+
+  /* ─── maximise / minimise helpers ─── */
+  const toggleMaximise = () => {
+    if (maximised) {
+      if (prevRect) setRect(prevRect);
+      setMaximised(false);
+    } else {
+      setPrevRect(rect);
+      setMaximised(true);
+    }
+    setMinimised(false);
+  };
+
+  const toggleMinimise = () => {
+    setMinimised((v) => !v);
+  };
+
+  /* ─── FAB button (only in standalone/uncontrolled mode) ─── */
+  if (!open) {
+    if (controlled) return null;
+    return (
       <button
         type="button"
-        aria-label="Close chat"
-        className="absolute inset-0 bg-gray-800 opacity-0"
-        onClick={onClose}
-      />
+        onClick={() => setOpen(true)}
+        className="kairos-btn fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95"
+        style={{ backgroundColor: "rgb(var(--accent-primary))" }}
+        aria-label="Open AI assistant"
+      >
+        <MessageCircle className="h-6 w-6 text-white" />
+      </button>
+    );
+  }
 
-      <div className="absolute right-4 bottom-4 w-[min(420px,calc(100vw-2rem))] h-[min(560px,calc(100vh-2rem))] rounded-2xl overflow-hidden bg-bg-primary shadow-xl border border-white/20 flex flex-col opacity-100">
-        <div className="h-[52px] px-3 flex items-center justify-between gap-2 border-b border-white/20 bg-zinc-900 opacity-100">
-          <div className="min-w-0">
-            <p className="text-[11px] text-fg-tertiary truncate">Workspace Concierge</p>
-          </div>
+  /* ─── panel styles ─── */
+  const panelStyle: React.CSSProperties = maximised
+    ? { inset: 0, width: "100vw", height: "100vh" }
+    : {
+        left: rect.x,
+        top: rect.y,
+        width: rect.w,
+        height: minimised ? 48 : rect.h,
+      };
 
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              className="p-2 rounded-lg hover:bg-bg-elevated text-fg-secondary transition-colors"
-              aria-label="Expand"
-              onClick={() => {
-                onClose();
-                router.push("/chat");
-              }}
-            >
-              <Expand size={16} />
-            </button>
-            <button
-              type="button"
-              className="p-2 rounded-lg hover:bg-bg-elevated text-fg-secondary transition-colors"
-              aria-label="Close"
-              onClick={onClose}
-            >
-              <X size={16} />
-            </button>
-          </div>
-        </div>
+  return (
+    <div
+      ref={panelRef}
+      className="fixed z-50 flex flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-bg-primary shadow-2xl transition-[height] duration-200 ease-out kairos-glass"
+      style={panelStyle}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+    >
+      {/* ─── title bar ─── */}
+      <div
+        onPointerDown={handleHeaderPointerDown}
+        className="flex h-12 shrink-0 cursor-grab items-center gap-2 border-b border-white/[0.06] bg-bg-elevated/70 px-3 select-none active:cursor-grabbing"
+      >
+        <GripVertical className="h-4 w-4 text-fg-tertiary opacity-50" />
+        <MessageCircle className="h-4 w-4 text-fg-secondary" />
+        <span className="flex-1 text-sm font-medium text-fg-primary truncate">A1 Intelligence</span>
 
-        <div className="flex-1 min-h-0">
-          <ProjectIntelligenceChat projectId={projectId} />
-        </div>
+        <button
+          type="button"
+          onClick={toggleMinimise}
+          className="flex h-7 w-7 items-center justify-center rounded-lg text-fg-tertiary transition-colors hover:bg-white/10 hover:text-fg-primary"
+          aria-label={minimised ? "Expand" : "Minimise"}
+        >
+          <Minus className="h-3.5 w-3.5" />
+        </button>
+
+        <button
+          type="button"
+          onClick={toggleMaximise}
+          className="flex h-7 w-7 items-center justify-center rounded-lg text-fg-tertiary transition-colors hover:bg-white/10 hover:text-fg-primary"
+          aria-label={maximised ? "Restore" : "Maximise"}
+        >
+          {maximised ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setOpen(false);
+            setMaximised(false);
+            setMinimised(false);
+          }}
+          className="flex h-7 w-7 items-center justify-center rounded-lg text-fg-tertiary transition-colors hover:bg-red-500/20 hover:text-red-400"
+          aria-label="Close"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
       </div>
+
+      {/* ─── body ─── */}
+      {!minimised && (
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <ProjectIntelligenceChat projectId={props.projectId} />
+        </div>
+      )}
+
+      {/* ─── resize indicator (bottom-right corner, visual only) ─── */}
+      {!maximised && !minimised && (
+        <div className="pointer-events-none absolute bottom-1 right-1.5 text-fg-tertiary/30">
+          <svg width="12" height="12" viewBox="0 0 12 12">
+            <path d="M11 1v10H1" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M11 5v6H5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </div>
+      )}
     </div>
   );
 }
