@@ -2,7 +2,6 @@
   "nav": {
     "home": "Accueil",
     "create": "Créer",
-    "create": "Créer",
     "publish": "Publier",
     "settings": "Paramètres",
     "projects": "Projets",
@@ -64,8 +63,14 @@
       "back": "Retour",
       "lastUpdate": "Dernière mise à jour",
       "taskCompletion": "Achèvement des tâches",
-      "activityCategories": "Catégories d’activité"
-    }
+      "activityCategories": "Catégories d’activité"    },
+    "activityTrend": {
+      "title": "Tendance d'activité",
+      "subtitle": "Tâches créées et terminées au fil du temps"
+    },
+    "createdVsCompleted": {
+      "title": "Créées vs Terminées",
+      "subtitle": "Comparaison de la création et de l'achèvement des tâches"    }
   },
   "home": {
     "title": "KAIROS",

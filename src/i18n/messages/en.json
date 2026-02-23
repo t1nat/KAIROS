@@ -2,7 +2,6 @@
   "nav": {
     "home": "Home",
     "create": "Create",
-    "create": "Create",
     "publish": "Publish",
     "settings": "Settings",
     "projects": "Projects",
@@ -67,6 +66,14 @@
       "lastUpdate": "Last update",
       "taskCompletion": "Task completion",
       "activityCategories": "Activity categories"
+    },
+    "activityTrend": {
+      "title": "Activity Trend",
+      "subtitle": "Tasks created & completed over time"
+    },
+    "createdVsCompleted": {
+      "title": "Created vs Completed",
+      "subtitle": "Task creation and completion comparison"
     }
   },
   "home": {

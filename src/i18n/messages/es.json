@@ -2,7 +2,6 @@
   "nav": {
     "home": "Inicio",
     "create": "Crear",
-    "create": "Crear",
     "publish": "Publicar",
     "settings": "Ajustes",
     "projects": "Proyectos",
@@ -65,6 +64,14 @@
       "lastUpdate": "Última actualización",
       "taskCompletion": "Finalización de tareas",
       "activityCategories": "Categorías de actividad"
+    },
+    "activityTrend": {
+      "title": "Tendencia de actividad",
+      "subtitle": "Tareas creadas y completadas a lo largo del tiempo"
+    },
+    "createdVsCompleted": {
+      "title": "Creadas vs Completadas",
+      "subtitle": "Comparación de creación y finalización de tareas"
     }
   },
   "home": {

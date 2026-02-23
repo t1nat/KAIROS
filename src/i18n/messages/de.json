@@ -2,7 +2,6 @@
   "nav": {
     "home": "Startseite",
     "create": "Erstellen",
-    "create": "Erstellen",
     "publish": "Veröffentlichen",
     "settings": "Einstellungen",
     "projects": "Projekte",
@@ -65,6 +64,14 @@
       "lastUpdate": "Letztes Update",
       "taskCompletion": "Aufgabenerledigung",
       "activityCategories": "Aktivitätskategorien"
+    },
+    "activityTrend": {
+      "title": "Aktivitätstrend",
+      "subtitle": "Erstellte und erledigte Aufgaben im Zeitverlauf"
+    },
+    "createdVsCompleted": {
+      "title": "Erstellt vs Erledigt",
+      "subtitle": "Vergleich von Aufgabenerstellung und -erledigung"
     }
   },
   "home": {
