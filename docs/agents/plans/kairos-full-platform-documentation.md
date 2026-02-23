@@ -1355,7 +1355,7 @@ Six accent color presets:
   - Text colors: `text-fg-primary`, `text-fg-secondary`, `text-fg-tertiary`
   - Border colors: `border-accent-primary`, `border-subtle`
 - **Typography:** Space Grotesk (sans), Cinzel (display), Newsreader, Uncial Antiqua, Faustina — all loaded as CSS variables
-- **Agent UI styles:** Dedicated CSS file (`src/styles/agents-ui.css`, 529 lines) with ChatGPT-like chat layouts, floating panels, agent shells, and iOS/Apple HIG-inspired controls
+- **Agent UI styles:** Dedicated CSS file (`src/styles/agents-ui.css`, 529 lines) with ChatGPT-like chat layouts, floating panels, agent shells, and KAIROS-inspired controls
 
 ---
 
