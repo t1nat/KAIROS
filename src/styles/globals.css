@@ -1469,3 +1469,261 @@ summary,
    End of Settings Navigation Indicator
    ============================================================================ */
 
+
+/* ============================================================================
+   KAIROS Futuristic Design System – Global Enhancements
+   ============================================================================ */
+
+/* Page entrance animation – soft reveal from bottom */
+@keyframes kairos-page-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0px);
+  }
+}
+
+.kairos-page-enter {
+  animation: kairos-page-enter 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Stagger children – use with data-stagger on parent */
+.kairos-stagger > * {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: kairos-stagger-child 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.kairos-stagger > *:nth-child(1) { animation-delay: 0.05s; }
+.kairos-stagger > *:nth-child(2) { animation-delay: 0.1s; }
+.kairos-stagger > *:nth-child(3) { animation-delay: 0.15s; }
+.kairos-stagger > *:nth-child(4) { animation-delay: 0.2s; }
+.kairos-stagger > *:nth-child(5) { animation-delay: 0.25s; }
+.kairos-stagger > *:nth-child(6) { animation-delay: 0.3s; }
+.kairos-stagger > *:nth-child(7) { animation-delay: 0.35s; }
+.kairos-stagger > *:nth-child(8) { animation-delay: 0.4s; }
+
+@keyframes kairos-stagger-child {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Glassmorphism surface */
+.kairos-glass {
+  background: rgba(var(--bg-elevated), 0.6);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark .kairos-glass {
+  background: rgba(var(--bg-elevated), 0.4);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Futuristic card with subtle glow */
+.kairos-card {
+  background: rgb(var(--bg-elevated));
+  border-radius: 16px;
+  border: 1px solid rgba(var(--border-light), 0.5);
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.kairos-card:hover {
+  border-color: rgba(var(--accent-primary), 0.3);
+  box-shadow: 0 8px 32px -8px rgba(var(--accent-primary), 0.15);
+  transform: translateY(-1px);
+}
+
+.kairos-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(var(--accent-primary), 0.03) 0%,
+    transparent 50%
+  );
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.kairos-card:hover::before {
+  opacity: 1;
+}
+
+/* Button micro-interaction */
+.kairos-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.kairos-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    rgba(255, 255, 255, 0.15),
+    rgba(255, 255, 255, 0)
+  );
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.kairos-btn:hover::after {
+  opacity: 1;
+}
+
+.kairos-btn:active {
+  transform: scale(0.97);
+}
+
+/* Modern input styling */
+.kairos-input {
+  background: rgba(var(--bg-surface), 0.8);
+  border: 1px solid rgba(var(--border-light), 0.5);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: rgb(var(--fg-primary));
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.kairos-input:focus {
+  border-color: rgba(var(--accent-primary), 0.5);
+  box-shadow: 0 0 0 3px rgba(var(--accent-primary), 0.1);
+  background: rgba(var(--bg-surface), 1);
+}
+
+.kairos-input::placeholder {
+  color: rgb(var(--fg-quaternary));
+}
+
+/* Modern modal overlay */
+.kairos-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: kairos-fade-in 0.2s ease;
+}
+
+@keyframes kairos-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.kairos-modal-content {
+  background: rgb(var(--bg-primary));
+  border-radius: 20px;
+  border: 1px solid rgba(var(--border-light), 0.3);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  animation: kairos-modal-enter 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  overflow: hidden;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+@keyframes kairos-modal-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Chatbot response formatting */
+.kairos-chat-response {
+  font-size: 14px;
+  line-height: 1.7;
+  color: rgb(var(--fg-primary));
+}
+
+.kairos-chat-response strong,
+.kairos-chat-response b {
+  font-weight: 600;
+  color: rgb(var(--fg-primary));
+}
+
+.kairos-chat-response ul,
+.kairos-chat-response ol {
+  padding-left: 1.25em;
+  margin: 0.5em 0;
+}
+
+.kairos-chat-response li {
+  margin: 0.25em 0;
+}
+
+.kairos-chat-response code {
+  background: rgba(var(--bg-tertiary), 0.8);
+  border-radius: 4px;
+  padding: 0.15em 0.4em;
+  font-size: 0.9em;
+  font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
+}
+
+.kairos-chat-response pre {
+  background: rgba(var(--bg-tertiary), 0.8);
+  border-radius: 8px;
+  padding: 0.75em 1em;
+  overflow-x: auto;
+  margin: 0.5em 0;
+}
+
+.kairos-chat-response pre code {
+  background: none;
+  padding: 0;
+}
+
+.kairos-chat-response p + p {
+  margin-top: 0.75em;
+}
+
+.kairos-chat-response h1,
+.kairos-chat-response h2,
+.kairos-chat-response h3 {
+  font-weight: 600;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+}
+
+/* Smooth transitions utility */
+.kairos-transition {
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.kairos-transition-slow {
+  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .kairos-page-enter,
+  .kairos-stagger > * {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
