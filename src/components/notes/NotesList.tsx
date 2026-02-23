@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { api } from "~/trpc/react";
@@ -207,25 +207,25 @@ export function NotesList() {
   const allNotes = notes ?? [];
 
   return (
-    <div className="flex flex-col h-full kairos-font-body">
+    <div className="flex flex-col h-full ">
       <div className="flex-1 overflow-hidden flex flex-col">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h3 className="text-[17px] font-[590] kairos-fg-primary leading-[1.235] tracking-[-0.016em]">
+            <h3 className="text-[17px] font-[590] text-fg-primary leading-[1.235] tracking-[-0.016em]">
               Notes
             </h3>
-            <p className="text-[13px] kairos-fg-secondary leading-[1.3846] tracking-[-0.006em] mt-0.5">
+            <p className="text-[13px] text-fg-secondary leading-[1.3846] tracking-[-0.006em] mt-0.5">
               Secured personal notes
             </p>
           </div>
           {allNotes.length > 0 && (
-            <span className="text-[13px] kairos-fg-tertiary">
+            <span className="text-[13px] text-fg-tertiary">
               {allNotes.length} {allNotes.length === 1 ? "note" : "notes"}
             </span>
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto kairos-system-scroll">
+        <div className="flex-1 overflow-y-auto scrollbar-thin">
           {allNotes.length > 0 ? (
             allNotes.map((note, index) => {
               const isSelected = selectedNoteId === note.id;
@@ -241,8 +241,8 @@ export function NotesList() {
 
               return (
                 <div key={note.id} className={cn(
-                  "kairos-settings-item",
-                  index > 0 && "border-t kairos-section-border"
+                  "px-4 py-4",
+                  index > 0 && "border-t border-white/[0.06]"
                 )}>
                   <div
                     role="button"
@@ -276,15 +276,15 @@ export function NotesList() {
 
                       {/* Note info */}
                       <div className="flex-1 min-w-0">
-                        <p className="text-[17px] font-[590] kairos-fg-primary leading-tight tracking-[-0.016em] truncate">
+                        <p className="text-[17px] font-[590] text-fg-primary leading-tight tracking-[-0.016em] truncate">
                           {firstLine || t("notes.encryptedNote")}
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <p className="text-[13px] kairos-fg-secondary leading-tight tracking-[-0.006em] truncate">
+                          <p className="text-[13px] text-fg-secondary leading-tight tracking-[-0.006em] truncate">
                             {new Date(note.createdAt).toLocaleDateString()}
                           </p>
                           {isLocked && (
-                            <span className="text-[11px] uppercase tracking-wider text-fg-tertiary border kairos-section-border rounded-full px-2 py-0.5">
+                            <span className="text-[11px] uppercase tracking-wider text-fg-tertiary border border-white/[0.06] rounded-full px-2 py-0.5">
                               {t("notes.password.protected")}
                             </span>
                           )}
@@ -300,7 +300,7 @@ export function NotesList() {
                             e.stopPropagation();
                             requestDeleteNote(note.id);
                           }}
-                          className="p-2 kairos-fg-tertiary hover:text-error hover:bg-error/10 transition-colors rounded-lg"
+                          className="p-2 text-fg-tertiary hover:text-error hover:bg-error/10 transition-colors rounded-lg"
                           aria-label="Delete note"
                         >
                           <Trash2 size={16} />
@@ -311,7 +311,7 @@ export function NotesList() {
 
                   {/* Expanded content */}
                   {isSelected && (
-                    <div className="mt-4 pt-4 border-t kairos-section-border">
+                    <div className="mt-4 pt-4 border-t border-white/[0.06]">
                       {isLocked ? (
                         <LockedNoteContent
                           passwordInput={passwordInputs[note.id] ?? ""}
@@ -373,7 +373,7 @@ export function NotesList() {
               );
             })
           ) : (
-            <div className="text-center py-12 kairos-fg-secondary text-[15px]">
+            <div className="text-center py-12 text-fg-secondary text-[15px]">
               {t("notes.empty")}
             </div>
           )}
@@ -383,29 +383,29 @@ export function NotesList() {
       {/* Reset Prompt Modal (after 2 failed unlock attempts) */}
       {showResetPromptModal !== null && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="kairos-system-card rounded-2xl shadow-2xl max-w-md w-full p-6">
+          <div className="bg-bg-secondary rounded-2xl shadow-2xl max-w-md w-full p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 bg-error/10 shadow-sm rounded-lg flex items-center justify-center">
                 <AlertCircle className="text-error" size={20} />
               </div>
               <div>
-                <h3 className="text-[17px] font-[590] kairos-fg-primary">
+                <h3 className="text-[17px] font-[590] text-fg-primary">
                   Incorrect password
                 </h3>
-                <p className="text-[13px] kairos-fg-secondary mt-0.5">
+                <p className="text-[13px] text-fg-secondary mt-0.5">
                   Multiple failed attempts detected
                 </p>
               </div>
             </div>
 
-            <p className="kairos-fg-secondary mb-6 text-[15px] leading-relaxed">
+            <p className="text-fg-secondary mb-6 text-[15px] leading-relaxed">
               You entered the wrong password twice. Do you want to reset this note password?
             </p>
 
             <div className="flex gap-3">
               <button
                 onClick={() => setShowResetPromptModal(null)}
-                className="flex-1 px-4 py-3.5 kairos-section-border kairos-fg-primary hover:kairos-active-state transition-colors rounded-xl text-[17px] font-[590]"
+                className="flex-1 px-4 py-3.5 border-white/[0.06] text-fg-primary hover:bg-bg-tertiary transition-colors rounded-xl text-[17px] font-[590]"
               >
                 Try again
               </button>
@@ -426,28 +426,28 @@ export function NotesList() {
       {/* Password Reset Modal (PIN-based) */}
       {showResetModal !== null && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="kairos-system-card rounded-2xl shadow-2xl max-w-md w-full p-6">
+          <div className="bg-bg-secondary rounded-2xl shadow-2xl max-w-md w-full p-6">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-10 h-10 bg-accent-primary/10 shadow-sm rounded-lg flex items-center justify-center">
-                <KeyRound className="kairos-accent-primary" size={20} />
+                <KeyRound className="text-accent-primary" size={20} />
               </div>
               <div>
-                <h3 className="text-[17px] font-[590] kairos-fg-primary">
+                <h3 className="text-[17px] font-[590] text-fg-primary">
                   {t("notes.reset.title")}
                 </h3>
-                <p className="text-[13px] kairos-fg-secondary mt-0.5">
+                <p className="text-[13px] text-fg-secondary mt-0.5">
                   Reset your note password
                 </p>
               </div>
             </div>
 
-            <p className="kairos-fg-secondary mb-4 text-[15px] leading-relaxed">
+            <p className="text-fg-secondary mb-4 text-[15px] leading-relaxed">
               {t("notes.reset.descPin")}
             </p>
 
-            <div className="bg-bg-elevated/60 border kairos-section-border rounded-xl p-4 mb-5 space-y-3">
+            <div className="bg-bg-elevated/60 border border-white/[0.06] rounded-xl p-4 mb-5 space-y-3">
               <div>
-                <label className="block text-[13px] font-[590] kairos-fg-secondary mb-2">
+                <label className="block text-[13px] font-[590] text-fg-secondary mb-2">
                   {t("notes.reset.pinLabel")}
                 </label>
                 <input
@@ -458,18 +458,18 @@ export function NotesList() {
                     setResetPinError(null);
                   }}
                   placeholder={t("notes.reset.pinPlaceholder")}
-                  className="w-full bg-bg-surface/60 kairos-fg-primary text-[15px] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 border kairos-section-border"
+                  className="w-full bg-bg-surface/60 text-fg-primary text-[15px] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 border border-white/[0.06]"
                 />
               </div>
               <div>
-                <label className="block text-[13px] font-[590] kairos-fg-secondary mb-1">
+                <label className="block text-[13px] font-[590] text-fg-secondary mb-1">
                   {t("notes.reset.hintLabel")}
                 </label>
-                <p className="text-[13px] kairos-fg-secondary italic">
+                <p className="text-[13px] text-fg-secondary italic">
                   {resetPinHint ? (
                     <span>{resetPinHint}</span>
                   ) : (
-                    <span className="kairos-fg-tertiary">
+                    <span className="text-fg-tertiary">
                       {t("notes.reset.noHint")}
                     </span>
                   )}
@@ -479,7 +479,7 @@ export function NotesList() {
 
             <div className="space-y-4 mb-5">
               <div>
-                <label className="block text-[13px] font-[590] kairos-fg-secondary mb-2">
+                <label className="block text-[13px] font-[590] text-fg-secondary mb-2">
                   {t("notes.reset.newPasswordLabel")}
                 </label>
                 <div className="relative">
@@ -487,12 +487,12 @@ export function NotesList() {
                     type={showNewPasswords ? "text" : "password"}
                     value={newPasswordInput}
                     onChange={(e) => setNewPasswordInput(e.target.value)}
-                    className="w-full bg-bg-surface/60 kairos-fg-primary text-[15px] rounded-xl px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 border kairos-section-border"
+                    className="w-full bg-bg-surface/60 text-fg-primary text-[15px] rounded-xl px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 border border-white/[0.06]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowNewPasswords((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 kairos-fg-tertiary hover:kairos-fg-primary"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-tertiary hover:text-fg-primary"
                     aria-label={showNewPasswords ? "Hide password" : "Show password"}
                   >
                     {showNewPasswords ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -500,14 +500,14 @@ export function NotesList() {
                 </div>
               </div>
               <div>
-                <label className="block text-[13px] font-[590] kairos-fg-secondary mb-2">
+                <label className="block text-[13px] font-[590] text-fg-secondary mb-2">
                   {t("notes.reset.confirmPasswordLabel")}
                 </label>
                 <input
                   type={showNewPasswords ? "text" : "password"}
                   value={confirmNewPasswordInput}
                   onChange={(e) => setConfirmNewPasswordInput(e.target.value)}
-                  className="w-full bg-bg-surface/60 kairos-fg-primary text-[15px] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 border kairos-section-border"
+                  className="w-full bg-bg-surface/60 text-fg-primary text-[15px] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 border border-white/[0.06]"
                 />
               </div>
             </div>
@@ -526,7 +526,7 @@ export function NotesList() {
                   setResetPinInput("");
                   setResetPinError(null);
                 }}
-                className="flex-1 px-4 py-3.5 kairos-section-border kairos-fg-primary hover:kairos-active-state transition-colors rounded-xl text-[17px] font-[590]"
+                className="flex-1 px-4 py-3.5 border-white/[0.06] text-fg-primary hover:bg-bg-tertiary transition-colors rounded-xl text-[17px] font-[590]"
               >
                 {t("notes.actions.cancel")}
               </button>
@@ -578,11 +578,11 @@ function LockedNoteContent(props: LockedNoteContentProps) {
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-2">
         <Lock className="text-error" size={18} />
-        <h3 className="text-[17px] font-[590] kairos-fg-primary">
+        <h3 className="text-[17px] font-[590] text-fg-primary">
           {t("notes.password.protected")}
         </h3>
       </div>
-      <p className="text-[15px] kairos-fg-secondary mb-4 leading-relaxed">
+      <p className="text-[15px] text-fg-secondary mb-4 leading-relaxed">
         {t("notes.password.protectedDesc")}
       </p>
 
@@ -594,12 +594,12 @@ function LockedNoteContent(props: LockedNoteContentProps) {
             onChange={(e) => onPasswordChange(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && onSubmit()}
             placeholder={t("notes.password.placeholder")}
-            className="w-full bg-bg-surface/60 kairos-fg-primary text-[15px] rounded-xl px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:bg-bg-surface border kairos-section-border shadow-sm transition-all"
+            className="w-full bg-bg-surface/60 text-fg-primary text-[15px] rounded-xl px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:bg-bg-surface border border-white/[0.06] shadow-sm transition-all"
           />
           <button
             type="button"
             onClick={onTogglePasswordVisibility}
-            className="absolute right-3 top-1/2 -translate-y-1/2 kairos-fg-tertiary hover:kairos-fg-primary transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-tertiary hover:text-fg-primary transition-colors"
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -627,7 +627,7 @@ function LockedNoteContent(props: LockedNoteContentProps) {
           <button
             type="button"
             onClick={onOpenResetPrompt}
-            className="px-4 py-3 rounded-xl border kairos-section-border kairos-fg-secondary hover:kairos-active-state transition-colors text-[15px] font-[590]"
+            className="px-4 py-3 rounded-xl border border-white/[0.06] text-fg-secondary hover:bg-bg-tertiary transition-colors text-[15px] font-[590]"
           >
             {t("notes.reset.cta")}
           </button>
@@ -653,15 +653,15 @@ function UnlockedNoteContent(props: UnlockedNoteContentProps) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4 pb-3 border-b kairos-section-border">
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/[0.06]">
         <div>
-          <span className="text-[17px] font-[590] kairos-fg-primary">Note Content</span>
-          <p className="text-[13px] kairos-fg-secondary mt-0.5">Edit and save your note</p>
+          <span className="text-[17px] font-[590] text-fg-primary">Note Content</span>
+          <p className="text-[13px] text-fg-secondary mt-0.5">Edit and save your note</p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={onRefresh}
-            className="p-2 kairos-fg-tertiary hover:kairos-fg-primary hover:kairos-bg-tertiary/30 transition-colors rounded-lg"
+            className="p-2 text-fg-tertiary hover:text-fg-primary hover:bg-bg-tertiary/30 transition-colors rounded-lg"
             aria-label="Refresh"
           >
             <RefreshCw size={16} />
@@ -672,7 +672,7 @@ function UnlockedNoteContent(props: UnlockedNoteContentProps) {
               "p-2 transition-colors rounded-lg",
               isPendingDelete
                 ? "bg-error/20 text-error"
-                : "kairos-fg-tertiary hover:text-error hover:bg-error/10"
+                : "text-fg-tertiary hover:text-error hover:bg-error/10"
             )}
             aria-label="Delete note"
           >
@@ -684,7 +684,7 @@ function UnlockedNoteContent(props: UnlockedNoteContentProps) {
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full min-h-[200px] bg-bg-surface/40 kairos-fg-primary rounded-xl p-4 text-[15px] leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-accent-primary/30 border kairos-section-border"
+        className="w-full min-h-[200px] bg-bg-surface/40 text-fg-primary rounded-xl p-4 text-[15px] leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-accent-primary/30 border border-white/[0.06]"
         placeholder={t("notes.placeholders.content")}
       />
       

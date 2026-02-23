@@ -7,7 +7,6 @@ import {
   X,
   Calendar,
   User,
-  Send,
   Check,
   AlertCircle,
   Loader2,
@@ -261,7 +260,7 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
         </div>
 
         <div className="p-4 sm:p-6 space-y-6">
-          <div className="bg-bg-secondary rounded-xl p-4 sm:p-5 ios-card">
+          <div className="bg-bg-secondary rounded-xl p-4 sm:p-5 border border-white/[0.06]">
             <div className="flex items-center gap-3 mb-2">
               <Users className="text-accent-primary" size={20} />
               <h3 className="text-base sm:text-lg font-semibold text-fg-primary">Total Responses</h3>
@@ -327,7 +326,7 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
             </div>
           </div>
 
-          <div className="bg-bg-secondary rounded-xl p-4 ios-card">
+          <div className="bg-bg-secondary rounded-xl p-4 border border-white/[0.06]">
             <h4 className="text-sm font-semibold text-fg-secondary mb-2">Event Details</h4>
             <p className="text-fg-primary font-medium mb-1">{event.title}</p>
             <div className="flex items-center gap-2 text-xs text-fg-tertiary">
@@ -477,86 +476,59 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
 
   return (
     <>
-      <div className="bg-bg-primary border border-border-light rounded-lg shadow-sm mb-6 p-4 last:mb-0">
+      <div className="bg-bg-secondary border-b border-white/[0.06] sm:rounded-xl sm:border sm:border-white/[0.06] sm:mb-4 overflow-hidden" data-testid="event-card">
         <InfoMessageToast
           message={infoMessage?.message ?? null}
           type={infoMessage?.type ?? null}
           onClose={() => setInfoMessage(null)}
         />
 
-        <div className="mb-4">
-          <div className="flex items-start gap-3 sm:gap-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-bg-secondary overflow-hidden flex-shrink-0">
-              {event.author.image ? (
-                <Image
-                  src={event.author.image}
-                  alt={event.author.name ?? "User"}
-                  width={48}
-                  height={48}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <User size={20} className="text-fg-secondary" />
-                </div>
+        {/* Author header - Instagram style */}
+        <div className="flex items-center gap-3 px-4 py-3">
+          <div className="w-9 h-9 rounded-full bg-bg-tertiary overflow-hidden flex-shrink-0 ring-2 ring-accent-primary/20">
+            {event.author.image ? (
+              <Image
+                src={event.author.image}
+                alt={event.author.name ?? "User"}
+                width={36}
+                height={36}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent-primary to-accent-secondary">
+                <User size={16} className="text-white" />
+              </div>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-fg-primary truncate">{event.author.name}</p>
+            <div className="flex items-center gap-1.5 text-xs text-fg-tertiary">
+              <MapPin size={11} />
+              <span>{getRegionLabel(event.region)}</span>
+              {isPastEvent && (
+                <span className="ml-1 px-1.5 py-0.5 bg-fg-tertiary/10 rounded text-[10px] text-fg-tertiary">Past</span>
               )}
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-3">
-                <h2 className="text-lg sm:text-xl font-bold text-fg-primary mb-2 break-words flex-1 min-w-0">
-                  {event.title}
-                </h2>
-                {event.isOwner && (
-                  <button
-                    onClick={handleDeleteEvent}
-                    disabled={deleteEvent.isPending}
-                    className={`p-2 rounded-lg transition-all ${
-                      deleteEventArmed
-                        ? "bg-error/10 text-error"
-                        : "text-fg-secondary hover:text-error hover:bg-bg-secondary"
-                    }`}
-                    aria-label={deleteEventArmed ? "Confirm delete event" : "Delete event"}
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                )}
-              </div>
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-fg-secondary">
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <User size={14} className="sm:w-4 sm:h-4" />
-                  <span className="font-medium">{event.author.name}</span>
-                </div>
-
-                <span className="text-fg-tertiary hidden sm:inline">•</span>
-
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <MapPin size={14} className="sm:w-4 sm:h-4" />
-                  <span>{getRegionLabel(event.region)}</span>
-                </div>
-
-                <span className="text-fg-tertiary hidden sm:inline">•</span>
-
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <Calendar size={14} className="sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">{formatDate(event.eventDate)}</span>
-                  <span className="sm:hidden">{new Date(event.eventDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                </div>
-
-                {isPastEvent && (
-                  <>
-                    <span className="text-fg-tertiary hidden sm:inline">•</span>
-                    <span className="px-2 py-0.5 bg-event-inactive/20 rounded text-xs text-event-inactive">
-                      Past Event
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
           </div>
+          {event.isOwner && (
+            <button
+              onClick={handleDeleteEvent}
+              disabled={deleteEvent.isPending}
+              className={`p-2 rounded-lg transition-all ${
+                deleteEventArmed
+                  ? "bg-error/10 text-error"
+                  : "text-fg-tertiary hover:text-error"
+              }`}
+              aria-label={deleteEventArmed ? "Confirm delete event" : "Delete event"}
+            >
+              <Trash2 size={16} />
+            </button>
+          )}
         </div>
 
+        {/* Image - full width like Instagram */}
         {event.imageUrl && (
-          <div className="relative aspect-video bg-bg-secondary my-4 rounded-lg sm:rounded-xl overflow-hidden">
+          <div className="relative aspect-video bg-bg-tertiary overflow-hidden">
             <Image
               src={event.imageUrl}
               alt={event.title}
@@ -566,185 +538,155 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
           </div>
         )}
 
-        <div className="mb-4">
-          <p className="text-xs sm:text-sm text-fg-secondary whitespace-pre-wrap leading-relaxed">
+        {/* Action bar */}
+        <div className="px-4 pt-3 flex items-center gap-3">
+          <button
+            onClick={handleLike}
+            disabled={toggleLike.isPending}
+            className={`transition-all ${
+              event.hasLiked ? "text-red-500" : "text-fg-secondary hover:text-red-500"
+            }`}
+          >
+            <Heart
+              size={22}
+              className={event.hasLiked ? "fill-current" : ""}
+            />
+          </button>
+
+          <button className="text-fg-secondary hover:text-fg-primary transition-colors">
+            <MessageCircle size={22} />
+          </button>
+        </div>
+
+        {/* Like count */}
+        <div className="px-4 pt-1.5">
+          <span className="text-sm font-semibold text-fg-primary">{event.likeCount} likes</span>
+        </div>
+
+        {/* Title + Description */}
+        <div className="px-4 pt-1.5 pb-2">
+          <h2 className="text-sm font-bold text-fg-primary inline mr-1.5">{event.title}</h2>
+          <p className="text-sm text-fg-secondary inline whitespace-pre-wrap leading-relaxed">
             {event.description}
           </p>
         </div>
 
+        {/* Date */}
+        <div className="px-4 pb-2 flex items-center gap-1.5 text-xs text-fg-tertiary">
+          <Calendar size={12} />
+          <span>{formatDate(event.eventDate)}</span>
+        </div>
+
+        {/* RSVP - compact Instagram-style */}
         {event.enableRsvp && (
-          <div className="mb-4">
-            <div className="p-3 sm:p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs sm:text-sm font-semibold text-fg-secondary">
-                  Will you come?
-                </h3>
-                {event.isOwner && (
-                  <button
-                    onClick={() => setShowDashboard(true)}
-                    className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-accent-primary/20 hover:bg-accent-primary/30 text-accent-primary rounded-lg transition-colors text-xs sm:text-sm font-medium">
-                    <BarChart3 size={14} className="sm:w-4 sm:h-4" />
-                    <span className="hidden sm:inline">View Stats</span>
-                    <span className="sm:hidden">Stats</span>
-                  </button>
-                )}
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2">
+          <div className="px-4 pb-2">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-fg-tertiary uppercase tracking-wider">RSVP</span>
+              {event.isOwner && (
                 <button
-                  onClick={() => handleRsvpClick("going")}
-                  disabled={updateRsvp.isPending}
-                  className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg transition-all ${
-                    event.userRsvpStatus === "going"
-                      ? "bg-event-positive/20 text-event-positive"
-                      : "bg-bg-surface/50 text-fg-secondary hover:bg-bg-secondary"
-                  }`}
-                >
-                  <CheckCircle2 size={14} className="sm:w-4 sm:h-4" />
-                  <span className="text-xs sm:text-sm font-medium">Going ({event.rsvpCounts.going})</span>
+                  onClick={() => setShowDashboard(true)}
+                  className="flex items-center gap-1 text-xs text-accent-primary font-medium">
+                  <BarChart3 size={12} />
+                  Stats
                 </button>
-                <button
-                  onClick={() => handleRsvpClick("maybe")}
-                  disabled={updateRsvp.isPending}
-                  className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg transition-all ${
-                    event.userRsvpStatus === "maybe"
-                      ? "bg-event-pending/20 text-event-pending"
-                      : "bg-bg-surface/50 text-fg-secondary hover:bg-bg-secondary"
-                  }`}
-                >
-                  <HelpCircle size={14} className="sm:w-4 sm:h-4" />
-                  <span className="text-xs sm:text-sm font-medium">Maybe ({event.rsvpCounts.maybe})</span>
-                </button>
-                <button
-                  onClick={() => handleRsvpClick("not_going")}
-                  disabled={updateRsvp.isPending}
-                  className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg transition-all ${
-                    event.userRsvpStatus === "not_going"
-                      ? "bg-event-critical/20 text-event-critical"
-                      : "bg-bg-surface/50 text-fg-secondary hover:bg-bg-secondary"
-                  }`}
-                >
-                  <XCircle size={14} className="sm:w-4 sm:h-4" />
-                  <span className="text-xs sm:text-sm font-medium">Can&apos;t Go ({event.rsvpCounts.notGoing})</span>
-                </button>
-              </div>
+              )}
+            </div>
+            <div className="flex gap-1.5">
+              <button
+                onClick={() => handleRsvpClick("going")}
+                disabled={updateRsvp.isPending}
+                className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  event.userRsvpStatus === "going"
+                    ? "bg-event-positive/20 text-event-positive"
+                    : "bg-bg-tertiary text-fg-secondary hover:bg-bg-tertiary/80"
+                }`}
+              >
+                <CheckCircle2 size={12} />
+                Going ({event.rsvpCounts.going})
+              </button>
+              <button
+                onClick={() => handleRsvpClick("maybe")}
+                disabled={updateRsvp.isPending}
+                className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  event.userRsvpStatus === "maybe"
+                    ? "bg-event-pending/20 text-event-pending"
+                    : "bg-bg-tertiary text-fg-secondary hover:bg-bg-tertiary/80"
+                }`}
+              >
+                <HelpCircle size={12} />
+                Maybe ({event.rsvpCounts.maybe})
+              </button>
+              <button
+                onClick={() => handleRsvpClick("not_going")}
+                disabled={updateRsvp.isPending}
+                className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  event.userRsvpStatus === "not_going"
+                    ? "bg-event-critical/20 text-event-critical"
+                    : "bg-bg-tertiary text-fg-secondary hover:bg-bg-tertiary/80"
+                }`}
+              >
+                <XCircle size={12} />
+                Can&apos;t ({event.rsvpCounts.notGoing})
+              </button>
             </div>
           </div>
         )}
 
-        <div className="py-3 flex items-center gap-2 sm:gap-3">
-          <button
-            onClick={handleLike}
-            disabled={toggleLike.isPending}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full transition-all hover:bg-bg-secondary ${
-              event.hasLiked
-                ? "text-event-critical"
-                : "text-fg-secondary hover:text-event-critical"
-            }`}
-          >
-            <Heart
-              size={16}
-              className={`sm:w-[18px] sm:h-[18px] ${event.hasLiked ? "fill-current" : ""}`}
-            />
-            <span className="text-xs sm:text-sm font-medium">{event.likeCount}</span>
-          </button>
+        {/* Comments */}
+        <div className="px-4 pb-3">
+          {sortedComments.length > 3 && !showAllComments && (
+            <button
+              onClick={() => setShowAllComments(true)}
+              className="text-xs text-fg-tertiary mb-2 block">
+              View all {sortedComments.length} comments
+            </button>
+          )}
 
-          <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-fg-secondary hover:text-accent-primary hover:bg-bg-secondary transition-colors">
-            <MessageCircle size={16} className="sm:w-[18px] sm:h-[18px]" />
-            <span className="text-xs sm:text-sm font-medium">{event.commentCount}</span>
-          </button>
-        </div>
-
-        <div className="mt-2">
           {displayedComments.length > 0 && (
-            <div className="py-4 sm:py-6 space-y-4">
+            <div className="space-y-1.5">
               {displayedComments.map((comment) => (
-                <div key={comment.id} className="flex gap-2 sm:gap-3">
-                  <div className="w-8 h-8 rounded-full bg-bg-secondary flex-shrink-0 overflow-hidden">
-                    {comment.author.image ? (
-                      <Image
-                        src={comment.author.image}
-                        alt={comment.author.name ?? "User"}
-                        width={32}
-                        height={32}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <User size={14} className="text-fg-secondary" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="bg-bg-secondary rounded-lg p-2.5 sm:p-3">
-                      <p className="text-xs sm:text-sm font-semibold text-fg-primary mb-1">
-                        {comment.author.name}
-                      </p>
-                      <p className="text-xs sm:text-sm text-fg-secondary">{comment.text}</p>
-                    </div>
-                    <p className="text-xs text-fg-tertiary mt-1 ml-2 sm:ml-3">
-                      {new Date(comment.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
+                <div key={comment.id} className="text-sm">
+                  <span className="font-semibold text-fg-primary mr-1.5">{comment.author.name}</span>
+                  <span className="text-fg-secondary">{comment.text}</span>
                 </div>
               ))}
-
-              {sortedComments.length > 3 && (
+              {showAllComments && sortedComments.length > 3 && (
                 <button
-                  onClick={() => setShowAllComments(!showAllComments)}
-                  className="text-xs sm:text-sm text-accent-primary hover:text-accent-secondary font-medium transition-colors">
-                  {showAllComments
-                    ? "Show less"
-                    : `View ${sortedComments.length - 3} more comments`}
+                  onClick={() => setShowAllComments(false)}
+                  className="text-xs text-fg-tertiary">
+                  Show less
                 </button>
               )}
             </div>
           )}
 
+          {/* Comment input */}
           {session && (
-            <div className="py-4 sm:py-6 border-t border-border-light">
-              <div className="flex gap-2 sm:gap-3">
-                <div className="w-8 h-8 rounded-full bg-bg-secondary flex-shrink-0 overflow-hidden">
-                  {session.user.image ? (
-                    <Image
-                      src={session.user.image}
-                      alt={session.user.name ?? "You"}
-                      width={32}
-                      height={32}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <User size={14} className="text-fg-secondary" />
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 flex gap-2">
-                  <input
-                    type="text"
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleAddComment(e);
-                      }
-                    }}
-                    placeholder="Write a comment..."
-                    className="flex-1 px-3 sm:px-4 py-2 bg-bg-secondary border border-border-light rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all text-sm sm:text-base text-fg-primary placeholder:text-fg-tertiary"
-                    disabled={addComment.isPending}
-                  />
-                  <button
-                    onClick={handleAddComment}
-                    disabled={addComment.isPending || !commentText.trim()}
-                    className="w-9 h-9 sm:w-10 sm:h-10 inline-flex items-center justify-center bg-accent-primary text-white rounded-full hover:bg-accent-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                    {addComment.isPending ? (
-                      <Loader2 className="animate-spin" size={18} />
-                    ) : (
-                      <Send size={18} />
-                    )}
-                  </button>
-                </div>
-              </div>
+            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/[0.04]">
+              <input
+                type="text"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAddComment(e);
+                  }
+                }}
+                placeholder="Add a comment..."
+                className="flex-1 bg-transparent text-sm text-fg-primary placeholder:text-fg-tertiary focus:outline-none py-1"
+                disabled={addComment.isPending}
+              />
+              <button
+                onClick={handleAddComment}
+                disabled={addComment.isPending || !commentText.trim()}
+                className="text-accent-primary text-sm font-semibold disabled:opacity-30 transition-opacity">
+                {addComment.isPending ? (
+                  <Loader2 className="animate-spin" size={14} />
+                ) : (
+                  "Post"
+                )}
+              </button>
             </div>
           )}
         </div>
@@ -803,7 +745,7 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false }) 
       {showCreateForm && session && (
         <div>
           {showForm ? (
-            <div className="ios-card-elevated p-4 sm:p-6">
+            <div className="bg-bg-elevated rounded-2xl border border-white/[0.06] p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-fg-primary">Create Event</h3>
                 <button
@@ -818,7 +760,7 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false }) 
           ) : (
             <button
               onClick={() => setShowForm(true)}
-              className="w-full ios-card p-4 flex items-center gap-3 text-fg-secondary hover:text-accent-primary hover:bg-accent-primary/5 transition-colors group"
+              className="w-full bg-bg-secondary rounded-2xl border border-white/[0.06] p-4 flex items-center gap-3 text-fg-secondary hover:text-accent-primary hover:bg-accent-primary/5 transition-colors group"
             >
               <div className="w-10 h-10 rounded-full bg-accent-primary/10 flex items-center justify-center group-hover:bg-accent-primary/20 transition-colors">
                 <Plus size={20} className="text-accent-primary" />
@@ -837,7 +779,7 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false }) 
           allowAll
           allLabel="All"
           fallback={
-            <div className="ios-card p-3 sm:p-4">
+            <div className="bg-bg-secondary rounded-2xl border border-white/[0.06] p-3 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
                 <MapPin className="text-accent-primary" size={18} />
                 <select
@@ -870,7 +812,7 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false }) 
           </p>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="sm:space-y-4">
           {filteredEvents.map((event) => (
             <EventCard
               key={event.id}

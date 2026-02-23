@@ -61,9 +61,6 @@ export default async function CreatePage({
 
   return (
     <div className="min-h-screen bg-bg-primary relative">
-      {/* Fixed background circles - independent of content */}
-      <div className="fixed inset-0 pointer-events-none z-0 bg-[radial-gradient(900px_circle_at_10%_10%,rgb(var(--accent-primary)/0.22),transparent_55%),radial-gradient(700px_circle_at_90%_15%,rgb(var(--accent-primary)/0.16),transparent_55%),radial-gradient(900px_circle_at_50%_85%,rgb(var(--accent-primary)/0.14),transparent_60%)]" />
-      
       <SideNav />
 
       <div className="lg:ml-16 min-h-screen flex flex-col pt-16 lg:pt-0 relative z-10 kairos-page-enter">

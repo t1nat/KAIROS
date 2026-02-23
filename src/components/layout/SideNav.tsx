@@ -5,17 +5,18 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
-  Home,
-  FolderKanban,
-  FileEdit,
-  BarChart3,
-  Users,
-  Settings,
+  Compass,
+  Briefcase,
+  BookText,
+  TrendingUp,
+  Building2,
+  SlidersHorizontal,
   Menu,
   X,
+  SquarePen,
+  Sparkles,
+  CalendarDays,
   Plus,
-  MessageCircle,
-  Calendar,
 } from "lucide-react";
 
 import { A1ChatWidgetOverlay } from "~/components/chat/A1ChatWidgetOverlay";
@@ -46,18 +47,18 @@ export function SideNav() {
   const action = searchParams?.get("action");
 
   const mainNavItems = [
-    { href: "/", icon: Home, label: t("home") },
-    { href: "/create", icon: Plus, label: t("create") },
-    { href: "/projects", icon: FolderKanban, label: t("projects") },
-    { href: "/create?action=new_note", icon: FileEdit, label: t("notes") },
-    { href: "/progress", icon: BarChart3, label: t("progress") },
-    { href: "/chat", icon: MessageCircle, label: "Chat" },
-    { href: "/publish", icon: Calendar, label: t("events") },
+    { href: "/", icon: Compass, label: t("home") },
+    { href: "/create", icon: SquarePen, label: t("create") },
+    { href: "/projects", icon: Briefcase, label: t("projects") },
+    { href: "/create?action=new_note", icon: BookText, label: t("notes") },
+    { href: "/progress", icon: TrendingUp, label: t("progress") },
+    { href: "/chat", icon: Sparkles, label: "Chat" },
+    { href: "/publish", icon: CalendarDays, label: t("events") },
   ];
 
-  const profileItem = { href: "/orgs", icon: Users, label: tOrg("yourOrgs") };
+  const profileItem = { href: "/orgs", icon: Building2, label: tOrg("yourOrgs") };
 
-  const settingsItem = { href: "/settings?section=profile", icon: Settings, label: t("settings") };
+  const settingsItem = { href: "/settings?section=profile", icon: SlidersHorizontal, label: t("settings") };
 
   const isItemActive = (href: string): boolean => {
     if (href === "/") {
@@ -216,7 +217,7 @@ export function SideNav() {
                 >
                   <item.icon size={20} />
 
-                  <span className="absolute left-full ml-4 px-3 py-1.5 ios-card text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
+                  <span className="absolute left-full ml-4 px-3 py-1.5 bg-bg-elevated border border-white/[0.06] text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
                     {item.label}
                   </span>
                 </button>
@@ -237,7 +238,7 @@ export function SideNav() {
               >
                 <item.icon size={20} />
 
-                <span className="absolute left-full ml-4 px-3 py-1.5 ios-card text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
+                <span className="absolute left-full ml-4 px-3 py-1.5 bg-bg-elevated border border-white/[0.06] text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
                   {item.label}
                 </span>
               </Link>
@@ -257,7 +258,7 @@ export function SideNav() {
             title={settingsItem.label}
           >
             <settingsItem.icon size={20} />
-            <span className="absolute left-full ml-4 px-3 py-1.5 ios-card text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
+            <span className="absolute left-full ml-4 px-3 py-1.5 bg-bg-elevated border border-white/[0.06] text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
               {settingsItem.label}
             </span>
           </Link>

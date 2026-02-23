@@ -261,11 +261,6 @@
 body {
   background-color: rgb(var(--bg-primary));
   color: rgb(var(--text-primary));
-  background-image:
-    radial-gradient(900px circle at 18% 6%, rgb(var(--accent-primary) / 0.14), transparent 48%),
-    radial-gradient(760px circle at 84% 12%, rgb(var(--brand-blue) / 0.12), transparent 52%),
-    radial-gradient(900px circle at 50% 92%, rgb(var(--brand-indigo) / 0.10), transparent 60%);
-  background-attachment: fixed;
 }
 
 html {
@@ -953,7 +948,7 @@ summary,
 }
 
 /* ============================================================================
-   KAIROS DESIGN SYSTEM - iPhone Settings Style
+   KAIROS DESIGN SYSTEM - Kairos Settings Style
    ============================================================================ */
 
 /* Kairos Font Stack - Elegant, clean, modern */

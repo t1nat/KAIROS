@@ -5,13 +5,13 @@ import { EventReminderService } from "~/components/events/EventReminderService";
 
 export default function PublishPage() {
     return (
-        <div className="min-h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary">
+        <div className="min-h-screen bg-bg-primary">
             <SideNav />
 
             <div className="lg:ml-16 pt-16 lg:pt-0 kairos-page-enter">
-                <header className="sticky top-16 lg:top-0 z-30 ios-header">
-                    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 flex justify-between items-center">
-                        <h1 className="text-lg sm:text-xl font-bold text-fg-primary tracking-tight">Events</h1>
+                <header className="sticky top-16 lg:top-0 z-30 bg-bg-primary/95 backdrop-blur-md border-b border-white/[0.06]">
+                    <div className="max-w-xl mx-auto px-4 py-3 flex justify-between items-center">
+                        <h1 className="text-lg font-bold text-fg-primary tracking-tight">Events</h1>
                         <UserDisplay />
                     </div>
                 </header>
@@ -19,7 +19,7 @@ export default function PublishPage() {
                 <main id="main-content" className="w-full">
                     <EventReminderService />
 
-                    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+                    <div className="max-w-xl mx-auto px-0 sm:px-4 py-2 sm:py-4">
                         <EventFeed showCreateForm={true} />
                     </div>
                 </main>

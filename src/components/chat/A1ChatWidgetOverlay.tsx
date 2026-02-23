@@ -39,6 +39,7 @@ function saveRect(r: Rect) {
 }
 
 function defaultRect(): Rect {
+  if (typeof window === "undefined") return { x: 0, y: 0, w: 420, h: 560 };
   const w = Math.min(420, window.innerWidth - 32);
   const h = Math.min(560, window.innerHeight - 32);
   return {
@@ -265,8 +266,12 @@ export function A1ChatWidgetOverlay(props: {
   return (
     <div
       ref={panelRef}
-      className="fixed z-50 flex flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-bg-primary shadow-2xl transition-[height] duration-200 ease-out kairos-glass"
-      style={panelStyle}
+      className="fixed z-50 flex flex-col overflow-hidden rounded-2xl shadow-2xl transition-[height] duration-200 ease-out"
+      style={{
+        ...panelStyle,
+        backgroundColor: 'rgb(var(--bg-primary))',
+        border: '1px solid rgb(var(--border-medium))'
+      }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -274,16 +279,28 @@ export function A1ChatWidgetOverlay(props: {
       {/* ─── title bar ─── */}
       <div
         onPointerDown={handleHeaderPointerDown}
-        className="flex h-12 shrink-0 cursor-grab items-center gap-2 border-b border-white/[0.06] bg-bg-elevated/70 px-3 select-none active:cursor-grabbing"
+        className="flex h-12 shrink-0 cursor-grab items-center gap-2 border-b px-3 select-none active:cursor-grabbing"
+        style={{
+          backgroundColor: 'rgb(var(--bg-secondary))',
+          borderBottomColor: 'rgb(var(--border-medium))',
+          borderBottomWidth: '1px',
+          borderBottomStyle: 'solid'
+        }}
       >
-        <GripVertical className="h-4 w-4 text-fg-tertiary opacity-50" />
-        <MessageCircle className="h-4 w-4 text-fg-secondary" />
-        <span className="flex-1 text-sm font-medium text-fg-primary truncate">A1 Intelligence</span>
+        <GripVertical className="h-4 w-4" style={{ color: 'rgb(var(--fg-tertiary))', opacity: 0.7 }} />
+        <MessageCircle className="h-4 w-4" style={{ color: 'rgb(var(--fg-secondary))' }} />
+        <span className="flex-1 text-sm font-medium truncate" style={{ color: 'rgb(var(--fg-primary))' }}>A1 Intelligence</span>
 
         <button
           type="button"
           onClick={toggleMinimise}
-          className="flex h-7 w-7 items-center justify-center rounded-lg text-fg-tertiary transition-colors hover:bg-white/10 hover:text-fg-primary"
+          className="flex h-7 w-7 items-center justify-center rounded-lg transition-colors"
+          style={{ 
+            color: 'rgb(var(--fg-tertiary))',
+            backgroundColor: 'transparent'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           aria-label={minimised ? "Expand" : "Minimise"}
         >
           <Minus className="h-3.5 w-3.5" />
@@ -292,7 +309,13 @@ export function A1ChatWidgetOverlay(props: {
         <button
           type="button"
           onClick={toggleMaximise}
-          className="flex h-7 w-7 items-center justify-center rounded-lg text-fg-tertiary transition-colors hover:bg-white/10 hover:text-fg-primary"
+          className="flex h-7 w-7 items-center justify-center rounded-lg transition-colors"
+          style={{ 
+            color: 'rgb(var(--fg-tertiary))',
+            backgroundColor: 'transparent'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           aria-label={maximised ? "Restore" : "Maximise"}
         >
           {maximised ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
@@ -305,7 +328,13 @@ export function A1ChatWidgetOverlay(props: {
             setMaximised(false);
             setMinimised(false);
           }}
-          className="flex h-7 w-7 items-center justify-center rounded-lg text-fg-tertiary transition-colors hover:bg-red-500/20 hover:text-red-400"
+          className="flex h-7 w-7 items-center justify-center rounded-lg transition-colors"
+          style={{ 
+            color: 'rgb(var(--fg-tertiary))',
+            backgroundColor: 'transparent'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           aria-label="Close"
         >
           <X className="h-3.5 w-3.5" />
@@ -321,7 +350,7 @@ export function A1ChatWidgetOverlay(props: {
 
       {/* ─── resize indicator (bottom-right corner, visual only) ─── */}
       {!maximised && !minimised && (
-        <div className="pointer-events-none absolute bottom-1 right-1.5 text-fg-tertiary/30">
+        <div className="pointer-events-none absolute bottom-1 right-1.5" style={{ color: 'rgb(var(--fg-tertiary))', opacity: 0.3 }}>
           <svg width="12" height="12" viewBox="0 0 12 12">
             <path d="M11 1v10H1" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             <path d="M11 5v6H5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />

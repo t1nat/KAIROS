@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { api } from "~/trpc/react";
 
 type ChatMsg =
@@ -103,8 +103,6 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
     );
   }, []);
 
-  const suggestedActions: string[] = [];
-
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const scrollToBottom = useCallback(() => {
     const el = scrollRef.current;
@@ -117,13 +115,10 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
       const msg = text.trim();
       if (!msg) return;
 
-      // Note: user bubble insertion happens in `a1Mutation.onMutate` for the A1 flow,
-      // and in the Notes Vault branch below for A3. Avoid double-inserting.
       setDraft("");
 
       const run = async () => {
         if (isNotesIntent(msg)) {
-          // Notes Vault runs workspace-scoped; no projectId required.
           const res = await notesDraftMutation.mutateAsync({ message: clampText(msg) });
 
           const plan = (res as unknown as {
@@ -135,12 +130,12 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
           }).plan;
           const draftId = (res as unknown as { draftId?: string }).draftId ?? "";
 
-          const operations = Array.isArray(plan?.operations) ? (plan!.operations as unknown[]) : [];
-          const blocked = Array.isArray(plan?.blocked) ? (plan!.blocked as unknown[]) : [];
+          const operations = Array.isArray(plan?.operations) ? plan.operations : [];
+          const blocked = Array.isArray(plan?.blocked) ? plan.blocked : [];
 
-          const creates = operations.filter((o) => (o as any)?.type === "create").length;
-          const updates = operations.filter((o) => (o as any)?.type === "update").length;
-          const deletes = operations.filter((o) => (o as any)?.type === "delete").length;
+          const creates = operations.filter((o) => (o as Record<string, unknown>)?.type === "create").length;
+          const updates = operations.filter((o) => (o as Record<string, unknown>)?.type === "update").length;
+          const deletes = operations.filter((o) => (o as Record<string, unknown>)?.type === "delete").length;
 
           const chatbotSummary =
             creates > 0
@@ -189,7 +184,6 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
         await a1Mutation.mutateAsync({ projectId, message: clampText(msg) });
       };
 
-      // Keep the input editable; only the send button is disabled while pending
       void run().finally(() => {
         setTimeout(scrollToBottom, 0);
       });
@@ -204,15 +198,25 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
   );
 
   return (
-    <div className="h-full w-full flex flex-col bg-zinc-900">
-      <div className="px-4 py-3 flex items-center justify-between gap-3 border-b border-white/10 bg-zinc-900">
+    <div className="h-full w-full flex flex-col" style={{ backgroundColor: 'rgb(var(--bg-primary))' }}>
+      {/* Header - completely solid with solid border */}
+      <div 
+        className="px-4 py-3 flex items-center justify-between gap-3 border-b"
+        style={{ 
+          backgroundColor: 'rgb(var(--bg-primary))',
+          borderBottomColor: 'rgb(var(--border-medium))',
+          borderBottomWidth: '1px',
+          borderBottomStyle: 'solid'
+        }}
+      >
         <div className="min-w-0">
           <p className="text-xs text-fg-tertiary truncate">Workspace Concierge</p>
         </div>
 
         <button
           type="button"
-          className="text-xs px-2.5 py-1.5 rounded-lg bg-bg-elevated hover:bg-bg-secondary/60 text-fg-secondary transition-colors"
+          className="text-xs px-2.5 py-1.5 rounded-lg text-fg-secondary transition-colors"
+          style={{ backgroundColor: 'rgb(var(--bg-secondary))' }}
           onClick={() => setShowAssumptions((v) => !v)}
         >
           {showAssumptions ? "Hide" : "Show"} info
@@ -220,8 +224,16 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
       </div>
 
       {showAssumptions && (
-        <div className="px-4 py-3 border-b border-white/10 bg-zinc-800">
-          <div className="w-full max-w-3xl">
+        <div 
+          className="px-4 py-3 border-b"
+          style={{ 
+            backgroundColor: 'rgb(var(--bg-secondary))',
+            borderBottomColor: 'rgb(var(--border-medium))',
+            borderBottomWidth: '1px',
+            borderBottomStyle: 'solid'
+          }}
+        >
+          <div className="w-full">
             <p className="text-xs text-fg-tertiary leading-relaxed">
               This chat is project-scoped. Predictions are best-effort; treat them as guidance and verify against task data.
             </p>
@@ -231,8 +243,8 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
         </div>
       )}
 
-      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 py-6">
-        <div className="w-full max-w-3xl space-y-4">
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 py-6" style={{ backgroundColor: 'rgb(var(--bg-primary))' }}>
+        <div className="w-full space-y-4">
           {messages.length === 0 ? (
             <div className="py-12 text-center">
               <p className="text-sm text-fg-tertiary">Ask a question about your workspace or projects.</p>
@@ -243,9 +255,14 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
                 <div
                   className={
                     m.role === "user"
-                      ? "max-w-[85%] rounded-2xl rounded-br-md bg-accent-primary text-white px-4 py-2.5 shadow-sm"
-                      : "max-w-[85%] rounded-2xl rounded-bl-md bg-bg-elevated text-fg-primary px-4 py-2.5 shadow-sm"
+                      ? "max-w-[85%] rounded-2xl rounded-br-md text-white px-4 py-2.5 shadow-sm"
+                      : "max-w-[85%] rounded-2xl rounded-bl-md text-fg-primary px-4 py-2.5 shadow-sm"
                   }
+                  style={{
+                    backgroundColor: m.role === "user" 
+                      ? 'rgb(var(--accent-primary))' 
+                      : 'rgb(var(--bg-secondary))'
+                  }}
                 >
                   <button
                     type="button"
@@ -289,7 +306,8 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
                             <button
                               key={`${a.type}-${a.draftId}-${aIdx}`}
                               type="button"
-                              className="text-xs px-3 py-1.5 rounded-lg bg-bg-secondary/60 hover:bg-bg-secondary text-fg-primary border border-white/10"
+                              className="text-xs px-3 py-1.5 rounded-lg text-fg-primary"
+                              style={{ backgroundColor: 'rgb(var(--bg-tertiary))' }}
                               disabled={notesConfirmMutation.isPending}
                               onClick={async () => {
                                 try {
@@ -339,7 +357,8 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
                             <button
                               key={`${a.type}-${a.draftId}-${aIdx}`}
                               type="button"
-                              className="text-xs px-3 py-1.5 rounded-lg bg-accent-primary/90 hover:bg-accent-primary text-white"
+                              className="text-xs px-3 py-1.5 rounded-lg text-white"
+                              style={{ backgroundColor: 'rgb(var(--accent-primary))' }}
                               disabled={notesApplyMutation.isPending}
                               onClick={async () => {
                                 const res = await notesApplyMutation.mutateAsync({
@@ -376,14 +395,20 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
       </div>
 
       <form
-        className="shrink-0 border-t border-white/10 bg-zinc-800"
+        className="shrink-0 border-t"
+        style={{ 
+          backgroundColor: 'rgb(var(--bg-primary))',
+          borderTopColor: 'rgb(var(--border-medium))',
+          borderTopWidth: '1px',
+          borderTopStyle: 'solid'
+        }}
         onSubmit={(e) => {
           e.preventDefault();
           handleSend(draft);
         }}
       >
-        <div className="w-full max-w-3xl px-4 py-4 lg:pl-8">
-          <div className="flex items-end gap-2 rounded-[999px] bg-bg-elevated px-3 py-2 shadow-sm">
+        <div className="w-full px-4 py-4">
+          <div className="flex items-end gap-2 rounded-[999px] px-3 py-2 shadow-sm" style={{ backgroundColor: 'rgb(var(--bg-secondary))' }}>
             <input
               type="text"
               value={draft}
@@ -393,23 +418,18 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
             />
             <button
               type="submit"
-              className={
-                "h-10 shrink-0 px-4 rounded-full text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed " +
-                (!a1Mutation.isPending && !notesDraftMutation.isPending && draft.trim()
-                  ? "text-white hover:opacity-90"
-                  : "bg-bg-secondary text-fg-tertiary")
-              }
+              className="h-10 shrink-0 px-4 rounded-full text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed text-white"
+              style={{
+                backgroundColor: !a1Mutation.isPending && !notesDraftMutation.isPending && draft.trim()
+                  ? 'rgb(var(--accent-primary))'
+                  : 'rgb(var(--bg-tertiary))'
+              }}
               disabled={
                 a1Mutation.isPending ||
                 notesDraftMutation.isPending ||
                 notesConfirmMutation.isPending ||
                 notesApplyMutation.isPending ||
                 !draft.trim()
-              }
-              style={
-                !a1Mutation.isPending && !notesDraftMutation.isPending && draft.trim()
-                  ? { backgroundColor: `rgb(var(--accent-primary))` }
-                  : { backgroundColor: "rgba(255,255,255,0.06)" }
               }
             >
               Send
@@ -423,4 +443,3 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
     </div>
   );
 }
-

@@ -142,7 +142,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess }) =
 
   if (!session) {
     return (
-      <div className="ios-card p-6 sm:p-8 rounded-xl sm:rounded-2xl mb-8">
+      <div className="bg-bg-secondary border border-white/[0.06] p-6 sm:p-8 rounded-xl sm:rounded-2xl mb-8">
         <div className="text-center">
           <div className="w-12 h-12 sm:w-16 sm:h-16 bg-accent-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
             <CalendarCheck size={24} className="sm:w-8 sm:h-8 text-accent-primary" />
@@ -155,7 +155,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess }) =
   }
 
   return (
-    <div className="ios-card-elevated rounded-xl sm:rounded-2xl mb-8 overflow-hidden">
+    <div className="bg-bg-elevated border border-white/[0.06] rounded-xl sm:rounded-2xl mb-8 overflow-hidden">
       {!showForm ? (
         <button
           onClick={() => setShowForm(true)}
@@ -283,7 +283,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess }) =
                   </button>
                 </div>
               ) : (
-                <div className="ios-card rounded-lg sm:rounded-xl p-6 sm:p-8 text-center hover:bg-accent-primary/5 transition-all duration-300">
+                <div className="bg-bg-secondary border border-white/[0.06] rounded-lg sm:rounded-xl p-6 sm:p-8 text-center hover:bg-accent-primary/5 transition-all duration-300">
                   <input
                     id="image"
                     type="file"
@@ -306,7 +306,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess }) =
               )}
             </div>
 
-            <div className="space-y-3 p-3 sm:p-4 bg-bg-surface/60 rounded-xl ios-card">
+            <div className="space-y-3 p-3 sm:p-4 bg-bg-secondary border border-white/[0.06] rounded-xl">
               <div className="flex items-center gap-2 sm:gap-3">
                 <input
                   type="checkbox"
