@@ -16,6 +16,11 @@ import {
   NotesVaultConfirmInputSchema,
   NotesVaultApplyInputSchema,
 } from "~/server/agents/schemas/a3NotesVaultSchemas";
+import {
+  EventsPublisherDraftInputSchema,
+  EventsPublisherConfirmInputSchema,
+  EventsPublisherApplyInputSchema,
+} from "~/server/agents/schemas/a4EventsPublisherSchemas";
 
 export const agentRouter = createTRPCRouter({
   /**
@@ -159,6 +164,39 @@ export const agentRouter = createTRPCRouter({
         pdfBase64: input.pdfBase64,
         fileName: input.fileName,
         message: input.message,
+      });
+    }),
+
+  // -------------------------------------------------------------------------
+  // A4 Events Publisher
+  // -------------------------------------------------------------------------
+
+  eventsPublisherDraft: protectedProcedure
+    .input(EventsPublisherDraftInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      return agentOrchestrator.eventsPublisherDraft({
+        ctx,
+        message: input.message,
+        handoffContext: input.handoffContext,
+      });
+    }),
+
+  eventsPublisherConfirm: protectedProcedure
+    .input(EventsPublisherConfirmInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      return agentOrchestrator.eventsPublisherConfirm({
+        ctx,
+        draftId: input.draftId,
+      });
+    }),
+
+  eventsPublisherApply: protectedProcedure
+    .input(EventsPublisherApplyInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      return agentOrchestrator.eventsPublisherApply({
+        ctx,
+        draftId: input.draftId,
+        confirmationToken: input.confirmationToken,
       });
     }),
 });
