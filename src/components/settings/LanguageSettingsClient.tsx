@@ -170,7 +170,11 @@ export function LanguageSettingsClient() {
  {isOpen && (
  <div
  role="listbox"
- className="absolute z-50 mt-2 min-w-[200px] w-max bg-bg-secondary border border border-white/[0.06] rounded-[10px] overflow-hidden shadow-xl"
+ className="absolute z-50 mt-2 min-w-[200px] w-max rounded-[10px] overflow-hidden shadow-xl"
+ style={{
+ backgroundColor: 'rgb(var(--bg-secondary))',
+ border: '1px solid rgb(var(--border-medium))',
+ }}
  >
  {languages.map((language, index) => (
  <div key={language.code} className="relative">
@@ -184,7 +188,7 @@ export function LanguageSettingsClient() {
  isBusy ? "opacity-50 cursor-not-allowed" : "active:bg-bg-tertiary"
  } ${
  locale === language.code
- ? "text-accent-primary/15"
+ ? "bg-accent-primary/10"
  : "hover:bg-bg-tertiary"
  }`}
  >

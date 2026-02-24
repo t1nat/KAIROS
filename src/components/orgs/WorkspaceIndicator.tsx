@@ -1,13 +1,15 @@
 "use client";
 
-import { Copy } from "lucide-react";
+import { Copy, ArrowRightLeft } from "lucide-react";
 import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { api } from "~/trpc/react";
 
 export function WorkspaceIndicator({ compact = false }: { compact?: boolean }) {
   const tOrg = useTranslations("org");
   const tCommon = useTranslations("common");
+  const router = useRouter();
   
   const { data: active } = api.organization.getActive.useQuery();
   
@@ -32,11 +34,16 @@ export function WorkspaceIndicator({ compact = false }: { compact?: boolean }) {
   if (compact) {
     return (
       <div className="flex items-center gap-3">
-        <span className={`text-xs font-semibold uppercase tracking-wider ${
-          isOrganization ? 'text-accent-primary' : 'text-blue-500'
-        }`}>
-          {isOrganization ? tOrg("organization") : tOrg("personalWorkspace")}
-        </span>
+        <button
+          onClick={() => router.push("/orgs")}
+          className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider hover:opacity-80 transition-opacity cursor-pointer"
+          title={tOrg("switchOrg")}
+        >
+          <span className={isOrganization ? 'text-accent-primary' : 'text-blue-500'}>
+            {isOrganization ? (orgName ?? tOrg("organization")) : tOrg("personalWorkspace")}
+          </span>
+          <ArrowRightLeft size={12} className="text-fg-tertiary" />
+        </button>
         
         {isOrganization && accessCode && (
           <button

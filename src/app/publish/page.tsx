@@ -9,7 +9,7 @@ export default function PublishPage() {
             <SideNav />
 
             <div className="lg:ml-16 pt-16 lg:pt-0 kairos-page-enter">
-                <header className="sticky top-16 lg:top-0 z-30 bg-bg-primary/95 backdrop-blur-md border-b border-white/[0.06]">
+                <header className="sticky top-16 lg:top-0 z-30 topbar-solid border-b border-white/[0.06]">
                     <div className="max-w-[600px] mx-auto px-4 py-3 flex justify-between items-center">
                         <h1 className="text-lg font-bold text-fg-primary tracking-tight">Events</h1>
                         <UserDisplay />

@@ -16,8 +16,44 @@ type ChatMsg =
       actions?: Array<
         | { type: "notes_confirm"; draftId: string }
         | { type: "notes_apply"; draftId: string; confirmationToken: string }
+        | { type: "events_confirm"; draftId: string }
+        | { type: "events_apply"; draftId: string; confirmationToken: string }
       >;
     };
+
+// Type definitions for mutation responses
+interface NotesDraftResponse {
+  draftId?: string;
+  plan?: {
+    summary?: string;
+    operations?: unknown[];
+    blocked?: unknown[];
+  };
+}
+
+interface EventsDraftResponse {
+  draftId?: string;
+  plan?: {
+    summary?: string;
+    creates?: unknown[];
+    updates?: unknown[];
+    deletes?: unknown[];
+    comments?: { add?: unknown[]; remove?: unknown[] };
+    rsvps?: unknown[];
+    likes?: unknown[];
+    questionsForUser?: string[];
+  };
+}
+
+interface ConfirmResponse {
+  confirmationToken: string;
+  summary?: unknown;
+  status?: string;
+}
+
+interface ApplyResponse {
+  results?: unknown;
+}
 
 function clampText(s: string, max = 20_000): string {
   if (s.length <= max) return s;
@@ -91,6 +127,13 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
   const notesConfirmMutation = api.agent.notesVaultConfirm.useMutation();
   const notesApplyMutation = api.agent.notesVaultApply.useMutation();
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+  const eventsDraftMutation = api.agent.eventsPublisherDraft.useMutation();
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+  const eventsConfirmMutation = api.agent.eventsPublisherConfirm.useMutation();
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+  const eventsApplyMutation = api.agent.eventsPublisherApply.useMutation();
+
   const isNotesIntent = useCallback((text: string) => {
     const t = text.toLowerCase();
     return (
@@ -100,6 +143,19 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
       t.includes("vault") ||
       t.includes("summarize my notes") ||
       t.includes("organize my notes")
+    );
+  }, []);
+
+  const isEventsIntent = useCallback((text: string) => {
+    const t = text.toLowerCase();
+    return (
+      t.includes("event") ||
+      t.includes("events") ||
+      t.includes("rsvp") ||
+      t.includes("publish") ||
+      t.includes("create an event") ||
+      t.includes("schedule an event") ||
+      t.includes("organize an event")
     );
   }, []);
 
@@ -118,17 +174,76 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
       setDraft("");
 
       const run = async () => {
-        if (isNotesIntent(msg)) {
-          const res = await notesDraftMutation.mutateAsync({ message: clampText(msg) });
+        if (isEventsIntent(msg)) {
+          setMessages((prev) => [
+            ...prev,
+            { role: "user", text: msg, createdAt: new Date() },
+            { role: "agent", text: "Thinking…", createdAt: new Date() },
+          ]);
 
-          const plan = (res as unknown as {
-            plan?: {
-              summary?: string;
-              operations?: unknown[];
-              blocked?: unknown[];
-            };
-          }).plan;
-          const draftId = (res as unknown as { draftId?: string }).draftId ?? "";
+          try {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+            const res = await eventsDraftMutation.mutateAsync({ message: clampText(msg) }) as EventsDraftResponse;
+
+            const plan = res?.plan;
+            const draftId = res?.draftId ?? "";
+
+            const creates = Array.isArray(plan?.creates) ? plan.creates.length : 0;
+            const updates = Array.isArray(plan?.updates) ? plan.updates.length : 0;
+            const deletes = Array.isArray(plan?.deletes) ? plan.deletes.length : 0;
+            const questions = Array.isArray(plan?.questionsForUser) ? plan.questionsForUser : [];
+
+            let agentText: string;
+            if (questions.length > 0) {
+              agentText = `I need some clarification:\n${questions.map(q => `• ${q}`).join("\n")}`;
+            } else {
+              const summaryLine = plan?.summary ?? "Here's what I plan to do:";
+              agentText = [
+                summaryLine,
+                `Create ${creates} | Update ${updates} | Delete ${deletes}`,
+                creates + updates + deletes > 0 ? "Click Confirm to proceed." : "",
+              ].filter(Boolean).join("\n");
+            }
+
+            const hasOps = creates + updates + deletes > 0;
+
+            setMessages((prev) => {
+              const next = [...prev];
+              for (let i = next.length - 1; i >= 0; i--) {
+                if (next[i]?.role === "agent" && next[i]?.text === "Thinking…") {
+                  next[i] = {
+                    role: "agent",
+                    text: agentText,
+                    createdAt: new Date(),
+                    actions: hasOps && draftId ? [{ type: "events_confirm", draftId }] : undefined,
+                  };
+                  return next;
+                }
+              }
+              return next;
+            });
+          } catch (err) {
+            const errMsg = err instanceof Error ? err.message : "Events request failed";
+            setMessages((prev) => {
+              const next = [...prev];
+              for (let i = next.length - 1; i >= 0; i--) {
+                if (next[i]?.role === "agent" && next[i]?.text === "Thinking…") {
+                  next[i] = { role: "agent", text: `Request failed: ${errMsg}`, createdAt: new Date() };
+                  return next;
+                }
+              }
+              return next;
+            });
+          }
+
+          return;
+        }
+
+        if (isNotesIntent(msg)) {
+          const res = await notesDraftMutation.mutateAsync({ message: clampText(msg) }) as NotesDraftResponse;
+
+          const plan = res?.plan;
+          const draftId = res?.draftId ?? "";
 
           const operations = Array.isArray(plan?.operations) ? plan.operations : [];
           const blocked = Array.isArray(plan?.blocked) ? plan.blocked : [];
@@ -192,10 +307,19 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
       projectId,
       a1Mutation,
       isNotesIntent,
+      isEventsIntent,
       notesDraftMutation,
+      eventsDraftMutation,
       scrollToBottom,
     ],
   );
+
+  // Helper function to check if any mutation is pending
+  const isAnyMutationPending = (): boolean => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const eventsPending = Boolean(eventsDraftMutation.isPending) || Boolean(eventsConfirmMutation.isPending) || Boolean(eventsApplyMutation.isPending);
+    return Boolean(a1Mutation.isPending) || Boolean(notesDraftMutation.isPending) || Boolean(notesConfirmMutation.isPending) || Boolean(notesApplyMutation.isPending) || eventsPending;
+  };
 
   return (
     <div className="h-full w-full flex flex-col" style={{ backgroundColor: 'rgb(var(--bg-primary))' }}>
@@ -311,9 +435,9 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
                               disabled={notesConfirmMutation.isPending}
                               onClick={async () => {
                                 try {
-                                  const res = await notesConfirmMutation.mutateAsync({ draftId: a.draftId });
-                                  const token = (res as unknown as { confirmationToken: string }).confirmationToken;
-                                  const summary = (res as unknown as { summary?: unknown }).summary;
+                                  const res = await notesConfirmMutation.mutateAsync({ draftId: a.draftId }) as ConfirmResponse;
+                                  const token = res.confirmationToken;
+                                  const summary = res.summary;
 
                                   setMessages((prev) => {
                                     const next = [...prev];
@@ -364,9 +488,9 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
                                 const res = await notesApplyMutation.mutateAsync({
                                   draftId: a.draftId,
                                   confirmationToken: a.confirmationToken,
-                                });
+                                }) as ApplyResponse;
 
-                                const results = (res as unknown as { results?: unknown }).results;
+                                const results = res.results;
                                 setMessages((prev) => [
                                   ...prev,
                                   {
@@ -378,6 +502,92 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
                               }}
                             >
                               Apply
+                            </button>
+                          );
+                        }
+
+                        if (a.type === "events_confirm") {
+                          return (
+                            <button
+                              key={`${a.type}-${a.draftId}-${aIdx}`}
+                              type="button"
+                              className="text-xs px-3 py-1.5 rounded-lg text-fg-primary"
+                              style={{ backgroundColor: 'rgb(var(--bg-tertiary))' }}
+                              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                              disabled={eventsConfirmMutation.isPending}
+                              onClick={async () => {
+                                try {
+                                  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+                                  const res = await eventsConfirmMutation.mutateAsync({ draftId: a.draftId }) as ConfirmResponse;
+                                  const token = res.confirmationToken;
+                                  const summary = res.summary;
+
+                                  setMessages((prev) => {
+                                    const next = [...prev];
+                                    next.push({
+                                      role: "agent",
+                                      text: `Event plan confirmed. Summary: ${JSON.stringify(summary)}`,
+                                      createdAt: new Date(),
+                                      actions: [{ type: "events_apply", draftId: a.draftId, confirmationToken: token }],
+                                    });
+                                    return next;
+                                  });
+                                } catch (err) {
+                                  const msg = err instanceof Error ? err.message : "Confirm failed";
+                                  setMessages((prev) => {
+                                    const next = [...prev];
+                                    next.push({
+                                      role: "agent",
+                                      text: msg.includes("status=confirmed")
+                                        ? "This event plan was already confirmed. Use Apply."
+                                        : `Confirm failed: ${msg}`,
+                                      createdAt: new Date(),
+                                    });
+                                    return next;
+                                  });
+                                }
+                              }}
+                            >
+                              Confirm Event Plan
+                            </button>
+                          );
+                        }
+
+                        if (a.type === "events_apply") {
+                          return (
+                            <button
+                              key={`${a.type}-${a.draftId}-${aIdx}`}
+                              type="button"
+                              className="text-xs px-3 py-1.5 rounded-lg text-white"
+                              style={{ backgroundColor: 'rgb(var(--accent-primary))' }}
+                              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                              disabled={eventsApplyMutation.isPending}
+                              onClick={async () => {
+                                try {
+                                  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+                                  const res = await eventsApplyMutation.mutateAsync({
+                                    draftId: a.draftId,
+                                    confirmationToken: a.confirmationToken,
+                                  }) as ApplyResponse;
+                                  const results = res.results;
+                                  setMessages((prev) => [
+                                    ...prev,
+                                    {
+                                      role: "agent",
+                                      text: `Event plan applied. Result: ${JSON.stringify(results)}`,
+                                      createdAt: new Date(),
+                                    },
+                                  ]);
+                                } catch (err) {
+                                  const msg = err instanceof Error ? err.message : "Apply failed";
+                                  setMessages((prev) => [
+                                    ...prev,
+                                    { role: "agent", text: `Apply failed: ${msg}`, createdAt: new Date() },
+                                  ]);
+                                }
+                              }}
+                            >
+                              Apply Event Plan
                             </button>
                           );
                         }
@@ -413,30 +623,24 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
               type="text"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              placeholder="Message A1…"
+              placeholder="Message KAIROS AI…"
               className="flex-1 bg-transparent px-2 py-2 text-sm text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus-visible:outline-none"
             />
             <button
               type="submit"
               className="h-10 shrink-0 px-4 rounded-full text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed text-white"
               style={{
-                backgroundColor: !a1Mutation.isPending && !notesDraftMutation.isPending && draft.trim()
+                backgroundColor: !isAnyMutationPending() && draft.trim()
                   ? 'rgb(var(--accent-primary))'
                   : 'rgb(var(--bg-tertiary))'
               }}
-              disabled={
-                a1Mutation.isPending ||
-                notesDraftMutation.isPending ||
-                notesConfirmMutation.isPending ||
-                notesApplyMutation.isPending ||
-                !draft.trim()
-              }
+              disabled={isAnyMutationPending() || !draft.trim()}
             >
               Send
             </button>
           </div>
           <p className="mt-2 text-[11px] text-fg-tertiary text-center">
-            A1 answers are best-effort. Verify critical decisions.
+            A1 routes projects/tasks, A3 handles notes, A4 manages events. Verify critical decisions.
           </p>
         </div>
       </form>

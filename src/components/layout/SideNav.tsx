@@ -241,7 +241,23 @@ export function SideNav() {
           })}
         </div>
 
-        <div className="mt-auto">
+        <div className="mt-auto flex flex-col items-center gap-4">
+          <Link
+            href={profileItem.href}
+            aria-label={profileItem.label}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors group relative ${
+              pathname === "/orgs"
+                ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 dark:bg-fg-primary dark:text-bg-primary dark:ring-0 shadow-sm"
+                : "text-fg-secondary hover:bg-bg-secondary/60 hover:text-fg-primary"
+            }`}
+            title={profileItem.label}
+          >
+            <profileItem.icon size={20} />
+            <span className="absolute left-full ml-4 px-3 py-1.5 bg-bg-elevated border border-white/[0.06] text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
+              {profileItem.label}
+            </span>
+          </Link>
+
           <Link
             href={settingsItem.href}
             aria-label={settingsItem.label}

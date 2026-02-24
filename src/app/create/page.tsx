@@ -7,6 +7,7 @@ import { CreateProjectContainer } from "~/components/projects/CreateProjectConta
 import { NotesList } from "~/components/notes/NotesList";
 import { NotificationSystem } from "~/components/notifications/NotificationSystem";
 import { WorkspaceIndicator } from "~/components/orgs/WorkspaceIndicator";
+import { OnboardingGate } from "~/components/auth/OnboardingGate";
 import { LogIn, ArrowRight, FolderKanban } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
@@ -60,6 +61,7 @@ export default async function CreatePage({
   }
 
   return (
+    <OnboardingGate>
     <div className="min-h-screen bg-bg-primary relative">
       <SideNav />
 
@@ -128,5 +130,6 @@ export default async function CreatePage({
         </main>
       </div>
     </div>
+    </OnboardingGate>
   );
 }

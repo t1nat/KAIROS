@@ -2,7 +2,7 @@ import "~/styles/globals.css";
 import "react-chat-elements/dist/main.css";
 
 import { type Metadata } from "next";
-import { Inter, Cinzel, Newsreader, Uncial_Antiqua, Faustina } from "next/font/google";
+import { Nunito_Sans } from "next/font/google";
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 
@@ -19,43 +19,18 @@ export const metadata: Metadata = {
   icons: [{ rel: "icon", url: "/logo_white.png" }],
 };
 
-const sans = Inter({
-  subsets: ["latin"],
+const sans = Nunito_Sans({
+  subsets: ["latin", "cyrillic"],
+  weight: ["200", "300", "400", "600", "700", "800", "900"],
   variable: "--font-geist-sans",
   display: "swap",
 });
 
-const display = Cinzel({
-  subsets: ["latin"],
-  weight: ["400", "700"],
+const display = Nunito_Sans({
+  subsets: ["latin", "cyrillic"],
+  weight: ["700", "800", "900"],
   variable: "--font-display",
   display: "swap",
-});
-
-const arsenica = Cinzel({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: '--font-arsenica',
-  display: 'swap',
-});
-
-const newsreader = Newsreader({
-  subsets: ["latin"],
-  variable: "--font-newsreader",
-  display: 'swap',
-});
-
-const uncialAntiqua = Uncial_Antiqua({
-  subsets: ["latin"],
-  weight: ["400"],
-  variable: '--font-uncial-antiqua',
-  display: 'swap',
-});
-
-const faustina = Faustina({
-  subsets: ["latin"],
-  variable: "--font-faustina",
-  display: 'swap',
 });
 
 export default async function RootLayout({
@@ -66,7 +41,7 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className={`${sans.variable} ${display.variable} ${arsenica.variable} ${newsreader.variable} ${uncialAntiqua.variable} ${faustina.variable}`} suppressHydrationWarning>
+    <html lang={locale} className={`${sans.variable} ${display.variable}`} suppressHydrationWarning>
       <body className="min-h-dvh bg-bg-primary text-fg-primary font-sans antialiased">
         <a href="#main-content" className="skip-link">
           Skip to content

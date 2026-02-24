@@ -19,6 +19,7 @@ import {
   TrendingUp,
   Trash2,
   Plus,
+  Bell,
 } from "lucide-react";
 import { api } from "~/trpc/react";
 import Image from "next/image";
@@ -333,6 +334,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
   const [commentText, setCommentText] = useState("");
   const [showDashboard, setShowDashboard] = useState(false);
   const [deleteEventArmed, setDeleteEventArmed] = useState(false);
+  const [showReminderPicker, setShowReminderPicker] = useState(false);
   const [infoMessage, setInfoMessage] = useState<{
     message: string;
     type: "error" | "info";
@@ -400,6 +402,24 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
       return;
     }
     updateRsvp.mutate({ eventId: event.id, status });
+    // Show reminder picker for going/maybe
+    if (status === "going" || status === "maybe") {
+      setShowReminderPicker(true);
+    } else {
+      setShowReminderPicker(false);
+    }
+  };
+
+  const handleSetReminder = (minutes: number | null) => {
+    updateRsvp.mutate({
+      eventId: event.id,
+      status: event.userRsvpStatus ?? "going",
+      reminderMinutesBefore: minutes,
+    });
+    setShowReminderPicker(false);
+    if (minutes !== null) {
+      setInfoMessage({ message: `Reminder set for ${minutes >= 1440 ? `${minutes / 1440} day(s)` : minutes >= 60 ? `${minutes / 60} hour(s)` : `${minutes} min`} before`, type: "info" });
+    }
   };
 
   const handleAddComment = (e: React.FormEvent) => {
@@ -615,6 +635,47 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                 Can&apos;t ({event.rsvpCounts.notGoing})
               </button>
             </div>
+
+            {/* Reminder preference picker */}
+            {showReminderPicker && (event.userRsvpStatus === "going" || event.userRsvpStatus === "maybe") && (
+              <div className="mt-2 p-2.5 rounded-lg bg-bg-secondary border border-white/[0.06]">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-fg-secondary flex items-center gap-1">
+                    <Bell size={12} />
+                    Get notified before event?
+                  </span>
+                  <button
+                    onClick={() => setShowReminderPicker(false)}
+                    className="text-fg-tertiary hover:text-fg-primary p-0.5"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { label: "30 min", value: 30 },
+                    { label: "1 hour", value: 60 },
+                    { label: "3 hours", value: 180 },
+                    { label: "1 day", value: 1440 },
+                    { label: "3 days", value: 4320 },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => handleSetReminder(opt.value)}
+                      className="px-2.5 py-1 rounded-md text-xs font-medium bg-accent-primary/10 text-accent-primary hover:bg-accent-primary/20 transition-colors"
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => handleSetReminder(null)}
+                    className="px-2.5 py-1 rounded-md text-xs font-medium bg-bg-tertiary text-fg-tertiary hover:bg-bg-tertiary/80 transition-colors"
+                  >
+                    No thanks
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -743,10 +804,10 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false }) 
 
           {/* Fullscreen modal overlay for create form (Instagram-like) */}
           {showForm && (
-            <div className="fixed inset-0 z-50 bg-bg-primary flex flex-col sm:items-center sm:justify-center sm:bg-black/60 sm:backdrop-blur-sm">
-              <div className="w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-lg sm:rounded-2xl sm:border sm:border-white/[0.08] bg-bg-primary overflow-y-auto">
+            <div className="fixed inset-0 z-50 flex flex-col sm:items-center sm:justify-center" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
+              <div className="w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-lg sm:rounded-2xl sm:border sm:border-white/[0.08] overflow-y-auto sm:resize sm:min-w-[320px] sm:min-h-[400px]" style={{ backgroundColor: "var(--bg-primary)" }}>
                 {/* Modal header */}
-                <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-white/[0.06] bg-bg-primary/95 backdrop-blur-sm">
+                <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-white/[0.06]" style={{ backgroundColor: "var(--bg-primary)" }}>
                   <button
                     onClick={() => setShowForm(false)}
                     className="p-1 text-fg-secondary hover:text-fg-primary transition-colors"

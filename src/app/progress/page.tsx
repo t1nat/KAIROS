@@ -6,6 +6,7 @@ import { SideNav } from"~/components/layout/SideNav";
 import { UserDisplay } from"~/components/layout/UserDisplay";
 import { NotificationSystem } from"~/components/notifications/NotificationSystem";
 import { OrgSwitcher } from"~/components/orgs/OrgSwitcher";
+import { WorkspaceIndicator } from"~/components/orgs/WorkspaceIndicator";
 import { ProgressFeedClient } from"~/components/progress/ProgressFeedClient";
 
 export default async function ProgressPage() {
@@ -24,9 +25,9 @@ export default async function ProgressPage() {
  <header className="sticky top-16 lg:top-0 z-30 topbar-solid">
  <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-3 sm:py-4 flex flex-wrap justify-between items-center gap-3">
  <div className="flex items-center gap-3">
- <div>
  <h1 className="text-xl font-bold text-fg-primary tracking-tight">{tNav("progress")}</h1>
- </div>
+ <div className="hidden sm:block h-6 w-px bg-border-medium mx-1"></div>
+ <WorkspaceIndicator compact />
  </div>
 
  <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
