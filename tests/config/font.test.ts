@@ -7,11 +7,11 @@ import path from "path";
  */
 
 describe("Font configuration", () => {
-  it("layout.tsx imports Inter font", () => {
+  it("layout.tsx imports Nunito_Sans font", () => {
     const layoutPath = path.resolve(__dirname, "../../src/app/layout.tsx");
     const content = fs.readFileSync(layoutPath, "utf-8");
-    expect(content).toContain("Inter");
-    expect(content).toMatch(/import.*Inter/);
+    expect(content).toContain("Nunito_Sans");
+    expect(content).toMatch(/import.*Nunito_Sans/);
   });
 
   it("layout.tsx no longer imports Space_Grotesk", () => {

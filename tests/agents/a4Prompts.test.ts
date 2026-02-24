@@ -77,4 +77,20 @@ describe("A4 System Prompt", () => {
     expect(typeof prompt).toBe("string");
     expect(prompt.length).toBeGreaterThan(50);
   });
+
+  /* ── Enhanced prompt sections ── */
+  it("includes identity & personality section", () => {
+    const prompt = getA4SystemPrompt(mockContext);
+    expect(prompt.toLowerCase()).toMatch(/identity|personality/);
+  });
+
+  it("includes response quality guidelines", () => {
+    const prompt = getA4SystemPrompt(mockContext);
+    expect(prompt.toLowerCase()).toContain("quality");
+  });
+
+  it("includes enthusiastic / community guidance", () => {
+    const prompt = getA4SystemPrompt(mockContext);
+    expect(prompt.toLowerCase()).toMatch(/enthusiast|community/);
+  });
 });
