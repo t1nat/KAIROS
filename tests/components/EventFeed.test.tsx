@@ -83,6 +83,21 @@ describe("EventFeed – Instagram Layout", () => {
       expect(eventFeedSource).toContain("rounded-lg text-xs font-medium");
     });
 
+    it("has RSVP reminder picker UI", () => {
+      expect(eventFeedSource).toContain("Get notified before event?");
+    });
+
+    it("has reminder timing options (30 min, 1 hour, 1 day, etc.)", () => {
+      expect(eventFeedSource).toContain('"30 min"');
+      expect(eventFeedSource).toContain('"1 hour"');
+      expect(eventFeedSource).toContain('"1 day"');
+      expect(eventFeedSource).toContain('"3 days"');
+    });
+
+    it("has Bell icon for notification picker", () => {
+      expect(eventFeedSource).toContain("<Bell");
+    });
+
     it("Like count is displayed after action bar", () => {
       // Instagram pattern: count followed by "likes"
       expect(eventFeedSource).toContain("text-sm font-semibold text-fg-primary");

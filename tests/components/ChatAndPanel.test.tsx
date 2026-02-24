@@ -27,12 +27,12 @@ describe("ProjectIntelligenceChat – Layout", () => {
     expect(chatSource).not.toContain("bg-zinc-800");
   });
 
-  it("uses bg-bg-primary design token for main background", () => {
-    expect(chatSource).toContain("bg-bg-primary");
+  it("uses bg-primary design token for main background (inline or class)", () => {
+    expect(chatSource).toMatch(/bg-bg-primary|--bg-primary/);
   });
 
-  it("uses bg-bg-elevated design token for elevated surfaces", () => {
-    expect(chatSource).toContain("bg-bg-elevated");
+  it("uses bg-secondary design token for elevated surfaces (inline or class)", () => {
+    expect(chatSource).toMatch(/bg-bg-secondary|bg-bg-elevated|--bg-secondary|--bg-elevated/);
   });
 
   it("message container uses w-full for full width", () => {
@@ -46,8 +46,8 @@ describe("A1ChatWidgetOverlay – Topbar", () => {
     expect(widgetSource).not.toContain("bg-bg-elevated/70");
   });
 
-  it("topbar uses bg-bg-elevated for background", () => {
-    expect(widgetSource).toContain("bg-bg-elevated");
+  it("topbar uses design token for background (inline or class)", () => {
+    expect(widgetSource).toMatch(/bg-bg-elevated|bg-bg-secondary|--bg-elevated|--bg-secondary/);
   });
 });
 

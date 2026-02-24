@@ -147,7 +147,8 @@ describe("A1ChatWidgetOverlay", () => {
     await user.click(screen.getByLabelText("Open AI assistant"));
 
     const panel = screen.getByText("A1 Intelligence").closest(".fixed");
-    expect(panel?.className).toContain("bg-bg-primary");
+    // Background is now applied via inline style
+    expect((panel as HTMLElement)?.style.backgroundColor).toContain("var(--bg-primary)");
     expect(panel?.className).not.toContain("kairos-glass");
   });
 

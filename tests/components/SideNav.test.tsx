@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SideNav } from "~/components/layout/SideNav";
+import fs from "node:fs";
+import path from "node:path";
 
 // Mock A1ChatWidgetOverlay
 vi.mock("~/components/chat/A1ChatWidgetOverlay", () => ({
@@ -113,20 +115,22 @@ describe("SideNav", () => {
 
   it("does not import Compass icon (home icon removed)", () => {
     // Static check on source
-    const fs = require("fs") as typeof import("fs");
-    const navPath = require("path") as typeof import("path");
     const source = fs.readFileSync(
-      navPath.resolve(__dirname, "../../src/components/layout/SideNav.tsx"),
+      path.resolve(__dirname, "../../src/components/layout/SideNav.tsx"),
       "utf-8"
     );
     expect(source).not.toContain("Compass");
   });
 
+  it("renders orgs link in desktop sidebar", () => {
+    const { container } = render(<SideNav />);
+    const orgsLinks = container.querySelectorAll("a[href='/orgs']");
+    expect(orgsLinks.length).toBeGreaterThanOrEqual(1);
+  });
+
   it("uses Settings (cog) icon instead of SlidersHorizontal", () => {
-    const fs = require("fs") as typeof import("fs");
-    const navPath = require("path") as typeof import("path");
     const source = fs.readFileSync(
-      navPath.resolve(__dirname, "../../src/components/layout/SideNav.tsx"),
+      path.resolve(__dirname, "../../src/components/layout/SideNav.tsx"),
       "utf-8"
     );
     expect(source).toContain("Settings");

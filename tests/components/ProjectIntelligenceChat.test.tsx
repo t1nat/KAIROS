@@ -25,7 +25,7 @@ describe("ProjectIntelligenceChat", () => {
 
   it("renders the message input", () => {
     render(<ProjectIntelligenceChat />);
-    const input = screen.getByPlaceholderText("Message A1…");
+    const input = screen.getByPlaceholderText("Message KAIROS AI…");
     expect(input).toBeInTheDocument();
   });
 
@@ -45,7 +45,7 @@ describe("ProjectIntelligenceChat", () => {
     const user = userEvent.setup();
     render(<ProjectIntelligenceChat />);
 
-    const input = screen.getByPlaceholderText("Message A1…");
+    const input = screen.getByPlaceholderText("Message KAIROS AI…");
     await user.type(input, "Hello");
 
     const sendBtn = screen.getByText("Send");
@@ -56,7 +56,7 @@ describe("ProjectIntelligenceChat", () => {
     const user = userEvent.setup();
     render(<ProjectIntelligenceChat />);
 
-    const input = screen.getByPlaceholderText("Message A1…");
+    const input = screen.getByPlaceholderText("Message KAIROS AI…");
     await user.type(input, "Hello");
     await user.click(screen.getByText("Send"));
 
@@ -67,7 +67,7 @@ describe("ProjectIntelligenceChat", () => {
     const user = userEvent.setup();
     render(<ProjectIntelligenceChat />);
 
-    const input = screen.getByPlaceholderText("Message A1…");
+    const input = screen.getByPlaceholderText("Message KAIROS AI…");
     await user.type(input, "Hello");
     await user.click(screen.getByText("Send"));
 
@@ -78,7 +78,7 @@ describe("ProjectIntelligenceChat", () => {
     const user = userEvent.setup();
     render(<ProjectIntelligenceChat />);
 
-    const input = screen.getByPlaceholderText("Message A1…");
+    const input = screen.getByPlaceholderText("Message KAIROS AI…");
     await user.type(input, "Hello");
     await user.click(screen.getByText("Send"));
 
@@ -88,13 +88,13 @@ describe("ProjectIntelligenceChat", () => {
   it("renders the disclaimer text", () => {
     render(<ProjectIntelligenceChat />);
     expect(
-      screen.getByText("A1 answers are best-effort. Verify critical decisions."),
+      screen.getByText(/verify critical decisions/i),
     ).toBeInTheDocument();
   });
 
   it("input has proper styling classes", () => {
     render(<ProjectIntelligenceChat />);
-    const input = screen.getByPlaceholderText("Message A1…");
+    const input = screen.getByPlaceholderText("Message KAIROS AI…");
     expect(input.className).toContain("bg-transparent");
   });
 
@@ -109,7 +109,7 @@ describe("ProjectIntelligenceChat", () => {
     const user = userEvent.setup();
     render(<ProjectIntelligenceChat />);
 
-    const input = screen.getByPlaceholderText("Message A1…");
+    const input = screen.getByPlaceholderText("Message KAIROS AI…");
     await user.type(input, "Test message");
     await user.click(screen.getByText("Send"));
 
@@ -126,7 +126,7 @@ describe("ProjectIntelligenceChat", () => {
     const user = userEvent.setup();
     render(<ProjectIntelligenceChat />);
 
-    const input = screen.getByPlaceholderText("Message A1…");
+    const input = screen.getByPlaceholderText("Message KAIROS AI…");
     await user.type(input, "Test");
     await user.click(screen.getByText("Send"));
 
@@ -138,7 +138,7 @@ describe("ProjectIntelligenceChat", () => {
     const user = userEvent.setup();
     render(<ProjectIntelligenceChat />);
 
-    const input = screen.getByPlaceholderText("Message A1…");
+    const input = screen.getByPlaceholderText("Message KAIROS AI…");
     await user.type(input, "User msg");
     await user.click(screen.getByText("Send"));
 
@@ -150,7 +150,7 @@ describe("ProjectIntelligenceChat", () => {
     const user = userEvent.setup();
     render(<ProjectIntelligenceChat />);
 
-    const input = screen.getByPlaceholderText("Message A1…");
+    const input = screen.getByPlaceholderText("Message KAIROS AI…");
     await user.type(input, "Copy me");
     await user.click(screen.getByText("Send"));
 
