@@ -24,7 +24,6 @@ import { api } from "~/trpc/react";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { CreateEventForm } from "~/components/events/CreateEventForm";
-import { RegionMapPicker, type RegionOption } from "~/components/events/RegionMapPicker";
 
 const REGIONS = [
   { value: '', label: 'All Regions' },
@@ -39,19 +38,6 @@ const REGIONS = [
   { value: 'dobrich', label: 'Dobrich' },
   { value: 'shumen', label: 'Shumen' },
 ] as const;
-
-const REGION_MAP: RegionOption[] = [
-  { value: "sofia", label: "Sofia", lat: 42.6977, lng: 23.3219 },
-  { value: "plovdiv", label: "Plovdiv", lat: 42.1354, lng: 24.7453 },
-  { value: "varna", label: "Varna", lat: 43.2141, lng: 27.9147 },
-  { value: "burgas", label: "Burgas", lat: 42.5048, lng: 27.4626 },
-  { value: "ruse", label: "Ruse", lat: 43.8356, lng: 25.9657 },
-  { value: "stara_zagora", label: "Stara Zagora", lat: 42.4258, lng: 25.6345 },
-  { value: "pleven", label: "Pleven", lat: 43.4170, lng: 24.6067 },
-  { value: "sliven", label: "Sliven", lat: 42.6810, lng: 26.3220 },
-  { value: "dobrich", label: "Dobrich", lat: 43.5726, lng: 27.8273 },
-  { value: "shumen", label: "Shumen", lat: 43.2706, lng: 26.9229 },
-];
 
 interface Author {
   id?: string | null; 
@@ -741,78 +727,89 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false }) 
   ) ?? [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-0 sm:space-y-3">
       {showCreateForm && session && (
-        <div>
-          {showForm ? (
-            <div className="bg-bg-elevated rounded-2xl border border-white/[0.06] p-4 sm:p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-fg-primary">Create Event</h3>
-                <button
-                  onClick={() => setShowForm(false)}
-                  className="p-2 hover:bg-bg-secondary rounded-lg transition-colors"
-                >
-                  <X size={20} className="text-fg-secondary" />
-                </button>
-              </div>
-              <CreateEventForm onSuccess={() => setShowForm(false)} />
+        <>
+          {/* Instagram-style "create" prompt bar */}
+          <button
+            onClick={() => setShowForm(true)}
+            className="w-full bg-bg-secondary border-b sm:border border-white/[0.06] sm:rounded-xl p-3 flex items-center gap-3 text-fg-secondary hover:text-accent-primary transition-colors group"
+          >
+            <div className="w-9 h-9 rounded-full bg-accent-primary/10 flex items-center justify-center group-hover:bg-accent-primary/20 transition-colors">
+              <Plus size={18} className="text-accent-primary" />
             </div>
-          ) : (
-            <button
-              onClick={() => setShowForm(true)}
-              className="w-full bg-bg-secondary rounded-2xl border border-white/[0.06] p-4 flex items-center gap-3 text-fg-secondary hover:text-accent-primary hover:bg-accent-primary/5 transition-colors group"
-            >
-              <div className="w-10 h-10 rounded-full bg-accent-primary/10 flex items-center justify-center group-hover:bg-accent-primary/20 transition-colors">
-                <Plus size={20} className="text-accent-primary" />
+            <span className="text-sm font-medium">Create new event...</span>
+          </button>
+
+          {/* Fullscreen modal overlay for create form (Instagram-like) */}
+          {showForm && (
+            <div className="fixed inset-0 z-50 bg-bg-primary flex flex-col sm:items-center sm:justify-center sm:bg-black/60 sm:backdrop-blur-sm">
+              <div className="w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-lg sm:rounded-2xl sm:border sm:border-white/[0.08] bg-bg-primary overflow-y-auto">
+                {/* Modal header */}
+                <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-white/[0.06] bg-bg-primary/95 backdrop-blur-sm">
+                  <button
+                    onClick={() => setShowForm(false)}
+                    className="p-1 text-fg-secondary hover:text-fg-primary transition-colors"
+                  >
+                    <X size={24} />
+                  </button>
+                  <h3 className="text-base font-semibold text-fg-primary">New Event</h3>
+                  <div className="w-8" /> {/* Spacer for center alignment */}
+                </div>
+                <div className="p-4">
+                  <CreateEventForm onSuccess={() => setShowForm(false)} />
+                </div>
               </div>
-              <span className="font-medium">Create new event</span>
-            </button>
+            </div>
           )}
-        </div>
+        </>
       )}
 
-      <div>
-        <RegionMapPicker
-          value={selectedRegion}
-          onChange={setSelectedRegion}
-          regions={REGION_MAP}
-          allowAll
-          allLabel="All"
-          fallback={
-            <div className="bg-bg-secondary rounded-2xl border border-white/[0.06] p-3 sm:p-4">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <MapPin className="text-accent-primary" size={18} />
-                <select
-                  value={selectedRegion}
-                  onChange={(e) => setSelectedRegion(e.target.value)}
-                  className="flex-1 px-3 sm:px-4 py-2 bg-bg-secondary shadow-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all text-sm sm:text-base text-fg-primary appearance-none cursor-pointer [&>option]:text-fg-primary [&>option]:bg-bg-secondary [color-scheme:dark]"
-                >
-                  {REGIONS.map((region) => (
-                    <option key={region.value} value={region.value}>
-                      {region.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          }
-        />
+      {/* Region filter — horizontal scroll like IG story bar */}
+      <div className="overflow-x-auto scrollbar-hide border-b sm:border-none border-white/[0.06]">
+        <div className="flex items-center gap-2 px-3 py-2 sm:py-3 min-w-max">
+          <button
+            type="button"
+            onClick={() => setSelectedRegion('')}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+              selectedRegion === ''
+                ? 'bg-fg-primary text-bg-primary'
+                : 'bg-bg-secondary text-fg-secondary hover:bg-bg-tertiary border border-white/[0.06]'
+            }`}
+          >
+            All
+          </button>
+          {REGIONS.filter(r => r.value !== '').map((region) => (
+            <button
+              key={region.value}
+              type="button"
+              onClick={() => setSelectedRegion(region.value)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                selectedRegion === region.value
+                  ? 'bg-fg-primary text-bg-primary'
+                  : 'bg-bg-secondary text-fg-secondary hover:bg-bg-tertiary border border-white/[0.06]'
+              }`}
+            >
+              {region.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {!filteredEvents || filteredEvents.length === 0 ? (
-        <div className="text-center py-20">
+        <div className="text-center py-20 px-4">
           <div className="w-16 h-16 bg-accent-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
             <Calendar size={32} className="text-accent-primary" />
           </div>
           <h3 className="text-xl font-semibold text-fg-primary mb-2">No Events Found</h3>
-          <p className="text-fg-secondary">
+          <p className="text-fg-secondary text-sm">
             {selectedRegion
               ? `No events currently listed for ${REGIONS.find((r) => r.value === selectedRegion)?.label}.`
               : `Create your first event to get started!`}
           </p>
         </div>
       ) : (
-        <div className="sm:space-y-4">
+        <div>
           {filteredEvents.map((event) => (
             <EventCard
               key={event.id}

@@ -343,9 +343,8 @@ export function HomeClient() {
 
                 {/* ─── Footer ─── */}
                 <footer className="py-8 px-4 sm:px-6 border-t border-white/[0.06]">
-                    <div className="max-w-7xl mx-auto flex items-center justify-between text-xs text-fg-quaternary">
+                    <div className="max-w-7xl mx-auto flex items-center justify-center text-xs text-fg-quaternary">
                         <span>&copy; {new Date().getFullYear()} KAIROS</span>
-                        <LanguageSwitcher variant="full" />
                     </div>
                 </footer>
             </div>

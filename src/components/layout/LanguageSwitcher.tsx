@@ -72,7 +72,7 @@ export function LanguageSwitcher({ variant = "compact", className = "" }: Langua
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-44 rounded-xl overflow-hidden border border-white/15 bg-bg-primary/95 backdrop-blur-xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute right-0 top-full mt-2 w-44 rounded-xl overflow-hidden border border-white/15 bg-bg-primary shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-200">
           {languages.map((lang) => (
             <button
               key={lang.code}

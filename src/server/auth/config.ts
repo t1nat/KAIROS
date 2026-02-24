@@ -38,9 +38,11 @@ export const authConfig = {
     Google({
       clientId: env.AUTH_GOOGLE_ID,
       clientSecret: env.AUTH_GOOGLE_SECRET,
-      // SECURITY: keep disabled to avoid unintended cross-provider account linking.
-      // If you need explicit account linking, implement a dedicated flow requiring re-auth.
-      allowDangerousEmailAccountLinking: false,
+      // Allow linking Google OAuth to an existing credentials account with the
+      // same email. Without this, browsers that partition cookies differently
+      // (e.g. Edge) throw OAuthAccountNotLinked when a user has both a
+      // credentials account and attempts Google sign-in with the same email.
+      allowDangerousEmailAccountLinking: true,
     }),
     Credentials({
       id: "account-switch",

@@ -125,12 +125,21 @@ export function SignInModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-xl"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Modal */}
       <div className="relative bg-bg-primary dark:bg-[#0a0a0c] rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/[0.08] kairos-modal-content">
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 z-10 p-2 rounded-full text-fg-tertiary hover:text-fg-primary hover:bg-white/10 transition-colors"
+          aria-label="Close"
+        >
+          <X size={20} />
+        </button>
+
         <div className="relative p-8 pb-6 text-center border-b border-white/[0.06]">
           <div className="absolute inset-0 bg-gradient-to-br from-accent-primary/5 via-transparent to-accent-secondary/5 pointer-events-none" />
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">

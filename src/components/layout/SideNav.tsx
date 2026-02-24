@@ -5,12 +5,11 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
-  Compass,
   Briefcase,
   BookText,
   TrendingUp,
   Building2,
-  SlidersHorizontal,
+  Settings,
   Menu,
   X,
   SquarePen,
@@ -47,7 +46,6 @@ export function SideNav() {
   const action = searchParams?.get("action");
 
   const mainNavItems = [
-    { href: "/", icon: Compass, label: t("home") },
     { href: "/create", icon: SquarePen, label: t("create") },
     { href: "/projects", icon: Briefcase, label: t("projects") },
     { href: "/create?action=new_note", icon: BookText, label: t("notes") },
@@ -58,12 +56,9 @@ export function SideNav() {
 
   const profileItem = { href: "/orgs", icon: Building2, label: tOrg("yourOrgs") };
 
-  const settingsItem = { href: "/settings?section=profile", icon: SlidersHorizontal, label: t("settings") };
+  const settingsItem = { href: "/settings?section=profile", icon: Settings, label: t("settings") };
 
   const isItemActive = (href: string): boolean => {
-    if (href === "/") {
-      return pathname === "/";
-    }
     if (href === "/create") {
       return pathname === "/create" && !action;
     }

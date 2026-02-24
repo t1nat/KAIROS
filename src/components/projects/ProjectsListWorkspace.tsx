@@ -7,7 +7,7 @@ import { useRouter } from"next/navigation";
 import { useTranslations } from"next-intl";
 import { Doughnut } from"react-chartjs-2";
 import { ensureChartJsRegistered } from"~/components/charts/chartjs";
-import { useResolvedThemeColors } from"~/components/charts/theme-colors";
+import { useResolvedThemeColors } from "~/components/charts/themeColors";
 
 interface ProjectWithStats {
  id: number;

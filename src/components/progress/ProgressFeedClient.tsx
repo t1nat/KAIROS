@@ -8,7 +8,7 @@ import { ArrowLeft, Folder } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Doughnut, Bar } from "react-chartjs-2";
 import { ensureChartJsRegistered } from "~/components/charts/chartjs";
-import { useResolvedThemeColors } from "~/components/charts/theme-colors";
+import { useResolvedThemeColors } from "~/components/charts/themeColors";
 
 type TaskStatus = "pending" | "in_progress" | "completed" | "blocked";
 
