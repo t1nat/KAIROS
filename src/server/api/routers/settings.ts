@@ -147,7 +147,12 @@ export const settingsRouter = createTRPCRouter({
       const rawHint = input.hint ?? "";
       const sanitizedHint = rawHint.trim() === "" ? null : rawHint.trim();
 
-      const hash = await argon2.hash(input.pin);
+      const hash = await argon2.hash(input.pin, {
+        type: argon2.argon2id,
+        memoryCost: 65536,
+        timeCost: 3,
+        parallelism: 4,
+      });
 
       await ctx.db
         .update(users)

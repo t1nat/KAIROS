@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import crypto from "node:crypto";
 import { eq, desc, and } from "drizzle-orm";
 
+import { env } from "~/env";
 import type { TRPCContext } from "~/server/api/trpc";
 import { a1WorkspaceConciergeProfile } from "~/server/agents/profiles/a1WorkspaceConcierge";
 import { a2TaskPlannerProfile } from "~/server/agents/profiles/a2TaskPlanner";
@@ -129,12 +130,29 @@ type ConfirmationTokenPayload = {
 };
 
 function mintConfirmationToken(payload: ConfirmationTokenPayload): string {
-  return Buffer.from(JSON.stringify(payload), "utf8").toString("base64");
+  const secret = env.AUTH_SECRET;
+  if (!secret) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "AUTH_SECRET is not configured" });
+  const payloadB64 = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+  const sig = crypto.createHmac("sha256", secret).update(payloadB64).digest("base64url");
+  return `${payloadB64}.${sig}`;
 }
 
 function readConfirmationToken(token: string): ConfirmationTokenPayload {
   try {
-    const raw = Buffer.from(token, "base64").toString("utf8");
+    const secret = env.AUTH_SECRET;
+    if (!secret) throw new Error("AUTH_SECRET is not configured");
+
+    const [payloadB64, sig] = token.split(".");
+    if (!payloadB64 || !sig) throw new Error("Malformed token");
+
+    const expected = crypto.createHmac("sha256", secret).update(payloadB64).digest("base64url");
+    if (expected.length !== sig.length) throw new Error("Signature mismatch");
+
+    const sigBuf = Buffer.from(sig, "base64url");
+    const expectedBuf = Buffer.from(expected, "base64url");
+    if (!crypto.timingSafeEqual(sigBuf, expectedBuf)) throw new Error("Signature mismatch");
+
+    const raw = Buffer.from(payloadB64, "base64url").toString("utf8");
     return JSON.parse(raw) as ConfirmationTokenPayload;
   } catch {
     throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid confirmation token" });

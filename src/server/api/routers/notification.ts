@@ -117,7 +117,7 @@ export const notificationRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
       z.object({
-        type: z.enum(["event", "task", "project", "system"]),
+        type: z.enum(["event", "task", "project", "system", "like", "comment", "reply"]),
         title: z.string(),
         message: z.string(),
         link: z.string().optional(),

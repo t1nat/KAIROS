@@ -27,7 +27,7 @@ export const projectStatusEnum = pgEnum("project_status", ["active", "archived"]
 export const themeEnum = pgEnum("theme", ["light", "dark", "system"]);
 export const languageEnum = pgEnum("language", ["en", "bg", "es", "fr", "de", "it", "pt", "ja", "ko", "zh", "ar"]);
 export const dateFormatEnum = pgEnum("date_format", ["MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"]);
-export const notificationTypeEnum = pgEnum("notification_type", ["event", "task", "project", "system"]);
+export const notificationTypeEnum = pgEnum("notification_type", ["event", "task", "project", "system", "like", "comment", "reply"]);
 export const rsvpStatusEnum = pgEnum("rsvp_status", ["going", "maybe", "not_going"]);
 export const regionEnum = pgEnum("region", [
   "sofia", 
@@ -554,7 +554,7 @@ export const sessions = createTable(
       .references(() => users.id),
     expires: d.timestamp({ mode: "date", withTimezone: true }).notNull(),
   }),
-  (t) => [index("t_user_id_idx").on(t.userId)],
+  (t) => [index("session_user_idx").on(t.userId)],
 );
 
 export const verificationTokens = createTable(
@@ -610,6 +610,10 @@ export const eventRsvps = createTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     status: rsvpStatusEnum("status").notNull(),
+    /** Minutes before the event that the user wants a reminder (null = no reminder) */
+    reminderMinutesBefore: d.integer("reminder_minutes_before"),
+    /** Whether the reminder notification has already been sent */
+    reminderSent: d.boolean("reminder_sent").notNull().default(false),
     createdAt: d
       .timestamp({ withTimezone: true })
       .$defaultFn(() => new Date())

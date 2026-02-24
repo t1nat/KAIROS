@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { protectedProcedure, publicProcedure, createTRPCRouter } from "../trpc";
-import { events, eventComments, eventLikes, eventRsvps, users } from "~/server/db/schema";
+import { events, eventComments, eventLikes, eventRsvps, users, notifications } from "~/server/db/schema";
 import { eq, desc, and, sql, inArray } from "drizzle-orm";
 import { type NewEvent } from "~/server/db/schema";
 import { TRPCError } from "@trpc/server";
@@ -34,6 +34,7 @@ const toggleLikeSchema = z.object({
 const updateRsvpSchema = z.object({
   eventId: z.number(),
   status: z.enum(["going", "maybe", "not_going"]),
+  reminderMinutesBefore: z.number().int().min(0).nullable().optional(),
 });
 
 const deleteEventSchema = z.object({
@@ -188,12 +189,39 @@ export const eventRouter = createTRPCRouter({
   addComment: protectedProcedure
     .input(addCommentSchema)
     .mutation(async ({ ctx, input }) => {
+      const currentUserId = ctx.session.user.id;
+
       await ctx.db.insert(eventComments).values({
         eventId: input.eventId,
         text: input.text,
         imageUrl: input.imageUrl,
-        createdById: ctx.session.user.id,
+        createdById: currentUserId,
       });
+
+      // Notify event owner about the comment (unless they're the commenter)
+      const [eventRow] = await ctx.db
+        .select({ createdById: events.createdById, title: events.title })
+        .from(events)
+        .where(eq(events.id, input.eventId))
+        .limit(1);
+
+      if (eventRow && eventRow.createdById !== currentUserId) {
+        const commenter = await ctx.db.query.users.findFirst({
+          where: eq(users.id, currentUserId),
+          columns: { name: true },
+        });
+        const commenterName = commenter?.name ?? "Someone";
+
+        await ctx.db.insert(notifications).values({
+          userId: eventRow.createdById,
+          type: "comment",
+          title: "New comment on your event",
+          message: `${commenterName} commented on "${eventRow.title}"`,
+          link: `/publish#event-${input.eventId}`,
+          read: false,
+        });
+      }
+
       return { success: true };
     }),
 
@@ -229,6 +257,31 @@ export const eventRouter = createTRPCRouter({
           eventId: input.eventId,
           createdById: currentUserId,
         });
+
+        // Notify event owner about the like (unless they liked their own post)
+        const [eventRow] = await ctx.db
+          .select({ createdById: events.createdById, title: events.title })
+          .from(events)
+          .where(eq(events.id, input.eventId))
+          .limit(1);
+
+        if (eventRow && eventRow.createdById !== currentUserId) {
+          const liker = await ctx.db.query.users.findFirst({
+            where: eq(users.id, currentUserId),
+            columns: { name: true },
+          });
+          const likerName = liker?.name ?? "Someone";
+
+          await ctx.db.insert(notifications).values({
+            userId: eventRow.createdById,
+            type: "like",
+            title: "New like on your event",
+            message: `${likerName} liked your event "${eventRow.title}"`,
+            link: `/publish#event-${input.eventId}`,
+            read: false,
+          });
+        }
+
         return { action: 'liked', hasLiked: true };
       }
     }),
@@ -256,6 +309,12 @@ export const eventRouter = createTRPCRouter({
           .set({ 
             status: input.status,
             updatedAt: new Date(),
+            ...(input.reminderMinutesBefore !== undefined
+              ? {
+                  reminderMinutesBefore: input.reminderMinutesBefore,
+                  reminderSent: false,
+                }
+              : {}),
           })
           .where(
             and(
@@ -268,6 +327,8 @@ export const eventRouter = createTRPCRouter({
           eventId: input.eventId,
           userId: currentUserId,
           status: input.status,
+          reminderMinutesBefore: input.reminderMinutesBefore ?? null,
+          reminderSent: false,
           updatedAt: new Date(),
         });
       }

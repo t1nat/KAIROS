@@ -28,7 +28,12 @@ export const authRouter = createTRPCRouter({
         });
       }
 
-      const hashedPassword = await argon2.hash(password);
+      const hashedPassword = await argon2.hash(password, {
+        type: argon2.argon2id,
+        memoryCost: 65536,
+        timeCost: 3,
+        parallelism: 4,
+      });
 
       const [newUser] = await ctx.db
         .insert(users)
