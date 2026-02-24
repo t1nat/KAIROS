@@ -393,7 +393,10 @@
     "roleLabel": "Rol",
     "roleAdmin": "Admin",
     "roleWorker": "Miembro",
-    "roleMentor": "Mentor"
+    "roleMentor": "Mentor",
+    "organization": "Organización",
+    "personalWorkspace": "Espacio personal",
+    "personalHint": "Únete a una organización para colaborar en equipo"
   },
   "ai": {
     "title": "Generador de tareas con IA",

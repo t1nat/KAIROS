@@ -393,7 +393,10 @@
     "roleLabel": "Rolle",
     "roleAdmin": "Admin",
     "roleWorker": "Mitglied",
-    "roleMentor": "Mentor"
+    "roleMentor": "Mentor",
+    "organization": "Organisation",
+    "personalWorkspace": "Persönlicher Arbeitsbereich",
+    "personalHint": "Tritt einer Organisation bei, um im Team zu arbeiten"
   },
   "ai": {
     "title": "KI-Aufgabengenerator",
