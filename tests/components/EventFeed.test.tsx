@@ -46,8 +46,8 @@ describe("EventFeed – Instagram Layout", () => {
       expect(eventFeedSource).toContain("bg-bg-secondary");
     });
 
-    it("uses bg-bg-elevated for elevated surfaces", () => {
-      expect(eventFeedSource).toContain("bg-bg-elevated");
+    it("uses bg-bg-secondary for card surfaces", () => {
+      expect(eventFeedSource).toContain("bg-bg-secondary");
     });
 
     it("EventCard has Instagram-style author header with ring avatar", () => {
@@ -104,16 +104,28 @@ describe("CreateEventForm – Design Tokens", () => {
     expect(createFormSource).not.toContain("ios-card-elevated");
   });
 
-  it("uses bg-bg-secondary for card backgrounds", () => {
+  it("uses bg-bg-secondary for input backgrounds", () => {
     expect(createFormSource).toContain("bg-bg-secondary");
   });
 
-  it("uses bg-bg-elevated for elevated surfaces", () => {
-    expect(createFormSource).toContain("bg-bg-elevated");
+  it("uses Instagram-style borderless inputs", () => {
+    expect(createFormSource).toContain("bg-transparent border-b");
   });
 
-  it("uses border-white/[0.06] for subtle borders", () => {
-    expect(createFormSource).toContain("border-white/[0.06]");
+  it("has a full-width Share submit button", () => {
+    expect(createFormSource).toContain("'Share'");
+  });
+
+  it("uses accent-primary for submit button", () => {
+    expect(createFormSource).toContain("bg-accent-primary");
+  });
+
+  it("has image upload with ImagePlus icon", () => {
+    expect(createFormSource).toContain("<ImagePlus");
+  });
+
+  it("uses space-y-4 form layout", () => {
+    expect(createFormSource).toContain('className="space-y-4"');
   });
 });
 

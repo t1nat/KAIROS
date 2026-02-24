@@ -41,7 +41,7 @@ describe("SignInModal", () => {
     const onClose = vi.fn();
     render(<SignInModal isOpen={true} onClose={onClose} />);
     // The backdrop is the element with bg-black/60 class
-    const backdrop = document.querySelector(".backdrop-blur-xl");
+    const backdrop = document.querySelector(".backdrop-blur-sm");
     if (backdrop) fireEvent.click(backdrop);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
@@ -95,9 +95,9 @@ describe("SignInModal", () => {
     expect(emailInput).toHaveValue("pre@fill.com");
   });
 
-  it("applies glassmorphism backdrop styling", () => {
+  it("applies subtle backdrop blur styling", () => {
     render(<SignInModal {...defaultProps} />);
-    const backdrop = document.querySelector(".backdrop-blur-xl");
+    const backdrop = document.querySelector(".backdrop-blur-sm");
     expect(backdrop).toBeInTheDocument();
   });
 
@@ -134,5 +134,35 @@ describe("SignInModal", () => {
   it("renders terms and privacy notice", () => {
     render(<SignInModal {...defaultProps} />);
     expect(screen.getByText(/Terms of Service/i)).toBeInTheDocument();
+  });
+
+  it("has an X close button", () => {
+    render(<SignInModal {...defaultProps} />);
+    // The X button is rendered as a button with an SVG X icon
+    const closeButtons = document.querySelectorAll("button");
+    const xButton = Array.from(closeButtons).find(
+      (btn) => btn.querySelector("svg") && btn.className.includes("absolute"),
+    );
+    expect(xButton).toBeTruthy();
+  });
+
+  it("X close button calls onClose when clicked", async () => {
+    const onClose = vi.fn();
+    render(<SignInModal isOpen={true} onClose={onClose} />);
+    const closeButtons = document.querySelectorAll("button");
+    const xButton = Array.from(closeButtons).find(
+      (btn) => btn.querySelector("svg") && btn.className.includes("absolute"),
+    );
+    if (xButton) {
+      fireEvent.click(xButton);
+      expect(onClose).toHaveBeenCalled();
+    }
+  });
+
+  it("uses subtle backdrop-blur-sm (not aggressive xl)", () => {
+    render(<SignInModal {...defaultProps} />);
+    const backdrop = document.querySelector(".backdrop-blur-sm");
+    expect(backdrop).toBeInTheDocument();
+    expect(document.querySelector(".backdrop-blur-xl")).toBeNull();
   });
 });

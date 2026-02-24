@@ -67,8 +67,8 @@ describe("Publish Page – No Gradient Background", () => {
     expect(publishPageSource).not.toContain("ios-header");
   });
 
-  it("uses max-w-xl for Instagram-style width constraint", () => {
-    expect(publishPageSource).toContain("max-w-xl");
+  it("uses max-w-[600px] for Instagram-style width constraint", () => {
+    expect(publishPageSource).toContain("max-w-[600px]");
   });
 
   it("header uses border-white/[0.06] separator", () => {

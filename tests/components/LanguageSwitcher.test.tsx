@@ -131,4 +131,18 @@ describe("LanguageSwitcher", () => {
     expect(screen.getByText("Français")).toBeInTheDocument();
     expect(screen.getByText("Deutsch")).toBeInTheDocument();
   });
+
+  it("dropdown has solid background (no transparency)", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<LanguageSwitcher />);
+    const btn = screen.getByLabelText("Switch language");
+
+    await user.click(btn);
+
+    // The dropdown should not have transparency classes
+    const dropdown = container.querySelector("[class*='bg-bg-primary']");
+    expect(dropdown).not.toBeNull();
+    expect(dropdown?.className).not.toContain("bg-bg-primary/95");
+    expect(dropdown?.className).not.toContain("backdrop-blur");
+  });
 });

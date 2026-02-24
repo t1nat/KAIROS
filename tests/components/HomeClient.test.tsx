@@ -37,10 +37,10 @@ describe("HomeClient", () => {
     expect(switcherButtons.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("renders two language switchers (header + footer)", () => {
+  it("renders one language switcher (header only, footer removed)", () => {
     render(<HomeClient />);
     const switcherButtons = screen.getAllByLabelText("Switch language");
-    expect(switcherButtons.length).toBe(2);
+    expect(switcherButtons.length).toBe(1);
   });
 
   it("renders the sign in button in header", () => {
