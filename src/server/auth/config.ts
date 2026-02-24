@@ -130,6 +130,36 @@ export const authConfig = {
   }),
   
   callbacks: {
+    async signIn({ user }) {
+      // Ensure the authenticated user exists in the app DB on every sign-in
+      // (moved from protectedProcedure to avoid per-request DB checks).
+      const userId = user.id;
+      const email = user.email;
+      const name = user.name;
+      const image = user.image;
+
+      if (typeof userId === "string" && typeof email === "string" && email.length > 0) {
+        const exists = await db.query.users.findFirst({
+          where: eq(users.id, userId),
+          columns: { id: true },
+        });
+
+        if (!exists) {
+          await db
+            .insert(users)
+            .values({
+              id: userId,
+              email,
+              name: typeof name === "string" ? name : null,
+              image: typeof image === "string" ? image : null,
+            })
+            .onConflictDoNothing({ target: users.id });
+        }
+      }
+
+      return true;
+    },
+
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
