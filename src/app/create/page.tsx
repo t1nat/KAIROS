@@ -8,6 +8,7 @@ import { NotesList } from "~/components/notes/NotesList";
 import { NotificationSystem } from "~/components/notifications/NotificationSystem";
 import { WorkspaceIndicator } from "~/components/orgs/WorkspaceIndicator";
 import { OnboardingGate } from "~/components/auth/OnboardingGate";
+import { TaskTimelineClient } from "~/components/progress/TaskTimelineClient";
 import { LogIn, ArrowRight, FolderKanban } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
@@ -62,7 +63,7 @@ export default async function CreatePage({
 
   return (
     <OnboardingGate>
-    <div className="min-h-screen bg-bg-primary relative">
+    <div className="min-h-screen bg-bg-primary relative timeline-page">
       <SideNav />
 
       <div className="lg:ml-16 min-h-screen flex flex-col pt-16 lg:pt-0 relative z-10 kairos-page-enter">
@@ -121,9 +122,7 @@ export default async function CreatePage({
                 </div>
               </div>
             ) : (
-              <div className="relative max-w-7xl mx-auto pt-6">
-                <CreateProjectContainer userId={session.user.id} />
-              </div>
+              <TaskTimelineClient />
             )}
           </div>
         </main>

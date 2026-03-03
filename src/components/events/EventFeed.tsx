@@ -20,13 +20,14 @@ import {
   Trash2,
   Plus,
   Bell,
+  ChevronDown,
 } from "lucide-react";
 import { api } from "~/trpc/react";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { CreateEventForm } from "~/components/events/CreateEventForm";
 
-const REGIONS = [
+export const REGIONS = [
   { value: '', label: 'All Regions' },
   { value: 'sofia', label: 'Sofia' },
   { value: 'plovdiv', label: 'Plovdiv' },
@@ -748,13 +749,16 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
 
 interface EventFeedProps {
   showCreateForm?: boolean;
+  externalRegion?: string;
+  hideRegionFilter?: boolean;
 }
 
-export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false }) => {
+export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false, externalRegion, hideRegionFilter = false }) => {
   const { data: session } = useSession();
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [showForm, setShowForm] = useState(false);
   
+  const activeRegion = externalRegion !== undefined ? externalRegion : selectedRegion;
 
   const { data: eventsData, isLoading, error } = api.event.getPublicEvents.useQuery(undefined, {
     enabled: true,
@@ -784,42 +788,33 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false }) 
   }
   
   const filteredEvents = eventsData?.filter(event =>
-    selectedRegion === '' || event.region === selectedRegion
+    activeRegion === '' || event.region === activeRegion
   ) ?? [];
 
   return (
     <div className="space-y-0 sm:space-y-3">
       {showCreateForm && session && (
         <>
-          {/* Instagram-style "create" prompt bar */}
+          {/* Create event toggle bar */}
           <button
-            onClick={() => setShowForm(true)}
-            className="w-full bg-bg-secondary border-b sm:border border-white/[0.06] sm:rounded-xl p-3 flex items-center gap-3 text-fg-secondary hover:text-accent-primary transition-colors group"
+            onClick={() => setShowForm((v) => !v)}
+            className="w-full bg-accent-primary/10 border-b sm:border border-accent-primary/20 sm:rounded-xl p-3 flex items-center gap-3 text-fg-primary hover:bg-accent-primary/15 transition-colors group"
           >
-            <div className="w-9 h-9 rounded-full bg-accent-primary/10 flex items-center justify-center group-hover:bg-accent-primary/20 transition-colors">
-              <Plus size={18} className="text-accent-primary" />
+            <div className="w-9 h-9 rounded-full bg-accent-primary flex items-center justify-center shadow-lg shadow-accent-primary/20 group-hover:brightness-110 transition-all">
+              <Plus size={18} className="text-white" />
             </div>
-            <span className="text-sm font-medium">Create new event...</span>
+            <span className="text-sm font-semibold">Create new event</span>
+            <ChevronDown
+              size={16}
+              className={`ml-auto text-fg-tertiary transition-transform duration-200 ${showForm ? "rotate-180" : ""}`}
+            />
           </button>
 
-          {/* Fullscreen modal overlay for create form (Instagram-like) */}
+          {/* Inline collapsible create form — slides down on the same page */}
           {showForm && (
-            <div className="fixed inset-0 z-50 flex flex-col sm:items-center sm:justify-center" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
-              <div className="w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-lg sm:rounded-2xl sm:border sm:border-white/[0.08] overflow-y-auto sm:resize sm:min-w-[320px] sm:min-h-[400px]" style={{ backgroundColor: "var(--bg-primary)" }}>
-                {/* Modal header */}
-                <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-white/[0.06]" style={{ backgroundColor: "var(--bg-primary)" }}>
-                  <button
-                    onClick={() => setShowForm(false)}
-                    className="p-1 text-fg-secondary hover:text-fg-primary transition-colors"
-                  >
-                    <X size={24} />
-                  </button>
-                  <h3 className="text-base font-semibold text-fg-primary">New Event</h3>
-                  <div className="w-8" /> {/* Spacer for center alignment */}
-                </div>
-                <div className="p-4">
-                  <CreateEventForm onSuccess={() => setShowForm(false)} />
-                </div>
+            <div className="overflow-hidden border-b sm:border border-border-medium/30 dark:border-white/[0.08] sm:rounded-xl bg-bg-elevated dark:bg-bg-secondary">
+              <div className="p-4 sm:p-5">
+                <CreateEventForm onSuccess={() => setShowForm(false)} />
               </div>
             </div>
           )}
@@ -827,6 +822,7 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false }) 
       )}
 
       {/* Region filter — horizontal scroll like IG story bar */}
+      {!hideRegionFilter && (
       <div className="overflow-x-auto scrollbar-hide border-b sm:border-none border-white/[0.06]">
         <div className="flex items-center gap-2 px-3 py-2 sm:py-3 min-w-max">
           <button
@@ -856,6 +852,7 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false }) 
           ))}
         </div>
       </div>
+      )}
 
       {!filteredEvents || filteredEvents.length === 0 ? (
         <div className="text-center py-20 px-4">

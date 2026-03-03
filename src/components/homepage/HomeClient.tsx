@@ -115,17 +115,20 @@ export function HomeClient() {
     useEffect(() => {
         if (!whyTeamsCardsRef.current.length) return;
         const ctx = gsap.context(() => {
-            gsap.set(whyTeamsCardsRef.current, { opacity: 0, filter: "blur(10px)", y: 60, scale: 0.85 });
-            gsap.set([whyTeamsCardsRef.current[0], whyTeamsCardsRef.current[2]], { x: -60 });
-            gsap.set([whyTeamsCardsRef.current[1], whyTeamsCardsRef.current[3]], { x: 60 });
-            gsap.to(whyTeamsCardsRef.current, {
-                opacity: 1, filter: "blur(0px)", x: 0, y: 0, scale: 1,
-                duration: 1, ease: "back.out(1.4)", stagger: 0.12,
-                scrollTrigger: {
-                    trigger: whyTeamsCardsRef.current[0]?.parentElement,
-                    start: "top 80%",
-                    toggleActions: "play none none none",
-                },
+            whyTeamsCardsRef.current.forEach((card, i) => {
+                if (!card) return;
+                const fromLeft = i % 2 === 0;
+                gsap.set(card, { opacity: 0, y: 30, x: fromLeft ? -30 : 30, scale: 0.95 });
+                gsap.to(card, {
+                    opacity: 1, x: 0, y: 0, scale: 1,
+                    duration: 0.8, ease: "power3.out",
+                    delay: i * 0.1,
+                    scrollTrigger: {
+                        trigger: card,
+                        start: "top 90%",
+                        toggleActions: "play none none reverse",
+                    },
+                });
             });
         });
         return () => ctx.revert();
@@ -175,7 +178,7 @@ export function HomeClient() {
     ];
 
     return (
-        <main id="main-content" className="min-h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary relative overflow-hidden">
+        <main id="main-content" className="min-h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary relative overflow-hidden scroll-smooth">
             {/* ─── Inline keyframes ─── */}
             <style dangerouslySetInnerHTML={{ __html: `
                 @keyframes circle-drift-1 {
@@ -234,13 +237,25 @@ export function HomeClient() {
                                 </div>
                                 <h1 className="text-xl sm:text-2xl font-bold text-fg-primary font-display tracking-tight">KAIROS</h1>
                             </div>
+                            {/* ─── Nav links ─── */}
+                            <nav className="hidden md:flex items-center gap-6">
+                                <button onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })} className="text-sm text-fg-secondary hover:text-fg-primary transition-colors duration-200">{t("navFeatures")}</button>
+                                <button onClick={() => document.getElementById("benefits")?.scrollIntoView({ behavior: "smooth" })} className="text-sm text-fg-secondary hover:text-fg-primary transition-colors duration-200">{t("navBenefits")}</button>
+                                <button onClick={() => document.getElementById("footer")?.scrollIntoView({ behavior: "smooth" })} className="text-sm text-fg-secondary hover:text-fg-primary transition-colors duration-200">{t("navAbout")}</button>
+                            </nav>
                             <div className="flex items-center gap-2 sm:gap-3">
                                 <LanguageSwitcher variant="compact" />
                                 <button
                                     onClick={() => setIsModalOpen(true)}
-                                    className="px-4 py-2 text-sm font-medium rounded-xl bg-accent-primary text-white hover:opacity-90 transition-all duration-200 shadow-md shadow-accent-primary/20 hover:shadow-lg hover:shadow-accent-primary/30 hover:scale-[1.02] active:scale-[0.98]"
+                                    className="hidden sm:inline-flex px-5 py-2 text-sm font-semibold rounded-full bg-accent-primary text-white hover:opacity-90 transition-all duration-200 shadow-md shadow-accent-primary/20"
                                 >
-                                    {t("signIn")}
+                                    {t("logIn")}
+                                </button>
+                                <button
+                                    onClick={() => setIsModalOpen(true)}
+                                    className="px-5 py-2 text-sm font-medium rounded-full bg-accent-primary text-white hover:opacity-90 transition-all duration-200 shadow-md shadow-accent-primary/20 hover:shadow-lg hover:shadow-accent-primary/30 hover:scale-[1.02] active:scale-[0.98]"
+                                >
+                                    {t("signUp")}
                                 </button>
                             </div>
                         </div>
@@ -253,9 +268,9 @@ export function HomeClient() {
                         <div className="flex flex-col items-center justify-center gap-8 text-center">
                             <div className="space-y-6 max-w-4xl">
                                 {/* Tagline pill */}
-                                <div data-reveal="true" className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent-primary/10 border border-accent-primary/20 backdrop-blur-sm">
+                                <div data-reveal="true" className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-accent-primary/10 backdrop-blur-sm">
                                     <Sparkles size={14} className="text-accent-primary" />
-                                    <span className="text-xs sm:text-sm font-medium text-accent-primary tracking-wide">{t("heroTagline")}</span>
+                                    <span className="text-xs sm:text-sm font-semibold text-accent-primary tracking-widest uppercase">{t("heroTagline")}</span>
                                 </div>
 
                                 {/* Title */}
@@ -277,7 +292,7 @@ export function HomeClient() {
                             <div data-reveal="true" className="flex flex-col sm:flex-row gap-3 w-full max-w-md justify-center">
                                 <button
                                     onClick={() => setIsModalOpen(true)}
-                                    className="kairos-glass-button flex items-center justify-center gap-2 px-8 sm:px-10 py-4 sm:py-5 text-fg-primary font-semibold rounded-2xl transition-all text-base sm:text-lg group"
+                                    className="flex items-center justify-center gap-2 px-8 sm:px-10 py-4 sm:py-5 font-semibold rounded-2xl transition-all text-base sm:text-lg group bg-accent-primary text-white hover:brightness-110 shadow-lg shadow-accent-primary/25 hover:shadow-xl hover:shadow-accent-primary/35 hover:scale-[1.02] active:scale-[0.98]"
                                 >
                                     <span className="relative z-10">{t("signIn")}</span>
                                     <ArrowRight size={20} className="relative z-10 group-hover:translate-x-1 transition-transform" />
@@ -291,7 +306,7 @@ export function HomeClient() {
                 </section>
 
                 {/* ─── About / Features ─── */}
-                <section ref={aboutRef} className="py-14 sm:py-20 px-4 sm:px-6 pt-20 sm:pt-28">
+                <section id="features" ref={aboutRef} className="py-14 sm:py-20 px-4 sm:px-6 pt-20 sm:pt-28 scroll-mt-20">
                     <div className="max-w-7xl mx-auto">
                         <div className="text-center mb-12">
                             <ScrollReveal containerClassName="text-center max-w-4xl mx-auto" baseOpacity={0.1} wordAnimationEnd="center center">
@@ -307,14 +322,14 @@ export function HomeClient() {
                         </div>
 
                         {/* Why Teams Choose Kairos */}
-                        <div className="mt-12 sm:mt-16 w-full max-w-[1200px] mx-auto">
+                        <div id="benefits" className="mt-12 sm:mt-16 w-full max-w-[1200px] mx-auto scroll-mt-24">
                             <h4 className="text-2xl md:text-3xl font-bold text-fg-primary mb-8">{t("whyTeams")}</h4>
                             <div className="grid md:grid-cols-2 gap-5">
                                 {whyTeamsData.map((card, i) => (
                                     <div
                                         key={card.titleKey}
                                         ref={(el) => { if (el) whyTeamsCardsRef.current[i] = el; }}
-                                        className={`group flex items-start gap-4 p-5 rounded-2xl ${card.bgClass} backdrop-blur-sm border border-white/[0.06] transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5`}
+                                        className={`group flex items-start gap-4 p-5 rounded-2xl bg-[#0a0a0e] border border-white/[0.08] transition-all duration-300 hover:shadow-lg hover:shadow-accent-primary/5 hover:-translate-y-0.5`}
                                     >
                                         <div className={`flex-shrink-0 w-11 h-11 ${card.iconBg} rounded-xl flex items-center justify-center mt-0.5 group-hover:scale-110 transition-transform duration-300`}>
                                             <span className={card.colorClass}>{card.icon}</span>
@@ -342,7 +357,7 @@ export function HomeClient() {
                 </section>
 
                 {/* ─── Footer ─── */}
-                <footer className="py-8 px-4 sm:px-6 border-t border-white/[0.06]">
+                <footer id="footer" className="py-8 px-4 sm:px-6 border-t border-white/[0.06]">
                     <div className="max-w-7xl mx-auto flex items-center justify-center text-xs text-fg-quaternary">
                         <span>&copy; {new Date().getFullYear()} KAIROS</span>
                     </div>

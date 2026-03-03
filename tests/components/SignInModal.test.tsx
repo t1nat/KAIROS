@@ -20,12 +20,12 @@ describe("SignInModal", () => {
 
   it("renders when isOpen is true", () => {
     render(<SignInModal {...defaultProps} />);
-    expect(screen.getByPlaceholderText("your@email.com")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("name@company.com")).toBeInTheDocument();
   });
 
   it("renders email input", () => {
     render(<SignInModal {...defaultProps} />);
-    const emailInput = screen.getByPlaceholderText("your@email.com");
+    const emailInput = screen.getByPlaceholderText("name@company.com");
     expect(emailInput).toBeInTheDocument();
     expect(emailInput).toHaveAttribute("type", "email");
   });
@@ -50,7 +50,7 @@ describe("SignInModal", () => {
     const user = userEvent.setup();
     render(<SignInModal {...defaultProps} />);
 
-    const emailInput = screen.getByPlaceholderText("your@email.com");
+    const emailInput = screen.getByPlaceholderText("name@company.com");
     await user.type(emailInput, "test@example.com");
     expect(emailInput).toHaveValue("test@example.com");
   });
@@ -66,7 +66,7 @@ describe("SignInModal", () => {
 
   it("has a toggle between sign in and sign up", () => {
     render(<SignInModal {...defaultProps} />);
-    const toggleBtn = screen.getByText(/Don't have an account\? Sign up/i);
+    const toggleBtn = screen.getByText(/Don.t have an account/i);
     expect(toggleBtn).toBeInTheDocument();
   });
 
@@ -74,24 +74,24 @@ describe("SignInModal", () => {
     const user = userEvent.setup();
     render(<SignInModal {...defaultProps} />);
 
-    const toggleBtn = screen.getByText(/Don't have an account\? Sign up/i);
+    const toggleBtn = screen.getByText(/Don.t have an account/i);
     await user.click(toggleBtn);
 
-    expect(screen.getByPlaceholderText("Your name")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Enter your full name")).toBeInTheDocument();
   });
 
   it("shows sign up heading in sign up mode", async () => {
     const user = userEvent.setup();
     render(<SignInModal {...defaultProps} />);
 
-    await user.click(screen.getByText(/Don't have an account\? Sign up/i));
+    await user.click(screen.getByText(/Don.t have an account/i));
 
-    expect(screen.getByText("Create your Kairos workspace")).toBeInTheDocument();
+    expect(screen.getByText("Create your account")).toBeInTheDocument();
   });
 
   it("pre-fills email when initialEmail is provided", () => {
     render(<SignInModal isOpen={true} onClose={vi.fn()} initialEmail="pre@fill.com" />);
-    const emailInput = screen.getByPlaceholderText("your@email.com");
+    const emailInput = screen.getByPlaceholderText("name@company.com");
     expect(emailInput).toHaveValue("pre@fill.com");
   });
 
@@ -103,7 +103,7 @@ describe("SignInModal", () => {
 
   it("renders Google sign-in button", () => {
     render(<SignInModal {...defaultProps} />);
-    expect(screen.getByText("Continue with Google")).toBeInTheDocument();
+    expect(screen.getByText("Google")).toBeInTheDocument();
   });
 
   it("renders with kairos design system classes", () => {
@@ -120,19 +120,21 @@ describe("SignInModal", () => {
 
   it("shows Welcome back heading in sign in mode", () => {
     render(<SignInModal {...defaultProps} />);
-    expect(screen.getByText("Welcome back")).toBeInTheDocument();
+    expect(screen.getByText("Welcome Back")).toBeInTheDocument();
   });
 
   it("shows toggle back to sign in from sign up", async () => {
     const user = userEvent.setup();
     render(<SignInModal {...defaultProps} />);
 
-    await user.click(screen.getByText(/Don't have an account\? Sign up/i));
-    expect(screen.getByText(/Already have an account\? Sign in/i)).toBeInTheDocument();
+    await user.click(screen.getByText(/Don.t have an account/i));
+    expect(screen.getByText(/Already have an account/i)).toBeInTheDocument();
   });
 
-  it("renders terms and privacy notice", () => {
+  it("renders terms and privacy notice", async () => {
+    const user = userEvent.setup();
     render(<SignInModal {...defaultProps} />);
+    await user.click(screen.getByText(/Don.t have an account/i));
     expect(screen.getByText(/Terms of Service/i)).toBeInTheDocument();
   });
 
