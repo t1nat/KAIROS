@@ -23,10 +23,10 @@ export default async function ProjectsPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-3 sm:py-4 flex flex-wrap justify-between items-center gap-3">
             <div className="flex items-center gap-3">
               <h1 className="text-xl font-bold text-fg-primary tracking-tight">{tNav("projects")}</h1>
-              <div className="hidden sm:block h-6 w-px bg-border-medium mx-1"></div>
-              <WorkspaceIndicator compact />
             </div>
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
+              <WorkspaceIndicator compact />
+              <div className="hidden sm:block h-6 w-px bg-border-medium mx-1"></div>
               <NotificationSystem />
               <UserDisplay />
             </div>

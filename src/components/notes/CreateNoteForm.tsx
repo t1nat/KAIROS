@@ -48,7 +48,7 @@ export function CreateNoteForm() {
       {!showForm ? (
         <button
           onClick={() => setShowForm(true)}
-          className="w-full p-5 rounded-3xl bg-accent-primary text-white shadow-xl shadow-accent-primary/20 hover:shadow-2xl hover:shadow-accent-primary/30 hover:brightness-[1.02] transition-all"
+          className="w-full p-5 rounded-xl bg-accent-primary text-white shadow-xl shadow-accent-primary/20 hover:shadow-2xl hover:shadow-accent-primary/30 hover:brightness-[1.02] transition-all"
         >
           <div className="flex items-center justify-center gap-2">
             <span className="text-lg sm:text-xl font-bold tracking-[-0.02em]">{t("notes.actions.createNew")}</span>
@@ -60,7 +60,7 @@ export function CreateNoteForm() {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder={t("notes.placeholders.content")}
-            className="flex-1 p-4 rounded-2xl bg-bg-secondary border border-border-light/20 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary placeholder:text-fg-tertiary resize-none"
+            className="flex-1 p-4 rounded-xl bg-bg-secondary border border-border-light/20 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary placeholder:text-fg-tertiary resize-none"
             autoFocus
           />
 

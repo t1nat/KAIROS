@@ -95,11 +95,10 @@ export default async function CreatePage({
                 </div>
               </div>
               
-              {/* Organization Code - positioned on the left */}
-              <div className="hidden sm:block h-6 w-px bg-border-medium mx-2"></div>
-              <WorkspaceIndicator compact />
             </div>
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
+              <WorkspaceIndicator compact />
+              <div className="hidden sm:block h-6 w-px bg-border-medium mx-2"></div>
               <NotificationSystem />
               <UserDisplay />
             </div>
@@ -114,10 +113,10 @@ export default async function CreatePage({
               </div>
             ) : shouldShowNoteForm ? (
               <div className="flex flex-col lg:flex-row gap-4 w-full h-[calc(100vh-200px)] mt-4">
-                <div className="w-full lg:w-[400px] lg:flex-shrink-0 flex flex-col p-5 rounded-3xl bg-bg-elevated shadow-xl shadow-accent-primary/10">
+                <div className="w-full lg:w-[400px] lg:flex-shrink-0 flex flex-col p-5 rounded-xl bg-bg-elevated shadow-xl shadow-accent-primary/10">
                   <CreateNoteForm />
                 </div>
-                <div className="flex-1 p-5 overflow-hidden rounded-3xl bg-bg-elevated shadow-xl shadow-accent-primary/10">
+                <div className="flex-1 p-5 overflow-hidden rounded-xl bg-bg-elevated shadow-xl shadow-accent-primary/10">
                   <NotesList />
                 </div>
               </div>

@@ -1,8 +1,8 @@
 ﻿"use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { api } from "~/trpc/react";
-import { Lock, Trash2, Eye, EyeOff, AlertCircle, RefreshCw, KeyRound, ChevronDown, Check } from "lucide-react";
+import { Lock, Trash2, Eye, EyeOff, AlertCircle, RefreshCw, KeyRound, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useToast } from "~/components/providers/ToastProvider";
 import { cn } from "~/lib/utils";
@@ -206,18 +206,27 @@ export function NotesList() {
 
   const allNotes = notes ?? [];
 
+  // Sticky note accent colors (cycle through them)
+  const stickyColors = [
+    { bg: "rgb(var(--accent-primary) / 0.12)", border: "rgb(var(--accent-primary) / 0.25)", text: "rgb(var(--accent-primary))" },
+    { bg: "rgb(var(--accent-secondary) / 0.12)", border: "rgb(var(--accent-secondary) / 0.25)", text: "rgb(var(--accent-secondary))" },
+    { bg: "rgb(var(--accent-tertiary) / 0.15)", border: "rgb(var(--accent-tertiary) / 0.3)", text: "rgb(var(--fg-secondary))" },
+    { bg: "rgb(var(--warning) / 0.10)", border: "rgb(var(--warning) / 0.25)", text: "rgb(var(--warning))" },
+    { bg: "rgb(var(--info) / 0.10)", border: "rgb(var(--info) / 0.25)", text: "rgb(var(--info))" },
+    { bg: "rgb(var(--success) / 0.10)", border: "rgb(var(--success) / 0.25)", text: "rgb(var(--success))" },
+  ];
+
+  const closeExpandedNote = useCallback(() => {
+    setSelectedNoteId(null);
+  }, []);
+
   return (
-    <div className="flex flex-col h-full ">
+    <div className="flex flex-col h-full">
       <div className="flex-1 overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h3 className="text-[17px] font-[590] text-fg-primary leading-[1.235] tracking-[-0.016em]">
-              Notes
-            </h3>
-            <p className="text-[13px] text-fg-secondary leading-[1.3846] tracking-[-0.006em] mt-0.5">
-              Secured personal notes
-            </p>
-          </div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-[17px] font-[590] text-fg-primary leading-[1.235] tracking-[-0.016em]">
+            Notes
+          </h3>
           {allNotes.length > 0 && (
             <span className="text-[13px] text-fg-tertiary">
               {allNotes.length} {allNotes.length === 1 ? "note" : "notes"}
@@ -227,151 +236,48 @@ export function NotesList() {
 
         <div className="flex-1 overflow-y-auto scrollbar-thin">
           {allNotes.length > 0 ? (
-            allNotes.map((note, index) => {
-              const isSelected = selectedNoteId === note.id;
-              const unlockedState = unlockedNotes[note.id];
-              const isLocked = !!note.passwordHash && !unlockedState?.unlocked;
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {allNotes.map((note, index) => {
+                const unlockedState = unlockedNotes[note.id];
+                const isLocked = !!note.passwordHash && !unlockedState?.unlocked;
+                const rawContent = unlockedState?.content ?? note.content ?? "";
+                const titleCandidate = rawContent.split("\n")[0]?.trim();
+                const firstLine =
+                  titleCandidate && titleCandidate.length > 0
+                    ? titleCandidate
+                    : rawContent.substring(0, 50);
+                const color = stickyColors[index % stickyColors.length]!;
 
-              const rawContent = unlockedState?.content ?? note.content ?? "";
-              const titleCandidate = rawContent.split("\n")[0]?.trim();
-              const firstLine =
-                titleCandidate && titleCandidate.length > 0
-                  ? titleCandidate
-                  : rawContent.substring(0, 50);
-
-              return (
-                <div key={note.id} className={cn(
-                  "px-4 py-4",
-                  index > 0 && "border-t border-white/[0.06]"
-                )}>
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={() =>
-                      setSelectedNoteId((current) =>
-                        current === note.id ? null : note.id,
-                      )
-                    }
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        setSelectedNoteId((current) =>
-                          current === note.id ? null : note.id,
-                        );
-                      }
+                return (
+                  <button
+                    key={note.id}
+                    type="button"
+                    onClick={() => setSelectedNoteId(note.id)}
+                    className="group relative aspect-square rounded-xl p-3 text-left transition-all duration-200 hover:scale-[1.04] hover:shadow-lg active:scale-[0.98] cursor-pointer border"
+                    style={{
+                      backgroundColor: color.bg,
+                      borderColor: color.border,
                     }}
-                    className={cn(
-                      "flex items-center justify-between",
-                      !isSelected && "cursor-pointer"
-                    )}
                   >
-                    {/* Left content */}
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      {/* Note icon */}
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary/80 flex items-center justify-center border border-border-light/20 shadow-sm">
-                        <span className="text-[15px] font-semibold text-white">
-                          {firstLine?.[0]?.toUpperCase() ?? "N"}
-                        </span>
-                      </div>
-
-                      {/* Note info */}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[17px] font-[590] text-fg-primary leading-tight tracking-[-0.016em] truncate">
-                          {firstLine || t("notes.encryptedNote")}
-                        </p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <p className="text-[13px] text-fg-secondary leading-tight tracking-[-0.006em] truncate">
-                            {new Date(note.createdAt).toLocaleDateString()}
-                          </p>
-                          {isLocked && (
-                            <span className="text-[11px] uppercase tracking-wider text-fg-tertiary border border-white/[0.06] rounded-full px-2 py-0.5">
-                              {t("notes.password.protected")}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right controls */}
-                    <div className="flex items-center gap-1.5">
-                      {!isSelected && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            requestDeleteNote(note.id);
-                          }}
-                          className="p-2 text-fg-tertiary hover:text-error hover:bg-error/10 transition-colors rounded-lg"
-                          aria-label="Delete note"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Expanded content */}
-                  {isSelected && (
-                    <div className="mt-4 pt-4 border-t border-white/[0.06]">
-                      {isLocked ? (
-                        <LockedNoteContent
-                          passwordInput={passwordInputs[note.id] ?? ""}
-                          passwordError={passwordErrors[note.id]}
-                          showPassword={showPasswords[note.id] ?? false}
-                          onPasswordChange={(value) => {
-                            setPasswordInputs((prev) => ({
-                              ...prev,
-                              [note.id]: value,
-                            }));
-                            if (passwordErrors[note.id]) {
-                              setPasswordErrors((prev) => ({
-                                ...prev,
-                                [note.id]: "",
-                              }));
-                            }
-                          }}
-                          onTogglePasswordVisibility={() =>
-                            togglePasswordVisibility(note.id)
-                          }
-                          onSubmit={() =>
-                            handlePasswordSubmit(
-                              note.id,
-                              passwordInputs[note.id] ?? "",
-                            )
-                          }
-                          onOpenResetPrompt={() =>
-                            openResetPromptAfterFailedUnlock(note.id)
-                          }
-                          isSubmitting={verifyPassword.isPending}
-                        />
-                      ) : (
-                        <UnlockedNoteContent
-                          value={
-                            editingContent[note.id] ??
-                            (unlockedState?.content ?? note.content ?? "")
-                          }
-                          onChange={(value) =>
-                            setEditingContent((prev) => ({
-                              ...prev,
-                              [note.id]: value,
-                            }))
-                          }
-                          onSave={() => {
-                            const content =
-                              editingContent[note.id] ??
-                              (unlockedState?.content ?? note.content ?? "");
-                            updateNote.mutate({ id: note.id, content });
-                          }}
-                          onRefresh={() => void refetch()}
-                          isSaving={updateNote.isPending}
-                          onDelete={() => requestDeleteNote(note.id)}
-                          isPendingDelete={pendingDeleteNoteId === note.id}
-                        />
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })
+                    {isLocked && (
+                      <Lock
+                        size={12}
+                        className="absolute top-2 right-2 text-fg-tertiary"
+                      />
+                    )}
+                    <p
+                      className="text-[13px] font-medium leading-snug line-clamp-4"
+                      style={{ color: color.text }}
+                    >
+                      {isLocked ? t("notes.encryptedNote") : (firstLine || t("notes.encryptedNote"))}
+                    </p>
+                    <p className="absolute bottom-2 left-3 text-[10px] text-fg-tertiary">
+                      {new Date(note.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
           ) : (
             <div className="text-center py-12 text-fg-secondary text-[15px]">
               {t("notes.empty")}
@@ -379,6 +285,69 @@ export function NotesList() {
           )}
         </div>
       </div>
+
+      {/* Expanded note popup */}
+      {selectedNoteId !== null && (() => {
+        const note = allNotes.find((n) => n.id === selectedNoteId);
+        if (!note) return null;
+        const unlockedState = unlockedNotes[note.id];
+        const isLocked = !!note.passwordHash && !unlockedState?.unlocked;
+
+        return (
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-[fadeIn_150ms_ease-out]"
+            onClick={closeExpandedNote}
+          >
+            <div
+              className="bg-bg-elevated rounded-2xl shadow-2xl max-w-lg w-full max-h-[80vh] overflow-auto p-6 animate-[popIn_200ms_cubic-bezier(0.34,1.56,0.64,1)]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[13px] text-fg-tertiary">
+                  {new Date(note.createdAt).toLocaleDateString()}
+                </span>
+                <button
+                  onClick={closeExpandedNote}
+                  className="p-1.5 rounded-lg text-fg-tertiary hover:text-fg-primary hover:bg-bg-secondary transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {isLocked ? (
+                <LockedNoteContent
+                  passwordInput={passwordInputs[note.id] ?? ""}
+                  passwordError={passwordErrors[note.id]}
+                  showPassword={showPasswords[note.id] ?? false}
+                  onPasswordChange={(value) => {
+                    setPasswordInputs((prev) => ({ ...prev, [note.id]: value }));
+                    if (passwordErrors[note.id]) {
+                      setPasswordErrors((prev) => ({ ...prev, [note.id]: "" }));
+                    }
+                  }}
+                  onTogglePasswordVisibility={() => togglePasswordVisibility(note.id)}
+                  onSubmit={() => handlePasswordSubmit(note.id, passwordInputs[note.id] ?? "")}
+                  onOpenResetPrompt={() => openResetPromptAfterFailedUnlock(note.id)}
+                  isSubmitting={verifyPassword.isPending}
+                />
+              ) : (
+                <UnlockedNoteContent
+                  value={editingContent[note.id] ?? (unlockedState?.content ?? note.content ?? "")}
+                  onChange={(value) => setEditingContent((prev) => ({ ...prev, [note.id]: value }))}
+                  onSave={() => {
+                    const content = editingContent[note.id] ?? (unlockedState?.content ?? note.content ?? "");
+                    updateNote.mutate({ id: note.id, content });
+                  }}
+                  onRefresh={() => void refetch()}
+                  isSaving={updateNote.isPending}
+                  onDelete={() => requestDeleteNote(note.id)}
+                  isPendingDelete={pendingDeleteNoteId === note.id}
+                />
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Reset Prompt Modal (after 2 failed unlock attempts) */}
       {showResetPromptModal !== null && (

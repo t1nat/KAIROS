@@ -723,7 +723,7 @@ export function ProgressFeedClient() {
                   key={project.id}
                   type="button"
                   onClick={() => setSelectedProjectId(project.id)}
-                  className="text-left p-3 rounded-lg shadow-sm hover:shadow-md hover:bg-bg-elevated/30 transition-colors"
+                  className="text-left p-3 rounded-lg border border-white/[0.06] shadow-sm hover:shadow-md hover:bg-bg-elevated/30 hover:border-accent-primary/30 transition-all"
                 >
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg bg-bg-secondary/50 overflow-hidden flex items-center justify-center flex-shrink-0">

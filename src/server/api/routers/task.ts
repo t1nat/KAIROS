@@ -1,8 +1,8 @@
 
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { tasks, projects, projectCollaborators, taskActivityLog, organizationMembers, users, organizations } from "~/server/db/schema";
-import { eq, and, desc, sql, isNull } from "drizzle-orm";
+import { tasks, projects, projectCollaborators, taskActivityLog, organizationMembers, users, organizations, events } from "~/server/db/schema";
+import { eq, and, desc, sql, isNull, gte, lte, isNotNull, or } from "drizzle-orm";
 
 export const taskRouter = createTRPCRouter({
  
@@ -697,5 +697,78 @@ export const taskRouter = createTRPCRouter({
         .limit(limit);
 
       return { scope: returnScope, rows };
+    }),
+
+  /**
+   * Calendar endpoint — returns tasks with due dates and events within a date range.
+   */
+  getForCalendar: protectedProcedure
+    .input(
+      z.object({
+        from: z.date(),
+        to: z.date(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      // Get organisations the user belongs to
+      const memberships = await ctx.db
+        .select({ organizationId: organizationMembers.organizationId })
+        .from(organizationMembers)
+        .where(eq(organizationMembers.userId, ctx.session.user.id));
+      const orgIds = memberships.map((m) => m.organizationId);
+
+      // Tasks with a due date in the range that the user can see
+      const taskRows = await ctx.db
+        .select({
+          id: tasks.id,
+          title: tasks.title,
+          status: tasks.status,
+          priority: tasks.priority,
+          dueDate: tasks.dueDate,
+          projectId: tasks.projectId,
+          projectTitle: projects.title,
+        })
+        .from(tasks)
+        .innerJoin(projects, eq(tasks.projectId, projects.id))
+        .where(
+          and(
+            isNotNull(tasks.dueDate),
+            gte(tasks.dueDate, input.from),
+            lte(tasks.dueDate, input.to),
+            orgIds.length
+              ? or(
+                  sql`${projects.organizationId} IN ${orgIds}`,
+                  and(
+                    eq(projects.createdById, ctx.session.user.id),
+                    isNull(projects.organizationId)
+                  )
+                )
+              : and(
+                  eq(projects.createdById, ctx.session.user.id),
+                  isNull(projects.organizationId)
+                )
+          )
+        )
+        .orderBy(tasks.dueDate);
+
+      // Events created by the user within the range
+      const eventRows = await ctx.db
+        .select({
+          id: events.id,
+          title: events.title,
+          eventDate: events.eventDate,
+          description: events.description,
+        })
+        .from(events)
+        .where(
+          and(
+            eq(events.createdById, ctx.session.user.id),
+            gte(events.eventDate, input.from),
+            lte(events.eventDate, input.to)
+          )
+        )
+        .orderBy(events.eventDate);
+
+      return { tasks: taskRows, events: eventRows };
     }),
 });
