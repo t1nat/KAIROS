@@ -15,6 +15,7 @@ import {
   SquarePen,
   Sparkles,
   CalendarDays,
+  CalendarCheck,
   Plus,
 } from "lucide-react";
 
@@ -50,6 +51,7 @@ export function SideNav() {
     { href: "/projects", icon: Briefcase, label: t("projects") },
     { href: "/create?action=new_note", icon: BookText, label: t("notes") },
     { href: "/progress", icon: TrendingUp, label: t("progress") },
+    { href: "/calendar", icon: CalendarCheck, label: t("calendar") },
     { href: "/chat", icon: Sparkles, label: "Chat" },
     { href: "/publish", icon: CalendarDays, label: t("events") },
   ];
@@ -70,6 +72,9 @@ export function SideNav() {
     }
     if (href === "/publish") {
       return pathname === "/publish";
+    }
+    if (href === "/calendar") {
+      return pathname === "/calendar";
     }
     if (href === "/projects") {
       return pathname === "/projects";
