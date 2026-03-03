@@ -96,7 +96,12 @@
     "smartScheduling": "Intelligente Planung",
     "smartSchedulingDesc": "Verwalten Sie mühelos Zeitpläne und koordinieren Sie teamübergreifend.",
     "heroTagline": "Planen · Zusammenarbeiten · Veröffentlichen",
-    "trustedBy": "Vertraut von Teams weltweit"
+    "trustedBy": "Vertraut von Teams weltweit",
+    "navFeatures": "Funktionen",
+    "navBenefits": "Vorteile",
+    "navAbout": "Über uns",
+    "logIn": "Anmelden",
+    "signUp": "Registrieren"
   },
   "settings": {
     "title": "Einstellungen",

@@ -94,7 +94,12 @@
     "smartScheduling": "Planification intelligente",
     "smartSchedulingDesc": "Gérez facilement les délais et coordonnez entre les équipes.",
     "heroTagline": "Planifier · Collaborer · Publier",
-    "trustedBy": "Approuvé par des équipes du monde entier"
+    "trustedBy": "Approuvé par des équipes du monde entier",
+    "navFeatures": "Fonctionnalités",
+    "navBenefits": "Avantages",
+    "navAbout": "À propos",
+    "logIn": "Connexion",
+    "signUp": "Inscription"
   },
   "settings": {
     "title": "Paramètres",

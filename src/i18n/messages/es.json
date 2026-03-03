@@ -96,7 +96,12 @@
     "smartScheduling": "Programación inteligente",
     "smartSchedulingDesc": "Gestiona cronogramas sin esfuerzo y coordina entre equipos.",
     "heroTagline": "Planifica · Colabora · Publica",
-    "trustedBy": "Confiado por equipos en todo el mundo"
+    "trustedBy": "Confiado por equipos en todo el mundo",
+    "navFeatures": "Funciones",
+    "navBenefits": "Beneficios",
+    "navAbout": "Sobre nosotros",
+    "logIn": "Iniciar sesión",
+    "signUp": "Registrarse"
   },
   "settings": {
     "title": "Ajustes",

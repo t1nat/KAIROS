@@ -98,7 +98,12 @@
     "smartScheduling": "Smart Scheduling",
     "smartSchedulingDesc": "Effortlessly manage timelines and coordinate across teams.",
     "heroTagline": "Plan · Collaborate · Publish",
-    "trustedBy": "Trusted by teams worldwide"
+    "trustedBy": "Trusted by teams worldwide",
+    "navFeatures": "Features",
+    "navBenefits": "Benefits",
+    "navAbout": "About Us",
+    "logIn": "Log In",
+    "signUp": "Sign Up"
   },
   "settings": {
     "title": "Settings",
