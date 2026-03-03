@@ -196,7 +196,7 @@ export function AiTaskPlannerPanel(props: {
  disabled={isPending || !draftId}
  className={cn(
 "inline-flex items-center gap-2 px-3 py-2 rounded-lg text-[13px] font-medium transition",
-"bg-bg-primary text-fg-primary border border-white/[0.06] hover:bg-bg-secondary",
+"bg-accent-primary/10 text-accent-primary border border-accent-primary/20 hover:bg-accent-primary/20",
 "disabled:opacity-50",
  )}
  >

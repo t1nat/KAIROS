@@ -530,7 +530,7 @@ export function AiTaskDraftPanel({
 
  <button
  onClick={onClose}
- className="w-full py-2.5 rounded-xl border border-white/[0.06] text-fg-primary text-[13px] font-medium hover:bg-bg-secondary transition-all"
+ className="w-full py-2.5 rounded-xl border border-accent-primary/20 text-accent-primary text-[13px] font-medium hover:bg-accent-primary/10 transition-all"
  >
  {t("close")}
  </button>
