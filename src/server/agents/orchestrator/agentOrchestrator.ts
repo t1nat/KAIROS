@@ -445,15 +445,48 @@ export const agentOrchestrator = {
     handoffContext?: Record<string, unknown>;
   }): Promise<{ draftId: string; plan: TaskPlanDraft }> {
     const userId = requireUserId(input.ctx);
-    if (!input.scope?.projectId) {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "projectId is required" });
+
+    // Allow draft calls without projectId. A2 will respond with questionsForUser.
+    // If a project name is provided, try to resolve it to a projectId.
+    const requestedNameRaw = (input.handoffContext as Record<string, unknown> | undefined)?.projectName;
+    const requestedName = typeof requestedNameRaw === "string" ? requestedNameRaw.trim() : "";
+
+    let resolvedProjectId: number | undefined = input.scope?.projectId;
+
+    if (!resolvedProjectId && requestedName) {
+      const userProjects = await input.ctx.db
+        .select({ id: projects.id, title: projects.title })
+        .from(projects)
+        .where(eq(projects.createdById, userId));
+
+      const norm = (s: string) => s.trim().toLowerCase();
+      const matches = userProjects.filter((p) => norm(p.title) === norm(requestedName));
+
+      if (matches.length === 1) {
+        resolvedProjectId = matches[0]!.id;
+      } else if (matches.length > 1) {
+        // Ambiguous title; let A2 ask a clarifying question.
+        resolvedProjectId = undefined;
+        input.handoffContext = {
+          ...(input.handoffContext ?? {}),
+          projectNameAmbiguous: true,
+          projectNameCandidates: matches.map((m) => ({ id: m.id, title: m.title })),
+        };
+      } else {
+        // Not found; let A2 ask for a valid project name.
+        input.handoffContext = {
+          ...(input.handoffContext ?? {}),
+          projectNameNotFound: true,
+          projectName: requestedName,
+        };
+      }
     }
 
     const draftId = createDraftId();
 
     const contextPack = await buildA2Context({
       ctx: input.ctx,
-      scope: { orgId: input.scope.orgId, projectId: input.scope.projectId },
+      scope: { orgId: input.scope?.orgId, projectId: resolvedProjectId },
       handoffContext: input.handoffContext,
     });
 
@@ -479,15 +512,19 @@ export const agentOrchestrator = {
     const planHash = computePlanHash(parseResult.data);
     const plan: TaskPlanDraft = { ...parseResult.data, planHash };
 
-    await input.ctx.db.insert(agentTaskPlannerDrafts).values({
-      id: draftId,
-      userId,
-      projectId: input.scope.projectId,
-      message: input.message,
-      planJson: JSON.stringify(plan),
-      planHash,
-      status: "draft",
-    });
+    // Persist the draft only when we have a resolved projectId.
+    // If projectId is missing/ambiguous, A2 should return questionsForUser and we skip persistence.
+    if (typeof resolvedProjectId === "number") {
+      await input.ctx.db.insert(agentTaskPlannerDrafts).values({
+        id: draftId,
+        userId,
+        projectId: resolvedProjectId,
+        message: input.message,
+        planJson: JSON.stringify(plan),
+        planHash,
+        status: "draft",
+      });
+    }
 
     return { draftId, plan };
   },

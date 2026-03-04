@@ -53,11 +53,24 @@ export async function buildA1Context(
   // 1. Session context
   const sessionResult = await A1_READ_TOOLS.getSessionContext.execute(ctx, {} as never);
 
-  // 2. Projects (top 10)
-  const projectsResult = await A1_READ_TOOLS.listProjects.execute(ctx, { limit: 10 });
+  // 2. Projects (privacy default)
+  // Only fetch project lists when the user explicitly scoped to a project,
+  // otherwise avoid loading workspace project names/titles into the prompt.
+  const projectId = scope?.projectId
+    ? typeof scope.projectId === "string"
+      ? Number(scope.projectId)
+      : scope.projectId
+    : null;
 
-  // 3. Notifications (top 10)
-  const notificationsResult = await A1_READ_TOOLS.listNotifications.execute(ctx, { limit: 10 });
+  const projectsResult = projectId && Number.isFinite(projectId)
+    ? await A1_READ_TOOLS.listProjects.execute(ctx, { limit: 10 })
+    : [];
+
+  // 3. Notifications (privacy default)
+  // Avoid listing notifications unless explicitly scoped to a project.
+  const notificationsResult = projectId && Number.isFinite(projectId)
+    ? await A1_READ_TOOLS.listNotifications.execute(ctx, { limit: 10 })
+    : [];
 
   // 4. Tasks — only if a projectId is in scope
   let tasksResult: Array<{
@@ -69,11 +82,7 @@ export async function buildA1Context(
     updatedAt: Date;
   }> = [];
 
-  const projectId = scope?.projectId
-    ? typeof scope.projectId === "string"
-      ? Number(scope.projectId)
-      : scope.projectId
-    : null;
+  // projectId derived above
 
   if (projectId && Number.isFinite(projectId)) {
     tasksResult = await A1_READ_TOOLS.listTasks.execute(ctx, {
