@@ -270,16 +270,9 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
 
   const a1Mutation = api.agent.projectChatbot.useMutation({
     onMutate: ({ message }) => {
-      const userText = message.trim();
-      if (!userText) return;
-
-      setMessages((prev) => [
-        ...prev,
-        { role: "user", text: userText, createdAt: new Date() },
-        { role: "agent", text: THINKING_SENTINEL, createdAt: new Date() },
-      ]);
-
-      setDraft("");
+      // Do not append messages here; handleSend() owns optimistic UI.
+      // This prevents duplicate user messages / thinking indicators and makes tests deterministic.
+      void message;
     },
     onError: (err) => {
       setMessages((prev) =>
@@ -433,6 +426,9 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
     );
   }, []);
 
+  // Keep task-intent detection closest to the "default A1" path so it can't regress.
+  const isTaskIntentRuntime = isTaskIntent;
+
   /* ---------- Task Planner Pipeline (auto draft → confirm → apply) ---------- */
 
   const runTaskPlannerPipeline = useCallback(
@@ -440,11 +436,8 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
       userMessage: string,
       handoffContext?: Record<string, unknown>,
     ) => {
-      // Show a sub-agent working indicator (distinct from normal thinking)
-      setMessages((prev) => [
-        ...prev,
-        { role: "agent", text: SUBAGENT_SENTINEL, createdAt: new Date() },
-      ]);
+      // Sub-agent working indicator is already inserted by the caller.
+      // Keep this function pure to avoid duplicate "thinking" bubbles.
 
       try {
         /* Step 1: Draft */
@@ -584,7 +577,7 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
       setDraft("");
 
       // Client-side greeting detection — instant response, no API call
-      if (GREETING_PATTERNS.test(msg) && msg.split(/\s+/).length <= 5) {
+      if (GREETING_PATTERNS.test(msg) && msg.split(/\s+/).length <= 3) {
         setMessages((prev) => [
           ...prev,
           { role: "user", text: msg, createdAt: new Date() },
@@ -599,7 +592,7 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
 
       const run = async () => {
         /* ---- Task planner path (auto draft → confirm → apply) ---- */
-        if (isTaskIntent(msg)) {
+        if (isTaskIntentRuntime(msg)) {
           setMessages((prev) => [
             ...prev,
             { role: "user", text: msg, createdAt: new Date() },
@@ -608,6 +601,8 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
               text: t("handoffTaskPlanner"),
               createdAt: new Date(),
             },
+            // "thinking..." field (sub-agent work indicator)
+            { role: "agent", text: SUBAGENT_SENTINEL, createdAt: new Date() },
           ]);
 
           await runTaskPlannerPipeline(msg);
@@ -788,6 +783,12 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
         }
 
         /* ---- Default: A1 workspace chatbot ---- */
+        setMessages((prev) => [
+          ...prev,
+          { role: "user", text: msg, createdAt: new Date() },
+          { role: "agent", text: THINKING_SENTINEL, createdAt: new Date() },
+        ]);
+
         await a1Mutation.mutateAsync({
           projectId,
           message: clampText(msg),
@@ -916,7 +917,7 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
         className="flex-1 min-h-0 overflow-y-auto px-4 py-6"
         style={{ backgroundColor: "rgb(var(--bg-primary))" }}
       >
-        <div className="w-full space-y-3">
+        <div className="w-full space-y-4">
           {messages.length === 0 ? (
             <div className="py-8 text-center space-y-5">
               <div

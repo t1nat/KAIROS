@@ -1375,24 +1375,24 @@ async function buildFallbackResponse(
   context: Awaited<ReturnType<typeof buildA1Context>>,
   input: AgentDraftInput,
 ): Promise<A1Output> {
-  void input;
-  const unreadNotifications = context.notifications.filter((n) => !n.read).length;
-  const projectCount = context.projects.length;
-  const taskSummary =
-    context.tasks.length > 0
-      ? `You have ${context.tasks.length} tasks in the current project scope.`
-      : "";
+  // Privacy + UX: do NOT dump workspace/project lists unless explicitly asked.
+  // Fallback should be a neutral "I'm unavailable" response that still guides the user.
+  void context;
 
   const safeScope = input.scope ?? {};
   return {
-    intent: { type: "answer" as const, scope: { orgId: safeScope.orgId, projectId: safeScope.projectId } },
+    intent: {
+      type: "answer" as const,
+      scope: { orgId: safeScope.orgId, projectId: safeScope.projectId },
+    },
     answer: {
-      summary: `Here's a quick overview of your workspace: ${projectCount} project(s), ${unreadNotifications} unread notification(s). ${taskSummary} (Note: The AI assistant is currently unavailable — this is a pre-built summary from your workspace data.)`,
+      summary:
+        "I’m having trouble generating an AI response right now. Try rephrasing your question or be more specific about what you need.",
       details: [
-        `Projects: ${context.projects.map((p) => p.title).join(", ") || "none"}`,
-        `Unread notifications: ${unreadNotifications}`,
+        "• Ask a direct question (e.g., ‘What’s the status of Project X?’)",
+        "• If you want tasks created, say ‘create tasks for …’ and I’ll hand it off to the Task Planner",
       ],
     },
-    citations: [{ label: "fallback", ref: "context_pack" }],
+    citations: [{ label: "fallback", ref: "ai_unavailable" }],
   };
 }
