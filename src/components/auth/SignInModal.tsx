@@ -135,14 +135,14 @@ export function SignInModal({
       />
 
       {/* Modal */}
-      <div className="relative bg-[#0a0a0f] rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/[0.08] kairos-modal-content">
+      <div className="relative dark:bg-[#0a0a0f] bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden dark:border-white/[0.08] border border-slate-200 kairos-modal-content">
         {/* Subtle gradient border effect */}
         <div className="absolute inset-0 rounded-3xl bg-gradient-to-b from-accent-primary/10 via-transparent to-transparent pointer-events-none" />
         
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 z-10 p-1.5 rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+          className="absolute top-5 right-5 z-10 p-1.5 rounded-full dark:text-white/40 text-slate-400 dark:hover:text-white hover:text-slate-700 dark:hover:bg-white/10 hover:bg-slate-100 transition-colors"
           aria-label="Close"
         >
           <X size={18} />
@@ -161,10 +161,10 @@ export function SignInModal({
             />
           </div>
 
-          <h2 className="text-2xl font-bold text-white mb-2 font-display tracking-tight">
+          <h2 className="text-2xl font-bold dark:text-white text-slate-900 mb-2 font-display tracking-tight">
             {isSignUp ? "Create your account" : "Welcome Back"}
           </h2>
-          <p className="text-white/50 text-sm leading-relaxed">
+          <p className="dark:text-white/50 text-slate-500 text-sm leading-relaxed">
             {isSignUp
               ? "Join the Kairos workspace today."
               : "Enter your details to access your workspace"
@@ -174,7 +174,7 @@ export function SignInModal({
 
         <div className="relative px-8 pb-8 space-y-5">
           {error && (
-            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-300 text-sm text-center">
+            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl dark:text-red-300 text-red-600 text-sm text-center">
               {error}
             </div>
           )}
@@ -189,11 +189,11 @@ export function SignInModal({
           <form onSubmit={isSignUp ? handleSignUp : handleEmailSignIn} className="space-y-4">
             {isSignUp && (
               <div className="space-y-2">
-                <label htmlFor="name" className="block text-xs font-bold text-white/60 uppercase tracking-wider">
+                <label htmlFor="name" className="block text-xs font-bold dark:text-white/60 text-slate-600 uppercase tracking-wider">
                   Full Name
                 </label>
                 <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={18} />
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 dark:text-white/30 text-slate-400" size={18} />
                   <input
                     id="name"
                     type="text"
@@ -201,18 +201,18 @@ export function SignInModal({
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Enter your full name"
                     disabled={isLoading}
-                    className="w-full pl-12 pr-4 py-3.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white placeholder:text-white/25 focus:outline-none focus:border-accent-primary/50 focus:bg-white/[0.06] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    className="w-full pl-12 pr-4 py-3.5 dark:bg-white/[0.04] bg-slate-50 dark:border-white/[0.08] border border-slate-300 rounded-xl dark:text-white text-slate-900 dark:placeholder:text-white/25 placeholder:text-slate-400 focus:outline-none focus:border-accent-primary/50 dark:focus:bg-white/[0.06] focus:bg-slate-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                   />
                 </div>
               </div>
             )}
 
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-xs font-bold text-white/60 uppercase tracking-wider">
+              <label htmlFor="email" className="block text-xs font-bold dark:text-white/60 text-slate-600 uppercase tracking-wider">
                 Email Address
               </label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={18} />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 dark:text-white/30 text-slate-400" size={18} />
                 <input
                   id="email"
                   type="email"
@@ -221,17 +221,17 @@ export function SignInModal({
                   placeholder="name@company.com"
                   required
                   disabled={isLoading}
-                  className="w-full pl-12 pr-4 py-3.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white placeholder:text-white/25 focus:outline-none focus:border-accent-primary/50 focus:bg-white/[0.06] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  className="w-full pl-12 pr-4 py-3.5 dark:bg-white/[0.04] bg-slate-50 dark:border-white/[0.08] border border-slate-300 rounded-xl dark:text-white text-slate-900 dark:placeholder:text-white/25 placeholder:text-slate-400 focus:outline-none focus:border-accent-primary/50 dark:focus:bg-white/[0.06] focus:bg-slate-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password" className="block text-xs font-bold text-white/60 uppercase tracking-wider">
+              <label htmlFor="password" className="block text-xs font-bold dark:text-white/60 text-slate-600 uppercase tracking-wider">
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={18} />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 dark:text-white/30 text-slate-400" size={18} />
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
@@ -241,12 +241,12 @@ export function SignInModal({
                   required
                   minLength={isSignUp ? 8 : undefined}
                   disabled={isLoading}
-                  className="w-full pl-12 pr-12 py-3.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white placeholder:text-white/25 focus:outline-none focus:border-accent-primary/50 focus:bg-white/[0.06] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  className="w-full pl-12 pr-12 py-3.5 dark:bg-white/[0.04] bg-slate-50 dark:border-white/[0.08] border border-slate-300 rounded-xl dark:text-white text-slate-900 dark:placeholder:text-white/25 placeholder:text-slate-400 focus:outline-none focus:border-accent-primary/50 dark:focus:bg-white/[0.06] focus:bg-slate-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 dark:text-white/30 text-slate-400 dark:hover:text-white/60 hover:text-slate-600 transition-colors"
                   tabIndex={-1}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -261,14 +261,14 @@ export function SignInModal({
                   <div
                     onClick={() => setRememberMe(!rememberMe)}
                     className={`w-4 h-4 rounded-full border-2 transition-all duration-200 flex items-center justify-center ${
-                      rememberMe ? 'border-accent-primary bg-accent-primary' : 'border-white/20 hover:border-white/40'
+                      rememberMe ? 'border-accent-primary bg-accent-primary' : 'dark:border-white/20 border-slate-300 dark:hover:border-white/40 hover:border-slate-500'
                     }`}
                   >
                     {rememberMe && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                   </div>
-                  <span className="text-white/50 group-hover:text-white/70 transition-colors">Remember me</span>
+                  <span className="dark:text-white/50 text-slate-500 dark:group-hover:text-white/70 group-hover:text-slate-700 transition-colors">Remember me</span>
                 </label>
-                <button type="button" className="text-white/50 hover:text-white/70 transition-colors">
+                <button type="button" className="dark:text-white/50 text-slate-500 dark:hover:text-white/70 hover:text-slate-700 transition-colors">
                   Forgot password?
                 </button>
               </div>
@@ -280,7 +280,7 @@ export function SignInModal({
                 <div
                   onClick={() => setAgreeTerms(!agreeTerms)}
                   className={`mt-0.5 w-4 h-4 rounded border transition-all duration-200 flex items-center justify-center flex-shrink-0 ${
-                    agreeTerms ? 'border-accent-primary bg-accent-primary' : 'border-white/20 hover:border-white/40'
+                    agreeTerms ? 'border-accent-primary bg-accent-primary' : 'dark:border-white/20 border-slate-300 dark:hover:border-white/40 hover:border-slate-500'
                   }`}
                 >
                   {agreeTerms && (
@@ -289,7 +289,7 @@ export function SignInModal({
                     </svg>
                   )}
                 </div>
-                <span className="text-white/50 leading-relaxed">
+                <span className="dark:text-white/50 text-slate-500 leading-relaxed">
                   I agree to the <span className="text-accent-primary underline underline-offset-2 cursor-pointer hover:text-accent-primary/80">Terms of Service</span> and <span className="text-accent-primary underline underline-offset-2 cursor-pointer hover:text-accent-primary/80">Privacy Policy</span>.
                 </span>
               </label>
@@ -320,16 +320,16 @@ export function SignInModal({
           {!isSignUp && (
             <>
               <div className="flex items-center gap-4">
-                <div className="flex-1 border-t border-white/[0.08]" />
-                <span className="text-[10px] font-bold text-white/30 uppercase tracking-[0.15em]">Or continue with</span>
-                <div className="flex-1 border-t border-white/[0.08]" />
+                <div className="flex-1 border-t dark:border-white/[0.08] border-slate-200" />
+                <span className="text-[10px] font-bold dark:text-white/30 text-slate-400 uppercase tracking-[0.15em]">Or continue with</span>
+                <div className="flex-1 border-t dark:border-white/[0.08] border-slate-200" />
               </div>
 
               <div className="flex gap-3">
                 <button
                   onClick={handleGoogleSignIn}
                   disabled={isLoading}
-                  className="flex-1 flex items-center justify-center gap-2.5 px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl font-medium text-white/80 hover:bg-white/[0.08] hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  className="flex-1 flex items-center justify-center gap-2.5 px-4 py-3 dark:bg-white/[0.04] bg-slate-50 dark:border-white/[0.08] border border-slate-300 rounded-xl font-medium dark:text-white/80 text-slate-700 dark:hover:bg-white/[0.08] hover:bg-slate-100 dark:hover:text-white hover:text-slate-900 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                 >
                   <svg viewBox="0 0 24 24" className="w-4 h-4">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -347,10 +347,10 @@ export function SignInModal({
             <button
               onClick={toggleMode}
               disabled={isLoading}
-              className="text-sm text-white/50 hover:text-white/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-sm dark:text-white/50 text-slate-500 dark:hover:text-white/80 hover:text-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSignUp ? (
-                <>Already have an account? <span className="font-semibold text-white">Log In</span></>
+                <>Already have an account? <span className="font-semibold dark:text-white text-slate-900">Log In</span></>
               ) : (
                 <>Don&#39;t have an account?  <span className="font-semibold text-accent-primary">Create account</span></>
               )}

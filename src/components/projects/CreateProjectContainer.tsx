@@ -337,7 +337,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
  {/* Create New Project Card */}
  {!selectedProjectId && (
  <div className="animate-in slide-in-from-top-2 duration-200">
- <div className="bg-bg-secondary rounded-[10px] overflow-hidden border border-white/[0.06]">
+ <div className="bg-bg-secondary rounded-[10px] overflow-hidden border border-slate-200 dark:border-white/[0.06] shadow-sm dark:shadow-none">
  <button
  onClick={() => setIsCreateProjectExpanded(!isCreateProjectExpanded)}
  className="w-full flex items-center justify-between pl-4 pr-[18px] py-[11px] active:bg-bg-tertiary transition-colors"
@@ -389,7 +389,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
  <button
  key={project.id}
  onClick={() => setSelectedProjectId(project.id)}
- className="w-full flex items-center justify-between pl-4 pr-[18px] py-[11px] bg-bg-secondary rounded-[10px] border border-white/[0.06] active:bg-bg-tertiary transition-colors group"
+ className="w-full flex items-center justify-between pl-4 pr-[18px] py-[11px] bg-bg-secondary rounded-[10px] border border-slate-200 dark:border-white/[0.06] shadow-sm dark:shadow-none active:bg-bg-tertiary transition-colors group"
  >
  <div className="flex items-center gap-3">
  <div className="w-[30px] h-[30px] rounded-full bg-bg-tertiary flex items-center justify-center">
@@ -418,7 +418,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
  {selectedProjectId && projectDetails && (
  <div className="space-y-4 animate-in fade-in slide-in-from-left-2 duration-300">
  {/* Project Header Card */}
- <div className="bg-bg-secondary rounded-[10px] overflow-hidden border border-white/[0.06]">
+ <div className="bg-bg-secondary rounded-[10px] overflow-hidden border border-slate-200 dark:border-white/[0.06] shadow-sm dark:shadow-none">
  {/* Back Button & Actions */}
  <div className="flex items-center justify-between px-4 pt-4 pb-3">
  <button
@@ -455,7 +455,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
  </div>
  </div>
 
- <div className="h-[0.33px] border-t border-white/[0.04] mx-4 mb-4" />
+ <div className="h-[0.33px] border-t border-slate-200 dark:border-white/[0.04] mx-4 mb-4" />
 
  {/* Project Title & Description */}
  <div className="flex items-start gap-3 px-4 mb-4">
@@ -474,7 +474,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
 
  {/* Access Indicator */}
  {!isOwner && (
- <div className="flex items-center gap-2 pt-4 px-4 border-t border-t border-white/[0.04]">
+ <div className="flex items-center gap-2 pt-4 px-4 border-t border-slate-100 dark:border-white/[0.04]">
  <span
  className={`inline-flex items-center gap-1.5 text-[13px] px-3 py-1.5 rounded-lg font-medium ${
  hasWriteAccess
@@ -496,7 +496,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
 
  {/* Team Members Section */}
  {isOwner && (
- <div className="mt-4 pt-4 px-4 border-t border-t border-white/[0.04]">
+ <div className="mt-4 pt-4 px-4 border-t border-slate-100 dark:border-white/[0.04]">
  <h3 className="text-[13px] leading-[1.3846] tracking-[-0.006em] text-fg-secondary mb-3 flex items-center gap-2 px-1 uppercase tracking-wide">
  <Users size={14} className="text-accent-primary" strokeWidth={2.2} />
  {t("team.title")}

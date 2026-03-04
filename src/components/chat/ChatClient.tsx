@@ -167,7 +167,7 @@ export function ChatClient({ userId }: { userId: string }) {
   };
 
   return (
-<div className="flex flex-col sm:flex-row h-full w-full bg-gray-900">      
+<div className="flex flex-col sm:flex-row h-full w-full dark:bg-gray-900 bg-white">      
       {showNewChatModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-bg-secondary rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in fade-in slide-in-from-bottom-4">

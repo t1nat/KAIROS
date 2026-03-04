@@ -299,7 +299,7 @@ export function NotesList() {
             onClick={closeExpandedNote}
           >
             <div
-              className="bg-bg-elevated rounded-2xl shadow-2xl max-w-lg w-full max-h-[80vh] overflow-auto p-6 animate-[popIn_200ms_cubic-bezier(0.34,1.56,0.64,1)]"
+              className="dark:bg-[#16151A] bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[80vh] overflow-auto p-6 animate-[popIn_200ms_cubic-bezier(0.34,1.56,0.64,1)]"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">
@@ -352,7 +352,7 @@ export function NotesList() {
       {/* Reset Prompt Modal (after 2 failed unlock attempts) */}
       {showResetPromptModal !== null && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-bg-secondary rounded-2xl shadow-2xl max-w-md w-full p-6">
+          <div className="dark:bg-[#16151A] bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 bg-error/10 shadow-sm rounded-lg flex items-center justify-center">
                 <AlertCircle className="text-error" size={20} />
@@ -374,7 +374,7 @@ export function NotesList() {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowResetPromptModal(null)}
-                className="flex-1 px-4 py-3.5 border-white/[0.06] text-fg-primary hover:bg-bg-tertiary transition-colors rounded-xl text-[17px] font-[590]"
+                className="flex-1 px-4 py-3.5 dark:border-white/[0.06] border border-slate-200 text-fg-primary hover:bg-bg-tertiary transition-colors rounded-xl text-[17px] font-[590]"
               >
                 Try again
               </button>
@@ -395,7 +395,7 @@ export function NotesList() {
       {/* Password Reset Modal (PIN-based) */}
       {showResetModal !== null && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-bg-secondary rounded-2xl shadow-2xl max-w-md w-full p-6">
+          <div className="dark:bg-[#16151A] bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-10 h-10 bg-accent-primary/10 shadow-sm rounded-lg flex items-center justify-center">
                 <KeyRound className="text-accent-primary" size={20} />
@@ -414,7 +414,7 @@ export function NotesList() {
               {t("notes.reset.descPin")}
             </p>
 
-            <div className="bg-bg-elevated/60 border border-white/[0.06] rounded-xl p-4 mb-5 space-y-3">
+            <div className="dark:bg-[#1A191E] bg-slate-50 border dark:border-white/[0.06] border-slate-200 rounded-xl p-4 mb-5 space-y-3">
               <div>
                 <label className="block text-[13px] font-[590] text-fg-secondary mb-2">
                   {t("notes.reset.pinLabel")}
@@ -427,7 +427,7 @@ export function NotesList() {
                     setResetPinError(null);
                   }}
                   placeholder={t("notes.reset.pinPlaceholder")}
-                  className="w-full bg-bg-surface/60 text-fg-primary text-[15px] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 border border-white/[0.06]"
+                  className="w-full dark:bg-bg-surface/60 bg-slate-100 text-fg-primary text-[15px] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 dark:border-white/[0.06] border border-slate-200"
                 />
               </div>
               <div>
@@ -456,7 +456,7 @@ export function NotesList() {
                     type={showNewPasswords ? "text" : "password"}
                     value={newPasswordInput}
                     onChange={(e) => setNewPasswordInput(e.target.value)}
-                    className="w-full bg-bg-surface/60 text-fg-primary text-[15px] rounded-xl px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 border border-white/[0.06]"
+                    className="w-full dark:bg-bg-surface/60 bg-slate-100 text-fg-primary text-[15px] rounded-xl px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 dark:border-white/[0.06] border border-slate-200"
                   />
                   <button
                     type="button"
@@ -476,7 +476,7 @@ export function NotesList() {
                   type={showNewPasswords ? "text" : "password"}
                   value={confirmNewPasswordInput}
                   onChange={(e) => setConfirmNewPasswordInput(e.target.value)}
-                  className="w-full bg-bg-surface/60 text-fg-primary text-[15px] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 border border-white/[0.06]"
+                  className="w-full dark:bg-bg-surface/60 bg-slate-100 text-fg-primary text-[15px] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 dark:border-white/[0.06] border border-slate-200"
                 />
               </div>
             </div>
@@ -563,7 +563,7 @@ function LockedNoteContent(props: LockedNoteContentProps) {
             onChange={(e) => onPasswordChange(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && onSubmit()}
             placeholder={t("notes.password.placeholder")}
-            className="w-full bg-bg-surface/60 text-fg-primary text-[15px] rounded-xl px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 focus:bg-bg-surface border border-white/[0.06] shadow-sm transition-all"
+            className="w-full dark:bg-bg-surface/60 bg-slate-100 text-fg-primary text-[15px] rounded-xl px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 dark:focus:bg-bg-surface dark:border-white/[0.06] border border-slate-200 shadow-sm transition-all"
           />
           <button
             type="button"

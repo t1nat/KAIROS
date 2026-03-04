@@ -1,5 +1,71 @@
 @import "tailwindcss";
 
+/* Force class-based dark mode so that dark: utilities only activate
+   when next-themes adds .dark to <html>, not via prefers-color-scheme. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ─── Tailwind v4 Theme Registration ───
+   Registers custom design-token colors, fonts and shadows so that utility
+   classes like `text-accent-primary`, `bg-fg-secondary/50`, `font-display`,
+   `shadow-accent` etc. are generated.  Values reference the CSS custom
+   properties defined further down in :root / .dark so they stay dynamic. */
+@theme inline {
+  /* Background palette */
+  --color-bg-primary: rgb(var(--bg-primary));
+  --color-bg-secondary: rgb(var(--bg-secondary));
+  --color-bg-tertiary: rgb(var(--bg-tertiary));
+  --color-bg-elevated: rgb(var(--bg-elevated));
+  --color-bg-surface: rgb(var(--bg-surface));
+  --color-bg-overlay: rgb(var(--bg-overlay));
+
+  /* Foreground / text palette */
+  --color-fg-primary: rgb(var(--fg-primary));
+  --color-fg-secondary: rgb(var(--fg-secondary));
+  --color-fg-tertiary: rgb(var(--fg-tertiary));
+  --color-fg-quaternary: rgb(var(--fg-quaternary));
+
+  /* Border palette */
+  --color-border-light: rgb(var(--border-light));
+  --color-border-medium: rgb(var(--border-medium));
+  --color-border-strong: rgb(var(--border-strong));
+
+  /* Accent (theme-switchable) */
+  --color-accent-primary: rgb(var(--accent-primary));
+  --color-accent-secondary: rgb(var(--accent-secondary));
+  --color-accent-tertiary: rgb(var(--accent-tertiary));
+  --color-accent-hover: rgb(var(--accent-hover));
+
+  /* Brand palette */
+  --color-brand-purple: rgb(var(--brand-purple));
+  --color-brand-pink: rgb(var(--brand-pink));
+  --color-brand-caramel: rgb(var(--brand-caramel));
+  --color-brand-mint: rgb(var(--brand-mint));
+  --color-brand-sky: rgb(var(--brand-sky));
+  --color-brand-strawberry: rgb(var(--brand-strawberry));
+
+  /* Status */
+  --color-success: rgb(var(--success));
+  --color-warning: rgb(var(--warning));
+  --color-error: rgb(var(--error));
+  --color-info: rgb(var(--info));
+
+  /* Semantic event colors */
+  --color-event-active: rgb(var(--event-active));
+  --color-event-upcoming: rgb(var(--event-upcoming));
+  --color-event-completed: rgb(var(--event-completed));
+  --color-event-cancelled: rgb(var(--event-cancelled));
+  --color-event-positive: rgb(var(--event-positive));
+  --color-event-pending: rgb(var(--event-pending));
+  --color-event-critical: rgb(var(--event-critical));
+
+  /* Font families */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif, "KairosEmoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-display: var(--font-display), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+
+  /* Box shadows */
+  --shadow-accent: 0 10px 25px -5px rgb(var(--accent-primary) / 0.3);
+}
+
 :root {
   color-scheme: light;
 }
@@ -68,6 +134,9 @@
   --event-upcoming: var(--brand-sky);
   --event-completed: 34 197 94;
   --event-cancelled: 148 163 184;
+  --event-positive: 34 197 94;
+  --event-pending: 251 146 60;
+  --event-critical: 239 68 68;
   
   /* Shadow Tokens */
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -192,6 +261,9 @@
   --event-upcoming: var(--brand-sky);
   --event-completed: 74 222 128;
   --event-cancelled: 113 113 122;
+  --event-positive: 74 222 128;
+  --event-pending: 251 191 36;
+  --event-critical: 248 113 113;
   
   /* Shadow Tokens - Dark (more prominent) */
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
@@ -330,10 +402,15 @@ summary,
 }
 
 /* Consistent focus treatment (keyboard accessibility) */
-:where(a, button, input, textarea, select, summary, [role="button"], [tabindex]):focus-visible {
+:where(a, button, summary, [role="button"], [tabindex]):focus-visible {
   outline: 2px solid rgb(var(--accent-primary));
   outline-offset: 2px;
-  border-radius: 9999px;
+}
+
+/* Inputs/textareas/selects keep their own border-radius on focus */
+:where(input, textarea, select):focus-visible {
+  outline: 2px solid rgb(var(--accent-primary));
+  outline-offset: 2px;
 }
 
 /* Skip link for keyboard and screen readers */
@@ -495,6 +572,35 @@ summary,
   box-shadow: var(--shadow-xl);
   transform: translateY(-4px);
   border-color: rgb(var(--accent-primary) / 0.5);
+}
+
+/* Events page utilities */
+.purple-glow {
+  box-shadow: 0 0 20px rgb(var(--accent-primary) / 0.15);
+}
+
+.purple-glow-soft {
+  box-shadow: 0 4px 20px rgb(var(--accent-primary) / 0.08);
+}
+
+.card-shadow {
+  box-shadow: 0 2px 15px rgb(0 0 0 / 0.04);
+}
+
+.modal-gradient {
+  background: radial-gradient(circle at top right, rgb(var(--accent-primary) / 0.08), transparent);
+}
+
+.progress-bar-glow {
+  box-shadow: 0 0 8px rgb(var(--accent-primary) / 0.4);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 ::-webkit-scrollbar {
@@ -767,6 +873,7 @@ summary,
   background-color: rgba(var(--accent-primary), 0.2);
 }
 
+/* Global focus — inherits the element's own border-radius */
 *:focus-visible {
   outline: 2px solid rgb(var(--accent-primary));
   outline-offset: 2px;
@@ -1849,12 +1956,12 @@ summary,
 
 /* Create Entry Card */
 .create-entry-card {
-  background: rgb(var(--bg-elevated));
-  box-shadow: var(--shadow-sm), 0 0 0 1px rgb(var(--accent-primary) / 0.04);
+  background: rgb(255 255 255);
+  box-shadow: var(--shadow-md), 0 0 0 1px rgb(var(--border-light) / 0.6);
   transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 .create-entry-card:hover {
-  box-shadow: var(--shadow-md), 0 0 0 1px rgb(var(--accent-primary) / 0.08), 0 8px 32px rgb(var(--accent-primary) / 0.06);
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgb(var(--accent-primary) / 0.15), 0 8px 32px rgb(var(--accent-primary) / 0.08);
 }
 .dark .create-entry-card {
   background: rgb(14 14 18);
@@ -1866,12 +1973,12 @@ summary,
 
 /* Timeline Entry Cards */
 .timeline-card {
-  background: rgb(var(--bg-elevated));
-  box-shadow: var(--shadow-xs), 0 0 0 1px rgb(0 0 0 / 0.02);
+  background: rgb(255 255 255);
+  box-shadow: var(--shadow-sm), 0 0 0 1px rgb(var(--border-light) / 0.5);
   transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
 }
 .timeline-card:hover {
-  box-shadow: var(--shadow-md), 0 0 0 1px rgb(var(--accent-primary) / 0.06);
+  box-shadow: var(--shadow-md), 0 0 0 1px rgb(var(--accent-primary) / 0.12);
 }
 .dark .timeline-card {
   background: rgb(14 14 18);

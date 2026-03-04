@@ -247,7 +247,7 @@ export function InteractiveTimeline({
 
  {/* Progress Section */}
  <div className="mb-8">
- <div className="bg-bg-secondary rounded-[10px] p-4 sm:p-6 border border-white/[0.06]">
+ <div className="bg-bg-secondary rounded-[10px] p-4 sm:p-6 border border-slate-200 dark:border-white/[0.06] shadow-sm dark:shadow-none">
  <div className="flex items-center justify-between mb-4">
  <div>
  <div className="text-[17px] leading-[1.235] tracking-[-0.016em] text-fg-primary font-[590] mb-1">
@@ -298,7 +298,7 @@ export function InteractiveTimeline({
  if (el) taskRefs.current.set(task.id, el);
  else taskRefs.current.delete(task.id);
  }}
- className={`bg-bg-secondary rounded-[10px] overflow-hidden border border-white/[0.06] ${isHighlighted ?"ring-2 ring-accent-primary/50" :""}`}
+ className={`bg-bg-secondary rounded-[10px] overflow-hidden border border-slate-200 dark:border-white/[0.06] shadow-sm dark:shadow-none ${isHighlighted ?"ring-2 ring-accent-primary/50" :""}`}
  onMouseEnter={() => setHoveredTaskId(task.id)}
  onMouseLeave={() => setHoveredTaskId(null)}
  >
@@ -393,7 +393,7 @@ export function InteractiveTimeline({
 
  {/* Expanded Details */}
  {isExpanded && (
- <div className="px-4 pb-4 border-t border-t border-white/[0.04] pt-4">
+ <div className="px-4 pb-4 border-t border-slate-100 dark:border-white/[0.04] pt-4">
  {task.description && (
  <p className="text-[15px] leading-[1.4667] tracking-[-0.01em] text-fg-secondary mb-4">
  {task.description}

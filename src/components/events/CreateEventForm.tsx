@@ -5,9 +5,8 @@ import { api } from '~/trpc/react';
 import { useSession } from 'next-auth/react';
 import { useUploadThing } from '~/lib/uploadthing';
 import Image from 'next/image';
-import { X, ImagePlus, Loader2, MapPin } from 'lucide-react';
+import { X, ImagePlus, Loader2, MapPin, Calendar, Clock, Plus, ChevronDown } from 'lucide-react';
 import { useToast } from "~/components/providers/ToastProvider";
-import { RegionMapPicker, type RegionOption } from "~/components/events/RegionMapPicker";
 
 const REGIONS = [
   { value: 'sofia', label: 'Sofia' },
@@ -22,24 +21,12 @@ const REGIONS = [
   { value: 'shumen', label: 'Shumen' },
 ] as const;
 
-const REGION_MAP: RegionOption[] = [
-  { value: "sofia", label: "Sofia", lat: 42.6977, lng: 23.3219 },
-  { value: "plovdiv", label: "Plovdiv", lat: 42.1354, lng: 24.7453 },
-  { value: "varna", label: "Varna", lat: 43.2141, lng: 27.9147 },
-  { value: "burgas", label: "Burgas", lat: 42.5048, lng: 27.4626 },
-  { value: "ruse", label: "Ruse", lat: 43.8356, lng: 25.9657 },
-  { value: "stara_zagora", label: "Stara Zagora", lat: 42.4258, lng: 25.6345 },
-  { value: "pleven", label: "Pleven", lat: 43.4170, lng: 24.6067 },
-  { value: "sliven", label: "Sliven", lat: 42.6810, lng: 26.3220 },
-  { value: "dobrich", label: "Dobrich", lat: 43.5726, lng: 27.8273 },
-  { value: "shumen", label: "Shumen", lat: 43.2706, lng: 26.9229 },
-];
-
 interface CreateEventFormProps {
   onSuccess?: () => void;
+  onClose?: () => void;
 }
 
-export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess }) => {
+export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess, onClose }) => {
   const { data: session } = useSession();
   const utils = api.useUtils();
   const toast = useToast();
@@ -47,6 +34,8 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess }) =
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [eventDate, setEventDate] = useState('');
+  const [eventTime, setEventTime] = useState('');
+  const [location, setLocation] = useState('');
   const [region, setRegion] = useState<string>('sofia');
   const [enableRsvp, setEnableRsvp] = useState(false);
   const [sendReminders, setSendReminders] = useState(false);
@@ -69,6 +58,8 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess }) =
       setTitle('');
       setDescription('');
       setEventDate('');
+      setEventTime('');
+      setLocation('');
       setRegion('sofia');
       setEnableRsvp(false);
       setSendReminders(false);
@@ -108,7 +99,9 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess }) =
       return;
     }
 
-    if (!title.trim() || !description.trim() || !eventDate || !region) {
+    const combinedDateTime = eventDate && eventTime ? `${eventDate}T${eventTime}` : eventDate;
+
+    if (!title.trim() || !description.trim() || !combinedDateTime || !region) {
       toast.info('Please fill in all required fields');
       return;
     }
@@ -125,11 +118,11 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess }) =
       createEvent.mutate({
         title: title.trim(),
         description: description.trim(),
-        eventDate: new Date(eventDate),
+        eventDate: new Date(combinedDateTime),
         region: region as "sofia" | "plovdiv" | "varna" | "burgas" | "ruse" | "stara_zagora" | "pleven" | "sliven" | "dobrich" | "shumen",
         imageUrl,
         enableRsvp,
-        sendReminders: enableRsvp ? sendReminders : false, // Only send reminders if RSVP is enabled
+        sendReminders: enableRsvp ? sendReminders : false,
       });
     } catch (error) {
       toast.error('Failed to upload image');
@@ -148,10 +141,123 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess }) =
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Image upload — prominent, Instagram-style */}
-      <div>
-        {imagePreview ? (
+    <form onSubmit={handleSubmit} className="flex flex-col max-h-[90vh]">
+      {/* Modal Header — matches create-event.html */}
+      <div className="px-6 py-4 border-b dark:border-white/5 border-slate-200 flex items-center justify-between shrink-0">
+        <h2 className="text-lg font-display font-bold dark:text-white text-slate-900 tracking-tight">Create Event</h2>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-accent-primary/60 hover:text-accent-primary transition-colors rounded-full p-1.5 dark:hover:bg-white/5 hover:bg-accent-primary/5"
+          >
+            <X size={20} />
+          </button>
+        )}
+      </div>
+
+      {/* Modal Body — scrollable */}
+      <div className="px-6 py-5 space-y-5 overflow-y-auto flex-1">
+        {/* Event Title — large display font */}
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Event Title"
+          maxLength={256}
+          className="w-full text-xl sm:text-2xl font-bold font-display dark:text-white text-slate-900 dark:placeholder-gray-600 placeholder-slate-300 border-none focus:ring-0 px-0 bg-transparent"
+          disabled={createEvent.isPending || isUploading}
+          required
+        />
+
+        {/* Fields */}
+        <div className="space-y-3">
+          {/* Region — dropdown at top */}
+          <div>
+            <label className="block text-[10px] font-bold dark:text-gray-500 text-slate-500 uppercase tracking-[0.15em] mb-1.5">
+              <MapPin className="inline mr-1 text-accent-primary" size={10} />
+              Region
+            </label>
+            <div className="relative">
+              <MapPin
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-accent-primary pointer-events-none"
+              />
+              <select
+                value={region}
+                onChange={(e) => setRegion(e.target.value)}
+                className="w-full pl-8 pr-8 py-2.5 dark:bg-white/5 bg-slate-50 rounded-xl text-sm dark:text-gray-200 text-slate-800 dark:border-accent-primary/20 border border-slate-200 focus:outline-none focus:ring-1 focus:ring-accent-primary/40 focus:border-accent-primary appearance-none cursor-pointer transition-all"
+                disabled={createEvent.isPending || isUploading}
+                required
+              >
+                {REGIONS.map((r) => (
+                  <option key={r.value} value={r.value} className="dark:bg-[#16151A] bg-white dark:text-gray-200 text-slate-800">
+                    {r.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={14}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-accent-primary pointer-events-none"
+              />
+            </div>
+          </div>
+
+          {/* Location */}
+          <div className="flex items-center gap-2.5 dark:bg-white/5 bg-slate-50 rounded-xl p-3 border dark:border-accent-primary/20 border-slate-200 focus-within:border-accent-primary focus-within:ring-1 focus-within:ring-accent-primary/40 transition-all">
+            <MapPin size={16} className="text-accent-primary shrink-0" />
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="Add Location"
+              className="w-full bg-transparent border-none focus:ring-0 text-sm dark:placeholder-gray-500 placeholder-slate-400 dark:text-gray-200 text-slate-800"
+              disabled={createEvent.isPending || isUploading}
+            />
+          </div>
+
+          {/* Date & Time grid */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center gap-2.5 dark:bg-white/5 bg-slate-50 rounded-xl p-3 border dark:border-accent-primary/20 border-slate-200 focus-within:border-accent-primary focus-within:ring-1 focus-within:ring-accent-primary/40 transition-all">
+              <Calendar size={16} className="text-accent-primary shrink-0" />
+              <input
+                type="date"
+                value={eventDate}
+                onChange={(e) => setEventDate(e.target.value)}
+                className="w-full bg-transparent border-none focus:ring-0 text-sm dark:placeholder-gray-500 placeholder-slate-400 dark:text-gray-200 text-slate-800 dark:[color-scheme:dark]"
+                disabled={createEvent.isPending || isUploading}
+                required
+              />
+            </div>
+            <div className="flex items-center gap-2.5 dark:bg-white/5 bg-slate-50 rounded-xl p-3 border dark:border-accent-primary/20 border-slate-200 focus-within:border-accent-primary focus-within:ring-1 focus-within:ring-accent-primary/40 transition-all">
+              <Clock size={16} className="text-accent-primary shrink-0" />
+              <input
+                type="time"
+                value={eventTime}
+                onChange={(e) => setEventTime(e.target.value)}
+                className="w-full bg-transparent border-none focus:ring-0 text-sm dark:placeholder-gray-500 placeholder-slate-400 dark:text-gray-200 text-slate-800 dark:[color-scheme:dark]"
+                disabled={createEvent.isPending || isUploading}
+              />
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="dark:bg-white/5 bg-slate-50 rounded-xl p-3 border dark:border-accent-primary/20 border-slate-200 focus-within:border-accent-primary focus-within:ring-1 focus-within:ring-accent-primary/40 transition-all">
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Tell everyone about your event..."
+              rows={3}
+              className="w-full bg-transparent border-none focus:ring-0 text-sm resize-none dark:placeholder-gray-500 placeholder-slate-400 dark:text-gray-200 text-slate-800 leading-relaxed"
+              disabled={createEvent.isPending || isUploading}
+              required
+            />
+          </div>
+
+        </div>
+
+        {/* Image upload inline */}
+        {imagePreview && (
           <div className="relative rounded-xl overflow-hidden">
             <Image
               src={imagePreview}
@@ -165,130 +271,86 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess }) =
               onClick={removeImage}
               className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors"
             >
-              <X size={16} />
+              <X size={14} />
             </button>
           </div>
-        ) : (
-          <div className="bg-bg-secondary border border-dashed border-white/[0.1] rounded-xl p-8 text-center hover:border-accent-primary/40 transition-colors">
-            <input
-              id="image"
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="hidden"
-              disabled={createEvent.isPending || isUploading}
-            />
-            <label htmlFor="image" className="cursor-pointer flex flex-col items-center gap-2">
-              <ImagePlus className="text-fg-tertiary" size={28} />
-              <span className="text-xs text-fg-tertiary">Add photo</span>
-            </label>
-          </div>
         )}
-      </div>
 
-      {/* Title */}
-      <input
-        type="text"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="Event title"
-        maxLength={256}
-        className="w-full px-0 py-2 bg-transparent border-b border-white/[0.08] focus:border-accent-primary text-base text-fg-primary placeholder:text-fg-tertiary focus:outline-none transition-colors"
-        disabled={createEvent.isPending || isUploading}
-        required
-      />
-
-      {/* Description */}
-      <textarea
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        placeholder="Write a caption..."
-        rows={3}
-        className="w-full px-0 py-2 bg-transparent border-b border-white/[0.08] focus:border-accent-primary text-sm text-fg-primary placeholder:text-fg-tertiary focus:outline-none transition-colors resize-none"
-        disabled={createEvent.isPending || isUploading}
-        required
-      />
-
-      {/* Date & Region — inline row */}
-      <div className="grid grid-cols-2 gap-3">
+        {/* Tag Collaborators */}
         <div>
-          <label className="block text-xs text-fg-tertiary mb-1">Date & Time</label>
-          <input
-            type="datetime-local"
-            value={eventDate}
-            onChange={(e) => setEventDate(e.target.value)}
-            className="w-full px-3 py-2 bg-bg-secondary rounded-lg text-sm text-fg-primary focus:outline-none focus:ring-1 focus:ring-accent-primary [color-scheme:dark]"
-            disabled={createEvent.isPending || isUploading}
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-xs text-fg-tertiary mb-1">
-            <MapPin className="inline mr-0.5" size={11} />
-            Region
+          <label className="block text-[10px] font-bold dark:text-gray-500 text-slate-500 uppercase tracking-[0.15em] mb-2">
+            Tag Collaborators
           </label>
-          <RegionMapPicker
-            value={region}
-            onChange={setRegion}
-            regions={REGION_MAP}
-            fallback={
-              <select
-                value={region}
-                onChange={(e) => setRegion(e.target.value)}
-                className="w-full px-3 py-2 bg-bg-secondary rounded-lg text-sm text-fg-primary focus:outline-none focus:ring-1 focus:ring-accent-primary appearance-none cursor-pointer [&>option]:text-fg-primary [&>option]:bg-bg-secondary"
-                disabled={createEvent.isPending || isUploading}
-                required
-              >
-                {REGIONS.map((r) => (
-                  <option key={r.value} value={r.value}>
-                    {r.label}
-                  </option>
-                ))}
-              </select>
-            }
-          />
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              className="w-9 h-9 rounded-full border-2 border-dashed dark:border-gray-700 border-slate-300 flex items-center justify-center dark:text-gray-500 text-slate-400 hover:text-accent-primary hover:border-accent-primary transition-all"
+            >
+              <Plus size={18} />
+            </button>
+            <span className="text-xs dark:text-gray-500 text-slate-400 font-medium">
+              Add guest hosts
+            </span>
+          </div>
         </div>
-      </div>
 
-      {/* Toggles — compact */}
-      <div className="flex items-center gap-4 py-1">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={enableRsvp}
-            onChange={(e) => setEnableRsvp(e.target.checked)}
-            className="w-4 h-4 rounded bg-bg-secondary text-accent-primary focus:ring-accent-primary/30 cursor-pointer"
-          />
-          <span className="text-xs text-fg-secondary">Enable RSVP</span>
-        </label>
-        {enableRsvp && (
+        {/* Toggles */}
+        <div className="flex items-center gap-4">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
-              checked={sendReminders}
-              onChange={(e) => setSendReminders(e.target.checked)}
-              className="w-4 h-4 rounded bg-bg-secondary text-accent-primary focus:ring-accent-primary/30 cursor-pointer"
+              checked={enableRsvp}
+              onChange={(e) => setEnableRsvp(e.target.checked)}
+              className="w-3.5 h-3.5 rounded dark:bg-white/5 bg-slate-100 text-accent-primary focus:ring-accent-primary/30 cursor-pointer border-accent-primary/20"
             />
-            <span className="text-xs text-fg-secondary">Send reminders</span>
+            <span className="text-xs dark:text-gray-400 text-slate-600">Enable RSVP</span>
           </label>
-        )}
+          {enableRsvp && (
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={sendReminders}
+                onChange={(e) => setSendReminders(e.target.checked)}
+                className="w-3.5 h-3.5 rounded dark:bg-white/5 bg-slate-100 text-accent-primary focus:ring-accent-primary/30 cursor-pointer border-accent-primary/20"
+              />
+              <span className="text-xs dark:text-gray-400 text-slate-600">Send reminders</span>
+            </label>
+          )}
+        </div>
       </div>
 
-      {/* Submit — full width like IG share */}
-      <button
-        type="submit"
-        disabled={createEvent.isPending || isUploading || !title.trim() || !description.trim() || !eventDate || !region}
-        className="w-full py-3 bg-accent-primary text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-      >
-        {isUploading || createEvent.isPending ? (
-          <>
-            <Loader2 className="animate-spin" size={16} />
-            {isUploading ? 'Uploading...' : 'Publishing...'}
-          </>
-        ) : (
-          'Share'
-        )}
-      </button>
+      {/* Modal Footer — matches create-event.html */}
+      <div className="px-6 py-4 dark:bg-white/[0.02] bg-accent-primary/[0.02] border-t dark:border-white/5 border-slate-200 flex items-center justify-between shrink-0">
+        <div className="flex gap-2">
+          {!imagePreview && (
+            <label className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-accent-primary dark:hover:bg-white/5 hover:bg-accent-primary/5 transition-all cursor-pointer group">
+              <ImagePlus size={16} className="text-accent-primary" />
+              <span className="text-xs font-semibold">Media</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+                disabled={createEvent.isPending || isUploading}
+              />
+            </label>
+          )}
+        </div>
+        <button
+          type="submit"
+          disabled={createEvent.isPending || isUploading || !title.trim() || !description.trim() || !eventDate || !region}
+          className="bg-accent-primary hover:bg-accent-hover text-white px-7 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-accent-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+        >
+          {isUploading || createEvent.isPending ? (
+            <>
+              <Loader2 className="animate-spin" size={14} />
+              {isUploading ? 'Uploading...' : 'Publishing...'}
+            </>
+          ) : (
+            'Publish Event'
+          )}
+        </button>
+      </div>
     </form>
   );
 };

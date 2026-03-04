@@ -143,7 +143,7 @@ export function SideNav() {
                     }}
                     className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-colors font-medium ${
                       isActive
-                        ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 dark:bg-fg-primary dark:text-bg-primary dark:ring-0 shadow-sm"
+                        ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 shadow-sm font-semibold"
                         : "text-fg-secondary hover:bg-bg-secondary/60 hover:text-fg-primary"
                     }`}
                   >
@@ -168,7 +168,7 @@ export function SideNav() {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-colors font-medium ${
                   pathname === "/settings"
-                    ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 dark:bg-fg-primary dark:text-bg-primary dark:ring-0 shadow-sm"
+                    ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 shadow-sm font-semibold"
                     : "text-fg-secondary hover:bg-bg-secondary/60 hover:text-fg-primary"
                 }`}
                 title={settingsItem.label}
@@ -210,7 +210,7 @@ export function SideNav() {
                   onClick={() => setIsA1WidgetOpen(true)}
                   className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors group relative ${
                     isActive
-                      ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 dark:bg-fg-primary dark:text-bg-primary dark:ring-0 shadow-sm"
+                      ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 shadow-sm"
                       : "text-fg-secondary hover:bg-bg-secondary/60 hover:text-fg-primary"
                   }`}
                   title={item.label}
@@ -231,7 +231,7 @@ export function SideNav() {
                 aria-label={item.label}
                 className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors group relative ${
                   isActive
-                    ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 dark:bg-fg-primary dark:text-bg-primary dark:ring-0 shadow-sm"
+                    ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 shadow-sm"
                     : "text-fg-secondary hover:bg-bg-secondary/60 hover:text-fg-primary"
                 }`}
                 title={item.label}
@@ -252,7 +252,7 @@ export function SideNav() {
             aria-label={profileItem.label}
             className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors group relative ${
               pathname === "/orgs"
-                ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 dark:bg-fg-primary dark:text-bg-primary dark:ring-0 shadow-sm"
+                ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 shadow-sm"
                 : "text-fg-secondary hover:bg-bg-secondary/60 hover:text-fg-primary"
             }`}
             title={profileItem.label}
@@ -268,7 +268,7 @@ export function SideNav() {
             aria-label={settingsItem.label}
             className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors group relative ${
               pathname === "/settings"
-                ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 dark:bg-fg-primary dark:text-bg-primary dark:ring-0 shadow-sm"
+                ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 shadow-sm"
                 : "text-fg-secondary hover:bg-bg-secondary/60 hover:text-fg-primary"
             }`}
             title={settingsItem.label}

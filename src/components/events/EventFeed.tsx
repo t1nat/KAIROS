@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Heart,
   MessageCircle,
@@ -18,9 +19,9 @@ import {
   Users,
   TrendingUp,
   Trash2,
-  Plus,
   Bell,
-  ChevronDown,
+  Share2,
+  MoreHorizontal,
 } from "lucide-react";
 import { api } from "~/trpc/react";
 import Image from "next/image";
@@ -186,8 +187,8 @@ const InfoMessageToast: React.FC<{
 
   const color =
     type === "error"
-      ? "bg-red-500/10 border-red-500/30 text-red-300"
-      : "bg-blue-500/10 border-blue-500/30 text-blue-300";
+      ? "dark:bg-red-500/10 bg-red-50 dark:border-red-500/30 border-red-200 dark:text-red-300 text-red-700"
+      : "dark:bg-blue-500/10 bg-blue-50 dark:border-blue-500/30 border-blue-200 dark:text-blue-300 text-blue-700";
 
   const Icon = type === "error" ? AlertCircle : Check;
 
@@ -232,8 +233,8 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="surface-card rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="p-4 sm:p-6 flex items-center justify-between sticky top-0 bg-bg-primary/95 backdrop-blur-sm z-10">
+      <div className="dark:bg-[#16151A] bg-white rounded-2xl dark:border-white/5 border border-slate-200 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="p-4 sm:p-6 flex items-center justify-between sticky top-0 dark:bg-[#16151A]/95 bg-white/95 backdrop-blur-sm z-10 rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-accent-primary/20 rounded-lg flex items-center justify-center">
               <BarChart3 size={18} className="sm:w-5 sm:h-5 text-accent-primary" />
@@ -242,13 +243,13 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-fg-secondary hover:text-fg-primary hover:bg-bg-secondary rounded-lg transition-colors">
+            className="p-2 text-accent-primary/60 hover:text-accent-primary hover:bg-accent-primary/5 rounded-lg transition-colors">
             <X size={20} />
           </button>
         </div>
 
         <div className="p-4 sm:p-6 space-y-6">
-          <div className="bg-bg-secondary rounded-xl p-4 sm:p-5 border border-white/[0.06]">
+          <div className="dark:bg-bg-secondary bg-slate-50 rounded-xl p-4 sm:p-5 border dark:border-white/[0.06] border-slate-200">
             <div className="flex items-center gap-3 mb-2">
               <Users className="text-accent-primary" size={20} />
               <h3 className="text-base sm:text-lg font-semibold text-fg-primary">Total Responses</h3>
@@ -257,68 +258,68 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-fg-secondary flex items-center gap-2">
-              <TrendingUp size={16} />
+            <h3 className="text-sm font-semibold text-accent-primary flex items-center gap-2">
+              <TrendingUp size={16} className="text-accent-primary" />
               Response Breakdown
             </h3>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 size={16} className="text-success" />
+                  <CheckCircle2 size={16} className="text-accent-primary" />
                   <span className="text-fg-secondary font-medium">Going</span>
                 </div>
                 <span className="text-fg-primary font-semibold">{event.rsvpCounts.going}</span>
               </div>
-              <div className="h-2 bg-bg-surface/60 rounded-full overflow-hidden">
+              <div className="h-2 dark:bg-white/5 bg-slate-100 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-success transition-all duration-500"
+                  className="h-full bg-accent-primary transition-all duration-500"
                   style={{ width: `${goingPercentage}%` }}
                 />
               </div>
-              <p className="text-xs text-fg-tertiary text-right">{goingPercentage.toFixed(1)}%</p>
+              <p className="text-xs text-accent-primary text-right">{goingPercentage.toFixed(1)}%</p>
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
-                  <HelpCircle size={16} className="text-warning" />
+                  <HelpCircle size={16} className="text-accent-primary/70" />
                   <span className="text-fg-secondary font-medium">Maybe</span>
                 </div>
                 <span className="text-fg-primary font-semibold">{event.rsvpCounts.maybe}</span>
               </div>
-              <div className="h-2 bg-bg-surface/60 rounded-full overflow-hidden">
+              <div className="h-2 dark:bg-white/5 bg-slate-100 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-warning transition-all duration-500"
+                  className="h-full bg-accent-primary/70 transition-all duration-500"
                   style={{ width: `${maybePercentage}%` }}
                 />
               </div>
-              <p className="text-xs text-fg-tertiary text-right">{maybePercentage.toFixed(1)}%</p>
+              <p className="text-xs text-accent-primary/70 text-right">{maybePercentage.toFixed(1)}%</p>
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
-                  <XCircle size={16} className="text-event-critical" />
+                  <XCircle size={16} className="text-accent-primary/50" />
                   <span className="text-fg-secondary font-medium">Can&apos;t Go</span>
                 </div>
                 <span className="text-fg-primary font-semibold">{event.rsvpCounts.notGoing}</span>
               </div>
-              <div className="h-2 bg-bg-secondary rounded-full overflow-hidden">
+              <div className="h-2 dark:bg-white/5 bg-slate-100 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-event-critical transition-all duration-500"
+                  className="h-full bg-accent-primary/50 transition-all duration-500"
                   style={{ width: `${notGoingPercentage}%` }}
                 />
               </div>
-              <p className="text-xs text-fg-tertiary text-right">{notGoingPercentage.toFixed(1)}%</p>
+              <p className="text-xs text-accent-primary/50 text-right">{notGoingPercentage.toFixed(1)}%</p>
             </div>
           </div>
 
-          <div className="bg-bg-secondary rounded-xl p-4 border border-white/[0.06]">
-            <h4 className="text-sm font-semibold text-fg-secondary mb-2">Event Details</h4>
+          <div className="dark:bg-bg-secondary bg-slate-50 rounded-xl p-4 border dark:border-white/[0.06] border-slate-200">
+            <h4 className="text-sm font-semibold text-accent-primary mb-2">Event Details</h4>
             <p className="text-fg-primary font-medium mb-1">{event.title}</p>
-            <div className="flex items-center gap-2 text-xs text-fg-tertiary">
-              <Calendar size={14} />
+            <div className="flex items-center gap-2 text-xs text-accent-primary/60">
+              <Calendar size={14} className="text-accent-primary" />
               <span>{formatEventDateTime(event.eventDate)}</span>
             </div>
           </div>
@@ -335,7 +336,9 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
   const [commentText, setCommentText] = useState("");
   const [showDashboard, setShowDashboard] = useState(false);
   const [deleteEventArmed, setDeleteEventArmed] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showReminderPicker, setShowReminderPicker] = useState(false);
+  const [lastRsvpStatus, setLastRsvpStatus] = useState<"going" | "maybe" | "not_going" | null>(null);
   const [infoMessage, setInfoMessage] = useState<{
     message: string;
     type: "error" | "info";
@@ -403,9 +406,11 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
       return;
     }
     updateRsvp.mutate({ eventId: event.id, status });
-    // Show reminder picker for going/maybe
+    // Show reminder picker for going/maybe, hide for not_going
+    setLastRsvpStatus(status);
     if (status === "going" || status === "maybe") {
-      setShowReminderPicker(true);
+      // Use a short delay so the optimistic update settles first
+      setTimeout(() => setShowReminderPicker(true), 50);
     } else {
       setShowReminderPicker(false);
     }
@@ -414,7 +419,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
   const handleSetReminder = (minutes: number | null) => {
     updateRsvp.mutate({
       eventId: event.id,
-      status: event.userRsvpStatus ?? "going",
+      status: lastRsvpStatus ?? event.userRsvpStatus ?? "going",
       reminderMinutesBefore: minutes,
     });
     setShowReminderPicker(false);
@@ -483,112 +488,126 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
 
   return (
     <>
-      <div className="bg-bg-secondary border-b border-white/[0.06] sm:rounded-xl sm:border sm:border-white/[0.06] sm:mb-4 overflow-hidden" data-testid="event-card">
-        <InfoMessageToast
-          message={infoMessage?.message ?? null}
-          type={infoMessage?.type ?? null}
-          onClose={() => setInfoMessage(null)}
-        />
+      <article className="dark:bg-[#16151A] bg-white rounded-2xl dark:border-white/5 border border-slate-200 overflow-hidden card-shadow" data-testid="event-card">
 
-        {/* Author header - Instagram style */}
-        <div className="flex items-center gap-3 px-4 py-3">
-          <div className="w-9 h-9 rounded-full bg-bg-tertiary overflow-hidden flex-shrink-0 ring-2 ring-accent-primary/20">
-            {event.author.image ? (
-              <Image
-                src={event.author.image}
-                alt={event.author.name ?? "User"}
-                width={36}
-                height={36}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent-primary to-accent-secondary">
-                <User size={16} className="text-white" />
-              </div>
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-fg-primary truncate">{event.author.name}</p>
-            <div className="flex items-center gap-1.5 text-xs text-fg-tertiary">
-              <MapPin size={11} />
-              <span>{getRegionLabel(event.region)}</span>
-              {isPastEvent && (
-                <span className="ml-1 px-1.5 py-0.5 bg-fg-tertiary/10 rounded text-[10px] text-fg-tertiary">Past</span>
+        {/* Header — event icon + title + author/time + actions */}
+        <div className="p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-accent-primary/20 flex items-center justify-center shrink-0 overflow-hidden">
+              {event.author.image ? (
+                <Image
+                  src={event.author.image}
+                  alt={event.author.name ?? "User"}
+                  width={40}
+                  height={40}
+                  className="w-full h-full rounded-full object-cover"
+                />
+              ) : (
+                <User size={18} className="text-accent-primary" />
               )}
             </div>
+            <div>
+              <h3 className="font-bold text-sm dark:text-white text-slate-900">{event.title}</h3>
+              <p className="text-xs text-fg-tertiary">
+                {event.author.name} · {formatDate(event.eventDate)}
+              </p>
+            </div>
           </div>
-          {event.isOwner && (
+          <div className="relative">
             <button
-              onClick={handleDeleteEvent}
-              disabled={deleteEvent.isPending}
-              className={`p-2 rounded-lg transition-all ${
-                deleteEventArmed
-                  ? "bg-error/10 text-error"
-                  : "text-fg-tertiary hover:text-error"
-              }`}
-              aria-label={deleteEventArmed ? "Confirm delete event" : "Delete event"}
+              onClick={() => setShowMoreMenu(!showMoreMenu)}
+              className="p-1.5 rounded-lg text-accent-primary/40 hover:text-accent-primary hover:bg-accent-primary/5 transition-all"
             >
-              <Trash2 size={16} />
+              <MoreHorizontal size={20} />
             </button>
+            {showMoreMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowMoreMenu(false)} />
+                <div className="absolute right-0 top-full mt-1 z-50 dark:bg-[#16151A] bg-white rounded-xl dark:border-white/[0.06] border border-slate-200 shadow-xl min-w-[160px] py-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                  {event.isOwner && (
+                    <button
+                      onClick={() => { handleDeleteEvent(); setShowMoreMenu(false); }}
+                      disabled={deleteEvent.isPending}
+                      className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium transition-colors ${
+                        deleteEventArmed
+                          ? "text-error bg-error/5 hover:bg-error/10"
+                          : "dark:text-red-400 text-red-500 dark:hover:bg-red-500/10 hover:bg-red-50"
+                      }`}
+                    >
+                      <Trash2 size={15} />
+                      {deleteEventArmed ? "Confirm Delete" : "Delete Event"}
+                    </button>
+                  )}
+                  {!event.isOwner && (
+                    <p className="px-3 py-2.5 text-xs text-fg-tertiary">No actions available</p>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Body — description + image */}
+        <div className="px-4 pb-3">
+          <p className="text-sm leading-relaxed dark:text-gray-300 text-slate-700">{event.description}</p>
+          {event.imageUrl && (
+            <div className="mt-4 rounded-xl overflow-hidden aspect-video bg-bg-tertiary relative">
+              <Image
+                src={event.imageUrl}
+                alt={event.title}
+                fill
+                className="object-cover"
+              />
+            </div>
           )}
         </div>
 
-        {/* Image - full width like Instagram */}
-        {event.imageUrl && (
-          <div className="relative aspect-video bg-bg-tertiary overflow-hidden">
-            <Image
-              src={event.imageUrl}
-              alt={event.title}
-              fill
-              className="object-cover"
-            />
+        {/* Date + Region bar */}
+        <div className="px-4 pb-2 flex items-center gap-3 text-xs text-fg-tertiary">
+          <div className="flex items-center gap-1.5">
+            <Calendar size={12} className="text-accent-primary" />
+            <span>{formatDate(event.eventDate)}</span>
           </div>
-        )}
+          <div className="flex items-center gap-1.5">
+            <MapPin size={12} className="text-accent-primary" />
+            <span>{getRegionLabel(event.region)}</span>
+          </div>
+          {isPastEvent && (
+            <span className="px-1.5 py-0.5 bg-fg-tertiary/10 rounded text-[10px] text-fg-tertiary">Past</span>
+          )}
+        </div>
 
-        {/* Action bar */}
-        <div className="px-4 pt-3 flex items-center gap-3">
+        {/* Action footer — like / comment / share */}
+        <div className="px-4 py-3 border-t dark:border-white/5 border-slate-100 flex items-center gap-6">
           <button
             onClick={handleLike}
             disabled={toggleLike.isPending}
-            className={`transition-all ${
-              event.hasLiked ? "text-red-500" : "text-fg-secondary hover:text-red-500"
+            className={`flex items-center gap-1.5 transition-colors ${
+              event.hasLiked
+                ? "text-accent-primary"
+                : "text-accent-primary/50 hover:text-accent-primary"
             }`}
           >
             <Heart
-              size={22}
+              size={20}
               className={event.hasLiked ? "fill-current" : ""}
             />
+            <span className="text-xs font-semibold">{event.likeCount}</span>
           </button>
-
-          <button className="text-fg-secondary hover:text-fg-primary transition-colors">
-            <MessageCircle size={22} />
+          <button className="flex items-center gap-1.5 text-accent-primary/50 hover:text-accent-primary transition-colors">
+            <MessageCircle size={20} />
+            <span className="text-xs font-semibold">{event.commentCount}</span>
+          </button>
+          <button className="flex items-center gap-1.5 text-accent-primary/50 hover:text-accent-primary transition-colors">
+            <Share2 size={20} />
           </button>
         </div>
 
-        {/* Like count */}
-        <div className="px-4 pt-1.5">
-          <span className="text-sm font-semibold text-fg-primary">{event.likeCount} likes</span>
-        </div>
-
-        {/* Title + Description */}
-        <div className="px-4 pt-1.5 pb-2">
-          <h2 className="text-sm font-bold text-fg-primary inline mr-1.5">{event.title}</h2>
-          <p className="text-sm text-fg-secondary inline whitespace-pre-wrap leading-relaxed">
-            {event.description}
-          </p>
-        </div>
-
-        {/* Date */}
-        <div className="px-4 pb-2 flex items-center gap-1.5 text-xs text-fg-tertiary">
-          <Calendar size={12} />
-          <span>{formatDate(event.eventDate)}</span>
-        </div>
-
-        {/* RSVP - compact Instagram-style */}
+        {/* RSVP section */}
         {event.enableRsvp && (
           <div className="px-4 pb-2">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-fg-tertiary uppercase tracking-wider">RSVP</span>
+              <span className="text-xs font-medium text-accent-primary uppercase tracking-wider">RSVP</span>
               {event.isOwner && (
                 <button
                   onClick={() => setShowDashboard(true)}
@@ -604,8 +623,8 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                 disabled={updateRsvp.isPending}
                 className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${
                   event.userRsvpStatus === "going"
-                    ? "bg-event-positive/20 text-event-positive"
-                    : "bg-bg-tertiary text-fg-secondary hover:bg-bg-tertiary/80"
+                    ? "bg-accent-primary/20 text-accent-primary"
+                    : "dark:bg-white/5 bg-slate-100 text-accent-primary/60 hover:bg-accent-primary/10 hover:text-accent-primary"
                 }`}
               >
                 <CheckCircle2 size={12} />
@@ -616,8 +635,8 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                 disabled={updateRsvp.isPending}
                 className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${
                   event.userRsvpStatus === "maybe"
-                    ? "bg-event-pending/20 text-event-pending"
-                    : "bg-bg-tertiary text-fg-secondary hover:bg-bg-tertiary/80"
+                    ? "bg-accent-primary/20 text-accent-primary"
+                    : "dark:bg-white/5 bg-slate-100 text-accent-primary/60 hover:bg-accent-primary/10 hover:text-accent-primary"
                 }`}
               >
                 <HelpCircle size={12} />
@@ -628,8 +647,8 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                 disabled={updateRsvp.isPending}
                 className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${
                   event.userRsvpStatus === "not_going"
-                    ? "bg-event-critical/20 text-event-critical"
-                    : "bg-bg-tertiary text-fg-secondary hover:bg-bg-tertiary/80"
+                    ? "bg-accent-primary/20 text-accent-primary"
+                    : "dark:bg-white/5 bg-slate-100 text-accent-primary/60 hover:bg-accent-primary/10 hover:text-accent-primary"
                 }`}
               >
                 <XCircle size={12} />
@@ -638,11 +657,11 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
             </div>
 
             {/* Reminder preference picker */}
-            {showReminderPicker && (event.userRsvpStatus === "going" || event.userRsvpStatus === "maybe") && (
-              <div className="mt-2 p-2.5 rounded-lg bg-bg-secondary border border-white/[0.06]">
+            {showReminderPicker && (lastRsvpStatus === "going" || lastRsvpStatus === "maybe" || event.userRsvpStatus === "going" || event.userRsvpStatus === "maybe") && (
+              <div className="mt-2 p-2.5 rounded-lg bg-bg-secondary dark:border-white/5 border border-slate-200">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-fg-secondary flex items-center gap-1">
-                    <Bell size={12} />
+                  <span className="text-xs font-medium text-accent-primary flex items-center gap-1">
+                    <Bell size={12} className="text-accent-primary" />
                     Get notified before event?
                   </span>
                   <button
@@ -670,7 +689,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                   ))}
                   <button
                     onClick={() => handleSetReminder(null)}
-                    className="px-2.5 py-1 rounded-md text-xs font-medium bg-bg-tertiary text-fg-tertiary hover:bg-bg-tertiary/80 transition-colors"
+                    className="px-2.5 py-1 rounded-md text-xs font-medium bg-accent-primary/5 text-accent-primary/60 hover:bg-accent-primary/10 hover:text-accent-primary transition-colors"
                   >
                     No thanks
                   </button>
@@ -685,7 +704,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
           {sortedComments.length > 3 && !showAllComments && (
             <button
               onClick={() => setShowAllComments(true)}
-              className="text-xs text-fg-tertiary mb-2 block">
+              className="text-xs text-accent-primary mb-2 block">
               View all {sortedComments.length} comments
             </button>
           )}
@@ -701,7 +720,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
               {showAllComments && sortedComments.length > 3 && (
                 <button
                   onClick={() => setShowAllComments(false)}
-                  className="text-xs text-fg-tertiary">
+                  className="text-xs text-accent-primary">
                   Show less
                 </button>
               )}
@@ -710,7 +729,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
 
           {/* Comment input */}
           {session && (
-            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/[0.04]">
+            <div className="flex items-center gap-2 mt-2 pt-2 border-t dark:border-white/5 border-slate-100">
               <input
                 type="text"
                 value={commentText}
@@ -722,7 +741,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                   }
                 }}
                 placeholder="Add a comment..."
-                className="flex-1 bg-transparent text-sm text-fg-primary placeholder:text-fg-tertiary focus:outline-none py-1"
+                className="flex-1 bg-transparent text-sm dark:text-white text-slate-800 dark:placeholder:text-fg-tertiary placeholder:text-slate-400 focus:outline-none py-1"
                 disabled={addComment.isPending}
               />
               <button
@@ -738,10 +757,11 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
             </div>
           )}
         </div>
-      </div>
+      </article>
 
-      {showDashboard && event.isOwner && (
-        <RsvpDashboard event={event} onClose={() => setShowDashboard(false)} />
+      {showDashboard && event.isOwner && typeof document !== 'undefined' && createPortal(
+        <RsvpDashboard event={event} onClose={() => setShowDashboard(false)} />,
+        document.body
       )}
     </>
   );
@@ -758,7 +778,7 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false, ex
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [showForm, setShowForm] = useState(false);
   
-  const activeRegion = externalRegion !== undefined ? externalRegion : selectedRegion;
+  const activeRegion = externalRegion ?? selectedRegion;
 
   const { data: eventsData, isLoading, error } = api.event.getPublicEvents.useQuery(undefined, {
     enabled: true,
@@ -776,8 +796,8 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false, ex
   if (error) {
     return (
       <div className="text-center py-20">
-        <div className="w-16 h-16 bg-event-critical/20 rounded-full flex items-center justify-center mx-auto mb-4">
-          <AlertCircle size={32} className="text-event-critical" />
+        <div className="w-16 h-16 bg-accent-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <AlertCircle size={32} className="text-accent-primary" />
         </div>
         <h3 className="text-xl font-semibold text-fg-primary mb-2">
           Error Loading Events
@@ -792,46 +812,72 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false, ex
   ) ?? [];
 
   return (
-    <div className="space-y-0 sm:space-y-3">
+    <div className="space-y-6">
       {showCreateForm && session && (
         <>
-          {/* Create event toggle bar */}
-          <button
-            onClick={() => setShowForm((v) => !v)}
-            className="w-full bg-accent-primary/10 border-b sm:border border-accent-primary/20 sm:rounded-xl p-3 flex items-center gap-3 text-fg-primary hover:bg-accent-primary/15 transition-colors group"
-          >
-            <div className="w-9 h-9 rounded-full bg-accent-primary flex items-center justify-center shadow-lg shadow-accent-primary/20 group-hover:brightness-110 transition-all">
-              <Plus size={18} className="text-white" />
-            </div>
-            <span className="text-sm font-semibold">Create new event</span>
-            <ChevronDown
-              size={16}
-              className={`ml-auto text-fg-tertiary transition-transform duration-200 ${showForm ? "rotate-180" : ""}`}
-            />
-          </button>
-
-          {/* Inline collapsible create form — slides down on the same page */}
-          {showForm && (
-            <div className="overflow-hidden border-b sm:border border-border-medium/30 dark:border-white/[0.08] sm:rounded-xl bg-bg-elevated dark:bg-bg-secondary">
-              <div className="p-4 sm:p-5">
-                <CreateEventForm onSuccess={() => setShowForm(false)} />
+          {/* Post Composer — matches events.html design */}
+          <div className="dark:bg-[#16151A] bg-white rounded-2xl dark:border-white/5 border border-slate-200 p-5">
+            <div className="flex gap-3">
+              <div className="w-10 h-10 rounded-full bg-accent-primary/10 shrink-0 overflow-hidden">
+                {session.user?.image ? (
+                  <Image
+                    src={session.user.image}
+                    alt="Profile"
+                    width={40}
+                    height={40}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-accent-primary/20">
+                    <span className="text-accent-primary font-bold text-xs">
+                      {session.user?.name?.charAt(0)?.toUpperCase() ?? "U"}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="flex-1">
+                <textarea
+                  className="w-full bg-transparent border-none focus:ring-0 text-base resize-none placeholder:text-fg-tertiary text-fg-primary"
+                  placeholder="What are you planning today?"
+                  rows={2}
+                  onFocus={() => setShowForm(true)}
+                />
               </div>
             </div>
+            <div className="mt-3 pt-3 border-t dark:border-white/5 border-slate-100 flex items-center justify-end">
+              <button
+                onClick={() => setShowForm(true)}
+                type="button"
+                className="bg-accent-primary text-white px-6 py-2 rounded-full font-bold text-sm hover:bg-accent-hover transition-all shadow-md shadow-accent-primary/20"
+              >
+                Post Event
+              </button>
+            </div>
+          </div>
+
+          {/* Full create form — modal overlay matching create-event.html */}
+          {showForm && typeof document !== 'undefined' && createPortal(
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+              <div className="dark:bg-[#1A191E] bg-white rounded-[32px] w-full max-w-2xl dark:border-white/5 border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col shadow-2xl">
+                <CreateEventForm onSuccess={() => setShowForm(false)} onClose={() => setShowForm(false)} />
+              </div>
+            </div>,
+            document.body
           )}
         </>
       )}
 
-      {/* Region filter — horizontal scroll like IG story bar */}
+      {/* Region filter — horizontal scroll */}
       {!hideRegionFilter && (
-      <div className="overflow-x-auto scrollbar-hide border-b sm:border-none border-white/[0.06]">
+      <div className="overflow-x-auto scrollbar-hide border-b sm:border-none dark:border-white/5 border-slate-200">
         <div className="flex items-center gap-2 px-3 py-2 sm:py-3 min-w-max">
           <button
             type="button"
             onClick={() => setSelectedRegion('')}
             className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
               selectedRegion === ''
-                ? 'bg-fg-primary text-bg-primary'
-                : 'bg-bg-secondary text-fg-secondary hover:bg-bg-tertiary border border-white/[0.06]'
+                ? 'bg-accent-primary text-white'
+                : 'bg-bg-secondary text-fg-secondary hover:bg-accent-primary/10 hover:text-accent-primary dark:border-white/5 border border-slate-200'
             }`}
           >
             All
@@ -843,8 +889,8 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false, ex
               onClick={() => setSelectedRegion(region.value)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                 selectedRegion === region.value
-                  ? 'bg-fg-primary text-bg-primary'
-                  : 'bg-bg-secondary text-fg-secondary hover:bg-bg-tertiary border border-white/[0.06]'
+                  ? 'bg-accent-primary text-white'
+                  : 'bg-bg-secondary text-fg-secondary hover:bg-accent-primary/10 hover:text-accent-primary dark:border-white/5 border border-slate-200'
               }`}
             >
               {region.label}
@@ -856,7 +902,7 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false, ex
 
       {!filteredEvents || filteredEvents.length === 0 ? (
         <div className="text-center py-20 px-4">
-          <div className="w-16 h-16 bg-accent-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-accent-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <Calendar size={32} className="text-accent-primary" />
           </div>
           <h3 className="text-xl font-semibold text-fg-primary mb-2">No Events Found</h3>
@@ -867,7 +913,7 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false, ex
           </p>
         </div>
       ) : (
-        <div>
+        <div className="space-y-6">
           {filteredEvents.map((event) => (
             <EventCard
               key={event.id}

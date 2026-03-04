@@ -6,18 +6,23 @@ import { SideNav } from "~/components/layout/SideNav";
 import { UserDisplay } from "~/components/layout/UserDisplay";
 import { EventReminderService } from "~/components/events/EventReminderService";
 import {
-    Rss,
     MapPin,
     Calendar,
     TrendingUp,
-    ListTodo,
+    CheckSquare,
+    ChevronRight,
+    Search,
+    Plus,
+    User,
+    Home,
     Heart,
     MessageCircle,
-    Users,
-    ChevronRight,
+    Activity,
+    ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
 import { api } from "~/trpc/react";
+import { useTranslations } from "next-intl";
 
 /* ─── Left Sidebar ─── */
 function FeedLeftSidebar({
@@ -27,50 +32,36 @@ function FeedLeftSidebar({
     selectedRegion: string;
     onRegionChange: (region: string) => void;
 }) {
-    return (
-        <aside className="sticky top-16 lg:top-0 h-fit space-y-6 py-4">
-            {/* Feed link */}
-            <div>
-                <button
-                    onClick={() => onRegionChange("")}
-                    className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl bg-accent-primary/10 text-accent-primary font-semibold text-sm transition-colors"
-                >
-                    <Rss size={18} />
-                    Feed
-                </button>
-            </div>
+    const t = useTranslations("publish");
 
-            {/* Filter by Towns */}
-            <div>
-                <h3 className="text-xs font-bold text-fg-tertiary uppercase tracking-wider px-4 mb-3">
-                    Filter by Towns
+    return (
+        <aside className="hidden lg:block lg:col-span-3 space-y-4">
+            {/* Filter by Towns — dropdown */}
+            <div className="dark:bg-[#16151A] bg-white rounded-xl dark:border-white/5 border border-slate-200 p-3">
+                <h3 className="text-[10px] font-bold dark:text-gray-500 text-slate-500 uppercase tracking-wider mb-2">
+                    {t("filterByTowns")}
                 </h3>
-                <div className="space-y-0.5">
-                    <button
-                        onClick={() => onRegionChange("")}
-                        className={`flex items-center gap-2.5 w-full px-4 py-2 rounded-lg text-sm transition-colors ${
-                            selectedRegion === ""
-                                ? "bg-accent-primary/10 text-accent-primary font-medium"
-                                : "text-fg-secondary hover:text-fg-primary hover:bg-white/[0.04]"
-                        }`}
+                <div className="relative">
+                    <MapPin
+                        size={12}
+                        className="absolute left-2.5 top-1/2 -translate-y-1/2 text-accent-primary pointer-events-none"
+                    />
+                    <select
+                        value={selectedRegion}
+                        onChange={(e) => onRegionChange(e.target.value)}
+                        className="w-full pl-7 pr-7 py-2 dark:bg-white/5 bg-slate-50 dark:border-accent-primary/20 border border-slate-200 rounded-lg text-xs dark:text-gray-200 text-slate-800 focus:outline-none focus:ring-1 focus:ring-accent-primary/40 focus:border-accent-primary appearance-none cursor-pointer transition-all"
                     >
-                        <MapPin size={14} />
-                        All Regions
-                    </button>
-                    {REGIONS.filter((r) => r.value !== "").map((region) => (
-                        <button
-                            key={region.value}
-                            onClick={() => onRegionChange(region.value)}
-                            className={`flex items-center gap-2.5 w-full px-4 py-2 rounded-lg text-sm transition-colors ${
-                                selectedRegion === region.value
-                                    ? "bg-accent-primary/10 text-accent-primary font-medium"
-                                    : "text-fg-secondary hover:text-fg-primary hover:bg-white/[0.04]"
-                            }`}
-                        >
-                            <MapPin size={14} />
-                            {region.label}
-                        </button>
-                    ))}
+                        <option value="" className="dark:bg-[#16151A] bg-white dark:text-gray-200 text-slate-800">{t("allRegions")}</option>
+                        {REGIONS.filter((r) => r.value !== "").map((region) => (
+                            <option key={region.value} value={region.value} className="dark:bg-[#16151A] bg-white dark:text-gray-200 text-slate-800">
+                                {region.label}
+                            </option>
+                        ))}
+                    </select>
+                    <ChevronDown
+                        size={12}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-accent-primary pointer-events-none"
+                    />
                 </div>
             </div>
         </aside>
@@ -79,6 +70,7 @@ function FeedLeftSidebar({
 
 /* ─── Right Sidebar ─── */
 function FeedRightSidebar() {
+    const t = useTranslations("publish");
     const { data: eventsData } = api.event.getPublicEvents.useQuery();
 
     /* Compute engagement stats from the events data */
@@ -91,16 +83,17 @@ function FeedRightSidebar() {
             (sum, e) => sum + e.rsvpCounts.going + e.rsvpCounts.maybe,
             0
         );
-        const maxLikes = Math.max(...eventsData.map((e) => e.likeCount), 1);
-        const maxComments = Math.max(...eventsData.map((e) => e.commentCount), 1);
+        const maxEngagement = Math.max(
+            ...eventsData.map((e) => e.likeCount + e.commentCount),
+            1
+        );
 
         return {
             totalLikes,
             totalComments,
             totalRsvps,
             totalEvents: eventsData.length,
-            maxLikes,
-            maxComments,
+            maxEngagement,
             topEvents: [...eventsData]
                 .sort((a, b) => b.likeCount + b.commentCount - (a.likeCount + a.commentCount))
                 .slice(0, 3),
@@ -108,142 +101,132 @@ function FeedRightSidebar() {
     }, [eventsData]);
 
     return (
-        <aside className="sticky top-16 lg:top-0 h-fit space-y-6 py-4">
+        <aside className="hidden md:block md:col-span-12 lg:col-span-3 space-y-4">
             {/* Quick Links */}
-            <div className="bg-[#0a0a0e] rounded-2xl border border-white/[0.06] p-4">
-                <h3 className="text-sm font-bold text-fg-primary mb-3">Quick Links</h3>
-                <div className="space-y-1">
-                    {[
-                        { label: "Calendar", href: "/calendar", icon: Calendar },
-                        { label: "Progress", href: "/progress", icon: TrendingUp },
-                        { label: "Tasks", href: "/create", icon: ListTodo },
-                    ].map((link) => (
-                        <Link
-                            key={link.href}
-                            href={link.href}
-                            className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm text-fg-secondary hover:text-fg-primary hover:bg-white/[0.04] transition-colors group"
-                        >
-                            <div className="flex items-center gap-2.5">
-                                <link.icon size={16} className="text-accent-primary" />
-                                {link.label}
+            <div className="dark:bg-[#16151A] bg-white rounded-xl dark:border-white/5 border border-slate-200 overflow-hidden card-shadow">
+                <div className="px-3 py-2.5 border-b dark:border-white/5 border-slate-100">
+                    <h3 className="font-bold text-xs dark:text-white text-slate-900">{t("quickLinks")}</h3>
+                </div>
+                <div className="p-1.5 space-y-0.5">
+                    <Link
+                        href="/calendar"
+                        className="flex items-center justify-between px-2.5 py-2 dark:hover:bg-white/5 hover:bg-accent-primary/5 rounded-lg group transition-all"
+                    >
+                        <div className="flex items-center gap-2.5">
+                            <div className="p-1.5 bg-accent-primary/10 rounded-md text-accent-primary group-hover:bg-accent-primary group-hover:text-white transition-all">
+                                <Calendar size={14} />
                             </div>
-                            <ChevronRight
-                                size={14}
-                                className="text-fg-tertiary opacity-0 group-hover:opacity-100 transition-opacity"
-                            />
-                        </Link>
-                    ))}
+                            <span className="text-xs font-semibold dark:text-gray-200 text-slate-700">
+                                {t("calendar")}
+                            </span>
+                        </div>
+                        <ChevronRight size={12} className="text-accent-primary/40" />
+                    </Link>
+                    <Link
+                        href="/progress"
+                        className="flex items-center justify-between px-2.5 py-2 dark:hover:bg-white/5 hover:bg-accent-primary/5 rounded-lg group transition-all"
+                    >
+                        <div className="flex items-center gap-2.5">
+                            <div className="p-1.5 bg-accent-primary/10 rounded-md text-accent-primary group-hover:bg-accent-primary group-hover:text-white transition-all">
+                                <TrendingUp size={14} />
+                            </div>
+                            <span className="text-xs font-semibold dark:text-gray-200 text-slate-700">
+                                {t("progress")}
+                            </span>
+                        </div>
+                        <ChevronRight size={12} className="text-accent-primary/40" />
+                    </Link>
+                    <Link
+                        href="/create"
+                        className="flex items-center justify-between px-2.5 py-2 dark:hover:bg-white/5 hover:bg-accent-primary/5 rounded-lg group transition-all"
+                    >
+                        <div className="flex items-center gap-2.5">
+                            <div className="p-1.5 bg-accent-primary/10 rounded-md text-accent-primary group-hover:bg-accent-primary group-hover:text-white transition-all">
+                                <CheckSquare size={14} />
+                            </div>
+                            <span className="text-xs font-semibold dark:text-gray-200 text-slate-700">
+                                {t("tasks")}
+                            </span>
+                        </div>
+                        <ChevronRight size={12} className="text-accent-primary/40" />
+                    </Link>
                 </div>
             </div>
 
-            {/* Event Progress / Engagement */}
-            <div className="bg-[#0a0a0e] rounded-2xl border border-white/[0.06] p-4">
-                <h3 className="text-sm font-bold text-fg-primary mb-4">Event Progress</h3>
+            {/* Event Progress with engagement data */}
+            <div className="dark:bg-[#16151A] bg-white rounded-xl dark:border-white/5 border border-slate-200 p-3.5 card-shadow">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-xs dark:text-white text-slate-900">{t("eventProgress")}</h3>
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-accent-primary bg-accent-primary/10 px-1.5 py-0.5 rounded">
+                        {t("active")}
+                    </span>
+                </div>
 
-                {!engagementStats ? (
-                    <p className="text-xs text-fg-tertiary">No event data yet.</p>
-                ) : (
-                    <div className="space-y-4">
-                        {/* Summary stats */}
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="bg-white/[0.03] rounded-xl p-3 text-center">
-                                <div className="flex items-center justify-center gap-1.5 mb-1">
-                                    <Heart size={12} className="text-red-400" />
-                                    <span className="text-lg font-bold text-fg-primary">
-                                        {engagementStats.totalLikes}
-                                    </span>
-                                </div>
-                                <span className="text-[10px] text-fg-tertiary uppercase tracking-wider">
-                                    Total Likes
-                                </span>
-                            </div>
-                            <div className="bg-white/[0.03] rounded-xl p-3 text-center">
-                                <div className="flex items-center justify-center gap-1.5 mb-1">
-                                    <MessageCircle size={12} className="text-blue-400" />
-                                    <span className="text-lg font-bold text-fg-primary">
-                                        {engagementStats.totalComments}
-                                    </span>
-                                </div>
-                                <span className="text-[10px] text-fg-tertiary uppercase tracking-wider">
-                                    Comments
-                                </span>
-                            </div>
-                            <div className="bg-white/[0.03] rounded-xl p-3 text-center">
-                                <div className="flex items-center justify-center gap-1.5 mb-1">
-                                    <Users size={12} className="text-green-400" />
-                                    <span className="text-lg font-bold text-fg-primary">
-                                        {engagementStats.totalRsvps}
-                                    </span>
-                                </div>
-                                <span className="text-[10px] text-fg-tertiary uppercase tracking-wider">
-                                    RSVPs
-                                </span>
-                            </div>
-                            <div className="bg-white/[0.03] rounded-xl p-3 text-center">
-                                <div className="flex items-center justify-center gap-1.5 mb-1">
-                                    <Rss size={12} className="text-accent-primary" />
-                                    <span className="text-lg font-bold text-fg-primary">
-                                        {engagementStats.totalEvents}
-                                    </span>
-                                </div>
-                                <span className="text-[10px] text-fg-tertiary uppercase tracking-wider">
-                                    Events
-                                </span>
-                            </div>
+                {/* Engagement summary stats */}
+                {engagementStats && (
+                    <div className="grid grid-cols-3 gap-1.5 mb-4">
+                        <div className="text-center p-1.5 rounded-md dark:bg-white/5 bg-accent-primary/5">
+                            <Heart size={12} className="mx-auto mb-0.5 text-accent-primary" />
+                            <p className="text-xs font-bold dark:text-white text-slate-900">{engagementStats.totalLikes}</p>
+                            <p className="text-[9px] text-fg-tertiary">{t("likes")}</p>
                         </div>
-
-                        {/* Top events by engagement */}
-                        {engagementStats.topEvents.length > 0 && (
-                            <div>
-                                <h4 className="text-xs font-semibold text-fg-tertiary uppercase tracking-wider mb-3">
-                                    Top Engagement
-                                </h4>
-                                <div className="space-y-3">
-                                    {engagementStats.topEvents.map((event) => {
-                                        const likePct =
-                                            (event.likeCount / engagementStats.maxLikes) * 100;
-                                        const commentPct =
-                                            (event.commentCount / engagementStats.maxComments) * 100;
-                                        return (
-                                            <div key={event.id} className="space-y-1.5">
-                                                <p className="text-xs font-medium text-fg-primary truncate">
-                                                    {event.title}
-                                                </p>
-                                                <div className="flex items-center gap-2">
-                                                    <Heart size={10} className="text-red-400 flex-shrink-0" />
-                                                    <div className="flex-1 h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
-                                                        <div
-                                                            className="h-full bg-red-400/60 rounded-full transition-all duration-500"
-                                                            style={{ width: `${likePct}%` }}
-                                                        />
-                                                    </div>
-                                                    <span className="text-[10px] text-fg-tertiary w-5 text-right">
-                                                        {event.likeCount}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <MessageCircle
-                                                        size={10}
-                                                        className="text-blue-400 flex-shrink-0"
-                                                    />
-                                                    <div className="flex-1 h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
-                                                        <div
-                                                            className="h-full bg-blue-400/60 rounded-full transition-all duration-500"
-                                                            style={{ width: `${commentPct}%` }}
-                                                        />
-                                                    </div>
-                                                    <span className="text-[10px] text-fg-tertiary w-5 text-right">
-                                                        {event.commentCount}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
+                        <div className="text-center p-1.5 rounded-md dark:bg-white/5 bg-accent-primary/5">
+                            <MessageCircle size={12} className="mx-auto mb-0.5 text-accent-primary" />
+                            <p className="text-xs font-bold dark:text-white text-slate-900">{engagementStats.totalComments}</p>
+                            <p className="text-[9px] text-fg-tertiary">{t("comments")}</p>
+                        </div>
+                        <div className="text-center p-1.5 rounded-md dark:bg-white/5 bg-accent-primary/5">
+                            <Activity size={12} className="mx-auto mb-0.5 text-accent-primary" />
+                            <p className="text-xs font-bold dark:text-white text-slate-900">{engagementStats.totalRsvps}</p>
+                            <p className="text-[9px] text-fg-tertiary">RSVPs</p>
+                        </div>
                     </div>
                 )}
+
+                {!engagementStats ? (
+                    <p className="text-[10px] text-fg-tertiary">No event data yet.</p>
+                ) : (
+                    <div className="space-y-3">
+                        {engagementStats.topEvents.map((event, i) => {
+                            const progress = Math.round(
+                                ((event.likeCount + event.commentCount) /
+                                    engagementStats.maxEngagement) *
+                                    100
+                            );
+                            const colorClasses = [
+                                { bar: "bg-accent-primary progress-bar-glow", text: "text-accent-primary" },
+                                { bar: "bg-accent-primary/60", text: "text-accent-primary/70" },
+                                { bar: "bg-accent-primary/30", text: "text-accent-primary/50" },
+                            ];
+                            const color = colorClasses[i] ?? colorClasses[0]!;
+                            return (
+                                <div key={event.id}>
+                                    <div className="flex justify-between items-end mb-1.5">
+                                        <span className="text-[10px] font-bold dark:text-gray-400 text-slate-600 truncate mr-2">
+                                            {event.title}
+                                        </span>
+                                        <span className={`text-[10px] font-black ${color.text} shrink-0`}>
+                                            {progress}%
+                                        </span>
+                                    </div>
+                                    <div className="h-1.5 w-full dark:bg-white/5 bg-slate-100 rounded-full overflow-hidden">
+                                        <div
+                                            className={`h-full ${color.bar} rounded-full transition-all duration-500`}
+                                            style={{ width: `${progress}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                <Link
+                    href="/progress"
+                    className="w-full mt-4 py-2 text-[10px] font-bold text-accent-primary dark:border-white/5 border border-slate-200 rounded-lg dark:hover:bg-white/5 hover:bg-accent-primary/5 transition-colors block text-center"
+                >
+                    {t("viewDashboard")}
+                </Link>
             </div>
         </aside>
     );
@@ -252,48 +235,63 @@ function FeedRightSidebar() {
 /* ─── Main Page ─── */
 export default function PublishPage() {
     const [selectedRegion, setSelectedRegion] = useState("");
+    const t = useTranslations("publish");
 
     return (
         <div className="min-h-screen bg-bg-primary">
             <SideNav />
 
             <div className="lg:ml-16 pt-16 lg:pt-0 kairos-page-enter">
-                <header className="sticky top-16 lg:top-0 z-30 topbar-solid border-b border-white/[0.06]">
-                    <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-                        <h1 className="text-lg font-bold text-fg-primary tracking-tight">Events</h1>
+                <header className="sticky top-16 lg:top-0 z-30 dark:bg-[#0A0A0C] bg-white border-b dark:border-white/5 border-slate-200">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+                        <h1 className="text-lg font-bold text-fg-primary tracking-tight">{t("title")}</h1>
                         <UserDisplay />
                     </div>
                 </header>
 
-                <main id="main-content" className="w-full">
+                <main
+                    id="main-content"
+                    className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 md:grid-cols-12 gap-8"
+                >
                     <EventReminderService />
 
-                    <div className="max-w-7xl mx-auto px-4">
-                        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr_280px] gap-6">
-                            {/* Left Sidebar — hidden on mobile */}
-                            <div className="hidden lg:block">
-                                <FeedLeftSidebar
-                                    selectedRegion={selectedRegion}
-                                    onRegionChange={setSelectedRegion}
-                                />
-                            </div>
+                    {/* Left Sidebar — hidden on mobile */}
+                    <FeedLeftSidebar
+                        selectedRegion={selectedRegion}
+                        onRegionChange={setSelectedRegion}
+                    />
 
-                            {/* Center Feed */}
-                            <div className="max-w-[600px] w-full mx-auto lg:mx-0">
-                                <EventFeed
-                                    showCreateForm={true}
-                                    externalRegion={selectedRegion}
-                                    hideRegionFilter={true}
-                                />
-                            </div>
+                    {/* Center Feed */}
+                    <section className="col-span-1 md:col-span-12 lg:col-span-6 space-y-6">
+                        <EventFeed
+                            showCreateForm={true}
+                            externalRegion={selectedRegion}
+                            hideRegionFilter={true}
+                        />
+                    </section>
 
-                            {/* Right Sidebar — hidden on mobile */}
-                            <div className="hidden lg:block">
-                                <FeedRightSidebar />
-                            </div>
-                        </div>
-                    </div>
+                    {/* Right Sidebar — hidden on mobile */}
+                    <FeedRightSidebar />
                 </main>
+
+                {/* Mobile Bottom Nav */}
+                <div className="lg:hidden fixed bottom-0 left-0 right-0 dark:bg-[#16151A] bg-white border-t dark:border-white/5 border-slate-200 px-6 py-3 flex justify-between items-center z-50">
+                    <Link href="/publish" className="text-accent-primary">
+                        <Home size={24} />
+                    </Link>
+                    <button className="text-accent-primary/50">
+                        <Search size={24} />
+                    </button>
+                    <button className="bg-accent-primary text-white p-3 rounded-full -mt-12 border-4 border-bg-primary shadow-xl shadow-accent-primary/30">
+                        <Plus size={24} />
+                    </button>
+                    <Link href="/calendar" className="text-accent-primary/50">
+                        <Calendar size={24} />
+                    </Link>
+                    <Link href="/settings" className="text-accent-primary/50">
+                        <User size={24} />
+                    </Link>
+                </div>
             </div>
         </div>
     );

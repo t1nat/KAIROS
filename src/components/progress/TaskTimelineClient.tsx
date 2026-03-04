@@ -260,28 +260,30 @@ function TimelineEntry({
           type="button"
           onClick={() => onToggleDone(entry.taskId, isCompleted)}
           disabled={isToggling}
-          className={`w-4 h-4 rounded-full border-[3px] flex-shrink-0 z-10 transition-all duration-300 cursor-pointer hover:scale-125 ${
+          className={`w-8 h-8 rounded-full flex-shrink-0 z-10 transition-all duration-300 cursor-pointer hover:scale-110 flex items-center justify-center ${
             isCompleted
-              ? "border-emerald-400 bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]"
+              ? "bg-white dark:bg-[#191022] border-2 border-accent-primary shadow-[0_0_15px_rgb(var(--accent-primary)/0.6)]"
               : isPending
-                ? "border-blue-400 bg-blue-400/30 shadow-[0_0_8px_rgba(96,165,250,0.3)] hover:bg-blue-400/50"
+                ? "bg-white dark:bg-[#191022] border-2 border-accent-primary shadow-[0_0_10px_rgb(var(--accent-primary)/0.4)]"
                 : isCreated
-                  ? "border-accent-primary bg-accent-primary/30 shadow-[0_0_8px_rgb(var(--accent-primary)/0.3)]"
-                  : "border-fg-tertiary/40 bg-bg-primary dark:bg-bg-primary hover:border-accent-primary hover:shadow-[0_0_6px_rgb(var(--accent-primary)/0.2)]"
+                  ? "bg-white dark:bg-[#191022] border-2 border-accent-primary shadow-[0_0_10px_rgb(var(--accent-primary)/0.4)]"
+                  : "bg-slate-50 dark:bg-[#191022] border-2 border-slate-400 dark:border-white/10 hover:border-accent-primary/60 hover:shadow-[0_0_6px_rgb(var(--accent-primary)/0.2)]"
           }`}
           title={isCompleted ? "Mark as pending" : "Mark as done"}
-        />
+        >
+          <div className={`rounded-full ${
+            isCompleted
+              ? "w-3 h-3 bg-accent-primary"
+              : isPending
+                ? "w-2.5 h-2.5 bg-accent-primary/80"
+                : isCreated
+                  ? "w-2.5 h-2.5 bg-accent-primary/80"
+                  : "w-2 h-2 bg-slate-400 dark:bg-white/20"
+          }`} />
+        </button>
         {!isLast && (
           <div
-            className={`w-[2px] flex-1 min-h-[60px] transition-all duration-500 ${
-              isCompleted
-                ? "bg-gradient-to-b from-emerald-400/60 to-emerald-400/10"
-                : isPending
-                  ? "bg-gradient-to-b from-blue-400/40 to-blue-400/5"
-                  : isCreated
-                    ? "bg-gradient-to-b from-accent-primary/40 to-accent-primary/5"
-                    : "bg-gradient-to-b from-border-medium/30 to-transparent dark:from-white/[0.08] dark:to-transparent"
-            }`}
+            className="w-[2px] flex-1 min-h-[60px] transition-all duration-500 bg-gradient-to-b from-slate-600 via-slate-400 to-slate-200 dark:from-accent-primary/50 dark:via-accent-primary/20 dark:to-transparent"
           />
         )}
       </div>
@@ -289,18 +291,21 @@ function TimelineEntry({
       {/* Card */}
       <div className="flex-1 pb-6 -mt-1">
         <div
-          className={`timeline-card rounded-2xl border p-4 sm:p-5 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 ${
+          className={`timeline-card rounded-lg border p-4 sm:p-5 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 relative ${
           isCompleted
-            ? "border-emerald-500/30 dark:border-emerald-500/20 hover:shadow-emerald-500/10"
+            ? "border-accent-primary/30 shadow-md shadow-accent-primary/10 bg-white dark:bg-[#20152b] hover:shadow-accent-primary/20 hover:border-accent-primary/50"
             : isPending
-              ? "border-blue-500/30 dark:border-blue-500/20 hover:shadow-blue-500/10"
+              ? "border-slate-200 dark:border-accent-primary/20 bg-white/60 dark:bg-[#20152b]/60 hover:bg-white dark:hover:bg-[#20152b] group-hover:border-accent-primary/40"
               : isCreated
                 ? "border-accent-primary/30 dark:border-accent-primary/20 hover:shadow-accent-primary/10"
-                : "border-border-medium/40 dark:border-white/[0.08] hover:shadow-black/5"
+                : "border-slate-200 dark:border-white/5 border-dashed bg-slate-50 dark:bg-black/20 group-hover:border-accent-primary/30"
         }`}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
+          {/* Speech-bubble arrow pointing to the dot */}
+          <div className={`absolute w-0 h-0 border-t-[8px] border-t-transparent border-r-[10px] border-b-[8px] border-b-transparent -left-[10px] top-5 transition-colors ${isCompleted ? "border-r-accent-primary/30" : "border-r-slate-200 dark:border-r-white/5"}`} />
+          <div className="absolute w-0 h-0 border-t-[7px] border-t-transparent border-r-[9px] border-r-white dark:border-r-[#20152b] border-b-[7px] border-b-transparent -left-[8px] top-[21px]" />
           {/* Date + status badge */}
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
@@ -315,14 +320,10 @@ function TimelineEntry({
                 type="button"
                 onClick={() => onToggleDone(entry.taskId, isCompleted)}
                 disabled={isToggling}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all border ${
+                className={`flex items-center gap-1.5 text-xs font-semibold transition-all ${
                   isCompleted
-                    ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25 shadow-sm shadow-emerald-500/10"
-                    : isPending
-                      ? "bg-blue-500/15 text-blue-400 border-blue-500/30 hover:bg-blue-500/25 shadow-sm shadow-blue-500/10"
-                      : isCreated
-                        ? "bg-accent-primary/15 text-accent-primary border-accent-primary/30 hover:bg-accent-primary/25"
-                        : "bg-bg-tertiary/50 text-fg-tertiary border-border-medium/30 hover:text-accent-primary hover:border-accent-primary/30 hover:bg-accent-primary/10"
+                    ? "text-slate-500 dark:text-slate-400 hover:text-accent-primary"
+                    : "text-slate-400 hover:text-accent-primary border border-slate-200 dark:border-white/10 rounded px-2 py-0.5 hover:border-accent-primary/50"
                 }`}
               >
                 {isToggling ? (
@@ -650,15 +651,15 @@ function CreateNewEntryForm({
   );
 
   return (
-    <div className="create-entry-card rounded-2xl border border-border-medium/40 dark:border-white/[0.08] p-5 sm:p-6">
-      <div className="flex items-center gap-2.5 mb-6">
-        <div className="w-8 h-8 rounded-full bg-accent-primary/15 border-2 border-accent-primary/40 flex items-center justify-center">
-          <Plus size={16} className="text-accent-primary" />
-        </div>
-        <h3 className="text-lg font-bold text-fg-primary">Create New Entry</h3>
-      </div>
+    <div className="create-entry-card bg-white dark:bg-[#20152b] rounded-xl border border-slate-200 dark:border-accent-primary/20 shadow-sm p-6 flex flex-col gap-6 relative overflow-hidden">
+      {/* Glow orb */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-accent-primary/10 blur-[60px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/4" />
+      <h3 className="text-slate-900 dark:text-slate-100 text-xl font-bold border-b border-slate-100 dark:border-accent-primary/10 pb-4 flex items-center gap-2 relative z-10">
+        <Plus size={20} className="text-accent-primary" />
+        Create New Entry
+      </h3>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5 relative z-10">
         {error && (
           <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center gap-2">
             <AlertTriangle size={14} />
@@ -669,14 +670,14 @@ function CreateNewEntryForm({
         {/* Project select */}
         {projects.length > 0 && (
           <div>
-            <label className="block text-xs font-bold text-fg-tertiary uppercase tracking-wider mb-2">
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-2">
               Project
             </label>
             <div className="relative">
               <select
                 value={selectedProjectId ?? ""}
                 onChange={(e) => setSelectedProjectId(Number(e.target.value))}
-                className="w-full px-4 py-3 rounded-xl timeline-input appearance-none text-sm text-fg-primary pr-10"
+                className="w-full rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-accent-primary/30 text-slate-900 dark:text-slate-100 focus:border-accent-primary focus:ring-1 focus:ring-accent-primary h-12 px-4 appearance-none pr-10 transition-all hover:border-accent-primary/50"
               >
                 {projects.map((p) => (
                   <option key={p.id} value={p.id} className="bg-bg-primary text-fg-primary">
@@ -694,7 +695,7 @@ function CreateNewEntryForm({
 
         {/* Task Title */}
         <div>
-          <label className="block text-xs font-bold text-fg-tertiary uppercase tracking-wider mb-2">
+          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-2">
             Task Title
           </label>
           <input
@@ -702,13 +703,13 @@ function CreateNewEntryForm({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Database Migration Review"
-            className="w-full px-4 py-3 rounded-xl timeline-input text-sm text-fg-primary placeholder:text-fg-quaternary"
+            className="w-full rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-accent-primary/30 text-slate-900 dark:text-slate-100 focus:border-accent-primary focus:ring-1 focus:ring-accent-primary h-12 px-4 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all hover:border-accent-primary/50"
           />
         </div>
 
         {/* Description — kept rectangular with explicit border-radius */}
         <div>
-          <label className="block text-xs font-bold text-fg-tertiary uppercase tracking-wider mb-2">
+          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-2">
             Description
           </label>
           <textarea
@@ -716,24 +717,23 @@ function CreateNewEntryForm({
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Detail the specific requirements..."
             rows={3}
-            className="w-full px-4 py-3 timeline-input text-sm text-fg-primary placeholder:text-fg-quaternary resize-y min-h-[80px]"
-            style={{ borderRadius: "0.75rem" }}
+            className="w-full rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-accent-primary/30 text-slate-900 dark:text-slate-100 focus:border-accent-primary focus:ring-1 focus:ring-accent-primary min-h-[100px] p-4 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all resize-y hover:border-accent-primary/50"
           />
         </div>
 
         {/* Priority / Assign To / Date row */}
         <div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
             {/* Priority selector — dropdown */}
             <div>
-              <label className="block text-[10px] font-bold text-fg-tertiary uppercase tracking-wider mb-1.5">
-                Priority
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-2">
+                Category
               </label>
               <div className="relative">
                 <select
                   value={priority}
                   onChange={(e) => setPriority(e.target.value as TaskPriority)}
-                  className="w-full px-3 py-2.5 rounded-xl timeline-input appearance-none text-xs text-fg-primary pr-9 font-medium"
+                  className="w-full rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-accent-primary/30 text-slate-900 dark:text-slate-100 focus:border-accent-primary focus:ring-1 focus:ring-accent-primary h-12 px-4 appearance-none transition-all hover:border-accent-primary/50"
                 >
                   {PRIORITY_OPTIONS.map((p) => (
                     <option key={p.value} value={p.value} className="bg-bg-primary text-fg-primary">
@@ -752,13 +752,13 @@ function CreateNewEntryForm({
               </div>
             </div>
             <div ref={assignDropdownRef} className="relative">
-              <label className="block text-[10px] font-bold text-fg-tertiary uppercase tracking-wider mb-1.5">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-2">
                 Assign To
               </label>
               <button
                 type="button"
                 onClick={() => setShowAssignDropdown(!showAssignDropdown)}
-                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl timeline-input text-left"
+                className="w-full flex items-center gap-2 rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-accent-primary/30 h-12 px-4 text-left transition-all hover:border-accent-primary/50"
               >
                 {selectedMember ? (
                   <>
@@ -842,14 +842,14 @@ function CreateNewEntryForm({
               )}
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-fg-tertiary uppercase tracking-wider mb-1.5">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-2">
                 Date
               </label>
               <input
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl timeline-input text-xs text-fg-primary"
+                className="w-full rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-accent-primary/30 text-slate-900 dark:text-slate-100 focus:border-accent-primary focus:ring-1 focus:ring-accent-primary h-12 px-4 transition-all hover:border-accent-primary/50"
               />
             </div>
           </div>
@@ -857,12 +857,12 @@ function CreateNewEntryForm({
 
         {/* Attachments */}
         <div>
-          <label className="block text-xs font-bold text-fg-tertiary uppercase tracking-wider mb-2">
+          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-2">
             Attachments
           </label>
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="timeline-upload-zone flex flex-col items-center justify-center gap-2 p-6 rounded-xl border-2 border-dashed border-border-medium/50 dark:border-white/[0.1] cursor-pointer hover:border-accent-primary/40 transition-colors"
+            className="w-full rounded-lg border-2 border-dashed border-slate-300 dark:border-accent-primary/40 bg-slate-50/50 dark:bg-black/10 hover:bg-slate-50 dark:hover:bg-accent-primary/5 transition-colors flex flex-col items-center justify-center py-6 cursor-pointer hover:border-accent-primary/60"
           >
             <Upload size={20} className="text-accent-primary" />
             <p className="text-xs text-fg-secondary">
@@ -879,21 +879,21 @@ function CreateNewEntryForm({
           type="button"
           onClick={handleGenerateAi}
           disabled={generateDrafts.isPending || !selectedProjectId}
-          className="w-full flex items-center gap-3 p-3.5 rounded-xl bg-accent-primary/[0.08] dark:bg-accent-primary/[0.1] border border-accent-primary/20 hover:bg-accent-primary/[0.15] hover:border-accent-primary/40 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group"
+          className="w-full text-left bg-accent-primary/5 border border-accent-primary/50 hover:border-accent-primary rounded-lg p-4 flex items-start gap-4 transition-all hover:shadow-[0_0_15px_rgb(var(--accent-primary)/0.3)] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group"
         >
-          <div className="w-10 h-10 rounded-xl bg-accent-primary/15 flex items-center justify-center flex-shrink-0 group-hover:bg-accent-primary/25 transition-colors">
+          <div className="bg-accent-primary/20 p-2 rounded-full flex shrink-0 shadow-[0_0_10px_rgb(var(--accent-primary)/0.2)] group-hover:bg-accent-primary/30 transition-colors">
             {generateDrafts.isPending ? (
-              <Loader2 size={20} className="text-accent-primary animate-spin" />
+              <Loader2 size={24} className="text-accent-primary animate-spin" />
             ) : (
-              <Sparkles size={20} className="text-accent-primary" />
+              <Sparkles size={24} className="text-accent-primary" />
             )}
           </div>
-          <div className="text-left">
-            <p className="text-sm font-bold text-fg-primary">
+          <div className="flex flex-col">
+            <h4 className="text-slate-900 dark:text-slate-100 font-semibold mb-1">
               {generateDrafts.isPending ? "Generating..." : "AI Task Planner"}
-            </p>
-            <p className="text-xs text-fg-secondary">
-              Generate tasks based off the project&apos;s description
+            </h4>
+            <p className="text-slate-600 dark:text-slate-400 text-sm">
+              Add tasks based off the project&apos;s description.
             </p>
           </div>
         </button>
@@ -913,7 +913,7 @@ function CreateNewEntryForm({
         <button
           type="submit"
           disabled={createTask.isPending || !title.trim() || !selectedProjectId}
-          className="w-full py-3.5 rounded-xl bg-accent-primary text-white font-bold text-sm flex items-center justify-center gap-2 hover:brightness-110 transition-all shadow-lg shadow-accent-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-gradient-to-r from-accent-primary to-purple-600 hover:from-accent-primary/90 hover:to-purple-500 text-white px-8 py-3 rounded-lg font-semibold shadow-[0_0_15px_rgb(var(--accent-primary)/0.4)] transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {createTask.isPending ? (
             <>
@@ -939,21 +939,21 @@ function MasterProgressBar({
   percentage: number;
 }) {
   return (
-    <div className="mb-6">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-bold text-fg-primary uppercase tracking-wider">
+    <div className="mb-8">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
           Master Progress
-        </h3>
-        <span className="text-sm font-bold text-accent-primary">
+        </span>
+        <span className="text-accent-primary font-bold">
           {Math.round(percentage)}%
         </span>
       </div>
-      <div className="relative w-full h-2 bg-bg-tertiary dark:bg-white/[0.06] rounded-full overflow-hidden">
+      <div className="w-full bg-slate-200 dark:bg-white/10 rounded-full h-2">
         <div
-          className="absolute top-0 left-0 h-full rounded-full transition-all duration-700 ease-out"
+          className="h-2 rounded-full transition-all duration-700 ease-out shadow-[0_0_10px_rgb(var(--accent-primary)/0.5)]"
           style={{
             width: `${percentage}%`,
-            background: "linear-gradient(90deg, rgb(var(--accent-primary)), rgb(var(--accent-secondary)))",
+            background: "linear-gradient(90deg, rgb(var(--accent-primary)), rgb(168 85 247))",
           }}
         />
       </div>
@@ -1091,10 +1091,10 @@ export function TaskTimelineClient() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-fg-primary tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 leading-tight tracking-tight">
           Task Creation & Timeline
         </h1>
-        <p className="text-sm text-fg-secondary mt-1">
+        <p className="text-base font-medium text-slate-600 dark:text-slate-400 mt-1">
           Add new tasks and track your historical progress.
         </p>
       </div>

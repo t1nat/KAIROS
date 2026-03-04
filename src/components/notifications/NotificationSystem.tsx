@@ -141,8 +141,8 @@ export function NotificationSystem() {
  onClick={() => setIsOpen(false)}
  aria-hidden="true"
  />
- <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-96 bg-bg-elevated/95 backdrop-blur-xl rounded-2xl bg-bg-elevated border border-white/[0.06] shadow-2xl z-50 max-h-[600px] overflow-hidden animate-in slide-in-from-top-2 duration-200">
- <div className="p-4 border-b border-border-light/50 flex items-center justify-between sticky top-0 bg-bg-overlay/80 z-10">
+ <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-96 backdrop-blur-xl rounded-2xl dark:bg-[#16151A] bg-white dark:border-white/[0.06] border border-slate-200 shadow-2xl z-50 max-h-[600px] overflow-hidden animate-in slide-in-from-top-2 duration-200">
+ <div className="p-4 border-b dark:border-white/[0.06] border-slate-200 flex items-center justify-between sticky top-0 dark:bg-[#16151A]/95 bg-white/95 backdrop-blur-sm z-10">
  <div>
  <h3 className="text-lg font-bold text-fg-primary">
  Notifications
