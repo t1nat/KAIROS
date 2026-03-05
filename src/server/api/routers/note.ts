@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import crypto from "node:crypto";
 import { protectedProcedure, createTRPCRouter } from "~/server/api/trpc";
-import { stickyNotes, users, notebooks, noteShares } from "~/server/db/schema";
+import { stickyNotes, users, notebooks, noteShares, notifications } from "~/server/db/schema";
 import { eq, and, or } from "drizzle-orm";
 import * as argon2 from "argon2";
 import { encryptContent, decryptContent } from "~/server/encryption";
@@ -86,11 +86,28 @@ export const noteRouter = createTRPCRouter({
       const notes = await ctx.db.query.stickyNotes.findMany({
         where: eq(stickyNotes.createdById, ctx.session.user.id),
         orderBy: (notes, { desc }) => [desc(notes.createdAt)],
+        with: {
+          shares: {
+            with: {
+              sharedWith: {
+                columns: { id: true, name: true, email: true, image: true },
+              },
+            },
+          },
+        },
       });
 
       // IMPORTANT: never ship plaintext content for password-protected notes.
       // The client must unlock via password before fetching content.
       return notes.map((n) => {
+        const sharedWith = n.shares?.map((s) => ({
+          id: s.sharedWith.id,
+          name: s.sharedWith.name,
+          email: s.sharedWith.email,
+          image: s.sharedWith.image,
+          permission: s.permission,
+        })) ?? [];
+
         if (n.passwordHash) {
           return {
             id: n.id,
@@ -100,12 +117,13 @@ export const noteRouter = createTRPCRouter({
             notebookId: n.notebookId,
             passwordHash: n.passwordHash,
             shareStatus: n.shareStatus,
+            sharedWith,
             // content intentionally omitted
             content: null,
           };
         }
 
-        return n;
+        return { ...n, sharedWith };
       });
     }),
 
@@ -190,6 +208,18 @@ export const noteRouter = createTRPCRouter({
         sharedWithId: targetUser.id,
         sharedById: ctx.session.user.id,
         permission: input.permission,
+      });
+
+      // Create notification for the target user
+      const sharerName = ctx.session.user.name ?? ctx.session.user.email ?? "Someone";
+      const noteTitle = note.title ?? "Untitled note";
+      await ctx.db.insert(notifications).values({
+        userId: targetUser.id,
+        type: "system",
+        title: "Note shared with you",
+        message: `${sharerName} shared "${noteTitle}" with you (${input.permission === "write" ? "can edit" : "view only"}).`,
+        link: "/create?action=new_note",
+        read: false,
       });
 
       // Update note share status
@@ -339,7 +369,7 @@ export const noteRouter = createTRPCRouter({
         throw new TRPCError({ code: "FORBIDDEN", message: "Not your note." });
       }
       await ctx.db.update(stickyNotes)
-        .set({ notebookId: input.notebookId })
+        .set({ notebookId: input.notebookId, updatedAt: new Date() })
         .where(eq(stickyNotes.id, input.noteId));
       return { success: true };
     }),
@@ -403,6 +433,7 @@ export const noteRouter = createTRPCRouter({
     .input(z.object({
       id: z.number(),
       content: z.string().min(1),
+      title: z.string().optional(),
       password: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -415,7 +446,19 @@ export const noteRouter = createTRPCRouter({
       }
 
       if (note.createdById !== ctx.session.user.id) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "You don't own this note." });
+        // Check if user has write permission via share
+        const [share] = await ctx.db
+          .select()
+          .from(noteShares)
+          .where(and(
+            eq(noteShares.noteId, input.id),
+            eq(noteShares.sharedWithId, ctx.session.user.id),
+            eq(noteShares.permission, "write"),
+          ))
+          .limit(1);
+        if (!share) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "You don't have write access to this note." });
+        }
       }
 
       // Re-encrypt if the note is password-protected and password is provided
@@ -424,7 +467,11 @@ export const noteRouter = createTRPCRouter({
         : input.content;
 
       await ctx.db.update(stickyNotes)
-        .set({ content: storedContent })
+        .set({
+          content: storedContent,
+          updatedAt: new Date(),
+          ...(input.title !== undefined ? { title: input.title || null } : {}),
+        })
         .where(eq(stickyNotes.id, input.id));
 
       return { success: true, message: "Note updated successfully" };

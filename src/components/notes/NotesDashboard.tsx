@@ -67,6 +67,7 @@ export function NotesDashboard() {
 
   // ---- Edit state ----
   const [editingContent, setEditingContent] = useState<Record<number, string>>({});
+  const [editingTitle, setEditingTitle] = useState<Record<number, string>>({});
   const [pendingDeleteNoteId, setPendingDeleteNoteId] = useState<number | null>(null);
   const pendingDeleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -74,6 +75,8 @@ export function NotesDashboard() {
   const [shareModalNoteId, setShareModalNoteId] = useState<number | null>(null);
   const [shareEmail, setShareEmail] = useState("");
   const [sharePermission, setSharePermission] = useState<"read" | "write">("read");
+  const [shareEmailDebounced, setShareEmailDebounced] = useState("");
+  const [showShareSuggestions, setShowShareSuggestions] = useState(false);
 
   // ---- Notebook creation state ----
   const [showCreateNotebook, setShowCreateNotebook] = useState(false);
@@ -81,6 +84,11 @@ export function NotesDashboard() {
 
   // ---- Context menu ----
   const [contextMenuNoteId, setContextMenuNoteId] = useState<number | null>(null);
+
+  // ---- Shared note editing ----
+  const [selectedSharedNoteId, setSelectedSharedNoteId] = useState<number | null>(null);
+  const [sharedEditTitle, setSharedEditTitle] = useState("");
+  const [sharedEditContent, setSharedEditContent] = useState("");
 
   // ---- Queries ----
   const { data: notes, refetch: refetchNotes } = api.note.getAll.useQuery();
@@ -94,6 +102,44 @@ export function NotesDashboard() {
     retry: false,
     refetchOnWindowFocus: false,
   });
+
+  // ---- Org members for share suggestions ----
+  const { data: activeOrg } = api.organization.getActive.useQuery(undefined, {
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+  const activeOrgId = activeOrg?.organization?.id;
+  const { data: orgMembers } = api.organization.getMembers.useQuery(
+    { organizationId: activeOrgId! },
+    { enabled: !!activeOrgId, retry: false, refetchOnWindowFocus: false },
+  );
+
+  // ---- Share email lookup ----
+  const shareEmailTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (shareEmailTimerRef.current) clearTimeout(shareEmailTimerRef.current);
+    const trimmed = shareEmail.trim();
+    if (trimmed && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      shareEmailTimerRef.current = setTimeout(() => setShareEmailDebounced(trimmed), 400);
+    } else {
+      setShareEmailDebounced("");
+    }
+    return () => { if (shareEmailTimerRef.current) clearTimeout(shareEmailTimerRef.current); };
+  }, [shareEmail]);
+
+  const { data: shareEmailLookup, isFetching: isShareLookingUp } = api.user.searchByEmail.useQuery(
+    { email: shareEmailDebounced },
+    { enabled: !!shareEmailDebounced, retry: false, refetchOnWindowFocus: false },
+  );
+
+  // Filter org members for suggestions based on typed email
+  const shareSuggestions = useMemo(() => {
+    if (!orgMembers || !shareEmail.trim()) return [];
+    const q = shareEmail.toLowerCase();
+    return orgMembers.filter((m) =>
+      (m.email?.toLowerCase().includes(q) || m.name?.toLowerCase().includes(q)) && m.email
+    ).slice(0, 5);
+  }, [orgMembers, shareEmail]);
 
   const keepUnlockedUntilClose = settings?.notesKeepUnlockedUntilClose ?? false;
   const resetPinHint = settings?.resetPinHint ?? null;
@@ -174,6 +220,7 @@ export function NotesDashboard() {
       toast.success("Note shared");
       setShareEmail("");
       void utils.note.getNoteShares.invalidate();
+      void utils.note.getAll.invalidate();
     },
     onError: (e) => toast.error(e.message),
   });
@@ -182,6 +229,7 @@ export function NotesDashboard() {
     onSuccess: () => {
       toast.success("Access removed");
       void utils.note.getNoteShares.invalidate();
+      void utils.note.getAll.invalidate();
     },
     onError: (e) => toast.error(e.message),
   });
@@ -211,6 +259,7 @@ export function NotesDashboard() {
       toast.success("Note moved");
       setContextMenuNoteId(null);
       void utils.note.getAll.invalidate();
+      void utils.note.getNotebooks.invalidate();
     },
     onError: (e) => toast.error(e.message),
   });
@@ -230,7 +279,11 @@ export function NotesDashboard() {
     toast.info("Click again to confirm delete");
   }, [pendingDeleteNoteId, deleteNote, toast]);
 
-  const closeExpandedNote = useCallback(() => setSelectedNoteId(null), []);
+  const closeExpandedNote = useCallback(() => {
+    setSelectedNoteId(null);
+    setEditingContent({});
+    setEditingTitle({});
+  }, []);
 
   // ---- Filtered notes ----
   const allNotes = notes ?? [];
@@ -273,6 +326,11 @@ export function NotesDashboard() {
     return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
   };
 
+  const formatFullDate = (date: Date | string) => {
+    const d = new Date(date);
+    return d.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  };
+
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
@@ -280,6 +338,14 @@ export function NotesDashboard() {
     <div className="flex h-[calc(100vh-65px)]">
       {/* ---- Secondary sidebar ---- */}
       <aside className="w-56 border-r border-white/[0.06] bg-bg-primary flex flex-col p-4 hidden md:flex">
+        <button
+          onClick={() => setShowCreateForm(true)}
+          className="w-full kairos-neon-btn text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-bold text-sm mb-4"
+        >
+          <Plus size={18} />
+          New Note
+        </button>
+
         <nav className="flex flex-col gap-1 flex-1">
           {tabs.map((tab) => (
             <button
@@ -300,14 +366,6 @@ export function NotesDashboard() {
             </button>
           ))}
         </nav>
-
-        <button
-          onClick={() => setShowCreateForm(true)}
-          className="w-full kairos-neon-btn text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-bold text-sm mt-4"
-        >
-          <Plus size={18} />
-          New Note
-        </button>
       </aside>
 
       {/* ---- Main content ---- */}
@@ -366,7 +424,7 @@ export function NotesDashboard() {
                     <div
                       key={note.id}
                       onClick={() => setSelectedNoteId(note.id)}
-                      className="group relative p-5 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-[0_0_20px_rgba(var(--accent-primary),0.12)] border border-white/[0.08] bg-[rgba(var(--accent-primary),0.03)] backdrop-blur-sm hover:bg-[rgba(var(--accent-primary),0.07)] hover:border-[rgba(var(--accent-primary),0.25)]"
+                      className="group relative p-5 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-[0_0_20px_rgba(var(--accent-primary),0.12)] border border-white/[0.08] dark:bg-[#1a1625] bg-[#f8f7fa] backdrop-blur-sm hover:bg-[rgba(var(--accent-primary),0.07)] hover:border-[rgba(var(--accent-primary),0.25)] max-h-[220px] flex flex-col"
                     >
                       <div className="flex items-start justify-between mb-3">
                         {note.shareStatus !== "private" ? (
@@ -382,28 +440,6 @@ export function NotesDashboard() {
                             Note
                           </span>
                         )}
-                        <span className="text-xs text-fg-tertiary">{formatTime(note.createdAt)}</span>
-                      </div>
-
-                      <h3 className="text-sm font-bold text-fg-primary mb-2 group-hover:text-accent-primary transition-colors line-clamp-1">
-                        {isLocked ? "Encrypted Note" : (title || "Untitled")}
-                      </h3>
-
-                      <p className="text-fg-tertiary text-xs leading-relaxed mb-5 line-clamp-3">
-                        {isLocked ? "This note is password protected" : (preview || "No content")}
-                      </p>
-
-                      <div className="flex items-center justify-between">
-                        {note.notebookId ? (
-                          <div className="flex items-center gap-1.5 text-fg-tertiary">
-                            <BookOpen size={12} />
-                            <span className="text-[10px]">
-                              {notebooksList?.find((nb) => nb.id === note.notebookId)?.name ?? "Notebook"}
-                            </span>
-                          </div>
-                        ) : (
-                          <div />
-                        )}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -413,6 +449,58 @@ export function NotesDashboard() {
                         >
                           <MoreHorizontal size={16} />
                         </button>
+                      </div>
+
+                      <h3 className="text-sm font-bold text-fg-primary mb-2 group-hover:text-accent-primary transition-colors line-clamp-1">
+                        {isLocked ? "Encrypted Note" : (title || "Untitled")}
+                      </h3>
+
+                      <p className="dark:text-slate-400 text-slate-500 text-xs leading-relaxed mb-3 line-clamp-3 flex-1 min-h-0 overflow-hidden">
+                        {isLocked ? "This note is password protected" : (preview || "No content")}
+                      </p>
+
+                      <div className="flex items-center justify-between mt-auto pt-2 border-t border-white/[0.04]">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[9px] text-fg-tertiary">Created: {formatTime(note.createdAt)}</span>
+                          <span className="text-[9px] text-fg-tertiary">Edited: {formatTime(note.updatedAt)}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {/* Shared users avatars */}
+                          {"sharedWith" in note && (note as { sharedWith?: { id: string; name: string | null; email: string; image: string | null; permission: string }[] }).sharedWith && (note as { sharedWith: { id: string; name: string | null; email: string; image: string | null; permission: string }[] }).sharedWith.length > 0 && (
+                            <div className="flex items-center -space-x-1.5">
+                              {(note as { sharedWith: { id: string; name: string | null; email: string; image: string | null; permission: string }[] }).sharedWith.slice(0, 3).map((u) => (
+                                <div
+                                  key={u.id}
+                                  title={`${u.name ?? u.email} (${u.permission})`}
+                                  className="w-5 h-5 rounded-full border-2 border-bg-primary bg-accent-primary/20 flex items-center justify-center overflow-hidden"
+                                >
+                                  {u.image ? (
+                                    <img src={u.image} alt={u.name ?? ""} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <span className="text-[8px] font-bold text-accent-primary">
+                                      {(u.name ?? u.email)?.[0]?.toUpperCase() ?? "?"}
+                                    </span>
+                                  )}
+                                </div>
+                              ))}
+                              {(note as { sharedWith: { id: string; name: string | null }[] }).sharedWith.length > 3 && (
+                                <div className="w-5 h-5 rounded-full border-2 border-bg-primary bg-bg-tertiary flex items-center justify-center">
+                                  <span className="text-[8px] font-bold text-fg-tertiary">
+                                    +{(note as { sharedWith: unknown[] }).sharedWith.length - 3}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {note.notebookId ? (
+                            <div className="flex items-center gap-1.5 text-fg-tertiary">
+                              <BookOpen size={12} />
+                              <span className="text-[10px]">
+                                {notebooksList?.find((nb) => nb.id === note.notebookId)?.name ?? "Notebook"}
+                              </span>
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
 
                       {/* Context menu */}
@@ -567,6 +655,71 @@ export function NotesDashboard() {
           {activeTab === "shared" && (
             <div>
               <h2 className="text-2xl font-bold text-fg-primary tracking-tight mb-6">Shared with me</h2>
+
+              {/* Shared note expanded editor */}
+              {selectedSharedNoteId && (() => {
+                const sn = sharedNotes?.find((n) => n.id === selectedSharedNoteId);
+                if (!sn) return null;
+                const canEdit = sn.permission === "write" && !sn.passwordHash;
+                return (
+                  <div className="mb-6 p-5 rounded-xl border border-accent-primary/20 bg-bg-secondary space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[rgba(var(--accent-primary),0.15)] text-accent-primary border border-[rgba(var(--accent-primary),0.2)]">
+                        {sn.permission === "write" ? "Can Edit" : "View Only"}
+                      </span>
+                      <button
+                        onClick={() => setSelectedSharedNoteId(null)}
+                        className="p-1.5 rounded-lg text-fg-tertiary hover:text-fg-primary hover:bg-white/[0.06] transition"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                    {canEdit ? (
+                      <>
+                        <input
+                          type="text"
+                          value={sharedEditTitle}
+                          onChange={(e) => setSharedEditTitle(e.target.value)}
+                          placeholder="Title"
+                          className="w-full px-3 py-2 bg-bg-primary rounded-lg text-sm font-bold text-fg-primary placeholder:text-fg-tertiary border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
+                        />
+                        <textarea
+                          value={sharedEditContent}
+                          onChange={(e) => setSharedEditContent(e.target.value)}
+                          placeholder="Write something..."
+                          rows={8}
+                          className="w-full px-3 py-2 bg-bg-primary rounded-lg text-sm text-fg-primary placeholder:text-fg-tertiary border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-accent-primary/30 resize-y"
+                        />
+                        <button
+                          onClick={() => {
+                            updateNote.mutate(
+                              { id: sn.id, content: sharedEditContent, title: sharedEditTitle || undefined },
+                              {
+                                onSuccess: () => {
+                                  toast.success("Note updated");
+                                  setSelectedSharedNoteId(null);
+                                  void utils.note.getSharedWithMe.invalidate();
+                                },
+                              },
+                            );
+                          }}
+                          disabled={updateNote.isPending}
+                          className="px-4 py-2 rounded-lg kairos-neon-btn text-white text-sm font-medium disabled:opacity-50"
+                        >
+                          {updateNote.isPending ? <Loader2 size={14} className="animate-spin" /> : "Save changes"}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <h3 className="text-sm font-bold text-fg-primary">{sn.title ?? "Untitled"}</h3>
+                        <p className="text-sm text-fg-secondary whitespace-pre-wrap">{sn.content ?? ""}</p>
+                      </>
+                    )}
+                    <div className="text-[10px] text-fg-tertiary">From {sn.ownerName ?? sn.ownerEmail}</div>
+                  </div>
+                );
+              })()}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {sharedNotes?.map((note) => {
                   const title = note.title ?? (note.content ?? "").split("\n")[0]?.trim().substring(0, 60) ?? "Untitled";
@@ -575,7 +728,12 @@ export function NotesDashboard() {
                   return (
                     <div
                       key={note.id}
-                      className="group p-5 rounded-xl transition-all duration-200 border border-white/[0.08] bg-[rgba(var(--accent-primary),0.03)] backdrop-blur-sm hover:bg-[rgba(var(--accent-primary),0.07)] hover:border-[rgba(var(--accent-primary),0.25)]"
+                      onClick={() => {
+                        setSelectedSharedNoteId(note.id);
+                        setSharedEditTitle(note.title ?? "");
+                        setSharedEditContent(note.content ?? "");
+                      }}
+                      className="group p-5 rounded-xl cursor-pointer transition-all duration-200 border border-white/[0.08] bg-[rgba(var(--accent-primary),0.03)] backdrop-blur-sm hover:bg-[rgba(var(--accent-primary),0.07)] hover:border-[rgba(var(--accent-primary),0.25)]"
                     >
                       <div className="flex items-start justify-between mb-3">
                         <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[rgba(var(--accent-primary),0.15)] text-accent-primary border border-[rgba(var(--accent-primary),0.2)]">
@@ -779,11 +937,15 @@ export function NotesDashboard() {
                 </div>
               ) : (
                 <div>
-                  <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/[0.06]">
-                    <span className="text-base font-bold text-fg-primary">
-                      {note.title || "Note Content"}
-                    </span>
-                    <div className="flex gap-1.5">
+                  <div className="flex items-center justify-between mb-2 pb-3 border-b border-white/[0.06]">
+                    <input
+                      type="text"
+                      value={editingTitle[note.id] ?? note.title ?? ""}
+                      onChange={(e) => setEditingTitle((prev) => ({ ...prev, [note.id]: e.target.value }))}
+                      placeholder="Untitled note"
+                      className="text-base font-bold text-fg-primary bg-transparent flex-1 mr-2 focus:outline-none focus:ring-0 placeholder:text-fg-tertiary"
+                    />
+                    <div className="flex gap-1.5 shrink-0">
                       <button onClick={() => void refetchNotes()} className="p-1.5 text-fg-tertiary hover:text-fg-primary hover:bg-white/[0.06] rounded-lg transition">
                         <RefreshCw size={15} />
                       </button>
@@ -795,6 +957,10 @@ export function NotesDashboard() {
                       </button>
                     </div>
                   </div>
+                  <div className="flex items-center gap-3 mb-3 text-[10px] text-fg-tertiary">
+                    <span>Created: {formatFullDate(note.createdAt)}</span>
+                    <span>Edited: {formatFullDate(note.updatedAt)}</span>
+                  </div>
                   <textarea
                     value={editingContent[note.id] ?? (unlockedState?.content ?? note.content ?? "")}
                     onChange={(e) => setEditingContent((prev) => ({ ...prev, [note.id]: e.target.value }))}
@@ -803,7 +969,8 @@ export function NotesDashboard() {
                   <button
                     onClick={() => {
                       const content = editingContent[note.id] ?? (unlockedState?.content ?? note.content ?? "");
-                      updateNote.mutate({ id: note.id, content });
+                      const title = editingTitle[note.id] ?? note.title ?? "";
+                      updateNote.mutate({ id: note.id, content, title: title || undefined });
                     }}
                     disabled={updateNote.isPending}
                     className="w-full mt-4 kairos-neon-btn text-white font-bold py-3 rounded-xl disabled:opacity-50 text-sm"
@@ -821,7 +988,7 @@ export function NotesDashboard() {
       {/* SHARE MODAL                                                        */}
       {/* ================================================================== */}
       {shareModalNoteId !== null && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4" onClick={() => setShareModalNoteId(null)}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4" onClick={() => { setShareModalNoteId(null); setShowShareSuggestions(false); }}>
           <div className="bg-bg-elevated rounded-2xl shadow-2xl max-w-md w-full p-6 border border-white/[0.08]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">
@@ -830,24 +997,81 @@ export function NotesDashboard() {
                 </div>
                 <h3 className="text-base font-bold text-fg-primary">Share Note</h3>
               </div>
-              <button onClick={() => setShareModalNoteId(null)} className="p-1.5 rounded-lg text-fg-tertiary hover:text-fg-primary hover:bg-white/[0.06] transition">
+              <button onClick={() => { setShareModalNoteId(null); setShowShareSuggestions(false); }} className="p-1.5 rounded-lg text-fg-tertiary hover:text-fg-primary hover:bg-white/[0.06] transition">
                 <X size={18} />
               </button>
             </div>
 
             <div className="flex gap-2 mb-4">
-              <input
-                type="email"
-                value={shareEmail}
-                onChange={(e) => setShareEmail(e.target.value)}
-                placeholder="Email address"
-                className="flex-1 px-3 py-2 bg-bg-primary rounded-lg text-sm text-fg-primary placeholder:text-fg-tertiary border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && shareEmail.trim()) {
-                    shareNote.mutate({ noteId: shareModalNoteId, email: shareEmail, permission: sharePermission });
-                  }
-                }}
-              />
+              <div className="flex-1 relative">
+                <input
+                  type="email"
+                  value={shareEmail}
+                  onChange={(e) => { setShareEmail(e.target.value); setShowShareSuggestions(true); }}
+                  onFocus={() => setShowShareSuggestions(true)}
+                  placeholder="Email address"
+                  className="w-full px-3 py-2 bg-bg-primary rounded-lg text-sm text-fg-primary placeholder:text-fg-tertiary border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && shareEmail.trim()) {
+                      shareNote.mutate({ noteId: shareModalNoteId, email: shareEmail, permission: sharePermission });
+                      setShowShareSuggestions(false);
+                    }
+                  }}
+                />
+                {/* Org member suggestions */}
+                {showShareSuggestions && shareEmail.trim() && !shareEmailDebounced && shareSuggestions.length > 0 && (
+                  <div className="absolute left-0 right-0 top-full mt-1 z-10 rounded-lg border border-white/[0.08] bg-bg-elevated shadow-xl max-h-40 overflow-y-auto">
+                    {shareSuggestions.map((m) => (
+                      <button
+                        key={m.id}
+                        onClick={() => { setShareEmail(m.email!); setShowShareSuggestions(false); }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-white/[0.06] transition text-left"
+                      >
+                        {m.image ? (
+                          <img src={m.image} alt="" className="w-7 h-7 rounded-full object-cover" />
+                        ) : (
+                          <div className="w-7 h-7 rounded-full bg-accent-primary/15 flex items-center justify-center text-[10px] font-bold text-accent-primary">
+                            {(m.name ?? m.email)?.[0]?.toUpperCase()}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-fg-primary truncate">{m.name ?? "No name"}</p>
+                          <p className="text-[10px] text-fg-tertiary truncate">{m.email}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {/* Email lookup result */}
+                {shareEmailDebounced && !isShareLookingUp && shareEmailLookup && (
+                  <div className="absolute left-0 right-0 top-full mt-1 z-10 p-2.5 rounded-lg border border-accent-primary/20 bg-bg-elevated shadow-lg flex items-center gap-2.5">
+                    {shareEmailLookup.image ? (
+                      <img src={shareEmailLookup.image} alt="" className="w-8 h-8 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-accent-primary/15 flex items-center justify-center">
+                        <span className="text-xs font-bold text-accent-primary">
+                          {(shareEmailLookup.name ?? shareEmailLookup.email)?.[0]?.toUpperCase() ?? "?"}
+                        </span>
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-fg-primary truncate">{shareEmailLookup.name ?? "No name"}</p>
+                      <p className="text-[10px] text-fg-tertiary truncate">{shareEmailLookup.email}</p>
+                    </div>
+                  </div>
+                )}
+                {shareEmailDebounced && !isShareLookingUp && !shareEmailLookup && (
+                  <div className="absolute left-0 right-0 top-full mt-1 z-10 p-2.5 rounded-lg border border-red-500/20 bg-bg-elevated shadow-lg">
+                    <p className="text-xs text-red-400">No account found with this email</p>
+                  </div>
+                )}
+                {shareEmailDebounced && isShareLookingUp && (
+                  <div className="absolute left-0 right-0 top-full mt-1 z-10 p-2.5 rounded-lg border border-white/[0.06] bg-bg-elevated shadow-lg flex items-center gap-2">
+                    <Loader2 size={12} className="animate-spin text-fg-tertiary" />
+                    <p className="text-xs text-fg-tertiary">Looking up email...</p>
+                  </div>
+                )}
+              </div>
               <select
                 value={sharePermission}
                 onChange={(e) => setSharePermission(e.target.value as "read" | "write")}
@@ -857,7 +1081,7 @@ export function NotesDashboard() {
                 <option value="write">Edit</option>
               </select>
               <button
-                onClick={() => shareEmail.trim() && shareNote.mutate({ noteId: shareModalNoteId, email: shareEmail, permission: sharePermission })}
+                onClick={() => { shareEmail.trim() && shareNote.mutate({ noteId: shareModalNoteId, email: shareEmail, permission: sharePermission }); setShowShareSuggestions(false); }}
                 disabled={!shareEmail.trim() || shareNote.isPending}
                 className="px-4 py-2 kairos-neon-btn text-white text-sm font-medium rounded-lg disabled:opacity-50"
               >

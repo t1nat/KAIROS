@@ -19,7 +19,7 @@ export default async function NotesPage() {
       <div className="min-h-screen bg-bg-primary">
         <SideNav />
         <div className="lg:ml-16 min-h-screen flex flex-col">
-          <header className="sticky top-0 z-30 bg-bg-primary/80 backdrop-blur-md border-b border-white/[0.06]">
+          <header className="sticky top-0 z-30 bg-bg-primary/80 backdrop-blur-md border-b border-slate-200 dark:border-white/[0.06]">
             <div className="px-4 sm:px-8 py-3 flex justify-between items-center">
               <div className="flex items-center gap-4">
                 <div>
@@ -33,7 +33,7 @@ export default async function NotesPage() {
               </div>
               <div className="flex items-center gap-3">
                 <WorkspaceIndicator compact />
-                <div className="hidden sm:block h-6 w-px bg-white/[0.06]" />
+                <div className="hidden sm:block h-6 w-px bg-slate-200 dark:bg-white/[0.06]" />
                 <NotificationSystem />
                 <UserDisplay />
               </div>
