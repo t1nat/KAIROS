@@ -67,6 +67,7 @@ interface EventWithDetails {
   title: string;
   description: string;
   eventDate: Date;
+  createdAt?: Date;
   imageUrl: string | null;
   region: string;
   enableRsvp: boolean;
@@ -77,7 +78,7 @@ interface EventWithDetails {
   rsvpCounts: RsvpCounts;
   author: Author;
   comments: Comment[];
-  createdById: string; 
+  createdById: string;
   isOwner: boolean;
 }
 
@@ -509,7 +510,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
             <div>
               <h3 className="font-bold text-sm dark:text-white text-slate-900">{event.title}</h3>
               <p className="text-xs text-fg-tertiary">
-                {event.author.name} · {formatDate(event.eventDate)}
+                {event.author.name}{event.createdAt ? ` · ${new Date(event.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : ""}
               </p>
             </div>
           </div>
@@ -848,7 +849,7 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false, ex
               <button
                 onClick={() => setShowForm(true)}
                 type="button"
-                className="bg-accent-primary text-white px-6 py-2 rounded-full font-bold text-sm hover:bg-accent-hover transition-all shadow-md shadow-accent-primary/20"
+                className="text-accent-primary font-semibold text-sm hover:text-accent-hover transition-colors underline underline-offset-2 decoration-accent-primary/40 hover:decoration-accent-primary"
               >
                 Post Event
               </button>

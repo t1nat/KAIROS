@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '~/trpc/react';
 import { useSession } from 'next-auth/react';
 import { useUploadThing } from '~/lib/uploadthing';
@@ -44,6 +44,40 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess, onC
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  // Restore unsaved changes from localStorage
+  const draftKey = 'kairos_event_draft';
+  const isRestoredRef = useRef(false);
+  useEffect(() => {
+    if (isRestoredRef.current) return;
+    isRestoredRef.current = true;
+    try {
+      const saved = localStorage.getItem(draftKey);
+      if (saved) {
+        const d = JSON.parse(saved) as Record<string, string | boolean>;
+        if (Date.now() - (Number(d._ts) || 0) < 120000) { // 2 minutes
+          if (d.title) setTitle(d.title as string);
+          if (d.description) setDescription(d.description as string);
+          if (d.eventDate) setEventDate(d.eventDate as string);
+          if (d.eventTime) setEventTime(d.eventTime as string);
+          if (d.location) setLocation(d.location as string);
+          if (d.region) setRegion(d.region as string);
+        } else {
+          localStorage.removeItem(draftKey);
+        }
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  // Save changes to localStorage on unmount or change
+  useEffect(() => {
+    const hasContent = title || description || eventDate || eventTime || location;
+    if (hasContent) {
+      localStorage.setItem(draftKey, JSON.stringify({ title, description, eventDate, eventTime, location, region, _ts: Date.now() }));
+    } else {
+      localStorage.removeItem(draftKey);
+    }
+  }, [title, description, eventDate, eventTime, location, region]);
+
   const { startUpload } = useUploadThing("imageUploader");
 
   // Automatically disable sendReminders when enableRsvp is turned off
@@ -65,6 +99,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess, onC
       setSendReminders(false);
       setImageFile(null);
       setImagePreview(null);
+      localStorage.removeItem(draftKey);
       void utils.event.getPublicEvents.invalidate();
       onSuccess?.();
     },
