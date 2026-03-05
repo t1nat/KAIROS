@@ -777,7 +777,7 @@ export const organizationRouter = createTRPCRouter({
       z.object({
         organizationId: z.number(),
         email: z.string().email(),
-        role: z.enum(["admin", "member", "guest"]).default("member"),
+        role: z.string().min(1).default("member"),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -797,12 +797,20 @@ export const organizationRouter = createTRPCRouter({
         throw new Error("You do not have permission to invite members");
       }
 
+      // Map custom role names to a valid DB enum value
+      const validRoles = ["admin", "member", "guest", "worker", "mentor"] as const;
+      type ValidRole = typeof validRoles[number];
+      const dbRole: ValidRole = validRoles.includes(input.role as ValidRole)
+        ? (input.role as ValidRole)
+        : "member";
+
       const [invite] = await ctx.db
         .insert(organizationInvites)
         .values({
           organizationId: input.organizationId,
           email: input.email,
-          role: input.role,
+          role: dbRole,
+          displayRole: input.role !== dbRole ? input.role : null,
           invitedById: ctx.session.user.id,
           status: "pending",
         })
