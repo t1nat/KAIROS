@@ -29,7 +29,8 @@ declare module "next-auth" {
 
 export const authConfig = {
   secret: env.AUTH_SECRET,
-  
+  trustHost: true,
+
 
   session: {
     strategy: "jwt" as const,
@@ -39,6 +40,9 @@ export const authConfig = {
     Google({
       clientId: env.AUTH_GOOGLE_ID,
       clientSecret: env.AUTH_GOOGLE_SECRET,
+      // Use state-based CSRF instead of PKCE to avoid cookie-parsing issues
+      // (InvalidCheck: pkceCodeVerifier) in dev / cross-browser scenarios.
+      checks: ["state"],
       // Allow linking Google OAuth to an existing credentials account with the
       // same email. Without this, browsers that partition cookies differently
       // (e.g. Edge) throw OAuthAccountNotLinked when a user has both a
@@ -55,6 +59,7 @@ export const authConfig = {
           scope: "openid profile email User.Read",
         },
       },
+      checks: ["state"],
       allowDangerousEmailAccountLinking: true,
     }),
     Credentials({

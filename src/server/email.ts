@@ -7,97 +7,192 @@ export interface PasswordResetEmailParams {
   resetToken: string;
 }
 
+export interface WelcomeEmailParams {
+  email: string;
+  userName: string;
+}
+
+export interface PasswordResetCodeParams {
+  email: string;
+  userName: string;
+  code: string;
+}
+
 type PasswordResetTemplateInput = {
   userName: string;
   resetUrl: string;
 };
 
-const PasswordResetEmailTemplate = {
-  subject: '🔐 Reset Your Note Password - Kairos',
-  renderHtml: ({ userName, resetUrl }: PasswordResetTemplateInput) => `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Reset Your Note Password</title>
-          </head>
-          <body style="margin: 0; padding: 0; font-family: Kairos, KairosSans, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #FCFBF9;">
-            <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-              
-              <!-- Header -->
-              <div style="text-align: center; margin-bottom: 40px;">
-                <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #9448F2 0%, #80C49B 100%); border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;">
-                  <span style="color: white; font-size: 28px;">🔐</span>
-                </div>
-                <h1 style="margin: 0; color: #222B32; font-size: 28px; font-weight: bold;">Reset Your Note Password</h1>
-              </div>
+type WelcomeTemplateInput = {
+  userName: string;
+  appUrl: string;
+};
 
-              <!-- Main Content -->
-              <div style="background: white; border-radius: 16px; padding: 32px; border: 1px solid #DDE3E9; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
-                <p style="margin: 0 0 20px 0; color: #222B32; font-size: 16px; line-height: 1.6;">
-                  Hi <strong>${userName}</strong>,
-                </p>
-                
-                <p style="margin: 0 0 20px 0; color: #59677C; font-size: 16px; line-height: 1.6;">
-                  We received a request to reset the password for one of your encrypted notes. 
-                  Click the button below to create a new password:
-                </p>
+type ResetCodeTemplateInput = {
+  userName: string;
+  code: string;
+};
 
-                <div style="text-align: center; margin: 32px 0;">
-                  <a href="${resetUrl}" 
-                     style="display: inline-block; padding: 16px 32px; background: linear-gradient(135deg, #9448F2 0%, #80C49B 100%); color: white; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(148, 72, 242, 0.3);">
-                    Reset Password
-                  </a>
-                </div>
+// ---------------------------------------------------------------------------
+// Shared email scaffolding
+// ---------------------------------------------------------------------------
 
-                <!-- Security Notice -->
-                <div style="background: #FFC53D20; border-left: 4px solid #FFC53D; padding: 16px; border-radius: 8px; margin: 24px 0;">
-                  <p style="margin: 0; color: #59677C; font-size: 14px; line-height: 1.6;">
-                    <strong style="color: #222B32;">⚠️ Security Notice:</strong><br>
-                    This link will expire in <strong>1 hour</strong>. If you didn't request this reset, you can safely ignore this email.
-                  </p>
-                </div>
+function emailWrapper(content: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Kairos</title>
+</head>
+<body style="margin:0;padding:0;font-family:'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background-color:#FCFBF9;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#FCFBF9;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
+${content}
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding:32px 0 0;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr><td style="border-top:1px solid #DDE3E9;padding-top:24px;text-align:center;">
+                  <p style="margin:0;color:#59677C;font-size:14px;line-height:1.5;">Best regards,<br><strong style="color:#222B32;">The Kairos Team</strong></p>
+                </td></tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
 
-                <p style="margin: 24px 0 0 0; color: #59677C; font-size: 14px; line-height: 1.6;">
-                  If the button doesn't work, copy and paste this link into your browser:
-                </p>
-                <p style="margin: 8px 0 0 0; color: #9448F2; font-size: 13px; word-break: break-all;">
-                  ${resetUrl}
-                </p>
-              </div>
+function logoBlock(title: string): string {
+  return `          <!-- Logo & Title -->
+          <tr>
+            <td align="center" style="padding-bottom:32px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" style="width:60px;height:60px;background-color:#9448F2;border-radius:16px;text-align:center;vertical-align:middle;line-height:60px;">
+                    <span style="color:#ffffff;font-size:28px;font-weight:bold;">K</span>
+                  </td>
+                </tr>
+              </table>
+              <h1 style="margin:16px 0 0;color:#222B32;font-size:26px;font-weight:bold;line-height:1.3;">${title}</h1>
+            </td>
+          </tr>`;
+}
 
-              <!-- Footer -->
-              <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #DDE3E9;">
-                <p style="margin: 0 0 8px 0; color: #59677C; font-size: 14px;">
-                  Best regards,<br>
-                  <strong style="color: #222B32;">The Kairos Team</strong>
-                </p>
-                <p style="margin: 16px 0 0 0; color: #59677C; font-size: 12px;">
-                  This is an automated email. Please do not reply to this message.
-                </p>
-              </div>
+// ---------------------------------------------------------------------------
+// Welcome Email
+// ---------------------------------------------------------------------------
 
-            </div>
-          </body>
-        </html>
-      `,
-  renderText: ({ userName, resetUrl }: PasswordResetTemplateInput) => `
-Hi ${userName},
-
-We received a request to reset the password for one of your encrypted notes.
-
-Click this link to reset your password:
-${resetUrl}
-
-This link will expire in 1 hour.
-
-If you didn't request this reset, you can safely ignore this email.
-
-Best regards,
-The Kairos Team
-      `,
+const WelcomeEmailTemplate = {
+  subject: 'Welcome to Kairos',
+  renderHtml: ({ userName, appUrl }: WelcomeTemplateInput) =>
+    emailWrapper(`
+${logoBlock('Welcome to Kairos')}
+          <!-- Content Card -->
+          <tr>
+            <td style="background:#ffffff;border-radius:16px;padding:32px;border:1px solid #DDE3E9;">
+              <p style="margin:0 0 20px;color:#222B32;font-size:16px;line-height:1.6;">Hi <strong>${userName}</strong>,</p>
+              <p style="margin:0 0 24px;color:#59677C;font-size:16px;line-height:1.6;">Your account has been created successfully. You can now start managing your projects, tasks, and notes.</p>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td align="center" style="padding:8px 0 0;">
+                    <a href="${appUrl}" style="display:inline-block;padding:14px 32px;background-color:#9448F2;color:#ffffff;text-decoration:none;border-radius:12px;font-weight:600;font-size:16px;line-height:1;">Open Kairos</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>`),
+  renderText: ({ userName, appUrl }: WelcomeTemplateInput) =>
+    `Hi ${userName},\n\nWelcome to Kairos! Your account has been created successfully.\n\nOpen Kairos: ${appUrl}\n\nBest regards,\nThe Kairos Team`,
 } as const;
+
+// ---------------------------------------------------------------------------
+// Password Reset Code Email
+// ---------------------------------------------------------------------------
+
+const PasswordResetCodeTemplate = {
+  subject: 'Your Password Reset Code - Kairos',
+  renderHtml: ({ userName, code }: ResetCodeTemplateInput) =>
+    emailWrapper(`
+${logoBlock('Password Reset Code')}
+          <!-- Content Card -->
+          <tr>
+            <td style="background:#ffffff;border-radius:16px;padding:32px;border:1px solid #DDE3E9;">
+              <p style="margin:0 0 20px;color:#222B32;font-size:16px;line-height:1.6;">Hi <strong>${userName}</strong>,</p>
+              <p style="margin:0 0 24px;color:#59677C;font-size:16px;line-height:1.6;">We received a request to reset your password. Use the code below to proceed:</p>
+              <!-- Code Display -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td align="center" style="padding:8px 0 24px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="padding:18px 36px;background-color:#F4F0FF;border:2px solid #9448F2;border-radius:12px;letter-spacing:8px;font-size:32px;font-weight:bold;color:#222B32;font-family:'Courier New',Courier,monospace;text-align:center;">${code}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <!-- Security Notice -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td style="background-color:#FFF8E6;border-left:4px solid #FFC53D;padding:16px;border-radius:0 8px 8px 0;">
+                    <p style="margin:0;color:#59677C;font-size:14px;line-height:1.6;"><strong style="color:#222B32;">Security Notice:</strong><br>This code will expire in <strong>15 minutes</strong>. If you didn't request this reset, you can safely ignore this email.</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>`),
+  renderText: ({ userName, code }: ResetCodeTemplateInput) =>
+    `Hi ${userName},\n\nYour password reset code is: ${code}\n\nThis code expires in 15 minutes.\n\nIf you didn't request this, you can safely ignore this email.\n\nBest regards,\nThe Kairos Team`,
+} as const;
+
+// ---------------------------------------------------------------------------
+// Note Password Reset Email (link-based)
+// ---------------------------------------------------------------------------
+
+const PasswordResetEmailTemplate = {
+  subject: 'Reset Your Note Password - Kairos',
+  renderHtml: ({ userName, resetUrl }: PasswordResetTemplateInput) =>
+    emailWrapper(`
+${logoBlock('Reset Your Note Password')}
+          <!-- Content Card -->
+          <tr>
+            <td style="background:#ffffff;border-radius:16px;padding:32px;border:1px solid #DDE3E9;">
+              <p style="margin:0 0 20px;color:#222B32;font-size:16px;line-height:1.6;">Hi <strong>${userName}</strong>,</p>
+              <p style="margin:0 0 24px;color:#59677C;font-size:16px;line-height:1.6;">We received a request to reset the password for one of your encrypted notes. Click the button below to create a new password:</p>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td align="center" style="padding:8px 0 24px;">
+                    <a href="${resetUrl}" style="display:inline-block;padding:14px 32px;background-color:#9448F2;color:#ffffff;text-decoration:none;border-radius:12px;font-weight:600;font-size:16px;line-height:1;">Reset Password</a>
+                  </td>
+                </tr>
+              </table>
+              <!-- Security Notice -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td style="background-color:#FFF8E6;border-left:4px solid #FFC53D;padding:16px;border-radius:0 8px 8px 0;">
+                    <p style="margin:0;color:#59677C;font-size:14px;line-height:1.6;"><strong style="color:#222B32;">Security Notice:</strong><br>This link will expire in <strong>1 hour</strong>. If you didn't request this reset, you can safely ignore this email.</p>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:24px 0 0;color:#59677C;font-size:14px;line-height:1.6;">If the button doesn't work, copy and paste this link into your browser:</p>
+              <p style="margin:8px 0 0;color:#9448F2;font-size:13px;word-break:break-all;">${resetUrl}</p>
+            </td>
+          </tr>`),
+  renderText: ({ userName, resetUrl }: PasswordResetTemplateInput) =>
+    `Hi ${userName},\n\nWe received a request to reset the password for one of your encrypted notes.\n\nClick this link to reset your password:\n${resetUrl}\n\nThis link will expire in 1 hour.\n\nIf you didn't request this reset, you can safely ignore this email.\n\nBest regards,\nThe Kairos Team`,
+} as const;
+
+// ---------------------------------------------------------------------------
+// Email Service
+// ---------------------------------------------------------------------------
 
 type EmailServiceOptions = {
   appUrl: string;
@@ -128,13 +223,64 @@ export class EmailService {
       });
 
       if (error) {
-        console.error('❌ Resend Error:', error);
+        console.error('Resend Error:', error);
         throw new Error(`Failed to send email: ${error.message}`);
       }
 
       return data;
     } catch (error) {
-      console.error('❌ Email Service Error:', error);
+      console.error('Email Service Error:', error);
+      throw error;
+    }
+  }
+
+  async sendWelcomeEmail({
+    email,
+    userName,
+  }: WelcomeEmailParams): Promise<{ id: string } | null> {
+    try {
+      const { data, error } = await this.resend.emails.send({
+        from: this.options.fromEmail,
+        to: [email],
+        subject: WelcomeEmailTemplate.subject,
+        html: WelcomeEmailTemplate.renderHtml({ userName, appUrl: this.options.appUrl }),
+        text: WelcomeEmailTemplate.renderText({ userName, appUrl: this.options.appUrl }),
+      });
+
+      if (error) {
+        console.error('Resend Error (welcome):', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Email Service Error (welcome):', error);
+      return null;
+    }
+  }
+
+  async sendPasswordResetCode({
+    email,
+    userName,
+    code,
+  }: PasswordResetCodeParams): Promise<{ id: string } | null> {
+    try {
+      const { data, error } = await this.resend.emails.send({
+        from: this.options.fromEmail,
+        to: [email],
+        subject: PasswordResetCodeTemplate.subject,
+        html: PasswordResetCodeTemplate.renderHtml({ userName, code }),
+        text: PasswordResetCodeTemplate.renderText({ userName, code }),
+      });
+
+      if (error) {
+        console.error('Resend Error (reset code):', error);
+        throw new Error(`Failed to send reset code: ${error.message}`);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Email Service Error (reset code):', error);
       throw error;
     }
   }
@@ -166,4 +312,16 @@ export async function sendPasswordResetEmail(
   params: PasswordResetEmailParams
 ): Promise<{ id: string } | null> {
   return getEmailService().sendPasswordResetEmail(params);
+}
+
+export async function sendWelcomeEmail(
+  params: WelcomeEmailParams
+): Promise<{ id: string } | null> {
+  return getEmailService().sendWelcomeEmail(params);
+}
+
+export async function sendPasswordResetCode(
+  params: PasswordResetCodeParams
+): Promise<{ id: string } | null> {
+  return getEmailService().sendPasswordResetCode(params);
 }

@@ -9,6 +9,8 @@ export const env = createEnv({
     AUTH_DISCORD_SECRET: z.string().optional(),
     AUTH_GOOGLE_ID: z.string().optional(),
     AUTH_GOOGLE_SECRET: z.string().optional(),
+    AUTH_MICROSOFT_ID: z.string().optional(),
+    AUTH_MICROSOFT_SECRET: z.string().optional(),
     DATABASE_URL: z.string().optional(),
 
     // LLM (OpenAI)
@@ -43,6 +45,8 @@ export const env = createEnv({
     AUTH_DISCORD_SECRET: process.env.AUTH_DISCORD_SECRET,
     AUTH_GOOGLE_ID: process.env.AUTH_GOOGLE_ID,
     AUTH_GOOGLE_SECRET: process.env.AUTH_GOOGLE_SECRET,
+    AUTH_MICROSOFT_ID: process.env.AUTH_MICROSOFT_ID,
+    AUTH_MICROSOFT_SECRET: process.env.AUTH_MICROSOFT_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
 
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,

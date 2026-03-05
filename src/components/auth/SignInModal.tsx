@@ -10,11 +10,6 @@ import Image from "next/image";
 /* ─── Types ─── */
 type ModalView = "signIn" | "signUp" | "forgotPassword" | "resetCode" | "newPassword";
 
-/* ─── 8-digit code generator (logged to console only) ─── */
-function generateResetCode(): string {
-  return Math.floor(10000000 + Math.random() * 90000000).toString();
-}
-
 export function SignInModal({
   isOpen,
   onClose,
@@ -36,7 +31,6 @@ export function SignInModal({
   const [view, setView] = useState<ModalView>("signIn");
 
   /* Forgot password state */
-  const [resetCode, setResetCode] = useState("");
   const [enteredCode, setEnteredCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -47,6 +41,9 @@ export function SignInModal({
 
   const router = useRouter();
   const signupMutation = api.auth.signup.useMutation();
+  const requestResetMutation = api.auth.requestPasswordReset.useMutation();
+  const verifyCodeMutation = api.auth.verifyResetCode.useMutation();
+  const resetPasswordMutation = api.auth.resetPassword.useMutation();
 
   /* Handle code input (8 separate boxes) */
   const handleCodeInput = useCallback((index: number, value: string) => {
@@ -98,7 +95,6 @@ export function SignInModal({
         setConfirmPassword("");
         setShowNewPassword(false);
         setShowConfirmPassword(false);
-        setResetCode("");
         setView("signIn");
         setResetSuccess(false);
       }, 200);
@@ -199,7 +195,6 @@ export function SignInModal({
     setConfirmPassword("");
     setShowNewPassword(false);
     setShowConfirmPassword(false);
-    setResetCode("");
   };
 
   const toggleMode = () => {
@@ -222,25 +217,35 @@ export function SignInModal({
     setError("");
     setLoadingMessage("Sending reset code...");
 
-    const code = generateResetCode();
-    setResetCode(code);
-
-    await new Promise((r) => setTimeout(r, 1200));
-    console.log(`[KAIROS] Password reset code for ${email}: ${code}`);
-
-    setIsLoading(false);
-    setLoadingMessage("");
-    setView("resetCode");
+    try {
+      await requestResetMutation.mutateAsync({ email });
+      setIsLoading(false);
+      setLoadingMessage("");
+      setView("resetCode");
+    } catch (err) {
+      setIsLoading(false);
+      setLoadingMessage("");
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Failed to send reset code. Please try again.");
+      }
+    }
   };
 
-  const handleVerifyCode = (e: React.FormEvent) => {
+  const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (enteredCode !== resetCode) {
-      setError("Invalid reset code. Please check your console.");
-      return;
+    setIsLoading(true);
+
+    try {
+      await verifyCodeMutation.mutateAsync({ email, code: enteredCode });
+      setIsLoading(false);
+      setView("newPassword");
+    } catch {
+      setIsLoading(false);
+      setError("Invalid or expired reset code. Please try again.");
     }
-    setView("newPassword");
   };
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -259,18 +264,31 @@ export function SignInModal({
     setIsLoading(true);
     setLoadingMessage("Resetting password...");
 
-    await new Promise((r) => setTimeout(r, 1000));
-    console.log(`[KAIROS] Password reset successful for ${email}`);
+    try {
+      await resetPasswordMutation.mutateAsync({
+        email,
+        code: enteredCode,
+        newPassword,
+      });
 
-    setIsLoading(false);
-    setLoadingMessage("");
-    setResetSuccess(true);
+      setIsLoading(false);
+      setLoadingMessage("");
+      setResetSuccess(true);
 
-    setTimeout(() => {
-      setResetSuccess(false);
-      resetForm();
-      setView("signIn");
-    }, 2000);
+      setTimeout(() => {
+        setResetSuccess(false);
+        resetForm();
+        setView("signIn");
+      }, 2000);
+    } catch (err) {
+      setIsLoading(false);
+      setLoadingMessage("");
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Failed to reset password. Please try again.");
+      }
+    }
   };
 
   const handleBackToSignIn = () => {
@@ -523,7 +541,7 @@ export function SignInModal({
                 />
               ))}
             </div>
-            <p className="text-[11px] text-white/30 text-center mt-2">Check your browser console for the code</p>
+            <p className="text-[11px] text-white/30 text-center mt-2">Check your email for the code</p>
           </div>
 
           <button type="submit" disabled={enteredCode.length < 8} className="w-full px-6 py-4 kairos-neon-btn rounded-2xl font-semibold text-white transition-all duration-300 shadow-lg shadow-accent-primary/25 hover:shadow-xl hover:shadow-accent-primary/35 hover:scale-[1.01] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 mt-2">
