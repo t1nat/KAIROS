@@ -13,14 +13,13 @@ import {
   User,
   UserPlus,
   CheckCircle2,
-  Clock,
+  Check,
   Loader2,
   ChevronDown,
   Trash2,
   AlertTriangle,
-  Shield,
-  Eye,
-  Edit3,
+  Filter,
+  X,
 } from "lucide-react";
 
 /* ─── Types ─── */
@@ -198,6 +197,7 @@ function TimelineEntry({
   isToggling,
   isDeleting,
   canDelete,
+  taskCurrentStatus,
 }: {
   entry: OrgActivityEntry;
   isLast: boolean;
@@ -207,10 +207,10 @@ function TimelineEntry({
   isToggling: boolean;
   isDeleting: boolean;
   canDelete: boolean;
+  taskCurrentStatus: TaskStatus | undefined;
 }) {
   const entryRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const el = entryRef.current;
@@ -225,116 +225,58 @@ function TimelineEntry({
 
   const date = new Date(entry.createdAt);
   const dateStr = date
-    .toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })
+    .toLocaleDateString("en-US", { month: "short", day: "2-digit" })
     .toUpperCase();
-  const isCompleted = entry.action === "status_changed" && entry.newValue === "completed";
-  const isPending = entry.action === "status_changed" && entry.newValue === "pending";
-  const isCreated = entry.action === "created";
-
-  const statusLabel = isCompleted
-    ? "Done"
-    : isPending
-      ? "Pending"
-      : isCreated
-        ? "Created"
-        : entry.action === "status_changed"
-          ? entry.newValue?.replace("_", " ") ?? "Updated"
-          : "Updated";
+  // Use the REAL current task status from DB, not the historical activity entry value
+  const isCompleted = taskCurrentStatus === "completed";
 
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
     <div
       ref={entryRef}
-      className="relative flex gap-4 sm:gap-6 timeline-entry-wrapper"
+      className="relative flex gap-3 sm:gap-4 timeline-entry-wrapper"
       style={{
         opacity: isVisible ? 1 : 0,
-        filter: isVisible ? "blur(0px)" : "blur(6px)",
-        transform: isVisible ? "translateY(0)" : "translateY(12px)",
-        transition: `all 0.5s cubic-bezier(0.22, 1, 0.36, 1) ${index * 0.06}s`,
+        transform: isVisible ? "translateY(0)" : "translateY(8px)",
+        transition: `all 0.4s ease ${index * 0.04}s`,
       }}
     >
-      {/* Vertical line + dot */}
+      {/* Vertical line + circle with tick */}
       <div className="flex flex-col items-center">
         <button
           type="button"
           onClick={() => onToggleDone(entry.taskId, isCompleted)}
           disabled={isToggling}
-          className={`w-8 h-8 rounded-full flex-shrink-0 z-10 transition-all duration-300 cursor-pointer hover:scale-110 flex items-center justify-center ${
+          className={`w-7 h-7 rounded-full flex-shrink-0 z-10 transition-all duration-200 cursor-pointer flex items-center justify-center border-2 ${
             isCompleted
-              ? "bg-white dark:bg-[#191022] border-2 border-accent-primary shadow-[0_0_15px_rgb(var(--accent-primary)/0.6)]"
-              : isPending
-                ? "bg-white dark:bg-[#191022] border-2 border-accent-primary shadow-[0_0_10px_rgb(var(--accent-primary)/0.4)]"
-                : isCreated
-                  ? "bg-white dark:bg-[#191022] border-2 border-accent-primary shadow-[0_0_10px_rgb(var(--accent-primary)/0.4)]"
-                  : "bg-slate-50 dark:bg-[#191022] border-2 border-slate-400 dark:border-white/10 hover:border-accent-primary/60 hover:shadow-[0_0_6px_rgb(var(--accent-primary)/0.2)]"
+              ? "bg-emerald-500 border-emerald-500 text-white"
+              : "bg-white dark:bg-[#1a1625] border-slate-300 dark:border-slate-600 hover:border-emerald-400 dark:hover:border-emerald-400"
           }`}
           title={isCompleted ? "Mark as pending" : "Mark as done"}
         >
-          <div className={`rounded-full ${
-            isCompleted
-              ? "w-3 h-3 bg-accent-primary"
-              : isPending
-                ? "w-2.5 h-2.5 bg-accent-primary/80"
-                : isCreated
-                  ? "w-2.5 h-2.5 bg-accent-primary/80"
-                  : "w-2 h-2 bg-slate-400 dark:bg-white/20"
-          }`} />
+          {isToggling ? (
+            <Loader2 size={13} className="animate-spin" />
+          ) : (
+            <Check size={13} className={isCompleted ? "text-white" : "text-slate-400 dark:text-slate-500"} />
+          )}
         </button>
         {!isLast && (
-          <div
-            className="w-[2px] flex-1 min-h-[60px] transition-all duration-500 bg-gradient-to-b from-slate-600 via-slate-400 to-slate-200 dark:from-accent-primary/50 dark:via-accent-primary/20 dark:to-transparent"
-          />
+          <div className="w-px flex-1 min-h-[40px] bg-slate-200 dark:bg-white/[0.08]" />
         )}
       </div>
 
       {/* Card */}
-      <div className="flex-1 pb-6 -mt-1">
-        <div
-          className={`timeline-card rounded-lg border p-4 sm:p-5 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 relative ${
+      <div className="flex-1 pb-4 -mt-0.5">
+        <div className={`rounded-lg border p-3.5 sm:p-4 transition-all duration-200 ${
           isCompleted
-            ? "border-accent-primary/30 shadow-md shadow-accent-primary/10 bg-white dark:bg-[#20152b] hover:shadow-accent-primary/20 hover:border-accent-primary/50"
-            : isPending
-              ? "border-slate-200 dark:border-accent-primary/20 bg-white/60 dark:bg-[#20152b]/60 hover:bg-white dark:hover:bg-[#20152b] group-hover:border-accent-primary/40"
-              : isCreated
-                ? "border-accent-primary/30 dark:border-accent-primary/20 hover:shadow-accent-primary/10"
-                : "border-slate-200 dark:border-white/5 border-dashed bg-slate-50 dark:bg-black/20 group-hover:border-accent-primary/30"
-        }`}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-        >
-          {/* Speech-bubble arrow pointing to the dot */}
-          <div className={`absolute w-0 h-0 border-t-[8px] border-t-transparent border-r-[10px] border-b-[8px] border-b-transparent -left-[10px] top-5 transition-colors ${isCompleted ? "border-r-accent-primary/30" : "border-r-slate-200 dark:border-r-white/5"}`} />
-          <div className="absolute w-0 h-0 border-t-[7px] border-t-transparent border-r-[9px] border-r-white dark:border-r-[#20152b] border-b-[7px] border-b-transparent -left-[8px] top-[21px]" />
-          {/* Date + status badge */}
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <Clock size={12} className="text-accent-primary" />
-              <span className="text-xs font-semibold text-accent-primary tracking-wide">
-                {dateStr}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              {/* Toggle done button */}
-              <button
-                type="button"
-                onClick={() => onToggleDone(entry.taskId, isCompleted)}
-                disabled={isToggling}
-                className={`flex items-center gap-1.5 text-xs font-semibold transition-all ${
-                  isCompleted
-                    ? "text-slate-500 dark:text-slate-400 hover:text-accent-primary"
-                    : "text-slate-400 hover:text-accent-primary border border-slate-200 dark:border-white/10 rounded px-2 py-0.5 hover:border-accent-primary/50"
-                }`}
-              >
-                {isToggling ? (
-                  <Loader2 size={12} className="animate-spin" />
-                ) : (
-                  <CheckCircle2 size={13} />
-                )}
-                {statusLabel}
-              </button>
-
-              {/* Delete button */}
+            ? "border-emerald-200 dark:border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-500/[0.04]"
+            : "border-slate-200 dark:border-white/[0.06] bg-white dark:bg-[#1a1625] hover:border-slate-300 dark:hover:border-white/[0.1]"
+        }`}>
+          {/* Top row: date + actions */}
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-medium text-fg-tertiary tracking-wide">{dateStr}</span>
+            <div className="flex items-center gap-1">
               {canDelete && (
                 <>
                   {confirmDelete ? (
@@ -343,14 +285,14 @@ function TimelineEntry({
                         type="button"
                         onClick={() => { onDelete(entry.taskId); setConfirmDelete(false); }}
                         disabled={isDeleting}
-                        className="px-2 py-1 rounded-lg bg-red-500/15 text-red-400 text-[10px] font-bold border border-red-500/30 hover:bg-red-500/25 transition-colors"
+                        className="px-2 py-0.5 rounded bg-red-500/15 text-red-400 text-[10px] font-bold hover:bg-red-500/25 transition-colors"
                       >
                         {isDeleting ? <Loader2 size={10} className="animate-spin" /> : "Delete"}
                       </button>
                       <button
                         type="button"
                         onClick={() => setConfirmDelete(false)}
-                        className="px-2 py-1 rounded-lg bg-bg-tertiary/50 text-fg-tertiary text-[10px] font-bold border border-border-medium/30 hover:text-fg-secondary transition-colors"
+                        className="px-2 py-0.5 rounded bg-bg-tertiary/50 text-fg-tertiary text-[10px] font-bold hover:text-fg-secondary transition-colors"
                       >
                         Cancel
                       </button>
@@ -359,10 +301,10 @@ function TimelineEntry({
                     <button
                       type="button"
                       onClick={() => setConfirmDelete(true)}
-                      className="p-1.5 rounded-lg text-fg-quaternary hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                      className="p-1 rounded text-fg-quaternary hover:text-red-400 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
                       title="Delete task"
                     >
-                      <Trash2 size={13} />
+                      <Trash2 size={12} />
                     </button>
                   )}
                 </>
@@ -371,72 +313,15 @@ function TimelineEntry({
           </div>
 
           {/* Title */}
-          <h4 className="text-base font-bold text-fg-primary mb-1.5 leading-snug">
+          <h4 className={`text-sm font-semibold mb-1 leading-snug ${
+            isCompleted ? "text-fg-tertiary line-through" : "text-fg-primary"
+          }`}>
             {entry.taskTitle}
           </h4>
-          <p className="text-sm text-fg-secondary leading-relaxed mb-3">
-            Project: {entry.projectTitle}
+          <p className="text-xs text-fg-tertiary">
+            {entry.projectTitle}
+            {entry.user ? ` · ${entry.user.name ?? "Unknown"}` : ""}
           </p>
-
-          {/* User avatar */}
-          {entry.user && (
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full overflow-hidden bg-accent-primary/20 flex-shrink-0">
-                {entry.user.image ? (
-                  <Image
-                    src={entry.user.image}
-                    alt={entry.user.name ?? "User"}
-                    width={24}
-                    height={24}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent-primary to-accent-secondary">
-                    <User size={12} className="text-white" />
-                  </div>
-                )}
-              </div>
-              <span className="text-xs text-fg-secondary">{entry.user.name ?? "Unknown"}</span>
-            </div>
-          )}
-
-          {/* Hover metadata tooltip */}
-          <div
-            className={`overflow-hidden transition-all duration-300 ease-out ${
-              isHovered ? "max-h-40 opacity-100 mt-3" : "max-h-0 opacity-0 mt-0"
-            }`}
-          >
-            <div className="pt-3 border-t border-border-medium/20 dark:border-white/[0.06] space-y-2">
-              <div className="flex items-center gap-2 text-[11px] text-fg-tertiary">
-                <Eye size={11} className="flex-shrink-0" />
-                <span>Action: <span className="text-fg-secondary font-medium">{entry.action.replace(/_/g, " ")}</span></span>
-              </div>
-              {entry.user && (
-                <div className="flex items-center gap-2 text-[11px] text-fg-tertiary">
-                  <Edit3 size={11} className="flex-shrink-0" />
-                  <span>By: <span className="text-fg-secondary font-medium">{entry.user.name ?? entry.user.email ?? "Unknown"}</span></span>
-                </div>
-              )}
-              {entry.oldValue && (
-                <div className="flex items-center gap-2 text-[11px] text-fg-tertiary">
-                  <Shield size={11} className="flex-shrink-0" />
-                  <span>From: <span className="text-fg-secondary font-medium">{entry.oldValue}</span> → <span className="text-fg-secondary font-medium">{entry.newValue}</span></span>
-                </div>
-              )}
-              <div className="flex items-center gap-2 text-[11px] text-fg-tertiary">
-                <Clock size={11} className="flex-shrink-0" />
-                <span>
-                  {date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
-                  {" at "}
-                  {date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-[11px] text-fg-tertiary">
-                <Calendar size={11} className="flex-shrink-0" />
-                <span>Project: <span className="text-accent-primary font-medium">{entry.projectTitle}</span></span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -457,6 +342,24 @@ function AiDraftPreview({
   onDismiss: () => void;
   isApplying: boolean;
 }) {
+  const [selected, setSelected] = useState<Set<number>>(() => new Set(tasks.map((_, i) => i)));
+
+  const toggleTask = (idx: number) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (selected.size === tasks.length) setSelected(new Set());
+    else setSelected(new Set(tasks.map((_, i) => i)));
+  };
+
+  const selectedTasks = tasks.filter((_, i) => selected.has(i));
+
   return (
     <div className="mt-4 rounded-xl border border-accent-primary/30 bg-accent-primary/[0.04] dark:bg-accent-primary/[0.06] p-4 space-y-3">
       <div className="flex items-center justify-between">
@@ -464,13 +367,22 @@ function AiDraftPreview({
           <Sparkles size={16} className="text-accent-primary" />
           <h4 className="text-sm font-bold text-fg-primary">AI Generated Tasks</h4>
         </div>
-        <button
-          type="button"
-          onClick={onDismiss}
-          className="text-xs text-fg-tertiary hover:text-fg-secondary transition-colors"
-        >
-          Dismiss
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={toggleAll}
+            className="text-[11px] text-accent-primary hover:text-accent-primary/80 font-medium transition-colors"
+          >
+            {selected.size === tasks.length ? "Deselect All" : "Select All"}
+          </button>
+          <button
+            type="button"
+            onClick={onDismiss}
+            className="text-xs text-fg-tertiary hover:text-fg-secondary transition-colors"
+          >
+            Dismiss
+          </button>
+        </div>
       </div>
 
       {reasoning && (
@@ -479,12 +391,22 @@ function AiDraftPreview({
 
       <div className="space-y-2">
         {tasks.map((t, i) => (
-          <div
+          <button
             key={i}
-            className="flex items-start gap-3 p-3 rounded-lg bg-bg-elevated dark:bg-white/[0.03] border border-border-medium/20 dark:border-white/[0.06]"
+            type="button"
+            onClick={() => toggleTask(i)}
+            className={`w-full flex items-start gap-3 p-3 rounded-lg border text-left transition-all ${
+              selected.has(i)
+                ? "bg-accent-primary/[0.06] dark:bg-accent-primary/[0.08] border-accent-primary/30"
+                : "bg-bg-elevated dark:bg-white/[0.03] border-border-medium/20 dark:border-white/[0.06] opacity-60"
+            }`}
           >
-            <div className="w-5 h-5 rounded-full bg-accent-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-[10px] font-bold text-accent-primary">{i + 1}</span>
+            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
+              selected.has(i)
+                ? "bg-accent-primary border-accent-primary"
+                : "border-slate-300 dark:border-slate-600"
+            }`}>
+              {selected.has(i) && <Check size={11} className="text-white" />}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-fg-primary">{t.title}</p>
@@ -504,14 +426,14 @@ function AiDraftPreview({
                 )}
               </div>
             </div>
-          </div>
+          </button>
         ))}
       </div>
 
       <button
         type="button"
-        onClick={() => onApply(tasks)}
-        disabled={isApplying}
+        onClick={() => onApply(selectedTasks)}
+        disabled={isApplying || selectedTasks.length === 0}
         className="w-full py-2.5 rounded-xl bg-accent-primary text-white font-bold text-sm flex items-center justify-center gap-2 hover:brightness-110 transition-all shadow-lg shadow-accent-primary/20 disabled:opacity-50"
       >
         {isApplying ? (
@@ -522,7 +444,7 @@ function AiDraftPreview({
         ) : (
           <>
             <CheckCircle2 size={14} />
-            Create All {tasks.length} Tasks
+            Create {selectedTasks.length} of {tasks.length} Tasks
           </>
         )}
       </button>
@@ -552,6 +474,38 @@ function CreateNewEntryForm({
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const assignDropdownRef = useRef<HTMLDivElement>(null);
+  const [attachedFiles, setAttachedFiles] = useState<{ name: string; size: number; type: string }[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Restore unsaved task changes from localStorage
+  const taskDraftKey = 'kairos_task_draft';
+  const isTaskRestoredRef = useRef(false);
+  useEffect(() => {
+    if (isTaskRestoredRef.current) return;
+    isTaskRestoredRef.current = true;
+    try {
+      const saved = localStorage.getItem(taskDraftKey);
+      if (saved) {
+        const d = JSON.parse(saved) as Record<string, string>;
+        if (Date.now() - (Number(d._ts) || 0) < 120000) { // 2 minutes
+          if (d.title) setTitle(d.title);
+          if (d.description) setDescription(d.description);
+          if (d.dueDate) setDueDate(d.dueDate);
+        } else {
+          localStorage.removeItem(taskDraftKey);
+        }
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => {
+    const hasContent = title || description;
+    if (hasContent) {
+      localStorage.setItem(taskDraftKey, JSON.stringify({ title, description, dueDate, _ts: Date.now() }));
+    } else {
+      localStorage.removeItem(taskDraftKey);
+    }
+  }, [title, description, dueDate]);
 
   /* AI draft state */
   const [aiDrafts, setAiDrafts] = useState<GeneratedTask[] | null>(null);
@@ -578,6 +532,8 @@ function CreateNewEntryForm({
       setDueDate("");
       setAssignedToId("");
       setError("");
+      setAttachedFiles([]);
+      localStorage.removeItem(taskDraftKey);
       onCreated();
     },
     onError: (err) => {
@@ -704,20 +660,6 @@ function CreateNewEntryForm({
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Database Migration Review"
             className="w-full rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-accent-primary/30 text-slate-900 dark:text-slate-100 focus:border-accent-primary focus:ring-1 focus:ring-accent-primary h-12 px-4 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all hover:border-accent-primary/50"
-          />
-        </div>
-
-        {/* Description — kept rectangular with explicit border-radius */}
-        <div>
-          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-2">
-            Description
-          </label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Detail the specific requirements..."
-            rows={3}
-            className="w-full rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-accent-primary/30 text-slate-900 dark:text-slate-100 focus:border-accent-primary focus:ring-1 focus:ring-accent-primary min-h-[100px] p-4 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all resize-y hover:border-accent-primary/50"
           />
         </div>
 
@@ -862,7 +804,17 @@ function CreateNewEntryForm({
           </label>
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="w-full rounded-lg border-2 border-dashed border-slate-300 dark:border-accent-primary/40 bg-slate-50/50 dark:bg-black/10 hover:bg-slate-50 dark:hover:bg-accent-primary/5 transition-colors flex flex-col items-center justify-center py-6 cursor-pointer hover:border-accent-primary/60"
+            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragging(false);
+              const files = Array.from(e.dataTransfer.files);
+              const valid = files.filter((f) => f.size <= 10 * 1024 * 1024);
+              if (valid.length < files.length) setError("Some files exceed 10MB limit");
+              setAttachedFiles((prev) => [...prev, ...valid.map((f) => ({ name: f.name, size: f.size, type: f.type }))]);
+            }}
+            className={`w-full rounded-lg border-2 border-dashed ${isDragging ? "border-accent-primary bg-accent-primary/10" : "border-slate-300 dark:border-accent-primary/40 bg-slate-50/50 dark:bg-black/10"} hover:bg-slate-50 dark:hover:bg-accent-primary/5 transition-colors flex flex-col items-center justify-center py-6 cursor-pointer hover:border-accent-primary/60`}
           >
             <Upload size={20} className="text-accent-primary" />
             <p className="text-xs text-fg-secondary">
@@ -871,32 +823,79 @@ function CreateNewEntryForm({
             </p>
             <p className="text-[10px] text-fg-quaternary">PDF, DOCX, PNG, JPG (max. 10MB)</p>
           </div>
-          <input ref={fileInputRef} type="file" className="hidden" accept=".pdf,.docx,.png,.jpg,.jpeg" />
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept=".pdf,.docx,.png,.jpg,.jpeg"
+            multiple
+            onChange={(e) => {
+              const files = Array.from(e.target.files ?? []);
+              const valid = files.filter((f) => f.size <= 10 * 1024 * 1024);
+              if (valid.length < files.length) setError("Some files exceed 10MB limit");
+              setAttachedFiles((prev) => [...prev, ...valid.map((f) => ({ name: f.name, size: f.size, type: f.type }))]);
+              e.target.value = "";
+            }}
+          />
+          {attachedFiles.length > 0 && (
+            <div className="mt-2 space-y-1.5">
+              {attachedFiles.map((f, i) => (
+                <div key={i} className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-accent-primary/20 text-xs">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-accent-primary font-semibold uppercase text-[10px]">{f.name.split(".").pop()}</span>
+                    <span className="text-fg-primary truncate">{f.name}</span>
+                    <span className="text-fg-quaternary shrink-0">({(f.size / 1024).toFixed(0)} KB)</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAttachedFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                    className="p-1 rounded text-fg-tertiary hover:text-red-400 transition shrink-0"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* AI Task Planner — now below attachments, clickable */}
-        <button
-          type="button"
-          onClick={handleGenerateAi}
-          disabled={generateDrafts.isPending || !selectedProjectId}
-          className="w-full text-left bg-accent-primary/5 border border-accent-primary/50 hover:border-accent-primary rounded-lg p-4 flex items-start gap-4 transition-all hover:shadow-[0_0_15px_rgb(var(--accent-primary)/0.3)] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group"
-        >
-          <div className="bg-accent-primary/20 p-2 rounded-full flex shrink-0 shadow-[0_0_10px_rgb(var(--accent-primary)/0.2)] group-hover:bg-accent-primary/30 transition-colors">
-            {generateDrafts.isPending ? (
-              <Loader2 size={24} className="text-accent-primary animate-spin" />
-            ) : (
-              <Sparkles size={24} className="text-accent-primary" />
-            )}
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-2">
+              Project Description / AI Instructions
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe the project or paste instructions for the AI task planner..."
+              rows={3}
+              className="w-full rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-accent-primary/30 text-slate-900 dark:text-slate-100 focus:border-accent-primary focus:ring-1 focus:ring-accent-primary min-h-[80px] p-4 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all resize-y hover:border-accent-primary/50"
+            />
           </div>
-          <div className="flex flex-col">
-            <h4 className="text-slate-900 dark:text-slate-100 font-semibold mb-1">
-              {generateDrafts.isPending ? "Generating..." : "AI Task Planner"}
-            </h4>
-            <p className="text-slate-600 dark:text-slate-400 text-sm">
-              Add tasks based off the project&apos;s description.
-            </p>
-          </div>
-        </button>
+          <button
+            type="button"
+            onClick={handleGenerateAi}
+            disabled={generateDrafts.isPending || !selectedProjectId}
+            className="w-full text-left bg-accent-primary/5 border border-accent-primary/50 hover:border-accent-primary rounded-lg p-4 flex items-start gap-4 transition-all hover:shadow-[0_0_15px_rgb(var(--accent-primary)/0.3)] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group"
+          >
+            <div className="bg-accent-primary/20 p-2 rounded-full flex shrink-0 shadow-[0_0_10px_rgb(var(--accent-primary)/0.2)] group-hover:bg-accent-primary/30 transition-colors">
+              {generateDrafts.isPending ? (
+                <Loader2 size={24} className="text-accent-primary animate-spin" />
+              ) : (
+                <Sparkles size={24} className="text-accent-primary" />
+              )}
+            </div>
+            <div className="flex flex-col">
+              <h4 className="text-slate-900 dark:text-slate-100 font-semibold mb-1">
+                {generateDrafts.isPending ? "Generating..." : "AI Task Planner"}
+              </h4>
+              <p className="text-slate-600 dark:text-slate-400 text-sm">
+                Generate tasks from the description above or the project&apos;s context.
+              </p>
+            </div>
+          </button>
+        </div>
 
         {/* AI Draft Preview */}
         {aiDrafts && aiDrafts.length > 0 && (
@@ -961,10 +960,21 @@ function MasterProgressBar({
   );
 }
 
+/* ─── Status Filter ─── */
+type StatusFilter = "all" | "completed" | "pending" | "in_progress" | "blocked";
+const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "completed", label: "Done" },
+  { value: "pending", label: "Pending" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "blocked", label: "Blocked" },
+];
+
 /* ─── Main Export ─── */
 export function TaskTimelineClient() {
   const { data: session } = useSession();
   const { permissions } = useRolePermissions();
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
   /* Get user profile to determine active org */
   const { data: profile } = typedApi.user.getProfile.useQuery(undefined, {
@@ -1008,7 +1018,8 @@ export function TaskTimelineClient() {
   const updateStatus = typedApi.task.updateStatus.useMutation({
     onSuccess: () => {
       setTogglingId(null);
-      void utils.invalidate();
+      void utils.project.getMyProjects.invalidate();
+      void utils.task.getOrgActivity.invalidate();
     },
     onError: () => {
       setTogglingId(null);
@@ -1028,7 +1039,8 @@ export function TaskTimelineClient() {
   const deleteTask = typedApi.task.delete.useMutation({
     onSuccess: () => {
       setDeletingId(null);
-      void utils.invalidate();
+      void utils.project.getMyProjects.invalidate();
+      void utils.task.getOrgActivity.invalidate();
     },
     onError: () => {
       setDeletingId(null);
@@ -1040,20 +1052,38 @@ export function TaskTimelineClient() {
     deleteTask.mutate({ taskId });
   };
 
-  /* Computed stats */
-  const { percentage, timelineEntries } = useMemo(() => {
+  /* Computed stats — percentage uses ALL tasks regardless of filter */
+  const { percentage, timelineEntries, taskStatusMap } = useMemo(() => {
     const allProjects = projects ?? [];
     const allTasks = allProjects.flatMap((p) => p.tasks ?? []);
     const total = allTasks.length;
     const completed = allTasks.filter((t) => t.status === "completed").length;
     const pct = total > 0 ? (completed / total) * 100 : 0;
 
+    // Build a map of taskId -> current status from the actual project data
+    const statusMap = new Map<number, TaskStatus>();
+    for (const t of allTasks) {
+      statusMap.set(t.id, t.status);
+    }
+
     const entries = (activity?.rows ?? [])
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 20);
+      .slice(0, 50);
 
-    return { percentage: pct, timelineEntries: entries };
+    return { percentage: pct, timelineEntries: entries, taskStatusMap: statusMap };
   }, [projects, activity]);
+
+  /* Filter timeline entries by status */
+  const filteredEntries = useMemo(() => {
+    if (statusFilter === "all") return timelineEntries;
+    return timelineEntries.filter((entry) => {
+      if (statusFilter === "completed") return entry.action === "status_changed" && entry.newValue === "completed";
+      if (statusFilter === "pending") return entry.action === "created" || (entry.action === "status_changed" && entry.newValue === "pending");
+      if (statusFilter === "in_progress") return entry.action === "status_changed" && entry.newValue === "in_progress";
+      if (statusFilter === "blocked") return entry.action === "status_changed" && entry.newValue === "blocked";
+      return true;
+    });
+  }, [timelineEntries, statusFilter]);
 
   const isLoading = isLoadingProjects || isLoadingActivity;
   const errorMsg = projError?.message ?? actError?.message;
@@ -1087,6 +1117,28 @@ export function TaskTimelineClient() {
     );
   }
 
+  /* No projects — prompt user to create one first */
+  if (!projects || projects.length === 0) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6">
+        <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+          <div className="w-20 h-20 rounded-2xl bg-accent-primary/10 flex items-center justify-center mb-6">
+            <Calendar size={36} className="text-accent-primary" />
+          </div>
+          <h2 className="text-2xl font-bold text-fg-primary mb-2">You have no active projects.</h2>
+          <p className="text-fg-secondary mb-6">Task creation and timeline become active after you create a project.</p>
+          <a
+            href="/projects"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-accent-primary to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-accent-primary/25 transition-all hover:scale-[1.02]"
+          >
+            <Plus size={18} />
+            Create one now
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6">
       {/* Page Header */}
@@ -1114,6 +1166,25 @@ export function TaskTimelineClient() {
         <div>
           <MasterProgressBar percentage={percentage} />
 
+          {/* Status filter */}
+          <div className="flex items-center gap-2 mb-5 flex-wrap">
+            <Filter size={14} className="text-fg-tertiary" />
+            {STATUS_FILTERS.map((f) => (
+              <button
+                key={f.value}
+                type="button"
+                onClick={() => setStatusFilter(f.value)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                  statusFilter === f.value
+                    ? "bg-accent-primary text-white"
+                    : "bg-slate-100 dark:bg-white/[0.06] text-fg-secondary hover:bg-slate-200 dark:hover:bg-white/[0.1]"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
           {timelineEntries.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="w-16 h-16 rounded-full bg-accent-primary/10 flex items-center justify-center mb-4">
@@ -1124,21 +1195,25 @@ export function TaskTimelineClient() {
                 Create tasks and track your progress here. Activity will appear on the timeline.
               </p>
             </div>
+          ) : filteredEntries.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <p className="text-sm text-fg-tertiary">No entries match this filter.</p>
+            </div>
           ) : (
             <div className="timeline-list relative">
-              {/* Bottom blur overlay for scroll depth effect */}
               <div className="timeline-scroll-fade pointer-events-none" />
-              {timelineEntries.map((entry, i) => (
+              {filteredEntries.map((entry, i) => (
                 <TimelineEntry
                   key={entry.id}
                   entry={entry}
-                  isLast={i === timelineEntries.length - 1}
+                  isLast={i === filteredEntries.length - 1}
                   index={i}
                   onToggleDone={handleToggleDone}
                   onDelete={handleDelete}
                   isToggling={togglingId === entry.taskId}
                   isDeleting={deletingId === entry.taskId}
                   canDelete={canDeleteTask(entry)}
+                  taskCurrentStatus={taskStatusMap.get(entry.taskId)}
                 />
               ))}
             </div>
@@ -1146,30 +1221,7 @@ export function TaskTimelineClient() {
         </div>
       </div>
 
-      {/* Bottom user badge */}
-      {session?.user && (
-        <div className="mt-10 flex items-center gap-3 px-1">
-          <div className="w-9 h-9 rounded-full overflow-hidden bg-accent-primary/20 flex-shrink-0 ring-2 ring-accent-primary/20">
-            {session.user.image ? (
-              <Image
-                src={session.user.image}
-                alt={session.user.name ?? "User"}
-                width={36}
-                height={36}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent-primary to-accent-secondary">
-                <User size={14} className="text-white" />
-              </div>
-            )}
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-fg-primary">{session.user.name}</p>
-            <p className="text-xs text-fg-tertiary">{profile?.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1) : "Member"}{profile?.organization ? ` · ${profile.organization.name}` : ""}</p>
-          </div>
-        </div>
-      )}
+      {/* Bottom user badge removed - role shown in user display modal */}
     </div>
   );
 }

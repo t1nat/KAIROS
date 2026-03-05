@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from"react";
 import { api } from"~/trpc/react";
-import { Folder, ChevronDown, ChevronUp, CheckCircle2, Clock, AlertCircle } from"lucide-react";
+import { Folder, ChevronDown, ChevronUp, CheckCircle2, Clock, AlertCircle, Plus } from"lucide-react";
 import { useRouter } from"next/navigation";
 import { useTranslations } from"next-intl";
 import { Doughnut } from"react-chartjs-2";
@@ -82,8 +82,29 @@ export function ProjectsListWorkspace() {
  );
  }
 
- if (isLoading || !projects || projects.length === 0) {
+ if (isLoading) {
  return null;
+ }
+
+ if (!projects || projects.length === 0) {
+ return (
+ <div className="w-full max-w-6xl mx-auto px-4 sm:px-6">
+ <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+ <div className="w-20 h-20 rounded-2xl bg-accent-primary/10 flex items-center justify-center mb-6">
+ <Folder size={36} className="text-accent-primary" />
+ </div>
+ <h2 className="text-2xl font-bold text-fg-primary mb-2">No projects yet</h2>
+ <p className="text-fg-secondary mb-6">Create your first project to get started.</p>
+ <a
+ href="/create?action=new_project"
+ className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-accent-primary to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-accent-primary/25 transition-all hover:scale-[1.02]"
+ >
+ <Plus size={18} />
+ New Project
+ </a>
+ </div>
+ </div>
+ );
  }
 
  const projectsWithStats: ProjectWithStats[] = projects.map((project) => {
@@ -204,13 +225,22 @@ export function ProjectsListWorkspace() {
  return (
  <div className="w-full max-w-6xl mx-auto px-4 sm:px-6">
  {/* Header */}
- <div className="pt-8 pb-6">
+ <div className="pt-8 pb-6 flex items-center justify-between">
+ <div>
  <h1 className="text-[34px] font-[700] leading-[1.1] tracking-[-0.022em] text-fg-primary mb-2">
  Project Analytics
  </h1>
  <p className="text-[15px] leading-[1.4667] tracking-[-0.01em] text-fg-tertiary">
  {t("projectsList.subtitle")}
  </p>
+ </div>
+ <a
+ href="/create?action=new_project"
+ className="inline-flex items-center gap-2 px-4 py-2.5 bg-accent-primary/10 text-accent-primary font-semibold text-sm rounded-xl hover:bg-accent-primary/20 transition-colors border border-accent-primary/20"
+ >
+ <Plus size={16} />
+ New Project
+ </a>
  </div>
 
  {/* Stats Grid */}

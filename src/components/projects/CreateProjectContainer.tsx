@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from"react";
 import { api } from"~/trpc/react";
-import { CreateProjectForm, CreateTaskForm, CollaboratorManager } from"./ProjectManagement";
+import { CreateProjectForm, CollaboratorManager } from"./ProjectManagement";
 import { InteractiveTimeline } from"./InteractiveTimeline";
-import { AiTaskPlannerPanel } from"./AiTaskPlannerPanel";
 import { ChevronDown, RefreshCw, CheckCircle2, ArrowLeft, Folder, Trash2, Users, Plus } from"lucide-react";
-import { useSearchParams } from"next/navigation";
+import { useSearchParams, useRouter } from"next/navigation";
 import { useTranslations } from"next-intl";
 import { useToast } from"~/components/providers/ToastProvider";
 
@@ -20,14 +19,6 @@ interface CreateProjectInput {
  title: string;
  description: string;
  shareStatus:"private" |"shared_read" |"shared_write";
-}
-
-interface CreateTaskInput {
- title: string;
- description: string;
- assignedToId?: string;
- priority:"low" |"medium" |"high" |"urgent";
- dueDate?: Date;
 }
 
 interface User {
@@ -68,6 +59,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
  const t = useT("create");
  const toast = useToast();
  const searchParams = useSearchParams();
+ const router = useRouter();
  const projectIdFromUrl = searchParams?.get("projectId");
  
  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
@@ -114,16 +106,10 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
  const createProject = api.project.create.useMutation({
  onSuccess: (data) => {
  void utils.project.getMyProjects.invalidate();
- if (data) setSelectedProjectId(data.id);
- },
- onError: (error) => toast.error(t("errors.generic", { message: error.message })),
- });
-
- const createTask = api.task.create.useMutation({
- onSuccess: () => {
- void utils.project.getById.invalidate({ id: selectedProjectId! });
- void utils.project.getMyProjects.invalidate();
- void utils.task.getOrgActivity.invalidate();
+ if (data) {
+ // Redirect directly to the task creation page
+ router.push("/create");
+ }
  },
  onError: (error) => toast.error(t("errors.generic", { message: error.message })),
  });
@@ -224,11 +210,6 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
  });
 
  const handleCreateProject = async (data: CreateProjectInput) => createProject.mutate(data);
-
- const handleCreateTask = async (data: CreateTaskInput) => {
- if (!selectedProjectId) return;
- createTask.mutate({ ...data, projectId: selectedProjectId });
- };
 
  const handleTaskStatusChange = (taskId: number, status: Task["status"]) =>
  updateTaskStatus.mutate({ taskId, status });
@@ -495,7 +476,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
  )}
 
  {/* Team Members Section */}
- {isOwner && (
+ {(isOwner || hasWriteAccess) && (
  <div className="mt-4 pt-4 px-4 border-t border-slate-100 dark:border-white/[0.04]">
  <h3 className="text-[13px] leading-[1.3846] tracking-[-0.006em] text-fg-secondary mb-3 flex items-center gap-2 px-1 uppercase tracking-wide">
  <Users size={14} className="text-accent-primary" strokeWidth={2.2} />
@@ -522,34 +503,6 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
  </div>
  )}
 
- {/* Add Task Section */}
- {hasWriteAccess && (
- <div className="mt-4 pt-4 px-4">
- <div className="space-y-4">
- <h3 className="text-[13px] leading-[1.3846] tracking-[-0.006em] text-fg-secondary mb-2 pl-1 uppercase tracking-wide flex items-center gap-2">
- <Plus size={14} className="text-accent-primary" strokeWidth={2.2} />
- {t("taskForm.add")}
- </h3>
-
- {/* AI Task Planner (A2) */}
- <AiTaskPlannerPanel
- projectId={selectedProjectId}
- orgId={projectDetails.organizationId ?? undefined}
- onApplied={() => {
- void utils.project.getById.invalidate({ id: selectedProjectId });
- }}
- />
-
-
- <CreateTaskForm
- projectId={selectedProjectId}
- onSubmit={handleCreateTask}
- availableUsers={availableUsers}
- />
- </div>
- </div>
- )}
-
  {/* Bottom spacing */}
  <div className="h-4" />
  </div>
@@ -569,9 +522,9 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
  onTaskDiscard={handleTaskDiscard}
  canEditCompletionNote={(task) => {
  const completerId = task.completedBy?.id ?? null;
- return completerId === userId || isOwner;
+ return completerId === userId || isOwner || hasWriteAccess;
  }}
- canDiscardTask={() => isOwner}
+ canDiscardTask={() => isOwner || hasWriteAccess}
  availableUsers={availableUsers}
  isReadOnly={!hasWriteAccess}
  projectTitle={projectDetails.title}

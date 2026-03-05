@@ -9,7 +9,7 @@ import { NotificationSystem } from "~/components/notifications/NotificationSyste
 import { WorkspaceIndicator } from "~/components/orgs/WorkspaceIndicator";
 import { OnboardingGate } from "~/components/auth/OnboardingGate";
 import { TaskTimelineClient } from "~/components/progress/TaskTimelineClient";
-import { LogIn, ArrowRight, FolderKanban } from "lucide-react";
+import { LogIn, ArrowRight, FolderKanban, ListTodo, StickyNote } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 export default async function CreatePage({ 
@@ -83,7 +83,11 @@ export default async function CreatePage({
                 >
                   {shouldShowProjectManagement ? (
                     <FolderKanban className="text-white" size={22} />
-                  ) : null}
+                  ) : shouldShowNoteForm ? (
+                    <StickyNote className="text-white" size={22} />
+                  ) : (
+                    <ListTodo className="text-white" size={22} />
+                  )}
                 </div>
                 <div>
                   <h1 className="text-xl font-semibold text-fg-primary tracking-[-0.02em] font-display">

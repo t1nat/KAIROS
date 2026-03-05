@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from"react";
-import { FolderPlus, CheckCircle2, Plus, Loader2, ChevronDown, ChevronUp, User as UserIcon, Sparkles } from"lucide-react";
+import { FolderPlus, CheckCircle2, Plus, Loader2, ChevronDown, ChevronUp, User as UserIcon } from"lucide-react";
 import Image from"next/image";
 import { api } from"~/trpc/react";
 import { useTranslations } from"next-intl";
@@ -51,11 +51,9 @@ export function CreateProjectForm({
 }: ProjectFormProps) {
  const useT = useTranslations as unknown as (namespace: string) => Translator;
  const t = useT("create");
- const tAi = useT("ai");
  const toast = useToast();
  const utils = api.useUtils();
  const [title, setTitle] = useState("");
- const [description, setDescription] = useState("");
  const [isSubmitting, setIsSubmitting] = useState(false);
  const [email, setEmail] = useState("");
  const [permission, setPermission] = useState<"read" |"write">("read");
@@ -116,9 +114,8 @@ export function CreateProjectForm({
 
  setIsSubmitting(true);
  try {
- await onSubmit({ title, description, shareStatus:"private" });
+ await onSubmit({ title, description: "", shareStatus:"private" });
  setTitle("");
- setDescription("");
  } finally {
  setIsSubmitting(false);
  }
@@ -190,26 +187,6 @@ export function CreateProjectForm({
  disabled={isSubmitting}
  required
  />
- </div>
-
- <div>
- <label className="block text-xs font-semibold text-fg-secondary mb-2 uppercase tracking-wide">
- {t("common.description")} <span className="text-fg-tertiary font-normal">({t("common.optional")})</span>
- </label>
- <textarea
- value={description}
- onChange={(e) => setDescription(e.target.value)}
- placeholder={t("projectForm.descriptionPlaceholder")}
- rows={3}
- className="w-full px-4 py-3 bg-bg-secondary rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary placeholder:text-fg-tertiary transition-all resize-none"
- disabled={isSubmitting}
- />
- {description.trim().length > 20 && (
- <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-accent-primary animate-in fade-in duration-300">
- <Sparkles size={11} />
- <span>{tAi("sparklesHint")}</span>
- </div>
- )}
  </div>
 
  {!projectId && (
