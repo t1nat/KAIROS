@@ -217,7 +217,7 @@ export function SideNav() {
                 >
                   <item.icon size={20} />
 
-                  <span className="absolute left-full ml-4 px-3 py-1.5 bg-bg-elevated border border-white/[0.06] text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
+                  <span className="absolute left-full ml-4 px-3 py-1.5 bg-bg-elevated border border-slate-200 dark:border-white/[0.06] text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
                     {item.label}
                   </span>
                 </button>
@@ -238,7 +238,7 @@ export function SideNav() {
               >
                 <item.icon size={20} />
 
-                <span className="absolute left-full ml-4 px-3 py-1.5 bg-bg-elevated border border-white/[0.06] text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
+                <span className="absolute left-full ml-4 px-3 py-1.5 bg-bg-elevated border border-slate-200 dark:border-white/[0.06] text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
                   {item.label}
                 </span>
               </Link>
@@ -258,7 +258,7 @@ export function SideNav() {
             title={profileItem.label}
           >
             <profileItem.icon size={20} />
-            <span className="absolute left-full ml-4 px-3 py-1.5 bg-bg-elevated border border-white/[0.06] text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
+            <span className="absolute left-full ml-4 px-3 py-1.5 bg-bg-elevated border border-slate-200 dark:border-white/[0.06] text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
               {profileItem.label}
             </span>
           </Link>
@@ -274,7 +274,7 @@ export function SideNav() {
             title={settingsItem.label}
           >
             <settingsItem.icon size={20} />
-            <span className="absolute left-full ml-4 px-3 py-1.5 bg-bg-elevated border border-white/[0.06] text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
+            <span className="absolute left-full ml-4 px-3 py-1.5 bg-bg-elevated border border-slate-200 dark:border-white/[0.06] text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
               {settingsItem.label}
             </span>
           </Link>

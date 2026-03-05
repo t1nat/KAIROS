@@ -37,6 +37,13 @@ export function UserDisplay() {
  refetchOnMount: false,
  });
 
+ const { data: profile } = api.user.getProfile.useQuery(undefined, {
+ enabled,
+ staleTime: 1000 * 60 * 5,
+ refetchOnWindowFocus: false,
+ refetchOnMount: false,
+ });
+
  useEffect(() => {
  if (!user?.email) return;
 
@@ -199,6 +206,11 @@ export function UserDisplay() {
  <div className="text-xs text-fg-secondary truncate">
  {user.email}
  </div>
+ {profile?.role && (
+ <div className="text-[10px] text-accent-primary font-medium mt-0.5 capitalize">
+ {profile.role}{profile.organization ? ` · ${profile.organization.name}` : ""}
+ </div>
+ )}
  </div>
  </div>
  {user.bio && (
