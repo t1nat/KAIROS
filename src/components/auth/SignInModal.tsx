@@ -183,17 +183,7 @@ export function SignInModal({
   };
 
   const handleMicrosoftSignIn = async () => {
-    console.log("[KAIROS] Microsoft sign-in initiated");
-    setIsLoading(true);
-    setLoadingMessage("Connecting to Microsoft...");
-    setTimeout(() => {
-      console.log("[KAIROS] Microsoft OAuth: In production, this would redirect to Microsoft's OAuth2 endpoint.");
-      console.log("[KAIROS] Required: Register app at https://portal.azure.com > App registrations");
-      console.log("[KAIROS] Required scopes: openid, profile, email, User.Read");
-      setIsLoading(false);
-      setLoadingMessage("");
-      setError("Microsoft sign-in is not yet configured. Please register your app in Azure AD.");
-    }, 1500);
+    await signIn("microsoft-entra-id", { callbackUrl: "/" });
   };
 
   const resetForm = () => {

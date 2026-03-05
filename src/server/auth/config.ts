@@ -1,6 +1,7 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import Google from "next-auth/providers/google";
+import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
 import Credentials from "next-auth/providers/credentials";
 import { env } from "~/env"
 import { eq } from "drizzle-orm";
@@ -42,6 +43,18 @@ export const authConfig = {
       // same email. Without this, browsers that partition cookies differently
       // (e.g. Edge) throw OAuthAccountNotLinked when a user has both a
       // credentials account and attempts Google sign-in with the same email.
+      allowDangerousEmailAccountLinking: true,
+    }),
+    MicrosoftEntraID({
+      clientId: env.AUTH_MICROSOFT_ID,
+      clientSecret: env.AUTH_MICROSOFT_SECRET,
+      // Use "common" tenant to allow personal MS accounts + work/school accounts
+      issuer: "https://login.microsoftonline.com/common/v2.0",
+      authorization: {
+        params: {
+          scope: "openid profile email User.Read",
+        },
+      },
       allowDangerousEmailAccountLinking: true,
     }),
     Credentials({
