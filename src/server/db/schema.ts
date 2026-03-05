@@ -1,10 +1,8 @@
-
 import { type InferInsertModel, type InferSelectModel, relations, sql } from "drizzle-orm"; 
 import {
   index,
   pgTableCreator,
   primaryKey,
-  serial,
   text,
   timestamp,
   varchar,
@@ -62,11 +60,9 @@ export const users = createTable("user", (d) => ({
     activeOrganizationId: integer("active_organization_id"),
     password: varchar("password", { length: 255 }),
 
-    // Secret reset PIN (hashed) + hint
     resetPinHash: varchar("reset_pin_hash", { length: 255 }),
     resetPinHint: text("reset_pin_hint"),
 
-    // PIN-based lockout / rate limiting
     resetPinFailedAttempts: integer("reset_pin_failed_attempts").notNull().default(0),
     resetPinLockedUntil: timestamp("reset_pin_locked_until", { mode: "date", withTimezone: true }),
     resetPinLastFailedAt: timestamp("reset_pin_last_failed_at", { mode: "date", withTimezone: true }),
@@ -83,11 +79,9 @@ export const users = createTable("user", (d) => ({
     timezone: varchar("timezone", { length: 100 }).default("UTC").notNull(),
     dateFormat: dateFormatEnum("date_format").default("MM/DD/YYYY").notNull(),
     
-    
     theme: themeEnum("theme").default("dark").notNull(),
     accentColor: varchar("accent_color", { length: 20 }).default("purple").notNull(),
 
-    // Notes
     notesKeepUnlockedUntilClose: boolean("notes_keep_unlocked_until_close").default(false).notNull(),
     
     profileVisibility: boolean("profile_visibility").default(true).notNull(),
@@ -105,6 +99,7 @@ export const users = createTable("user", (d) => ({
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
 }));
+
 export type UserSettings = {
   name: string | null;
   bio: string | null;
@@ -119,7 +114,6 @@ export type UserSettings = {
   language: "en" | "bg" | "es" | "fr" | "de" | "it" | "pt" | "ja" | "ko" | "zh" | "ar";
   timezone: string;
   dateFormat: "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD";
-  
 
   theme: "light" | "dark" | "system";
   accentColor: string;
@@ -137,7 +131,7 @@ export type UserSettings = {
 export const organizations = createTable(
   "organizations",
   (_d) => ({
-    id: serial("id").primaryKey(),
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
     name: varchar("name", { length: 256 }).notNull(),
     accessCode: varchar("access_code", { length: 14 }).notNull().unique(),
     createdById: varchar("created_by_id", { length: 255 })
@@ -159,7 +153,7 @@ export const organizations = createTable(
 export const organizationMembers = createTable(
   "organization_members",
   (_d) => ({
-    id: serial("id").primaryKey(),
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
     organizationId: integer("organization_id")
       .notNull()
       .references(() => organizations.id, { onDelete: "cascade" }),
@@ -185,14 +179,10 @@ export const organizationMembers = createTable(
   ]
 );
 
-/**
- * Custom roles per organization – define a named role with permission flags.
- * Template roles (admin, member, guest) are computed and not stored here.
- */
 export const organizationRoles = createTable(
   "organization_roles",
   (_d) => ({
-    id: serial("id").primaryKey(),
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
     organizationId: integer("organization_id")
       .notNull()
       .references(() => organizations.id, { onDelete: "cascade" }),
@@ -215,13 +205,10 @@ export const organizationRoles = createTable(
   ]
 );
 
-/**
- * Pending invites to an organization (email-based).
- */
 export const organizationInvites = createTable(
   "organization_invites",
   (_d) => ({
-    id: serial("id").primaryKey(),
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
     organizationId: integer("organization_id")
       .notNull()
       .references(() => organizations.id, { onDelete: "cascade" }),
@@ -245,7 +232,7 @@ export const organizationInvites = createTable(
 export const projects = createTable(
   "projects",
   (d) => ({
-    id: serial("id").primaryKey(),
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
     title: varchar("title", { length: 256 }).notNull(),
     description: text("description"),
     imageUrl: varchar("image_url", { length: 512 }),
@@ -272,7 +259,7 @@ export const projects = createTable(
 export const tasks = createTable(
   "tasks",
   (d) => ({
-    id: serial("id").primaryKey(),
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
     title: varchar("title", { length: 256 }).notNull(),
     description: text("description"),
     projectId: integer("project_id")
@@ -288,13 +275,7 @@ export const tasks = createTable(
     completedById: d
       .varchar("completed_by_id", { length: 255 })
       .references(() => users.id, { onDelete: "set null" }),
-
-    /**
-     * Short completion summary/note, usually filled when a task is marked completed.
-     * Editable by the completer and admins/org owner.
-     */
     completionNote: text("completion_note"),
-
     createdById: d
       .varchar({ length: 255 })
       .notNull()
@@ -310,7 +291,6 @@ export const tasks = createTable(
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
     orderIndex: integer("order_index").notNull().default(0),
-    /** Idempotency key for agent-driven changes (A2 Task Planner). */
     clientRequestId: varchar("client_request_id", { length: 128 }),
   }),
   (t) => [
@@ -322,8 +302,6 @@ export const tasks = createTable(
     index("task_client_request_id_idx").on(t.clientRequestId),
   ]
 );
-
-
 
 // ---------------------------------------------------------------------------
 // Agent A2 Task Planner persistence
@@ -346,7 +324,6 @@ export const agentTaskPlannerDrafts = createTable(
       .notNull()
       .references(() => projects.id, { onDelete: "cascade" }),
     message: text("message").notNull(),
-    /** Raw JSON string of TaskPlanDraft */
     planJson: text("plan_json").notNull(),
     planHash: varchar("plan_hash", { length: 64 }).notNull(),
     status: agentTaskPlannerDraftStatusEnum("status").notNull().default("draft"),
@@ -368,7 +345,7 @@ export const agentTaskPlannerDrafts = createTable(
 export const agentTaskPlannerApplies = createTable(
   "agent_task_planner_applies",
   (d) => ({
-    id: serial("id").primaryKey(),
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
     draftId: varchar("draft_id", { length: 80 })
       .notNull()
       .references(() => agentTaskPlannerDrafts.id, { onDelete: "cascade" }),
@@ -405,7 +382,6 @@ export const agentNotesVaultDrafts = createTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     message: text("message").notNull(),
-    /** Raw JSON string of NotesVaultDraft */
     planJson: text("plan_json").notNull(),
     planHash: varchar("plan_hash", { length: 64 }).notNull(),
     status: agentNotesVaultDraftStatusEnum("status").notNull().default("draft"),
@@ -426,7 +402,7 @@ export const agentNotesVaultDrafts = createTable(
 export const agentNotesVaultApplies = createTable(
   "agent_notes_vault_applies",
   (d) => ({
-    id: serial("id").primaryKey(),
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
     draftId: varchar("draft_id", { length: 80 })
       .notNull()
       .references(() => agentNotesVaultDrafts.id, { onDelete: "cascade" }),
@@ -445,11 +421,12 @@ export const agentNotesVaultApplies = createTable(
   ],
 );
 
-export const stickyNotes = createTable(
-  "sticky_notes",
+export const notebooks = createTable(
+  "notebooks",
   (d) => ({
-    id: serial("id").primaryKey(),
-    content: text("content").notNull(),
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    name: varchar("name", { length: 256 }).notNull(),
+    description: text("description"),
     createdById: d
       .varchar({ length: 255 })
       .notNull()
@@ -457,13 +434,65 @@ export const stickyNotes = createTable(
     createdAt: timestamp("created_at")
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
+    updatedAt: timestamp("updated_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  }),
+  (t) => [
+    index("notebook_created_by_idx").on(t.createdById),
+  ]
+);
+
+export const stickyNotes = createTable(
+  "sticky_notes",
+  (d) => ({
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    title: varchar("title", { length: 256 }),
+    content: text("content").notNull(),
+    createdById: d
+      .varchar({ length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    notebookId: integer("notebook_id").references(() => notebooks.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: timestamp("updated_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
     passwordHash: varchar("password_hash", { length: 256 }),
     passwordSalt: varchar("password_salt", { length: 256 }),
-
     shareStatus: shareStatusEnum("share_status").notNull(),
   }),
   (t) => [
     index("note_created_by_idx").on(t.createdById),
+    index("note_notebook_idx").on(t.notebookId),
+  ]
+);
+
+export const noteShares = createTable(
+  "note_shares",
+  (d) => ({
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    noteId: integer("note_id")
+      .notNull()
+      .references(() => stickyNotes.id, { onDelete: "cascade" }),
+    sharedWithId: d
+      .varchar("shared_with_id", { length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    permission: permissionEnum("permission").notNull().default("read"),
+    sharedById: d
+      .varchar("shared_by_id", { length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  }),
+  (t) => [
+    index("note_share_note_idx").on(t.noteId),
+    index("note_share_user_idx").on(t.sharedWithId),
   ]
 );
 
@@ -491,7 +520,7 @@ export const projectCollaborators = createTable(
 export const taskComments = createTable(
   "task_comments",
   (d) => ({
-    id: serial("id").primaryKey(),
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
     content: text("content").notNull(),
     taskId: integer("task_id")
       .notNull()
@@ -513,7 +542,7 @@ export const taskComments = createTable(
 export const taskActivityLog = createTable(
   "task_activity_log",
   (d) => ({
-    id: serial("id").primaryKey(),
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
     taskId: integer("task_id")
       .notNull()
       .references(() => tasks.id, { onDelete: "cascade" }),
@@ -534,11 +563,10 @@ export const taskActivityLog = createTable(
   ]
 );
 
-
 export const directConversations = createTable(
   "direct_conversations",
   (d) => ({
-    id: d.serial("id").primaryKey(),
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
     projectId: d.integer("project_id").references(() => projects.id, { onDelete: "cascade" }),
     organizationId: d.integer("organization_id").references(() => organizations.id, { onDelete: "cascade" }),
     userOneId: d
@@ -564,7 +592,7 @@ export const directConversations = createTable(
 export const directMessages = createTable(
   "direct_messages",
   (d) => ({
-    id: d.serial("id").primaryKey(),
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
     conversationId: d
       .integer("conversation_id")
       .notNull()
@@ -633,7 +661,7 @@ export const verificationTokens = createTable(
 export const events = createTable(
   "event",
   (d) => ({
-    id: d.serial("id").primaryKey(),
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
     title: d.varchar("title", { length: 256 }).notNull(),
     description: d.text("description").notNull(),
     imageUrl: d.text("image_url"),
@@ -643,11 +671,9 @@ export const events = createTable(
       .varchar({ length: 255 })
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-
     enableRsvp: d.boolean("enable_rsvp").notNull().default(false),
     sendReminders: d.boolean("send_reminders").notNull().default(false),
     reminderSent: d.boolean("reminder_sent").notNull().default(false),
-
     createdAt: d
       .timestamp({ withTimezone: true })
       .$defaultFn(() => new Date())
@@ -663,7 +689,7 @@ export const events = createTable(
 export const eventRsvps = createTable(
   "event_rsvp",
   (d) => ({
-    id: d.serial("id").primaryKey(),
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
     eventId: d
       .integer("event_id")
       .notNull()
@@ -673,9 +699,7 @@ export const eventRsvps = createTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     status: rsvpStatusEnum("status").notNull(),
-    /** Minutes before the event that the user wants a reminder (null = no reminder) */
     reminderMinutesBefore: d.integer("reminder_minutes_before"),
-    /** Whether the reminder notification has already been sent */
     reminderSent: d.boolean("reminder_sent").notNull().default(false),
     createdAt: d
       .timestamp({ withTimezone: true })
@@ -696,7 +720,7 @@ export const eventRsvps = createTable(
 export const eventComments = createTable(
   "event_comment",
   (d) => ({
-    id: d.serial("id").primaryKey(),
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
     text: d.text("text").notNull(),
     imageUrl: d.text("image_url"),
     eventId: d
@@ -743,7 +767,7 @@ export const eventLikes = createTable(
 export const notifications = createTable(
   "notifications",
   (d) => ({
-    id: d.serial("id").primaryKey(),
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
     userId: d
       .varchar("user_id", { length: 255 })
       .notNull()
@@ -766,6 +790,10 @@ export const notifications = createTable(
 );
 
 
+// ---------------------------------------------------------------------------
+// Relations
+// ---------------------------------------------------------------------------
+
 export const organizationsRelations = relations(organizations, ({ one, many }) => ({
   creator: one(users, { fields: [organizations.createdById], references: [users.id] }),
   members: many(organizationMembers),
@@ -777,8 +805,21 @@ export const organizationMembersRelations = relations(organizationMembers, ({ on
   user: one(users, { fields: [organizationMembers.userId], references: [users.id] }),
 }));
 
-export const stickyNotesRelations = relations(stickyNotes, ({ one }) => ({
+export const notebooksRelations = relations(notebooks, ({ one, many }) => ({
+  creator: one(users, { fields: [notebooks.createdById], references: [users.id] }),
+  notes: many(stickyNotes),
+}));
+
+export const stickyNotesRelations = relations(stickyNotes, ({ one, many }) => ({
   author: one(users, { fields: [stickyNotes.createdById], references: [users.id] }),
+  notebook: one(notebooks, { fields: [stickyNotes.notebookId], references: [notebooks.id] }),
+  shares: many(noteShares),
+}));
+
+export const noteSharesRelations = relations(noteShares, ({ one }) => ({
+  note: one(stickyNotes, { fields: [noteShares.noteId], references: [stickyNotes.id] }),
+  sharedWith: one(users, { fields: [noteShares.sharedWithId], references: [users.id] }),
+  sharedBy: one(users, { fields: [noteShares.sharedById], references: [users.id] }),
 }));
 
 export const projectsRelations = relations(projects, ({ one, many }) => ({
@@ -810,7 +851,6 @@ export const taskActivityLogRelations = relations(taskActivityLog, ({ one }) => 
   task: one(tasks, { fields: [taskActivityLog.taskId], references: [tasks.id] }),
   user: one(users, { fields: [taskActivityLog.userId], references: [users.id] }),
 }));
-
 
 export const directConversationsRelations = relations(directConversations, ({ one, many }) => ({
   project: one(projects, { fields: [directConversations.projectId], references: [projects.id] }),
@@ -878,6 +918,10 @@ export const eventLikesRelations = relations(eventLikes, ({ one }) => ({
 }));
 
 
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
 export type User = InferSelectModel<typeof users>;
 export type NewUser = InferInsertModel<typeof users>;
 export type Event = InferSelectModel<typeof events>;
@@ -896,11 +940,8 @@ export type OrganizationMember = InferSelectModel<typeof organizationMembers>;
 export type NewOrganizationMember = InferInsertModel<typeof organizationMembers>;
 export type Notification = InferSelectModel<typeof notifications>;
 export type NewNotification = InferInsertModel<typeof notifications>;
-
-
 export type EventRsvp = InferSelectModel<typeof eventRsvps>;
 export type NewEventRsvp = InferInsertModel<typeof eventRsvps>;
-
 export type DirectConversation = InferSelectModel<typeof directConversations>;
 export type NewDirectConversation = InferInsertModel<typeof directConversations>;
 export type DirectMessage = InferSelectModel<typeof directMessages>;
