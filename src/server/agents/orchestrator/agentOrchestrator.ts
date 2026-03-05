@@ -888,10 +888,13 @@ export const agentOrchestrator = {
       const [collab] = await input.ctx.db
         .select({ collaboratorId: projectCollaborators.collaboratorId })
         .from(projectCollaborators)
-        .where(eq(projectCollaborators.projectId, input.projectId))
+        .where(and(
+          eq(projectCollaborators.projectId, input.projectId),
+          eq(projectCollaborators.collaboratorId, userId),
+        ))
         .limit(1);
 
-      if (collab?.collaboratorId !== userId) {
+      if (!collab) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You do not have access to this project",
@@ -939,17 +942,13 @@ export const agentOrchestrator = {
       input.message ? `\n\nAdditional instructions: ${input.message}` : "",
     ].join("");
 
-    if (!projectDescription.trim()) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message:
-          "Project has no description and no additional instructions were provided. Please add a description to your project first.",
-      });
-    }
+    // If no description and no message, use the project title as minimal context
+    const effectiveDescription = projectDescription.trim()
+      || `Project: "${project.title}". Generate a reasonable set of tasks for a project with this name.`;
 
     const systemPrompt = getTaskGenerationPrompt({
       projectTitle: project.title,
-      projectDescription,
+      projectDescription: effectiveDescription,
       existingTasks,
       availableUsers,
     });
