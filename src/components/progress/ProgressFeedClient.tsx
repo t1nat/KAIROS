@@ -482,8 +482,18 @@ export function ProgressFeedClient() {
 
   if (!projects || projects.length === 0) {
     return (
-      <div className="p-6">
-        <p className="text-sm text-fg-secondary">{t("empty")}</p>
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center px-4">
+        <div className="w-20 h-20 rounded-2xl bg-accent-primary/10 flex items-center justify-center mb-6">
+          <Folder size={36} className="text-accent-primary" />
+        </div>
+        <h2 className="text-2xl font-bold text-fg-primary mb-2">No projects yet</h2>
+        <p className="text-fg-secondary mb-6">Create your first project to start tracking progress.</p>
+        <a
+          href="/projects"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-accent-primary to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-accent-primary/25 transition-all hover:scale-[1.02]"
+        >
+          Create one now!
+        </a>
       </div>
     );
   }
