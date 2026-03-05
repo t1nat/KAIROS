@@ -9,6 +9,7 @@ import { AppearanceSettings } from "~/components/settings/AppearanceSettings";
 import { LanguageSettingsClient } from "~/components/settings/LanguageSettingsClient";
 import { NotificationSettingsClient } from "~/components/settings/NotificationSettingsClient";
 import { SecuritySettingsClient } from "~/components/settings/SecuritySettingsClient";
+import { WorkspaceSettingsClient } from "~/components/settings/WorkspaceSettingsClient";
 import { getTranslations } from "next-intl/server";
 import { Settings } from "lucide-react";
 
@@ -83,6 +84,7 @@ export default async function SettingsPage({
  {/* Settings Content */}
  <div className="pb-8">
  {activeSection === "profile" && <ProfileSettingsClient user={session.user} />}
+ {activeSection === "workspace" && <WorkspaceSettingsClient />}
  {activeSection === "notifications" && <NotificationSettingsClient />}
  {activeSection === "security" && <SecuritySettingsClient />}
  {activeSection === "language" && <LanguageSettingsClient />}

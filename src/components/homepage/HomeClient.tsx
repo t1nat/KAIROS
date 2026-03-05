@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
 import { SignInModal } from "~/components/auth/SignInModal";
@@ -78,97 +78,108 @@ function rotateHue(rgb: [number, number, number], degrees: number): [number, num
     ];
 }
 
-const DEFAULT_PRIMARY: [number, number, number] = [139, 92, 246];
+const DEFAULT_PRIMARY: [number, number, number] = [168, 85, 247];
 
 /* ─── Component ─── */
 
 export function HomeClient() {
-    const { resolvedTheme } = useTheme();
+    const { setTheme } = useTheme();
     const t = useTranslations("home");
-    const [themeMounted, setThemeMounted] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isClient, setIsClient] = useState(false);
     const heroRef = useRef<HTMLDivElement>(null);
     const aboutRef = useRef<HTMLElement>(null);
     const subtitleRef = useRef<HTMLParagraphElement>(null);
     const whyTeamsCardsRef = useRef<HTMLDivElement[]>([]);
+    const [kairosHover, setKairosHover] = useState(false);
 
     const colorTick = useThemeColorTick();
 
-    useEffect(() => { setThemeMounted(true); setIsClient(true); }, []);
+    /* ─── Force dark theme on HomeClient ─── */
+    useEffect(() => {
+        setTheme("dark");
+        setIsClient(true);
+    }, [setTheme]);
 
-    /* ─── GSAP entrance animation (bottom → top stagger) ─── */
+    /* ─── GSAP entrance animation (bottom → top stagger, smooth with blur) ─── */
     useEffect(() => {
         if (!heroRef.current) return;
         const ctx = gsap.context(() => {
             const children = heroRef.current!.querySelectorAll("[data-reveal]");
-            gsap.fromTo(
-                children,
-                { opacity: 0, y: 60, filter: "blur(8px)", scale: 0.96 },
-                { opacity: 1, y: 0, filter: "blur(0px)", scale: 1, duration: 0.9, ease: "power3.out", stagger: 0.12 },
-            );
+            gsap.set(children, { opacity: 0, y: 40, filter: "blur(6px)", willChange: "opacity, transform, filter" });
+            gsap.to(children, {
+                opacity: 1, y: 0, filter: "blur(0px)",
+                duration: 1.0, ease: "power2.out", stagger: 0.15,
+                onComplete: () => {
+                    (children as NodeListOf<HTMLElement>).forEach((el) => { el.style.willChange = "auto"; });
+                },
+            });
         });
         return () => ctx.revert();
     }, []);
 
-    /* ─── "Why Teams" cards GSAP ─── */
+    /* ─── "Why Teams" cards GSAP (smooth scroll-triggered fade with blur) ─── */
     useEffect(() => {
         if (!whyTeamsCardsRef.current.length) return;
         const ctx = gsap.context(() => {
-            whyTeamsCardsRef.current.forEach((card, i) => {
+            whyTeamsCardsRef.current.forEach((card) => {
                 if (!card) return;
-                const fromLeft = i % 2 === 0;
-                gsap.set(card, { opacity: 0, y: 30, x: fromLeft ? -30 : 30, scale: 0.95 });
+                gsap.set(card, { opacity: 0, y: 40, filter: "blur(6px)", willChange: "opacity, transform, filter" });
                 gsap.to(card, {
-                    opacity: 1, x: 0, y: 0, scale: 1,
-                    duration: 0.8, ease: "power3.out",
-                    delay: i * 0.1,
+                    opacity: 1, y: 0, filter: "blur(0px)",
+                    duration: 0.9, ease: "power2.out",
                     scrollTrigger: {
                         trigger: card,
-                        start: "top 90%",
-                        toggleActions: "play none none reverse",
+                        start: "top 88%",
+                        end: "top 60%",
+                        scrub: 0.6,
                     },
+                    onComplete: () => { card.style.willChange = "auto"; },
                 });
             });
         });
         return () => ctx.revert();
     }, []);
 
-    /* ─── Subtitle scroll animation ─── */
+    /* ─── Subtitle scroll animation (smooth with blur) ─── */
     useEffect(() => {
         if (!subtitleRef.current) return;
         const ctx = gsap.context(() => {
             gsap.fromTo(
                 subtitleRef.current,
-                { opacity: 0, filter: "blur(5px)", y: 30, scale: 0.9 },
+                { opacity: 0, filter: "blur(6px)", y: 30, willChange: "opacity, transform, filter" },
                 {
-                    opacity: 1, filter: "blur(0px)", y: 0, scale: 1,
-                    duration: 0.8, ease: "back.out(1.7)",
-                    scrollTrigger: { trigger: subtitleRef.current, start: "top 85%", scrub: 1 },
+                    opacity: 1, filter: "blur(0px)", y: 0,
+                    duration: 0.8, ease: "power2.out",
+                    scrollTrigger: { trigger: subtitleRef.current, start: "top 85%", end: "top 60%", scrub: 0.6 },
+                    onComplete: () => { if (subtitleRef.current) subtitleRef.current.style.willChange = "auto"; },
                 },
             );
         });
         return () => ctx.revert();
     }, []);
 
-    const isDarkTheme = themeMounted ? resolvedTheme === "dark" : false;
-    const logoSrc = isDarkTheme ? "/logo_white.png" : "/logo_purple.png";
+    /* ─── Always dark – hardcode logo ─── */
+    const logoSrc = "/logo_white.png";
 
-    /* ─── Circle gradients ─── */
+    const handleKairosEnter = useCallback(() => setKairosHover(true), []);
+    const handleKairosLeave = useCallback(() => setKairosHover(false), []);
+
+    /* ─── Circle gradients (always dark values) ─── */
     const circleGradients = useMemo(() => {
         if (!isClient) return { circle1: "", circle2: "", circle3: "", circle4: "" };
         const primary = getCssVarRgb("--accent-primary") ?? DEFAULT_PRIMARY;
         const a1 = rotateHue(primary, -20), a2 = rotateHue(primary, 10);
         const a3 = rotateHue(primary, -45), a4 = rotateHue(primary, -10);
         const toRgb = (c: [number, number, number]) => `${c[0]}, ${c[1]}, ${c[2]}`;
-        const opSet = isDarkTheme ? [0.28, 0.25, 0.20, 0.18] : [0.22, 0.18, 0.14, 0.12];
+        const opSet = [0.28, 0.25, 0.20, 0.18];
         return {
             circle1: `radial-gradient(circle at 40% 40%, rgba(${toRgb(primary)}, ${opSet[0]}), rgba(${toRgb(a1)}, ${(opSet[0] ?? 0) * 0.5}), transparent 65%)`,
             circle2: `radial-gradient(circle at 60% 60%, rgba(${toRgb(a2)}, ${opSet[1]}), rgba(${toRgb(a3)}, ${(opSet[1] ?? 0) * 0.5}), transparent 65%)`,
             circle3: `radial-gradient(circle at 50% 50%, rgba(${toRgb(a3)}, ${opSet[2]}), rgba(${toRgb(primary)}, ${(opSet[2] ?? 0) * 0.5}), transparent 55%)`,
             circle4: `radial-gradient(circle at 50% 50%, rgba(${toRgb(a4)}, ${opSet[3]}), rgba(${toRgb(a1)}, ${(opSet[3] ?? 0) * 0.4}), transparent 60%)`,
         };
-    }, [isDarkTheme, colorTick, isClient]);
+    }, [colorTick, isClient]);
 
     const whyTeamsData = [
         { icon: <Zap size={20} />, colorClass: "text-success", bgClass: "bg-success/5 hover:bg-success/10", iconBg: "bg-success/10", titleKey: "streamlinedWorkflow" as const, descKey: "streamlinedWorkflowDesc" as const },
@@ -178,7 +189,7 @@ export function HomeClient() {
     ];
 
     return (
-        <main id="main-content" className="min-h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary relative overflow-hidden scroll-smooth">
+        <main id="main-content" className="dark min-h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-tertiary relative overflow-hidden scroll-smooth">
             {/* ─── Inline keyframes ─── */}
             <style dangerouslySetInnerHTML={{ __html: `
                 @keyframes circle-drift-1 {
@@ -210,10 +221,20 @@ export function HomeClient() {
                 .fc-2 { animation: gentle-fade-in 1.2s ease-out forwards, circle-drift-2 12s ease-in-out infinite; animation-delay: .15s, 0s; }
                 .fc-3 { animation: gentle-fade-in 1.2s ease-out forwards, circle-drift-3 8s ease-in-out infinite; animation-delay: .3s, 0s; }
                 .fc-4 { animation: gentle-fade-in 1.2s ease-out forwards, circle-drift-4 14s ease-in-out infinite; animation-delay: .2s, 0s; }
-                @keyframes pulse-ring {
-                    0% { transform: scaleX(1); opacity: 0.6; }
-                    50% { transform: scaleX(1.05); opacity: 0.3; }
-                    100% { transform: scaleX(1); opacity: 0.6; }
+                .kairos-underline {
+                    position: absolute;
+                    bottom: -2px;
+                    left: 50%;
+                    right: 50%;
+                    height: 3px;
+                    background: linear-gradient(90deg, rgb(var(--accent-primary)), rgb(var(--accent-secondary)));
+                    border-radius: 9999px;
+                    transition: left 0.45s cubic-bezier(0.4, 0, 0.2, 1), right 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+                .kairos-title:hover .kairos-underline,
+                .kairos-underline--active {
+                    left: 0%;
+                    right: 0%;
                 }
             ` }} />
 
@@ -230,30 +251,32 @@ export function HomeClient() {
                 {/* ─── Header ─── */}
                 <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-bg-primary/60 border-b border-white/[0.06]">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
-                        <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-lg bg-bg-surface/80 dark:bg-gradient-to-br dark:from-accent-primary dark:to-accent-secondary">
+                        <div className="flex items-center">
+                            {/* Logo - left */}
+                            <div className="flex items-center gap-3 flex-shrink-0">
+                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-lg bg-gradient-to-br from-accent-primary to-accent-secondary">
                                     <Image src={logoSrc} alt="Kairos Logo" width={24} height={24} className="w-5 h-5 sm:w-6 sm:h-6 object-contain" priority />
                                 </div>
                                 <h1 className="text-xl sm:text-2xl font-bold text-fg-primary font-display tracking-tight">KAIROS</h1>
                             </div>
-                            {/* ─── Nav links ─── */}
-                            <nav className="hidden md:flex items-center gap-6">
+                            {/* ─── Nav links (centered) ─── */}
+                            <nav className="hidden md:flex items-center gap-6 flex-1 justify-center">
                                 <button onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })} className="text-sm text-fg-secondary hover:text-fg-primary transition-colors duration-200">{t("navFeatures")}</button>
                                 <button onClick={() => document.getElementById("benefits")?.scrollIntoView({ behavior: "smooth" })} className="text-sm text-fg-secondary hover:text-fg-primary transition-colors duration-200">{t("navBenefits")}</button>
                                 <button onClick={() => document.getElementById("footer")?.scrollIntoView({ behavior: "smooth" })} className="text-sm text-fg-secondary hover:text-fg-primary transition-colors duration-200">{t("navAbout")}</button>
                             </nav>
-                            <div className="flex items-center gap-2 sm:gap-3">
+                            {/* Right side */}
+                            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                                 <LanguageSwitcher variant="compact" />
                                 <button
                                     onClick={() => setIsModalOpen(true)}
-                                    className="hidden sm:inline-flex px-5 py-2 text-sm font-semibold rounded-full bg-accent-primary text-white hover:opacity-90 transition-all duration-200 shadow-md shadow-accent-primary/20"
+                                    className="hidden sm:inline-flex px-5 py-2 text-sm font-semibold rounded-full kairos-neon-btn text-white hover:opacity-90 transition-all duration-200 shadow-md shadow-accent-primary/20"
                                 >
                                     {t("logIn")}
                                 </button>
                                 <button
                                     onClick={() => setIsModalOpen(true)}
-                                    className="px-5 py-2 text-sm font-medium rounded-full bg-accent-primary text-white hover:opacity-90 transition-all duration-200 shadow-md shadow-accent-primary/20 hover:shadow-lg hover:shadow-accent-primary/30 hover:scale-[1.02] active:scale-[0.98]"
+                                    className="px-5 py-2 text-sm font-medium rounded-full kairos-neon-btn text-white hover:opacity-90 transition-all duration-200 shadow-md shadow-accent-primary/20 hover:shadow-lg hover:shadow-accent-primary/30 hover:scale-[1.02] active:scale-[0.98]"
                                 >
                                     {t("signUp")}
                                 </button>
@@ -273,11 +296,16 @@ export function HomeClient() {
                                     <span className="text-xs sm:text-sm font-semibold text-accent-primary tracking-widest uppercase">{t("heroTagline")}</span>
                                 </div>
 
-                                {/* Title */}
-                                <h2 data-reveal="true" className="text-5xl sm:text-6xl lg:text-8xl font-bold leading-[0.95] tracking-tight font-display relative kairos-title">
+                                {/* Title with hover underline from center */}
+                                <h2
+                                    data-reveal="true"
+                                    className="text-5xl sm:text-6xl lg:text-8xl font-bold leading-[0.95] tracking-tight font-display relative kairos-title"
+                                    onMouseEnter={handleKairosEnter}
+                                    onMouseLeave={handleKairosLeave}
+                                >
                                     <span className="relative inline-block kairos-title-gradient">
                                         KAIROS
-                                        <div className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-accent-primary to-accent-secondary rounded-full" style={{ animation: "pulse-ring 3s ease-in-out infinite" }} />
+                                        <div className={`kairos-underline ${kairosHover ? "kairos-underline--active" : ""}`} />
                                     </span>
                                 </h2>
 
@@ -292,7 +320,7 @@ export function HomeClient() {
                             <div data-reveal="true" className="flex flex-col sm:flex-row gap-3 w-full max-w-md justify-center">
                                 <button
                                     onClick={() => setIsModalOpen(true)}
-                                    className="flex items-center justify-center gap-2 px-8 sm:px-10 py-4 sm:py-5 font-semibold rounded-2xl transition-all text-base sm:text-lg group bg-accent-primary text-white hover:brightness-110 shadow-lg shadow-accent-primary/25 hover:shadow-xl hover:shadow-accent-primary/35 hover:scale-[1.02] active:scale-[0.98]"
+                                    className="flex items-center justify-center gap-2 px-8 sm:px-10 py-4 sm:py-5 font-semibold rounded-2xl transition-all text-base sm:text-lg group kairos-neon-btn text-white shadow-lg shadow-accent-primary/25 hover:shadow-xl hover:shadow-accent-primary/35 hover:scale-[1.02] active:scale-[0.98]"
                                 >
                                     <span className="relative z-10">{t("signIn")}</span>
                                     <ArrowRight size={20} className="relative z-10 group-hover:translate-x-1 transition-transform" />
@@ -347,7 +375,7 @@ export function HomeClient() {
                         <div className="mt-16 text-center">
                             <button
                                 onClick={() => setIsModalOpen(true)}
-                                className="inline-flex items-center gap-2 px-8 py-4 bg-accent-primary text-white font-semibold rounded-2xl hover:opacity-90 transition-all duration-200 shadow-lg shadow-accent-primary/25 hover:shadow-xl hover:shadow-accent-primary/35 hover:scale-[1.02] active:scale-[0.98]"
+                                className="inline-flex items-center gap-2 px-8 py-4 kairos-neon-btn text-white font-semibold rounded-2xl hover:opacity-90 transition-all duration-200 shadow-lg shadow-accent-primary/25 hover:shadow-xl hover:shadow-accent-primary/35 hover:scale-[1.02] active:scale-[0.98]"
                             >
                                 {t("getStarted")}
                                 <ArrowRight size={18} />

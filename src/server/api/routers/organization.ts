@@ -1,7 +1,7 @@
 
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { organizations, organizationMembers, users } from "~/server/db/schema";
+import { organizations, organizationMembers, organizationRoles, organizationInvites, users } from "~/server/db/schema";
 import { eq, and } from "drizzle-orm";
 
 
@@ -205,6 +205,12 @@ export const organizationRouter = createTRPCRouter({
           role: "admin",
           canAddMembers: true,
           canAssignTasks: true,
+          canCreateProjects: true,
+          canDeleteTasks: true,
+          canKickMembers: true,
+          canManageRoles: true,
+          canEditProjects: true,
+          canViewAnalytics: true,
         });
 
         
@@ -491,6 +497,401 @@ export const organizationRouter = createTRPCRouter({
             eq(organizationMembers.userId, input.userId)
           )
         );
+
+      return { success: true };
+    }),
+
+  updateMemberRole: protectedProcedure
+    .input(
+      z.object({
+        organizationId: z.number(),
+        userId: z.string(),
+        role: z.enum(["admin", "member", "guest"]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Verify the caller is an admin
+      const [caller] = await ctx.db
+        .select()
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.organizationId, input.organizationId),
+            eq(organizationMembers.userId, ctx.session.user.id),
+          ),
+        )
+        .limit(1);
+
+      if (!caller || caller.role !== "admin") {
+        throw new Error("Only admins can change member roles");
+      }
+
+      // Determine permissions based on the template role
+      const permissionsByRole = {
+        admin: {
+          canAddMembers: true,
+          canAssignTasks: true,
+          canCreateProjects: true,
+          canDeleteTasks: true,
+          canKickMembers: true,
+          canManageRoles: true,
+          canEditProjects: true,
+          canViewAnalytics: true,
+        },
+        member: {
+          canAddMembers: false,
+          canAssignTasks: true,
+          canCreateProjects: true,
+          canDeleteTasks: false,
+          canKickMembers: false,
+          canManageRoles: false,
+          canEditProjects: true,
+          canViewAnalytics: true,
+        },
+        guest: {
+          canAddMembers: false,
+          canAssignTasks: false,
+          canCreateProjects: false,
+          canDeleteTasks: false,
+          canKickMembers: false,
+          canManageRoles: false,
+          canEditProjects: false,
+          canViewAnalytics: false,
+        },
+      } as const;
+
+      const permissions = permissionsByRole[input.role];
+
+      await ctx.db
+        .update(organizationMembers)
+        .set({
+          role: input.role,
+          ...permissions,
+        })
+        .where(
+          and(
+            eq(organizationMembers.organizationId, input.organizationId),
+            eq(organizationMembers.userId, input.userId),
+          ),
+        );
+
+      return { success: true };
+    }),
+
+  removeMember: protectedProcedure
+    .input(
+      z.object({
+        organizationId: z.number(),
+        userId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Verify the caller is an admin with canKickMembers permission
+      const [caller] = await ctx.db
+        .select()
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.organizationId, input.organizationId),
+            eq(organizationMembers.userId, ctx.session.user.id),
+          ),
+        )
+        .limit(1);
+
+      if (!caller || caller.role !== "admin" || !caller.canKickMembers) {
+        throw new Error("You do not have permission to remove members");
+      }
+
+      // Prevent removing yourself
+      if (input.userId === ctx.session.user.id) {
+        throw new Error("You cannot remove yourself. Use the leave action instead.");
+      }
+
+      // Delete the membership
+      await ctx.db
+        .delete(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.organizationId, input.organizationId),
+            eq(organizationMembers.userId, input.userId),
+          ),
+        );
+
+      // If the removed user had this org as active, switch them to personal mode
+      const [removedUser] = await ctx.db
+        .select({ activeOrganizationId: users.activeOrganizationId })
+        .from(users)
+        .where(eq(users.id, input.userId))
+        .limit(1);
+
+      if (removedUser?.activeOrganizationId === input.organizationId) {
+        const [nextMembership] = await ctx.db
+          .select({ organizationId: organizationMembers.organizationId })
+          .from(organizationMembers)
+          .where(eq(organizationMembers.userId, input.userId))
+          .limit(1);
+
+        if (!nextMembership) {
+          await ctx.db
+            .update(users)
+            .set({ usageMode: "personal", activeOrganizationId: null })
+            .where(eq(users.id, input.userId));
+        } else {
+          await ctx.db
+            .update(users)
+            .set({ activeOrganizationId: nextMembership.organizationId })
+            .where(eq(users.id, input.userId));
+        }
+      }
+
+      return { success: true };
+    }),
+
+  getRoles: protectedProcedure
+    .input(z.object({ organizationId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      // Verify the caller is a member
+      const [membership] = await ctx.db
+        .select()
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.organizationId, input.organizationId),
+            eq(organizationMembers.userId, ctx.session.user.id),
+          ),
+        )
+        .limit(1);
+
+      if (!membership) {
+        throw new Error("You are not a member of this organization");
+      }
+
+      const roles = await ctx.db
+        .select()
+        .from(organizationRoles)
+        .where(eq(organizationRoles.organizationId, input.organizationId));
+
+      return roles;
+    }),
+
+  createRole: protectedProcedure
+    .input(
+      z.object({
+        organizationId: z.number(),
+        name: z.string().min(1).max(100),
+        canAddMembers: z.boolean().default(false),
+        canAssignTasks: z.boolean().default(false),
+        canCreateProjects: z.boolean().default(false),
+        canDeleteTasks: z.boolean().default(false),
+        canKickMembers: z.boolean().default(false),
+        canManageRoles: z.boolean().default(false),
+        canEditProjects: z.boolean().default(false),
+        canViewAnalytics: z.boolean().default(false),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Verify the caller is an admin
+      const [caller] = await ctx.db
+        .select()
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.organizationId, input.organizationId),
+            eq(organizationMembers.userId, ctx.session.user.id),
+          ),
+        )
+        .limit(1);
+
+      if (!caller || caller.role !== "admin") {
+        throw new Error("Only admins can create roles");
+      }
+
+      const [role] = await ctx.db
+        .insert(organizationRoles)
+        .values({
+          organizationId: input.organizationId,
+          name: input.name,
+          canAddMembers: input.canAddMembers,
+          canAssignTasks: input.canAssignTasks,
+          canCreateProjects: input.canCreateProjects,
+          canDeleteTasks: input.canDeleteTasks,
+          canKickMembers: input.canKickMembers,
+          canManageRoles: input.canManageRoles,
+          canEditProjects: input.canEditProjects,
+          canViewAnalytics: input.canViewAnalytics,
+        })
+        .returning();
+
+      return role;
+    }),
+
+  deleteRole: protectedProcedure
+    .input(
+      z.object({
+        organizationId: z.number(),
+        roleId: z.number(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Verify the caller is an admin
+      const [caller] = await ctx.db
+        .select()
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.organizationId, input.organizationId),
+            eq(organizationMembers.userId, ctx.session.user.id),
+          ),
+        )
+        .limit(1);
+
+      if (!caller || caller.role !== "admin") {
+        throw new Error("Only admins can delete roles");
+      }
+
+      // Verify the role belongs to this organization
+      const [role] = await ctx.db
+        .select()
+        .from(organizationRoles)
+        .where(
+          and(
+            eq(organizationRoles.id, input.roleId),
+            eq(organizationRoles.organizationId, input.organizationId),
+          ),
+        )
+        .limit(1);
+
+      if (!role) {
+        throw new Error("Role not found in this organization");
+      }
+
+      await ctx.db
+        .delete(organizationRoles)
+        .where(eq(organizationRoles.id, input.roleId));
+
+      return { success: true };
+    }),
+
+  inviteMember: protectedProcedure
+    .input(
+      z.object({
+        organizationId: z.number(),
+        email: z.string().email(),
+        role: z.enum(["admin", "member", "guest"]).default("member"),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Verify the caller is an admin or has canAddMembers permission
+      const [caller] = await ctx.db
+        .select()
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.organizationId, input.organizationId),
+            eq(organizationMembers.userId, ctx.session.user.id),
+          ),
+        )
+        .limit(1);
+
+      if (!caller || (caller.role !== "admin" && !caller.canAddMembers)) {
+        throw new Error("You do not have permission to invite members");
+      }
+
+      const [invite] = await ctx.db
+        .insert(organizationInvites)
+        .values({
+          organizationId: input.organizationId,
+          email: input.email,
+          role: input.role,
+          invitedById: ctx.session.user.id,
+          status: "pending",
+        })
+        .returning();
+
+      console.log(
+        `[Organization Invite] Org ${input.organizationId}: ${ctx.session.user.id} invited ${input.email} as ${input.role} (invite id: ${invite?.id})`,
+      );
+
+      return invite;
+    }),
+
+  getInvites: protectedProcedure
+    .input(z.object({ organizationId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      // Verify the caller is an admin
+      const [caller] = await ctx.db
+        .select()
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.organizationId, input.organizationId),
+            eq(organizationMembers.userId, ctx.session.user.id),
+          ),
+        )
+        .limit(1);
+
+      if (!caller || caller.role !== "admin") {
+        throw new Error("Only admins can view invites");
+      }
+
+      const invites = await ctx.db
+        .select()
+        .from(organizationInvites)
+        .where(
+          and(
+            eq(organizationInvites.organizationId, input.organizationId),
+            eq(organizationInvites.status, "pending"),
+          ),
+        );
+
+      return invites;
+    }),
+
+  cancelInvite: protectedProcedure
+    .input(
+      z.object({
+        organizationId: z.number(),
+        inviteId: z.number(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Verify the caller is an admin
+      const [caller] = await ctx.db
+        .select()
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.organizationId, input.organizationId),
+            eq(organizationMembers.userId, ctx.session.user.id),
+          ),
+        )
+        .limit(1);
+
+      if (!caller || caller.role !== "admin") {
+        throw new Error("Only admins can cancel invites");
+      }
+
+      // Verify the invite belongs to this organization
+      const [invite] = await ctx.db
+        .select()
+        .from(organizationInvites)
+        .where(
+          and(
+            eq(organizationInvites.id, input.inviteId),
+            eq(organizationInvites.organizationId, input.organizationId),
+            eq(organizationInvites.status, "pending"),
+          ),
+        )
+        .limit(1);
+
+      if (!invite) {
+        throw new Error("Invite not found or already processed");
+      }
+
+      await ctx.db
+        .update(organizationInvites)
+        .set({ status: "cancelled" })
+        .where(eq(organizationInvites.id, input.inviteId));
 
       return { success: true };
     }),

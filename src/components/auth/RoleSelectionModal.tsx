@@ -12,23 +12,13 @@ interface RoleSelectionModalProps {
 
 export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalProps) {
   const toast = useToast();
-  const [step, setStep] = useState<"choose" | "admin-setup" | "worker-join">("choose");
+  const [step, setStep] = useState<"choose" | "admin-setup">("choose");
   const [organizationName, setOrganizationName] = useState("");
-  const [accessCode, setAccessCode] = useState("");
   const [generatedCode, setGeneratedCode] = useState("");
 
   const createOrganization = api.organization.create.useMutation({
     onSuccess: (data) => {
       setGeneratedCode(data.accessCode);
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const joinOrganization = api.organization.join.useMutation({
-    onSuccess: () => {
-      onComplete();
     },
     onError: (error) => {
       toast.error(error.message);
@@ -52,40 +42,25 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
     createOrganization.mutate({ name: organizationName });
   };
 
-  const handleJoinOrganization = () => {
-    if (!accessCode.trim()) {
-      toast.info("Please enter the access code");
-      return;
-    }
-    joinOrganization.mutate({ code: accessCode });
-  };
-
   const handleCopyCode = async () => {
     try {
       await navigator.clipboard.writeText(generatedCode);
       toast.success("Access code copied");
-   } catch {
-    const textArea = document.createElement("textarea");
-    textArea.value = generatedCode;
-    document.body.appendChild(textArea);
-    textArea.select();
-    document.execCommand("copy");
-    document.body.removeChild(textArea);
-    toast.success("Access code copied");
-  }
+    } catch {
+      const textArea = document.createElement("textarea");
+      textArea.value = generatedCode;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      toast.success("Access code copied");
+    }
   };
 
   const handleOrgNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
       handleCreateOrganization();
-    }
-  };
-
-  const handleAccessCodeKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleJoinOrganization();
     }
   };
 
@@ -96,25 +71,23 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
       <div className="p-8">
         {step === "choose" && (
           <>
-            <h3 className="text-2xl font-semibold text-fg-primary mb-6 text-left">
-              What will you be using Kairos for?
+            <h3 className="text-2xl font-semibold text-fg-primary mb-2 text-left">
+              Welcome to Kairos
             </h3>
+            <p className="text-sm text-fg-tertiary mb-6">
+              Get started by creating an organization, or skip for now.
+            </p>
 
             <div className="space-y-3">
               <button
                 onClick={() => setStep("admin-setup")}
                 className="w-full p-4 bg-bg-surface shadow-sm rounded-2xl hover:bg-bg-elevated hover:shadow-md transition-all duration-200 text-left group flex items-center justify-between border border-white/[0.06] kairos-card"
               >
-                <span className="text-fg-primary font-medium">Organization Admin</span>
-                <ChevronRight className="text-fg-tertiary group-hover:text-accent-primary transition-colors" size={20} />
-              </button>
-
-              <button
-                onClick={() => setStep("worker-join")}
-                className="w-full p-4 bg-bg-surface shadow-sm rounded-2xl hover:bg-bg-elevated hover:shadow-md transition-all duration-200 text-left group flex items-center justify-between border border-white/[0.06] kairos-card"
-              >
-                <span className="text-fg-primary font-medium">Join Organization</span>
-                <ChevronRight className="text-fg-tertiary group-hover:text-accent-primary transition-colors" size={20} />
+                <div>
+                  <span className="text-fg-primary font-medium block">Create Organization</span>
+                  <span className="text-fg-tertiary text-xs mt-0.5 block">Set up a workspace and invite your team</span>
+                </div>
+                <ChevronRight className="text-fg-tertiary group-hover:text-accent-primary transition-colors flex-shrink-0" size={20} />
               </button>
 
               <button
@@ -122,8 +95,11 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
                 disabled={setPersonalMode.isPending}
                 className="w-full p-4 bg-bg-surface shadow-sm rounded-2xl hover:bg-bg-elevated hover:shadow-md transition-all duration-200 text-left group disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between border border-white/[0.06] kairos-card"
               >
-                <span className="text-fg-primary font-medium">Personal Use</span>
-                <ChevronRight className="text-fg-tertiary group-hover:text-accent-primary transition-colors" size={20} />
+                <div>
+                  <span className="text-fg-primary font-medium block">Maybe Later</span>
+                  <span className="text-fg-tertiary text-xs mt-0.5 block">Continue with a personal profile — you can create or join an org in Settings anytime</span>
+                </div>
+                <ChevronRight className="text-fg-tertiary group-hover:text-accent-primary transition-colors flex-shrink-0" size={20} />
               </button>
             </div>
           </>
@@ -135,9 +111,9 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
               onClick={() => setStep("choose")}
               className="text-fg-tertiary hover:text-fg-primary mb-6 flex items-center gap-2 transition text-sm"
             >
-              ← Back
+              &larr; Back
             </button>
-            
+
             <h3 className="text-xl font-semibold text-fg-primary mb-6">Create Organization</h3>
 
             <div className="space-y-4">
@@ -159,7 +135,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
               <button
                 onClick={handleCreateOrganization}
                 disabled={createOrganization.isPending}
-                className="w-full px-6 py-3 bg-accent-primary text-white font-medium rounded-xl hover:bg-accent-hover transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed kairos-btn"
+                className="w-full px-6 py-3 kairos-neon-btn text-white font-medium rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {createOrganization.isPending ? "Creating..." : "Create Organization"}
               </button>
@@ -187,69 +163,13 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
 
             <button
               onClick={onComplete}
-              className="w-full px-6 py-3 bg-accent-primary text-white font-medium rounded-xl hover:bg-accent-hover transition-all duration-200 kairos-btn"
+              className="w-full px-6 py-3 kairos-neon-btn text-white font-medium rounded-xl transition-all duration-200"
             >
               Continue to Dashboard
             </button>
           </>
         )}
-
-        {step === "worker-join" && (
-          <>
-            <button
-              onClick={() => setStep("choose")}
-              className="text-fg-tertiary hover:text-fg-primary mb-6 flex items-center gap-2 transition text-sm"
-            >
-              ← Back
-            </button>
-            
-            <h3 className="text-xl font-semibold text-fg-primary mb-6">Join Organization</h3>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm text-fg-secondary mb-2">
-                  Access Code
-                </label>
-                <input
-                  type="text"
-                  value={accessCode}
-                  onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
-                  onKeyDown={handleAccessCodeKeyDown}
-                  placeholder="XXXX-XXXX-XXXX"
-                  className="w-full px-4 py-3 bg-bg-surface shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary font-mono text-center text-xl tracking-wider placeholder:text-fg-tertiary border border-white/[0.06] kairos-input"
-                  maxLength={14}
-                  autoFocus
-                />
-              </div>
-
-              <button
-                onClick={handleJoinOrganization}
-                disabled={joinOrganization.isPending}
-                className="w-full px-6 py-3 bg-accent-primary text-white font-medium rounded-xl hover:bg-accent-hover transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed kairos-btn"
-              >
-                {joinOrganization.isPending ? "Joining..." : "Join Organization"}
-              </button>
-            </div>
-          </>
-        )}
       </div>
-
-      <style jsx>{`
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-slideUp {
-          animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-      `}</style>
     </div>
   );
 }

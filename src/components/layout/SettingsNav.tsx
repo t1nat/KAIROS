@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { User, Bell, Shield, Globe, Palette } from "lucide-react";
+import { User, Bell, Shield, Globe, Palette, Building2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 type Translator = (key: string, values?: Record<string, unknown>) => string;
@@ -17,6 +17,7 @@ export function SettingsNav({ activeSection, variant = "card" }: SettingsNavProp
   
   const sections = [
     { id: "profile", label: t("profile"), icon: User },
+    { id: "workspace", label: "Workspace", icon: Building2 },
     { id: "notifications", label: t("notifications"), icon: Bell },
     { id: "security", label: t("security"), icon: Shield },
     { id: "language", label: t("language"), icon: Globe },

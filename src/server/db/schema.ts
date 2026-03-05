@@ -22,7 +22,7 @@ export const permissionEnum = pgEnum("permission", ['read', 'write']);
 export const taskStatusEnum = pgEnum("task_status", ['pending', 'in_progress', 'completed', 'blocked']);
 export const taskPriorityEnum = pgEnum("task_priority", ['low', 'medium', 'high', 'urgent']);
 export const usageModeEnum = pgEnum("usage_mode", ["personal", "organization"]);
-export const orgRoleEnum = pgEnum("org_role", ["admin", "worker", "mentor"]);
+export const orgRoleEnum = pgEnum("org_role", ["admin", "member", "guest", "worker", "mentor"]);
 export const projectStatusEnum = pgEnum("project_status", ["active", "archived"]);
 export const themeEnum = pgEnum("theme", ["light", "dark", "system"]);
 export const languageEnum = pgEnum("language", ["en", "bg", "es", "fr", "de", "it", "pt", "ja", "ko", "zh", "ar"]);
@@ -169,6 +169,12 @@ export const organizationMembers = createTable(
     role: orgRoleEnum("role").notNull(),
     canAddMembers: boolean("can_add_members").default(false).notNull(),
     canAssignTasks: boolean("can_assign_tasks").default(false).notNull(),
+    canCreateProjects: boolean("can_create_projects").default(false).notNull(),
+    canDeleteTasks: boolean("can_delete_tasks").default(false).notNull(),
+    canKickMembers: boolean("can_kick_members").default(false).notNull(),
+    canManageRoles: boolean("can_manage_roles").default(false).notNull(),
+    canEditProjects: boolean("can_edit_projects").default(false).notNull(),
+    canViewAnalytics: boolean("can_view_analytics").default(false).notNull(),
     joinedAt: timestamp("joined_at")
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -176,6 +182,63 @@ export const organizationMembers = createTable(
   (t) => [
     index("org_member_org_idx").on(t.organizationId),
     index("org_member_user_idx").on(t.userId),
+  ]
+);
+
+/**
+ * Custom roles per organization – define a named role with permission flags.
+ * Template roles (admin, member, guest) are computed and not stored here.
+ */
+export const organizationRoles = createTable(
+  "organization_roles",
+  (_d) => ({
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 100 }).notNull(),
+    canAddMembers: boolean("can_add_members").default(false).notNull(),
+    canAssignTasks: boolean("can_assign_tasks").default(false).notNull(),
+    canCreateProjects: boolean("can_create_projects").default(false).notNull(),
+    canDeleteTasks: boolean("can_delete_tasks").default(false).notNull(),
+    canKickMembers: boolean("can_kick_members").default(false).notNull(),
+    canManageRoles: boolean("can_manage_roles").default(false).notNull(),
+    canEditProjects: boolean("can_edit_projects").default(false).notNull(),
+    canViewAnalytics: boolean("can_view_analytics").default(false).notNull(),
+    isTemplate: boolean("is_template").default(false).notNull(),
+    createdAt: timestamp("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  }),
+  (t) => [
+    index("org_role_org_idx").on(t.organizationId),
+  ]
+);
+
+/**
+ * Pending invites to an organization (email-based).
+ */
+export const organizationInvites = createTable(
+  "organization_invites",
+  (_d) => ({
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    email: varchar("email", { length: 255 }).notNull(),
+    role: orgRoleEnum("role").notNull().default("member"),
+    invitedById: varchar("invited_by_id", { length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    status: varchar("status", { length: 20 }).notNull().default("pending"),
+    createdAt: timestamp("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    expiresAt: timestamp("expires_at", { mode: "date", withTimezone: true }),
+  }),
+  (t) => [
+    index("org_invite_org_idx").on(t.organizationId),
+    index("org_invite_email_idx").on(t.email),
   ]
 );
 
