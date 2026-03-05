@@ -214,6 +214,7 @@ export const organizationInvites = createTable(
       .references(() => organizations.id, { onDelete: "cascade" }),
     email: varchar("email", { length: 255 }).notNull(),
     role: orgRoleEnum("role").notNull().default("member"),
+    displayRole: varchar("display_role", { length: 100 }),
     invitedById: varchar("invited_by_id", { length: 255 })
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
