@@ -2,8 +2,8 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import crypto from "node:crypto";
 import { protectedProcedure, createTRPCRouter } from "~/server/api/trpc";
-import { stickyNotes, users } from "~/server/db/schema";
-import { eq } from "drizzle-orm";
+import { stickyNotes, users, notebooks, noteShares } from "~/server/db/schema";
+import { eq, and, or } from "drizzle-orm";
 import * as argon2 from "argon2";
 import { encryptContent, decryptContent } from "~/server/encryption";
 
@@ -18,7 +18,9 @@ export const noteRouter = createTRPCRouter({
   create: protectedProcedure
     .input(z.object({
       content: z.string().min(1),
+      title: z.string().optional(),
       password: z.string().optional(),
+      notebookId: z.number().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       let passwordHash: string | null = null;
@@ -49,10 +51,12 @@ export const noteRouter = createTRPCRouter({
 
         const [newNote] = await ctx.db.insert(stickyNotes).values({
           content: storedContent,
+          title: input.title ?? null,
           createdById: ctx.session.user.id,
-          passwordHash: passwordHash, 
+          notebookId: input.notebookId ?? null,
+          passwordHash: passwordHash,
           passwordSalt: passwordSalt,
-          shareStatus: 'private', 
+          shareStatus: 'private',
         }).returning(); 
 
         if (!newNote) {
@@ -90,7 +94,10 @@ export const noteRouter = createTRPCRouter({
         if (n.passwordHash) {
           return {
             id: n.id,
+            title: n.title,
             createdAt: n.createdAt,
+            updatedAt: n.updatedAt,
+            notebookId: n.notebookId,
             passwordHash: n.passwordHash,
             shareStatus: n.shareStatus,
             // content intentionally omitted
@@ -100,6 +107,241 @@ export const noteRouter = createTRPCRouter({
 
         return n;
       });
+    }),
+
+  getSharedWithMe: protectedProcedure
+    .query(async ({ ctx }) => {
+      const shares = await ctx.db
+        .select({
+          id: stickyNotes.id,
+          title: stickyNotes.title,
+          content: stickyNotes.content,
+          createdAt: stickyNotes.createdAt,
+          updatedAt: stickyNotes.updatedAt,
+          shareStatus: stickyNotes.shareStatus,
+          passwordHash: stickyNotes.passwordHash,
+          notebookId: stickyNotes.notebookId,
+          permission: noteShares.permission,
+          sharedById: noteShares.sharedById,
+          ownerName: users.name,
+          ownerEmail: users.email,
+        })
+        .from(noteShares)
+        .innerJoin(stickyNotes, eq(noteShares.noteId, stickyNotes.id))
+        .innerJoin(users, eq(stickyNotes.createdById, users.id))
+        .where(eq(noteShares.sharedWithId, ctx.session.user.id));
+
+      return shares.map((s) => ({
+        ...s,
+        content: s.passwordHash ? null : s.content,
+      }));
+    }),
+
+  shareNote: protectedProcedure
+    .input(z.object({
+      noteId: z.number(),
+      email: z.string().email(),
+      permission: z.enum(["read", "write"]).default("read"),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const note = await ctx.db.query.stickyNotes.findFirst({
+        where: eq(stickyNotes.id, input.noteId),
+      });
+
+      if (!note || note.createdById !== ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You don't own this note." });
+      }
+
+      const [targetUser] = await ctx.db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.email, input.email))
+        .limit(1);
+
+      if (!targetUser) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "User not found with that email." });
+      }
+
+      if (targetUser.id === ctx.session.user.id) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot share with yourself." });
+      }
+
+      // Check if already shared
+      const [existing] = await ctx.db
+        .select()
+        .from(noteShares)
+        .where(and(
+          eq(noteShares.noteId, input.noteId),
+          eq(noteShares.sharedWithId, targetUser.id),
+        ))
+        .limit(1);
+
+      if (existing) {
+        // Update permission
+        await ctx.db
+          .update(noteShares)
+          .set({ permission: input.permission })
+          .where(eq(noteShares.id, existing.id));
+        return { success: true, updated: true };
+      }
+
+      await ctx.db.insert(noteShares).values({
+        noteId: input.noteId,
+        sharedWithId: targetUser.id,
+        sharedById: ctx.session.user.id,
+        permission: input.permission,
+      });
+
+      // Update note share status
+      await ctx.db
+        .update(stickyNotes)
+        .set({ shareStatus: input.permission === "write" ? "shared_write" : "shared_read" })
+        .where(eq(stickyNotes.id, input.noteId));
+
+      return { success: true, updated: false };
+    }),
+
+  unshareNote: protectedProcedure
+    .input(z.object({
+      noteId: z.number(),
+      userId: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const note = await ctx.db.query.stickyNotes.findFirst({
+        where: eq(stickyNotes.id, input.noteId),
+      });
+
+      if (!note || note.createdById !== ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You don't own this note." });
+      }
+
+      await ctx.db
+        .delete(noteShares)
+        .where(and(
+          eq(noteShares.noteId, input.noteId),
+          eq(noteShares.sharedWithId, input.userId),
+        ));
+
+      // Check if any shares remain
+      const remaining = await ctx.db
+        .select()
+        .from(noteShares)
+        .where(eq(noteShares.noteId, input.noteId))
+        .limit(1);
+
+      if (remaining.length === 0) {
+        await ctx.db
+          .update(stickyNotes)
+          .set({ shareStatus: "private" })
+          .where(eq(stickyNotes.id, input.noteId));
+      }
+
+      return { success: true };
+    }),
+
+  getNoteShares: protectedProcedure
+    .input(z.object({ noteId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const note = await ctx.db.query.stickyNotes.findFirst({
+        where: eq(stickyNotes.id, input.noteId),
+      });
+
+      if (!note || note.createdById !== ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You don't own this note." });
+      }
+
+      return ctx.db
+        .select({
+          id: noteShares.id,
+          userId: noteShares.sharedWithId,
+          permission: noteShares.permission,
+          userName: users.name,
+          userEmail: users.email,
+          userImage: users.image,
+          createdAt: noteShares.createdAt,
+        })
+        .from(noteShares)
+        .innerJoin(users, eq(noteShares.sharedWithId, users.id))
+        .where(eq(noteShares.noteId, input.noteId));
+    }),
+
+  // ---- Notebooks ----
+  getNotebooks: protectedProcedure
+    .query(async ({ ctx }) => {
+      return ctx.db.query.notebooks.findMany({
+        where: eq(notebooks.createdById, ctx.session.user.id),
+        orderBy: (nb, { desc }) => [desc(nb.updatedAt)],
+      });
+    }),
+
+  createNotebook: protectedProcedure
+    .input(z.object({
+      name: z.string().min(1).max(256),
+      description: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const [nb] = await ctx.db.insert(notebooks).values({
+        name: input.name,
+        description: input.description ?? null,
+        createdById: ctx.session.user.id,
+      }).returning();
+      return nb;
+    }),
+
+  updateNotebook: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      name: z.string().min(1).max(256).optional(),
+      description: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const nb = await ctx.db.query.notebooks.findFirst({
+        where: eq(notebooks.id, input.id),
+      });
+      if (!nb || nb.createdById !== ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Not your notebook." });
+      }
+      await ctx.db.update(notebooks).set({
+        ...(input.name ? { name: input.name } : {}),
+        ...(input.description !== undefined ? { description: input.description } : {}),
+        updatedAt: new Date(),
+      }).where(eq(notebooks.id, input.id));
+      return { success: true };
+    }),
+
+  deleteNotebook: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const nb = await ctx.db.query.notebooks.findFirst({
+        where: eq(notebooks.id, input.id),
+      });
+      if (!nb || nb.createdById !== ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Not your notebook." });
+      }
+      // Unlink notes from notebook (don't delete them)
+      await ctx.db.update(stickyNotes)
+        .set({ notebookId: null })
+        .where(eq(stickyNotes.notebookId, input.id));
+      await ctx.db.delete(notebooks).where(eq(notebooks.id, input.id));
+      return { success: true };
+    }),
+
+  moveToNotebook: protectedProcedure
+    .input(z.object({
+      noteId: z.number(),
+      notebookId: z.number().nullable(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const note = await ctx.db.query.stickyNotes.findFirst({
+        where: eq(stickyNotes.id, input.noteId),
+      });
+      if (!note || note.createdById !== ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Not your note." });
+      }
+      await ctx.db.update(stickyNotes)
+        .set({ notebookId: input.notebookId })
+        .where(eq(stickyNotes.id, input.noteId));
+      return { success: true };
     }),
     
   getOne: protectedProcedure 

@@ -49,7 +49,7 @@ export function SideNav() {
   const mainNavItems = [
     { href: "/create", icon: SquarePen, label: t("create") },
     { href: "/projects", icon: Briefcase, label: t("projects") },
-    { href: "/create?action=new_note", icon: BookText, label: t("notes") },
+    { href: "/notes", icon: BookText, label: t("notes") },
     { href: "/progress", icon: TrendingUp, label: t("progress") },
     { href: "/calendar", icon: CalendarCheck, label: t("calendar") },
     { href: "/chat", icon: Sparkles, label: "Chat" },
@@ -85,8 +85,8 @@ export function SideNav() {
     if (href === "/create?action=new_project") {
       return pathname === "/create" && action === "new_project";
     }
-    if (href === "/create?action=new_note") {
-      return pathname === "/create" && action === "new_note";
+    if (href === "/notes") {
+      return pathname === "/notes";
     }
     return false;
   };
