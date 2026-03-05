@@ -42,17 +42,17 @@ export default async function SettingsPage({
  href="/settings?section=profile"
  aria-label={t("title")}
  title={t("title")}
- className="fixed bottom-4 left-4 z-40 w-11 h-11 rounded-xl bg-bg-secondary backdrop-blur-sm shadow-lg flex items-center justify-center text-fg-secondary hover:text-accent-primary lg:hidden border border-white/[0.06]"
+ className="fixed bottom-4 left-4 z-40 w-11 h-11 rounded-xl bg-bg-secondary backdrop-blur-sm shadow-lg flex items-center justify-center text-fg-secondary hover:text-accent-primary lg:hidden border border-slate-200 dark:border-white/[0.06]"
  >
  <Settings size={20} />
  </Link>
 
  <div className="lg:ml-16 min-h-screen flex flex-col">
  {/* Header */}
- <header className="sticky top-0 z-30 bg-bg-primary/95 backdrop-blur-md border-b border-white/[0.06]">
+ <header className="sticky top-0 z-30 bg-bg-primary/95 backdrop-blur-md border-b border-slate-200 dark:border-white/[0.06]">
  <div className="px-4 sm:px-6 py-4 flex justify-between items-center">
  <div className="flex items-center gap-3">
- <div className="hidden sm:flex w-10 h-10 flex-shrink-0 items-center justify-center rounded-xl bg-bg-secondary border border-white/[0.06]">
+ <div className="hidden sm:flex w-10 h-10 flex-shrink-0 items-center justify-center rounded-xl bg-bg-secondary border border-slate-200 dark:border-white/[0.06]">
  <Settings size={20} className="text-fg-tertiary" />
  </div>
  <div>
@@ -72,7 +72,7 @@ export default async function SettingsPage({
 
  <main className="flex-1 flex overflow-hidden">
  {/* Settings Navigation */}
- <aside className="w-64 bg-transparent border-r border-white/[0.06]">
+ <aside className="w-64 bg-transparent border-r border-slate-200 dark:border-white/[0.06]">
  <div className="h-full py-2">
  <SettingsNav activeSection={activeSection} variant="embedded" />
  </div>

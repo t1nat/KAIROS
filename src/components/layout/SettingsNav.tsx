@@ -56,7 +56,7 @@ export function SettingsNav({ activeSection, variant = "card" }: SettingsNavProp
                 )}
               </Link>
               {index < sections.length - 1 && (
-                <div className="mx-6 border-b border-white/[0.04]" />
+                <div className="mx-6 border-b border-slate-100 dark:border-white/[0.04]" />
               )}
             </div>
           );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Building2,
   Plus,
@@ -98,7 +98,8 @@ export function WorkspaceSettingsClient() {
 
   // ---- Invite state ----
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"admin" | "member" | "guest">("member");
+  const [inviteRole, setInviteRole] = useState("member");
+  const [emailLookupDebouncedEmail, setEmailLookupDebouncedEmail] = useState("");
 
   // ---- Custom role creation state ----
   const [showCreateRole, setShowCreateRole] = useState(false);
@@ -109,6 +110,19 @@ export function WorkspaceSettingsClient() {
 
   // ---- Expand/collapse sections ----
   const [expandedSection, setExpandedSection] = useState<string | null>("org");
+
+  // ---- Email lookup debounce ----
+  const inviteEmailTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (inviteEmailTimerRef.current) clearTimeout(inviteEmailTimerRef.current);
+    const trimmed = inviteEmail.trim();
+    if (trimmed && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      inviteEmailTimerRef.current = setTimeout(() => setEmailLookupDebouncedEmail(trimmed), 400);
+    } else {
+      setEmailLookupDebouncedEmail("");
+    }
+    return () => { if (inviteEmailTimerRef.current) clearTimeout(inviteEmailTimerRef.current); };
+  }, [inviteEmail]);
 
   // ---- Queries ----
   const { data: profile } = api.user.getProfile.useQuery(undefined, {
@@ -137,6 +151,10 @@ export function WorkspaceSettingsClient() {
   const { data: invites } = api.organization.getInvites.useQuery(
     { organizationId: activeOrgId! },
     { enabled: !!activeOrgId && activeOrg?.role === "admin", retry: false, refetchOnWindowFocus: false },
+  );
+  const { data: inviteEmailLookup, isFetching: isLookingUpEmail } = api.user.searchByEmail.useQuery(
+    { email: emailLookupDebouncedEmail },
+    { enabled: !!emailLookupDebouncedEmail, retry: false, refetchOnWindowFocus: false },
   );
 
   // ---- Mutations ----
@@ -268,7 +286,7 @@ export function WorkspaceSettingsClient() {
       <section>
         <button
           onClick={() => toggleSection("org")}
-          className="w-full flex items-center justify-between py-3 text-left"
+          className="w-full flex items-center justify-between py-3 px-4 rounded-xl text-left hover:bg-white/[0.04] transition border border-transparent hover:border-white/[0.08]"
         >
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-accent-primary/15 flex items-center justify-center">
@@ -297,7 +315,7 @@ export function WorkspaceSettingsClient() {
                     className={`p-4 rounded-xl border transition-all ${
                       activeOrgId === org.id
                         ? "border-accent-primary/30 bg-accent-primary/5"
-                        : "border-white/[0.06] bg-bg-surface"
+                        : "border-white/[0.1] bg-white/[0.03] dark:bg-white/[0.04]"
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -355,7 +373,7 @@ export function WorkspaceSettingsClient() {
 
             {/* No org message */}
             {(!myOrgs || myOrgs.length === 0) && isPersonal && (
-              <div className="p-6 rounded-xl border border-white/[0.06] bg-bg-surface text-center">
+              <div className="p-6 rounded-xl border border-white/[0.1] bg-white/[0.03] dark:bg-white/[0.04] text-center">
                 <Building2 size={32} className="text-fg-tertiary mx-auto mb-3" />
                 <p className="text-sm text-fg-secondary mb-1">No organizations yet</p>
                 <p className="text-xs text-fg-tertiary">Create or join an organization to collaborate with your team</p>
@@ -379,7 +397,7 @@ export function WorkspaceSettingsClient() {
                   setShowJoinOrg(true);
                   setShowCreateOrg(false);
                 }}
-                className="flex-1 px-4 py-2.5 rounded-xl border border-white/[0.06] bg-bg-surface hover:bg-bg-elevated text-fg-primary text-sm font-medium flex items-center justify-center gap-2 transition"
+                className="flex-1 px-4 py-2.5 rounded-xl border border-white/[0.1] bg-white/[0.03] dark:bg-white/[0.04] hover:bg-bg-elevated text-fg-primary text-sm font-medium flex items-center justify-center gap-2 transition"
               >
                 <UserPlus size={16} />
                 Join Organization
@@ -388,7 +406,7 @@ export function WorkspaceSettingsClient() {
 
             {/* Create org form */}
             {showCreateOrg && (
-              <div className="p-4 rounded-xl border border-white/[0.06] bg-bg-surface space-y-3">
+              <div className="p-4 rounded-xl border border-white/[0.1] bg-white/[0.03] dark:bg-white/[0.04] space-y-3">
                 <input
                   type="text"
                   value={orgName}
@@ -421,7 +439,7 @@ export function WorkspaceSettingsClient() {
 
             {/* Join org form */}
             {showJoinOrg && (
-              <div className="p-4 rounded-xl border border-white/[0.06] bg-bg-surface space-y-3">
+              <div className="p-4 rounded-xl border border-white/[0.1] bg-white/[0.03] dark:bg-white/[0.04] space-y-3">
                 <input
                   type="text"
                   value={joinCode}
@@ -462,7 +480,7 @@ export function WorkspaceSettingsClient() {
         <section>
           <button
             onClick={() => toggleSection("members")}
-            className="w-full flex items-center justify-between py-3 text-left"
+            className="w-full flex items-center justify-between py-3 px-4 rounded-xl text-left hover:bg-white/[0.04] transition border border-transparent hover:border-white/[0.08]"
           >
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-blue-500/15 flex items-center justify-center">
@@ -486,36 +504,72 @@ export function WorkspaceSettingsClient() {
             <div className="mt-3 space-y-3">
               {/* Invite form (admin only) */}
               {isAdmin && (
-                <div className="p-4 rounded-xl border border-white/[0.06] bg-bg-surface">
+                <div className="p-4 rounded-xl border border-white/[0.1] bg-white/[0.03] dark:bg-white/[0.04]">
                   <h3 className="text-sm font-medium text-fg-primary mb-3 flex items-center gap-2">
                     <Mail size={14} className="text-accent-primary" />
                     Invite Member
                   </h3>
                   <div className="flex gap-2">
-                    <input
-                      type="email"
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      placeholder="Email address"
-                      className="flex-1 px-3 py-2 bg-bg-primary rounded-lg text-sm text-fg-primary placeholder:text-fg-tertiary border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && inviteEmail.trim() && activeOrgId) {
-                          inviteMember.mutate({
-                            organizationId: activeOrgId,
-                            email: inviteEmail,
-                            role: inviteRole,
-                          });
-                        }
-                      }}
-                    />
+                    <div className="flex-1 relative">
+                      <input
+                        type="email"
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                        placeholder="Email address"
+                        className="w-full px-3 py-2 bg-bg-primary rounded-lg text-sm text-fg-primary placeholder:text-fg-tertiary border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && inviteEmail.trim() && activeOrgId) {
+                            inviteMember.mutate({
+                              organizationId: activeOrgId,
+                              email: inviteEmail,
+                              role: inviteRole,
+                            });
+                          }
+                        }}
+                      />
+                      {emailLookupDebouncedEmail && !isLookingUpEmail && inviteEmailLookup && (
+                        <div className="absolute left-0 right-0 top-full mt-1 z-10 p-2.5 rounded-lg border border-accent-primary/20 bg-bg-elevated shadow-lg flex items-center gap-2.5">
+                          {inviteEmailLookup.image ? (
+                            <img src={inviteEmailLookup.image} alt="" className="w-8 h-8 rounded-full object-cover" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-accent-primary/15 flex items-center justify-center">
+                              <span className="text-xs font-bold text-accent-primary">
+                                {(inviteEmailLookup.name ?? inviteEmailLookup.email)?.[0]?.toUpperCase() ?? "?"}
+                              </span>
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-fg-primary truncate">{inviteEmailLookup.name ?? "No name"}</p>
+                            <p className="text-[10px] text-fg-tertiary truncate">{inviteEmailLookup.email}</p>
+                          </div>
+                        </div>
+                      )}
+                      {emailLookupDebouncedEmail && !isLookingUpEmail && !inviteEmailLookup && (
+                        <div className="absolute left-0 right-0 top-full mt-1 z-10 p-2.5 rounded-lg border border-red-500/20 bg-bg-elevated shadow-lg">
+                          <p className="text-xs text-red-400">No account found with this email</p>
+                        </div>
+                      )}
+                      {emailLookupDebouncedEmail && isLookingUpEmail && (
+                        <div className="absolute left-0 right-0 top-full mt-1 z-10 p-2.5 rounded-lg border border-white/[0.06] bg-bg-elevated shadow-lg flex items-center gap-2">
+                          <Loader2 size={12} className="animate-spin text-fg-tertiary" />
+                          <p className="text-xs text-fg-tertiary">Looking up email...</p>
+                        </div>
+                      )}
+                    </div>
                     <select
                       value={inviteRole}
-                      onChange={(e) => setInviteRole(e.target.value as "admin" | "member" | "guest")}
+                      onChange={(e) => setInviteRole(e.target.value)}
                       className="px-3 py-2 bg-bg-primary rounded-lg text-sm text-fg-primary border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
                     >
                       <option value="member">Member</option>
                       <option value="admin">Admin</option>
                       <option value="guest">Guest</option>
+                      {roles && roles.length > 0 && (
+                        <option disabled>──────────</option>
+                      )}
+                      {roles?.map((role) => (
+                        <option key={role.id} value={role.name}>{role.name}</option>
+                      ))}
                     </select>
                     <button
                       onClick={() => {
@@ -538,7 +592,7 @@ export function WorkspaceSettingsClient() {
 
               {/* Pending invites */}
               {isAdmin && invites && invites.length > 0 && (
-                <div className="p-4 rounded-xl border border-white/[0.06] bg-bg-surface">
+                <div className="p-4 rounded-xl border border-white/[0.1] bg-white/[0.03] dark:bg-white/[0.04]">
                   <h3 className="text-sm font-medium text-fg-primary mb-3">Pending Invites</h3>
                   <div className="space-y-2">
                     {invites.map((inv) => (
@@ -550,7 +604,7 @@ export function WorkspaceSettingsClient() {
                           <Mail size={14} className="text-fg-tertiary" />
                           <span className="text-sm text-fg-secondary">{inv.email}</span>
                           <span className="text-xs text-fg-tertiary capitalize px-1.5 py-0.5 rounded bg-bg-tertiary">
-                            {inv.role}
+                            {inv.displayRole ?? inv.role}
                           </span>
                         </div>
                         <button
@@ -573,7 +627,7 @@ export function WorkspaceSettingsClient() {
                 {members?.map((member) => (
                   <div
                     key={member.id}
-                    className="p-3 rounded-xl border border-white/[0.06] bg-bg-surface flex items-center justify-between"
+                    className="p-3 rounded-xl border border-white/[0.1] bg-white/[0.03] dark:bg-white/[0.04] flex items-center justify-between"
                   >
                     <div className="flex items-center gap-3">
                       {member.image ? (
@@ -613,6 +667,12 @@ export function WorkspaceSettingsClient() {
                           <option value="admin">Admin</option>
                           <option value="member">Member</option>
                           <option value="guest">Guest</option>
+                          {roles && roles.length > 0 && (
+                            <option disabled>──────────</option>
+                          )}
+                          {roles?.map((role) => (
+                            <option key={role.id} value={role.name}>{role.name}</option>
+                          ))}
                         </select>
                       ) : (
                         <span className="text-xs text-fg-tertiary capitalize px-2 py-1 rounded-lg bg-bg-tertiary">
@@ -652,7 +712,7 @@ export function WorkspaceSettingsClient() {
         <section>
           <button
             onClick={() => toggleSection("roles")}
-            className="w-full flex items-center justify-between py-3 text-left"
+            className="w-full flex items-center justify-between py-3 px-4 rounded-xl text-left hover:bg-white/[0.04] transition border border-transparent hover:border-white/[0.08]"
           >
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-purple-500/15 flex items-center justify-center">
@@ -683,7 +743,7 @@ export function WorkspaceSettingsClient() {
                   {Object.entries(TEMPLATE_ROLES).map(([name, perms]) => (
                     <div
                       key={name}
-                      className="p-4 rounded-xl border border-white/[0.06] bg-bg-surface"
+                      className="p-4 rounded-xl border border-white/[0.1] bg-white/[0.03] dark:bg-white/[0.04]"
                     >
                       <div className="flex items-center justify-between mb-3">
                         <h4 className="text-sm font-semibold text-fg-primary">{name}</h4>
@@ -802,7 +862,7 @@ export function WorkspaceSettingsClient() {
                     roles.map((role) => (
                       <div
                         key={role.id}
-                        className="p-4 rounded-xl border border-white/[0.06] bg-bg-surface"
+                        className="p-4 rounded-xl border border-white/[0.1] bg-white/[0.03] dark:bg-white/[0.04]"
                       >
                         <div className="flex items-center justify-between mb-3">
                           <h4 className="text-sm font-semibold text-fg-primary">{role.name}</h4>
@@ -845,7 +905,7 @@ export function WorkspaceSettingsClient() {
                       </div>
                     ))
                   ) : (
-                    <div className="p-4 rounded-xl border border-white/[0.06] bg-bg-surface text-center">
+                    <div className="p-4 rounded-xl border border-white/[0.1] bg-white/[0.03] dark:bg-white/[0.04] text-center">
                       <p className="text-xs text-fg-tertiary">
                         No custom roles yet.{" "}
                         {isAdmin ? "Create one to define specific permissions." : ""}
