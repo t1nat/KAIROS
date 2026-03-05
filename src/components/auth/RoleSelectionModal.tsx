@@ -12,6 +12,7 @@ interface RoleSelectionModalProps {
 
 export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalProps) {
   const toast = useToast();
+  const utils = api.useUtils();
   const [step, setStep] = useState<"choose" | "admin-setup">("choose");
   const [organizationName, setOrganizationName] = useState("");
   const [generatedCode, setGeneratedCode] = useState("");
@@ -19,6 +20,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
   const createOrganization = api.organization.create.useMutation({
     onSuccess: (data) => {
       setGeneratedCode(data.accessCode);
+      void utils.user.checkOnboardingStatus.invalidate();
     },
     onError: (error) => {
       toast.error(error.message);
@@ -27,6 +29,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
 
   const setPersonalMode = api.user.setPersonalMode.useMutation({
     onSuccess: () => {
+      void utils.user.checkOnboardingStatus.invalidate();
       onComplete();
     },
     onError: (error) => {
