@@ -5,6 +5,7 @@ import { EventFeed, REGIONS } from "~/components/events/EventFeed";
 import { SideNav } from "~/components/layout/SideNav";
 import { UserDisplay } from "~/components/layout/UserDisplay";
 import { EventReminderService } from "~/components/events/EventReminderService";
+import { NotificationSystem } from "~/components/notifications/NotificationSystem";
 import {
     MapPin,
     Calendar,
@@ -245,13 +246,16 @@ export default function PublishPage() {
                 <header className="sticky top-16 lg:top-0 z-30 dark:bg-[#0A0A0C] bg-white border-b dark:border-white/5 border-slate-200">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
                         <h1 className="text-lg font-bold text-fg-primary tracking-tight">{t("title")}</h1>
-                        <UserDisplay />
+                        <div className="flex items-center gap-2 sm:gap-3">
+                            <NotificationSystem />
+                            <UserDisplay />
+                        </div>
                     </div>
                 </header>
 
                 <main
                     id="main-content"
-                    className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 md:grid-cols-12 gap-8"
+                    className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-28 lg:pb-8 grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8"
                 >
                     <EventReminderService />
 

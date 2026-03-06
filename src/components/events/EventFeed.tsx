@@ -401,6 +401,23 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
     toggleLike.mutate({ eventId: event.id });
   };
 
+  const handleBellClick = () => {
+    if (!session) {
+      setInfoMessage({ message: "Please sign in to manage event notifications", type: "error" });
+      return;
+    }
+
+    if (!event.enableRsvp) {
+      setInfoMessage({
+        message: "Like and comment notifications are sent to the event author automatically.",
+        type: "info",
+      });
+      return;
+    }
+
+    setShowReminderPicker((prev) => !prev);
+  };
+
   const handleRsvpClick = (status: "going" | "maybe" | "not_going") => {
     if (!session) {
       setInfoMessage({ message: "Please sign in to RSVP", type: "error" });
@@ -579,7 +596,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
         </div>
 
         {/* Action footer — like / comment / share */}
-        <div className="px-4 py-3 border-t dark:border-white/5 border-slate-100 flex items-center gap-6">
+        <div className="px-4 py-3 border-t dark:border-white/5 border-slate-100 flex items-center gap-5 sm:gap-6 flex-wrap">
           <button
             onClick={handleLike}
             disabled={toggleLike.isPending}
@@ -601,6 +618,18 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
           </button>
           <button className="flex items-center gap-1.5 text-accent-primary/50 hover:text-accent-primary transition-colors">
             <Share2 size={20} />
+          </button>
+          <button
+            onClick={handleBellClick}
+            className={`flex items-center gap-1.5 transition-colors ${
+              showReminderPicker
+                ? "text-accent-primary"
+                : "text-accent-primary/50 hover:text-accent-primary"
+            }`}
+            aria-label="Event notifications"
+            title="Event notifications"
+          >
+            <Bell size={20} className={showReminderPicker ? "fill-current" : ""} />
           </button>
         </div>
 
@@ -764,6 +793,12 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
         <RsvpDashboard event={event} onClose={() => setShowDashboard(false)} />,
         document.body
       )}
+
+      <InfoMessageToast
+        message={infoMessage?.message ?? null}
+        type={infoMessage?.type ?? null}
+        onClose={() => setInfoMessage(null)}
+      />
     </>
   );
 };
