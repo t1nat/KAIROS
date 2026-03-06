@@ -178,10 +178,6 @@ export function SignInModal({
     await signIn("google", { callbackUrl: "/" });
   };
 
-  const handleMicrosoftSignIn = async () => {
-    await signIn("microsoft-entra-id", { callbackUrl: "/" });
-  };
-
   const resetForm = () => {
     setEmail(initialEmail ?? "");
     setPassword("");
@@ -303,7 +299,7 @@ export function SignInModal({
 
   /* ─── Render helpers ─── */
   const renderHeader = (title: string, subtitle: string) => (
-    <div className="relative px-8 pt-8 pb-6 text-center">
+    <div className="relative px-5 sm:px-8 pt-6 sm:pt-8 pb-5 sm:pb-6 text-center">
       <div className="w-14 h-14 rounded-2xl kairos-neon-btn flex items-center justify-center mx-auto mb-5 shadow-lg shadow-accent-primary/25">
         <Image src="/logo_white.png" alt="Kairos Logo" width={32} height={32} className="w-8 h-8 object-contain" priority />
       </div>
@@ -331,7 +327,7 @@ export function SignInModal({
   const renderSignIn = () => (
     <>
       {renderHeader("Welcome Back", "Enter your details to access your workspace")}
-      <div className="relative px-8 pb-8 space-y-5">
+      <div className="relative px-5 sm:px-8 pb-6 sm:pb-8 space-y-5">
         {renderError()}
         {renderLoading()}
 
@@ -384,7 +380,7 @@ export function SignInModal({
         </div>
 
         <div className="flex gap-3">
-          <button onClick={handleGoogleSignIn} disabled={isLoading} className="flex-1 flex items-center justify-center gap-2.5 px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl font-medium text-white/80 hover:bg-white/[0.08] hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm">
+          <button onClick={handleGoogleSignIn} disabled={isLoading} className="w-full flex items-center justify-center gap-2.5 px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl font-medium text-white/80 hover:bg-white/[0.08] hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm">
             <svg viewBox="0 0 24 24" className="w-4 h-4">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -392,15 +388,6 @@ export function SignInModal({
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
             </svg>
             Google
-          </button>
-          <button onClick={handleMicrosoftSignIn} disabled={isLoading} className="flex-1 flex items-center justify-center gap-2.5 px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl font-medium text-white/80 hover:bg-white/[0.08] hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm">
-            <svg viewBox="0 0 21 21" className="w-4 h-4">
-              <rect x="1" y="1" width="9" height="9" fill="#F25022"/>
-              <rect x="11" y="1" width="9" height="9" fill="#7FBA00"/>
-              <rect x="1" y="11" width="9" height="9" fill="#00A4EF"/>
-              <rect x="11" y="11" width="9" height="9" fill="#FFB900"/>
-            </svg>
-            Microsoft
           </button>
         </div>
 
@@ -417,7 +404,7 @@ export function SignInModal({
   const renderSignUp = () => (
     <>
       {renderHeader("Create your account", "Join the Kairos workspace today.")}
-      <div className="relative px-8 pb-8 space-y-5">
+      <div className="relative px-5 sm:px-8 pb-6 sm:pb-8 space-y-5">
         {renderError()}
         {renderLoading()}
 
@@ -484,7 +471,7 @@ export function SignInModal({
   const renderForgotPassword = () => (
     <>
       {renderHeader("Forgot Password?", "Enter your email and we'll send you a reset code")}
-      <div className="relative px-8 pb-8 space-y-5">
+      <div className="relative px-5 sm:px-8 pb-6 sm:pb-8 space-y-5">
         {renderError()}
         {renderLoading()}
 
@@ -520,7 +507,7 @@ export function SignInModal({
   const renderResetCode = () => (
     <>
       {renderHeader("Enter Reset Code", `We sent an 8-digit code to ${email}`)}
-      <div className="relative px-8 pb-8 space-y-5">
+      <div className="relative px-5 sm:px-8 pb-6 sm:pb-8 space-y-5">
         {renderError()}
 
         <form onSubmit={handleVerifyCode} className="space-y-4">
@@ -564,7 +551,7 @@ export function SignInModal({
   const renderNewPassword = () => (
     <>
       {renderHeader(resetSuccess ? "Password Reset!" : "Set New Password", resetSuccess ? "Your password has been updated successfully" : "Choose a strong password for your account")}
-      <div className="relative px-8 pb-8 space-y-5">
+      <div className="relative px-5 sm:px-8 pb-6 sm:pb-8 space-y-5">
         {resetSuccess ? (
           <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-green-300 text-sm text-center flex items-center justify-center gap-2">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8L7 11L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -620,11 +607,11 @@ export function SignInModal({
   );
 
   return (
-    <div className="dark fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="dark fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-[#0a0a0f] rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/[0.08] kairos-modal-content">
+      <div className="relative bg-[#0a0a0f] rounded-3xl shadow-2xl w-full max-w-md max-h-[92dvh] overflow-y-auto border border-white/[0.08] kairos-modal-content">
         {/* Subtle gradient border effect */}
         <div className="absolute inset-0 rounded-3xl bg-gradient-to-b from-accent-primary/10 via-transparent to-transparent pointer-events-none" />
 
