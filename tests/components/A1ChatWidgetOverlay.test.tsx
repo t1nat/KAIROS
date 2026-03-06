@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+﻿import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { A1ChatWidgetOverlay } from "~/components/chat/A1ChatWidgetOverlay";
@@ -30,7 +30,7 @@ describe("A1ChatWidgetOverlay", () => {
     await user.click(screen.getByLabelText("Open AI assistant"));
 
     // Panel should now be visible with title
-    expect(screen.getByText("A1 Intelligence")).toBeInTheDocument();
+    expect(screen.getByText("KAIROS AI")).toBeInTheDocument();
   });
 
   it("shows minimise, maximise, and close buttons in header", async () => {
@@ -49,10 +49,10 @@ describe("A1ChatWidgetOverlay", () => {
     render(<A1ChatWidgetOverlay />);
 
     await user.click(screen.getByLabelText("Open AI assistant"));
-    expect(screen.getByText("A1 Intelligence")).toBeInTheDocument();
+    expect(screen.getByText("KAIROS AI")).toBeInTheDocument();
 
     await user.click(screen.getByLabelText("Close"));
-    expect(screen.queryByText("A1 Intelligence")).not.toBeInTheDocument();
+    expect(screen.queryByText("KAIROS AI")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Open AI assistant")).toBeInTheDocument();
   });
 
@@ -62,7 +62,7 @@ describe("A1ChatWidgetOverlay", () => {
 
     await user.click(screen.getByLabelText("Open AI assistant"));
 
-    const panel = screen.getByText("A1 Intelligence").closest(".fixed");
+    const panel = screen.getByText("KAIROS AI").closest(".fixed");
     expect(panel).toBeInTheDocument();
 
     await user.click(screen.getByLabelText("Minimise"));
@@ -80,7 +80,7 @@ describe("A1ChatWidgetOverlay", () => {
     await user.click(screen.getByLabelText("Open AI assistant"));
     await user.click(screen.getByLabelText("Maximise"));
 
-    const panelEl = screen.getByText("A1 Intelligence").closest(".fixed");
+    const panelEl = screen.getByText("KAIROS AI").closest(".fixed");
     const panel = panelEl as unknown as HTMLElement;
     expect(panel.style.width).toBe("100vw");
     expect(panel.style.height).toBe("100vh");
@@ -92,7 +92,7 @@ describe("A1ChatWidgetOverlay", () => {
 
     await user.click(screen.getByLabelText("Open AI assistant"));
 
-    const panel = screen.getByText("A1 Intelligence").closest(".fixed")!;
+    const panel = screen.getByText("KAIROS AI").closest(".fixed")!;
     const originalWidth = (panel as HTMLElement).style.width;
 
     await user.click(screen.getByLabelText("Maximise"));
@@ -126,7 +126,7 @@ describe("A1ChatWidgetOverlay", () => {
 
     await user.click(screen.getByLabelText("Open AI assistant"));
 
-    const panelEl = screen.getByText("A1 Intelligence").closest(".fixed");
+    const panelEl = screen.getByText("KAIROS AI").closest(".fixed");
     const panel = panelEl as unknown as HTMLElement;
     expect(panel.style.left).toBe("100px");
     expect(panel.style.top).toBe("200px");
@@ -137,7 +137,7 @@ describe("A1ChatWidgetOverlay", () => {
     render(<A1ChatWidgetOverlay projectId={42} />);
 
     await user.click(screen.getByLabelText("Open AI assistant"));
-    expect(screen.getByText("A1 Intelligence")).toBeInTheDocument();
+    expect(screen.getByText("KAIROS AI")).toBeInTheDocument();
   });
 
   it("renders with solid background styling", async () => {
@@ -146,7 +146,7 @@ describe("A1ChatWidgetOverlay", () => {
 
     await user.click(screen.getByLabelText("Open AI assistant"));
 
-    const panel = screen.getByText("A1 Intelligence").closest(".fixed");
+    const panel = screen.getByText("KAIROS AI").closest(".fixed");
     // Background is now applied via inline style
     expect((panel as HTMLElement)?.style.backgroundColor).toContain("var(--bg-primary)");
     expect(panel?.className).not.toContain("kairos-glass");
@@ -182,7 +182,7 @@ describe("A1ChatWidgetOverlay", () => {
 
     await user.click(screen.getByLabelText("Open AI assistant"));
 
-    const header = screen.getByText("A1 Intelligence").closest("[class*='cursor-grab']");
+    const header = screen.getByText("KAIROS AI").closest("[class*='cursor-grab']");
     expect(header).toBeInTheDocument();
     expect(header?.className).toContain("cursor-grab");
   });
@@ -199,7 +199,7 @@ describe("A1ChatWidgetOverlay", () => {
 
     await user.click(screen.getByLabelText("Open AI assistant"));
 
-    const panel = screen.getByText("A1 Intelligence").closest(".fixed");
+    const panel = screen.getByText("KAIROS AI").closest(".fixed");
     expect(panel?.className).toContain("rounded-2xl");
   });
 });

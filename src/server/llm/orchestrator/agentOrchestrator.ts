@@ -4,48 +4,49 @@ import { eq, desc, and } from "drizzle-orm";
 
 import { env } from "~/env";
 import type { TRPCContext } from "~/server/api/trpc";
-import { a1WorkspaceConciergeProfile } from "~/server/agents/profiles/a1WorkspaceConcierge";
-import { a2TaskPlannerProfile } from "~/server/agents/profiles/a2TaskPlanner";
+import { a1WorkspaceConciergeProfile } from "~/server/llm/profiles/a1WorkspaceConcierge";
+import { a2TaskPlannerProfile } from "~/server/llm/profiles/a2TaskPlanner";
 import {
   A1OutputSchema,
   type A1Output,
-} from "~/server/agents/schemas/a1WorkspaceConciergeSchemas";
+} from "~/server/llm/schemas/a1WorkspaceConciergeSchemas";
 import {
   TaskGenerationOutputSchema,
   type GenerateTaskDraftsOutput,
-} from "~/server/agents/schemas/taskGenerationSchemas";
+} from "~/server/llm/schemas/taskGenerationSchemas";
 import {
   TaskPlanDraftSchema,
   type TaskPlanDraft,
-} from "~/server/agents/schemas/a2TaskPlannerSchemas";
+} from "~/server/llm/schemas/a2TaskPlannerSchemas";
 import {
   NotesVaultDraftSchema,
   type NotesVaultDraft,
   type NotesVaultApplyOutput,
-} from "~/server/agents/schemas/a3NotesVaultSchemas";
+} from "~/server/llm/schemas/a3NotesVaultSchemas";
 import {
   EventsPublisherDraftSchema,
   type EventsPublisherDraft,
   type EventsPublisherApplyOutput,
-} from "~/server/agents/schemas/a4EventsPublisherSchemas";
-import { buildA1Context } from "~/server/agents/context/a1ContextBuilder";
-import { buildA2Context } from "~/server/agents/context/a2ContextBuilder";
-import { buildA3Context } from "~/server/agents/context/a3ContextBuilder";
-import { buildA4Context } from "~/server/agents/context/a4ContextBuilder";
+} from "~/server/llm/schemas/a4EventsPublisherSchemas";
+import { buildA1Context } from "~/server/llm/context/a1ContextBuilder";
+import { buildA2Context } from "~/server/llm/context/a2ContextBuilder";
+import { buildA3Context } from "~/server/llm/context/a3ContextBuilder";
+import { buildA4Context } from "~/server/llm/context/a4ContextBuilder";
 import {
   getA1SystemPrompt,
   getTaskGenerationPrompt,
   getPdfTaskExtractionPrompt,
-} from "~/server/agents/prompts/a1Prompts";
-import { getA2SystemPrompt } from "~/server/agents/prompts/a2Prompts";
-import { getA3SystemPrompt } from "~/server/agents/prompts/a3Prompts";
-import { getA4SystemPrompt } from "~/server/agents/prompts/a4Prompts";
-import { chatCompletion } from "~/server/agents/llm/modelClient";
-import { parseAndValidate } from "~/server/agents/llm/jsonRepair";
-import { extractTextFromPdf } from "~/server/agents/pdf/pdfExtractor";
+} from "~/server/llm/prompts/a1Prompts";
+import { getA2SystemPrompt } from "~/server/llm/prompts/a2Prompts";
+import { getA3SystemPrompt } from "~/server/llm/prompts/a3Prompts";
+import { getA4SystemPrompt } from "~/server/llm/prompts/a4Prompts";
+import { chatCompletion } from "~/server/llm/llm/modelClient";
+import { parseAndValidate } from "~/server/llm/llm/jsonRepair";
+import { extractTextFromPdf } from "~/server/llm/pdf/pdfExtractor";
 import {
   projects,
   tasks,
+  taskActivityLog,
   projectCollaborators,
   users,
   stickyNotes,
@@ -661,7 +662,15 @@ export const agentOrchestrator = {
         })
         .returning({ id: tasks.id });
 
-      if (inserted[0]?.id) createdTaskIds.push(inserted[0].id);
+      if (inserted[0]?.id) {
+        createdTaskIds.push(inserted[0].id);
+        await input.ctx.db.insert(taskActivityLog).values({
+          taskId: inserted[0].id,
+          userId,
+          action: "created",
+          newValue: "Task created",
+        });
+      }
     }
 
     // Apply updates/status changes/deletes (best-effort). These operations are not idempotent via clientRequestId
@@ -685,6 +694,12 @@ export const agentOrchestrator = {
         })
         .where(and(eq(tasks.id, u.taskId), eq(tasks.projectId, plan.scope.projectId)));
       updatedTaskIds.push(u.taskId);
+      await input.ctx.db.insert(taskActivityLog).values({
+        taskId: u.taskId,
+        userId,
+        action: "updated",
+        newValue: "Task updated",
+      });
     }
 
     for (const s of plan.statusChanges) {
@@ -702,6 +717,12 @@ export const agentOrchestrator = {
         })
         .where(and(eq(tasks.id, s.taskId), eq(tasks.projectId, plan.scope.projectId)));
       statusChangedTaskIds.push(s.taskId);
+      await input.ctx.db.insert(taskActivityLog).values({
+        taskId: s.taskId,
+        userId,
+        action: "status_changed",
+        newValue: s.status,
+      });
     }
 
     for (const d of plan.deletes) {

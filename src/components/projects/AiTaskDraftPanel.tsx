@@ -17,7 +17,7 @@ import { motion, AnimatePresence } from"motion/react";
 import { useTranslations } from"next-intl";
 import { api } from"~/trpc/react";
 import { cn } from"~/lib/utils";
-import type { GeneratedTask } from"~/server/agents/schemas/taskGenerationSchemas";
+import type { GeneratedTask } from"~/server/llm/schemas/taskGenerationSchemas";
 
 // ---------------------------------------------------------------------------
 // Constants

@@ -926,6 +926,53 @@ export const organizationRouter = createTRPCRouter({
         });
       }
 
+      // Check if the email belongs to someone already in the organization
+      const [existingUser] = await ctx.db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.email, input.email))
+        .limit(1);
+
+      if (existingUser) {
+        const [existingMember] = await ctx.db
+          .select({ userId: organizationMembers.userId })
+          .from(organizationMembers)
+          .where(
+            and(
+              eq(organizationMembers.organizationId, input.organizationId),
+              eq(organizationMembers.userId, existingUser.id),
+            ),
+          )
+          .limit(1);
+
+        if (existingMember) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "This user is already a member of this organization",
+          });
+        }
+      }
+
+      // Check for existing pending invite to avoid duplicates
+      const [existingInvite] = await ctx.db
+        .select({ id: organizationInvites.id })
+        .from(organizationInvites)
+        .where(
+          and(
+            eq(organizationInvites.organizationId, input.organizationId),
+            eq(organizationInvites.email, input.email),
+            eq(organizationInvites.status, "pending"),
+          ),
+        )
+        .limit(1);
+
+      if (existingInvite) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "A pending invite already exists for this email",
+        });
+      }
+
       // Map custom role names to a valid DB enum value
       const validRoles = ["admin", "member", "guest", "worker", "mentor"] as const;
       type ValidRole = typeof validRoles[number];

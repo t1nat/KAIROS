@@ -1,5 +1,5 @@
-import { A1OutputSchema } from "~/server/agents/schemas/a1WorkspaceConciergeSchemas";
-import type { A1ReadToolName } from "~/server/agents/tools/a1/readTools";
+import { A1OutputSchema } from "~/server/llm/schemas/a1WorkspaceConciergeSchemas";
+import type { A1ReadToolName } from "~/server/llm/tools/a1/readTools";
 
 export interface AgentProfile {
   id: string;

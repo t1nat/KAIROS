@@ -86,17 +86,31 @@ vi.mock("~/trpc/react", () => {
     }),
   });
 
+  const createInvalidateProxy = (): unknown =>
+    new Proxy(() => Promise.resolve(), {
+      get: () => createInvalidateProxy(),
+      apply: () => Promise.resolve(),
+    });
+
   return {
     api: new Proxy(
       {},
       {
-        get: () =>
-          new Proxy(
+        get: (_target, prop) => {
+          if (prop === "useUtils") {
+            return () =>
+              new Proxy(
+                {},
+                { get: () => createInvalidateProxy() },
+              );
+          }
+          return new Proxy(
             {},
             {
               get: () => createMockQuery(),
             },
-          ),
+          );
+        },
       },
     ),
   };

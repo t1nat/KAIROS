@@ -5,7 +5,7 @@
  * that gets injected into the system prompt for LLM calls.
  */
 import type { TRPCContext } from "~/server/api/trpc";
-import { A1_READ_TOOLS } from "~/server/agents/tools/a1/readTools";
+import { A1_READ_TOOLS } from "~/server/llm/tools/a1/readTools";
 
 export interface A1ContextPack {
   session: {
@@ -22,6 +22,7 @@ export interface A1ContextPack {
   }>;
   tasks: Array<{
     id: number;
+    projectId: number;
     title: string;
     status: string;
     priority: string;
@@ -53,28 +54,24 @@ export async function buildA1Context(
   // 1. Session context
   const sessionResult = await A1_READ_TOOLS.getSessionContext.execute(ctx, {} as never);
 
-  // 2. Projects (privacy default)
-  // Only fetch project lists when the user explicitly scoped to a project,
-  // otherwise avoid loading workspace project names/titles into the prompt.
+  // 2. Projects
+  // Always load a summary of user's projects so the LLM can mention them.
+  // When scoped to a specific project, we load more detail for that project.
   const projectId = scope?.projectId
     ? typeof scope.projectId === "string"
       ? Number(scope.projectId)
       : scope.projectId
     : null;
 
-  const projectsResult = projectId && Number.isFinite(projectId)
-    ? await A1_READ_TOOLS.listProjects.execute(ctx, { limit: 10 })
-    : [];
+  const projectsResult = await A1_READ_TOOLS.listProjects.execute(ctx, { limit: 10 });
 
-  // 3. Notifications (privacy default)
-  // Avoid listing notifications unless explicitly scoped to a project.
-  const notificationsResult = projectId && Number.isFinite(projectId)
-    ? await A1_READ_TOOLS.listNotifications.execute(ctx, { limit: 10 })
-    : [];
+  // 3. Notifications — load for workspace overview or project-scoped.
+  const notificationsResult = await A1_READ_TOOLS.listNotifications.execute(ctx, { limit: 10 });
 
-  // 4. Tasks — only if a projectId is in scope
+  // 4. Tasks
   let tasksResult: Array<{
     id: number;
+    projectId: number;
     title: string;
     status: string;
     priority: string;
@@ -82,13 +79,22 @@ export async function buildA1Context(
     updatedAt: Date;
   }> = [];
 
-  // projectId derived above
-
   if (projectId && Number.isFinite(projectId)) {
-    tasksResult = await A1_READ_TOOLS.listTasks.execute(ctx, {
+    // Project-scoped: load tasks for the specific project
+    const rawTasks = await A1_READ_TOOLS.listTasks.execute(ctx, {
       projectId,
       limit: 20,
     });
+    tasksResult = rawTasks.map((t) => ({ ...t, projectId }));
+  } else if (projectsResult.length > 0) {
+    // Workspace-scoped: load tasks from ALL projects so the AI can analyze overall progress
+    for (const proj of projectsResult) {
+      const projectTasks = await A1_READ_TOOLS.listTasks.execute(ctx, {
+        projectId: proj.id,
+        limit: 10,
+      });
+      tasksResult.push(...projectTasks.map((t) => ({ ...t, projectId: proj.id })));
+    }
   }
 
   // 5. Optional project detail
@@ -120,6 +126,7 @@ export async function buildA1Context(
     })),
     tasks: tasksResult.map((t) => ({
       id: t.id,
+      projectId: t.projectId,
       title: t.title,
       status: t.status,
       priority: t.priority,

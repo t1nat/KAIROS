@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from"react";
 import { api } from"~/trpc/react";
-import { Folder, ChevronDown, ChevronUp, CheckCircle2, Clock, AlertCircle, Plus } from"lucide-react";
+import { Folder, ChevronDown, ChevronUp, CheckCircle2, Clock, AlertCircle, Plus, Trash2 } from"lucide-react";
 import { useRouter } from"next/navigation";
 import { useTranslations } from"next-intl";
 import { Doughnut } from"react-chartjs-2";
@@ -13,6 +13,7 @@ interface ProjectWithStats {
  id: number;
  title: string;
  description: string | null;
+ createdById: string;
  totalTasks: number;
  completedTasks: number;
  inProgressTasks: number;
@@ -43,10 +44,11 @@ function hasTasks(value: unknown): value is { tasks: Array<{ status: string }> }
  });
 }
 
-export function ProjectsListWorkspace() {
+export function ProjectsListWorkspace({ userId }: { userId: string }) {
  const [mounted, setMounted] = useState(false);
  const [showProjects, setShowProjects] = useState(false);
  const [animateCharts, setAnimateCharts] = useState(false);
+ const [deleteArmedId, setDeleteArmedId] = useState<number | null>(null);
  const router = useRouter();
  
  ensureChartJsRegistered();
@@ -63,6 +65,31 @@ export function ProjectsListWorkspace() {
  const { data: projects, isLoading } = api.project.getMyProjects.useQuery(undefined, {
  staleTime: 1000 * 60 * 5,
  });
+
+ const utils = api.useUtils();
+
+ const deleteProject = api.project.delete.useMutation({
+ onSuccess: () => {
+   setDeleteArmedId(null);
+   void utils.project.getMyProjects.invalidate();
+ },
+ });
+
+ // Auto-disarm delete after 4 seconds
+ useEffect(() => {
+ if (!deleteArmedId) return;
+ const tId = setTimeout(() => setDeleteArmedId(null), 4000);
+ return () => clearTimeout(tId);
+ }, [deleteArmedId]);
+
+ const handleDeleteProject = (e: React.MouseEvent, projectId: number) => {
+ e.stopPropagation();
+ if (deleteArmedId !== projectId) {
+   setDeleteArmedId(projectId);
+   return;
+ }
+ deleteProject.mutate({ id: projectId });
+ };
 
  if (!mounted) {
  return (
@@ -120,6 +147,7 @@ export function ProjectsListWorkspace() {
  id: project.id,
  title: project.title,
  description: project.description ?? null,
+ createdById: (project as unknown as { createdById: string }).createdById,
  totalTasks,
  completedTasks,
  inProgressTasks,
@@ -429,6 +457,24 @@ export function ProjectsListWorkspace() {
  style={{ width: `${project.completionPercentage}%` }}
  />
  </div>
+ </div>
+ )}
+
+ {project.createdById === userId && (
+ <div className="px-5 pb-3 flex justify-end">
+  <button
+   type="button"
+   onClick={(e) => handleDeleteProject(e, project.id)}
+   disabled={deleteProject.isPending}
+   className={`p-2 rounded-lg transition-all duration-200 ${
+    deleteArmedId === project.id
+     ? "bg-error/10 text-error"
+     : "text-fg-quaternary hover:text-error hover:bg-error/10"
+   }`}
+   aria-label={deleteArmedId === project.id ? "Confirm delete project" : "Delete project"}
+  >
+   <Trash2 size={14} strokeWidth={2.2} />
+  </button>
  </div>
  )}
  </div>

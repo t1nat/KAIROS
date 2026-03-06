@@ -1,6 +1,6 @@
 import {
   EventsPublisherDraftSchema,
-} from "~/server/agents/schemas/a4EventsPublisherSchemas";
+} from "~/server/llm/schemas/a4EventsPublisherSchemas";
 
 export type A4ReadToolName = "listEventsPublic" | "getEventDetail";
 

@@ -67,11 +67,11 @@ describe("Publish Page – No Gradient Background", () => {
     expect(publishPageSource).not.toContain("ios-header");
   });
 
-  it("uses max-w-[600px] for Instagram-style width constraint", () => {
-    expect(publishPageSource).toContain("max-w-[600px]");
+  it("uses max-w-7xl for responsive width constraint", () => {
+    expect(publishPageSource).toContain("max-w-7xl");
   });
 
-  it("header uses border-white/[0.06] separator", () => {
-    expect(publishPageSource).toContain("border-white/[0.06]");
+  it("header uses dark:border-white/5 separator", () => {
+    expect(publishPageSource).toContain("dark:border-white/5");
   });
 });

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { getA2SystemPrompt } from "~/server/agents/prompts/a2Prompts";
-import type { A2ContextPack } from "~/server/agents/context/a2ContextBuilder";
+import { getA2SystemPrompt } from "~/server/llm/prompts/a2Prompts";
+import type { A2ContextPack } from "~/server/llm/context/a2ContextBuilder";
 
 const mockContext: A2ContextPack = {
   session: {

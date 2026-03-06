@@ -41,7 +41,7 @@ describe("Settings Page – No White Borders", () => {
   });
 
   it("sidebar uses border-white/[0.06] instead of border-border-light/20", () => {
-    expect(settingsPageSource).toContain("border-r border-white/[0.06]");
+    expect(settingsPageSource).toContain("border-r border-slate-200 dark:border-white/[0.06]");
   });
 
   it("uses bg-bg-primary as base background (not bg-bg-secondary)", () => {
@@ -49,7 +49,7 @@ describe("Settings Page – No White Borders", () => {
   });
 
   it("mobile settings button uses subtle border", () => {
-    expect(settingsPageSource).toContain("border border-white/[0.06]");
+    expect(settingsPageSource).toContain("border border-slate-200 dark:border-white/[0.06]");
     expect(settingsPageSource).not.toContain("border-border-light");
   });
 });

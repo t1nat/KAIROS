@@ -68,8 +68,8 @@ export function InteractiveTimeline({
  const [mounted, setMounted] = useState(false);
  const [optimisticTasks, setOptimisticTasks] = useState<Task[]>(tasks);
  const [animatedPercentage, setAnimatedPercentage] = useState(0);
- // eslint-disable-next-line @typescript-eslint/no-unused-vars
- const [_hoveredTaskId, setHoveredTaskId] = useState<number | null>(null);
+ const [hoveredTaskId, setHoveredTaskId] = useState<number | null>(null);
+ const [hoverAssignTaskId, setHoverAssignTaskId] = useState<number | null>(null);
  const [expandedTaskId, setExpandedTaskId] = useState<number | null>(null);
  const [highlightedTaskId, setHighlightedTaskId] = useState<number | null>(null);
 
@@ -300,7 +300,7 @@ export function InteractiveTimeline({
  }}
  className={`bg-bg-secondary rounded-[10px] overflow-hidden border border-slate-200 dark:border-white/[0.06] shadow-sm dark:shadow-none ${isHighlighted ?"ring-2 ring-accent-primary/50" :""}`}
  onMouseEnter={() => setHoveredTaskId(task.id)}
- onMouseLeave={() => setHoveredTaskId(null)}
+ onMouseLeave={() => { setHoveredTaskId(null); setHoverAssignTaskId(null); }}
  >
  <div 
  role="button"
@@ -383,12 +383,81 @@ export function InteractiveTimeline({
  </div>
  </div>
  </div>
+
+ {/* Hover assign button */}
+ <div className="flex items-center gap-2">
+ {!isReadOnly && onTaskUpdate && hoveredTaskId === task.id && task.id >= 0 && (
+ <div className="relative">
+ <button
+ type="button"
+ onClick={(e) => {
+ e.stopPropagation();
+ setHoverAssignTaskId(prev => prev === task.id ? null : task.id);
+ }}
+ className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium bg-accent-primary/10 text-accent-primary hover:bg-accent-primary/20 transition-all"
+ >
+ <User size={12} strokeWidth={2.5} />
+ <span>{task.assignedTo?.name?.split(" ")[0] ?? "Assign"}</span>
+ </button>
+
+ {hoverAssignTaskId === task.id && (
+ <div
+ className="absolute right-0 top-full mt-1 z-30 min-w-[200px] rounded-xl border border-slate-200 dark:border-white/[0.1] bg-bg-elevated dark:bg-[rgb(14,14,18)] shadow-xl shadow-black/10 dark:shadow-black/30 overflow-hidden"
+ onClick={(e) => e.stopPropagation()}
+ >
+ <div className="max-h-[200px] overflow-y-auto py-1">
+ <button
+ type="button"
+ onClick={() => {
+ onTaskUpdate(task.id, { assignedToId: null });
+ setHoverAssignTaskId(null);
+ }}
+ className={`w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-accent-primary/10 transition-colors ${!task.assignedTo ? "bg-accent-primary/5" : ""}`}
+ >
+ <div className="w-6 h-6 rounded-full bg-bg-tertiary/50 flex items-center justify-center flex-shrink-0">
+ <User size={11} className="text-fg-quaternary" />
+ </div>
+ <span className="text-[12px] text-fg-secondary">Unassigned</span>
+ </button>
+ {availableUsers.map((u) => (
+ <button
+ key={u.id}
+ type="button"
+ onClick={() => {
+ onTaskUpdate(task.id, { assignedToId: u.id });
+ setHoverAssignTaskId(null);
+ }}
+ className={`w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-accent-primary/10 transition-colors ${task.assignedTo?.id === u.id ? "bg-accent-primary/5" : ""}`}
+ >
+ <div className="w-6 h-6 rounded-full overflow-hidden bg-accent-primary/20 flex-shrink-0">
+ {u.image ? (
+ <Image src={u.image} alt={u.name ?? ""} width={24} height={24} className="w-full h-full object-cover" />
+ ) : (
+ <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent-primary to-accent-secondary">
+ <User size={10} className="text-white" />
+ </div>
+ )}
+ </div>
+ <div className="flex-1 min-w-0">
+ <p className="text-[12px] text-fg-primary font-medium truncate">{u.name ?? "Unknown"}</p>
+ </div>
+ {task.assignedTo?.id === u.id && (
+ <CheckCircle2 size={12} className="text-accent-primary flex-shrink-0" />
+ )}
+ </button>
+ ))}
+ </div>
+ </div>
+ )}
+ </div>
+ )}
  
  <ChevronDown 
  size={20} 
  className={`text-fg-tertiary transition-transform ${isExpanded ?"rotate-180" :""}`}
  strokeWidth={2.5}
  />
+ </div>
  </div>
 
  {/* Expanded Details */}

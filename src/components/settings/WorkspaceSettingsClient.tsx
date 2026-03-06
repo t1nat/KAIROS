@@ -545,8 +545,8 @@ export function WorkspaceSettingsClient() {
                         </div>
                       )}
                       {emailLookupDebouncedEmail && !isLookingUpEmail && !inviteEmailLookup && (
-                        <div className="absolute left-0 right-0 top-full mt-1 z-10 p-2.5 rounded-lg border border-red-500/20 bg-bg-elevated shadow-lg">
-                          <p className="text-xs text-red-400">No account found with this email</p>
+                        <div className="absolute left-0 right-0 top-full mt-1 z-10 p-2.5 rounded-lg border border-amber-500/20 bg-bg-elevated shadow-lg">
+                          <p className="text-xs text-amber-400">No existing account — invite will be sent anyway</p>
                         </div>
                       )}
                       {emailLookupDebouncedEmail && isLookingUpEmail && (
@@ -734,185 +734,170 @@ export function WorkspaceSettingsClient() {
 
           {expandedSection === "roles" && (
             <div className="mt-3 space-y-4">
-              {/* Template roles (read-only) */}
-              <div>
-                <h3 className="text-xs font-medium text-fg-tertiary uppercase tracking-wider mb-3">
-                  Template Roles
+              {/* New Role button */}
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-medium text-fg-tertiary uppercase tracking-wider">
+                  All Roles
                 </h3>
-                <div className="space-y-3">
-                  {Object.entries(TEMPLATE_ROLES).map(([name, perms]) => (
-                    <div
-                      key={name}
-                      className="p-4 rounded-xl border border-white/[0.1] bg-white/[0.03] dark:bg-white/[0.04]"
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-sm font-semibold text-fg-primary">{name}</h4>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-bg-tertiary text-fg-tertiary font-medium">
-                          Template
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {PERMISSION_KEYS.map((key) => (
-                          <label
-                            key={key}
-                            className="flex items-center gap-2 text-xs text-fg-secondary"
-                          >
-                            <div
-                              className={`w-4 h-4 rounded border flex items-center justify-center ${
-                                perms[key]
-                                  ? "bg-accent-primary/20 border-accent-primary/50"
-                                  : "bg-bg-tertiary border-white/[0.06]"
-                              }`}
-                            >
-                              {perms[key] && <Check size={10} className="text-accent-primary" />}
-                            </div>
-                            {PERMISSION_LABELS[key]}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                {isAdmin && (
+                  <button
+                    onClick={() => setShowCreateRole(!showCreateRole)}
+                    className="text-xs text-accent-primary hover:text-accent-secondary transition flex items-center gap-1"
+                  >
+                    <Plus size={12} />
+                    New Role
+                  </button>
+                )}
               </div>
 
-              {/* Custom roles */}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-xs font-medium text-fg-tertiary uppercase tracking-wider">
-                    Custom Roles
-                  </h3>
-                  {isAdmin && (
+              {/* Create role form */}
+              {showCreateRole && isAdmin && (
+                <div className="p-4 rounded-xl border border-accent-primary/20 bg-bg-surface">
+                  <input
+                    type="text"
+                    value={newRoleName}
+                    onChange={(e) => setNewRoleName(e.target.value)}
+                    placeholder="Role name"
+                    className="w-full px-3 py-2 bg-bg-primary rounded-lg text-sm text-fg-primary placeholder:text-fg-tertiary border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-accent-primary/30 mb-3"
+                    autoFocus
+                  />
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    {PERMISSION_KEYS.map((key) => (
+                      <label
+                        key={key}
+                        className="flex items-center gap-2 text-xs text-fg-secondary cursor-pointer hover:text-fg-primary transition"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={newRolePerms[key]}
+                          onChange={(e) =>
+                            setNewRolePerms((prev) => ({ ...prev, [key]: e.target.checked }))
+                          }
+                          className="sr-only"
+                        />
+                        <div
+                          className={`w-4 h-4 rounded border flex items-center justify-center transition ${
+                            newRolePerms[key]
+                              ? "bg-accent-primary/20 border-accent-primary/50"
+                              : "bg-bg-tertiary border-white/[0.06]"
+                          }`}
+                        >
+                          {newRolePerms[key] && <Check size={10} className="text-accent-primary" />}
+                        </div>
+                        {PERMISSION_LABELS[key]}
+                      </label>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
                     <button
-                      onClick={() => setShowCreateRole(!showCreateRole)}
-                      className="text-xs text-accent-primary hover:text-accent-secondary transition flex items-center gap-1"
+                      onClick={() => {
+                        if (newRoleName.trim() && activeOrgId) {
+                          createRole.mutate({
+                            organizationId: activeOrgId,
+                            name: newRoleName,
+                            ...newRolePerms,
+                          });
+                        }
+                      }}
+                      disabled={!newRoleName.trim() || createRole.isPending}
+                      className="flex-1 px-4 py-2 rounded-lg kairos-neon-btn text-white text-sm font-medium disabled:opacity-50"
                     >
-                      <Plus size={12} />
-                      New Role
+                      {createRole.isPending ? <Loader2 size={14} className="animate-spin" /> : "Create Role"}
                     </button>
-                  )}
+                    <button
+                      onClick={() => setShowCreateRole(false)}
+                      className="px-4 py-2 rounded-lg border border-white/[0.06] text-fg-secondary text-sm hover:bg-bg-elevated transition"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
+              )}
 
-                {/* Create role form */}
-                {showCreateRole && isAdmin && (
-                  <div className="p-4 rounded-xl border border-accent-primary/20 bg-bg-surface mb-3">
-                    <input
-                      type="text"
-                      value={newRoleName}
-                      onChange={(e) => setNewRoleName(e.target.value)}
-                      placeholder="Role name"
-                      className="w-full px-3 py-2 bg-bg-primary rounded-lg text-sm text-fg-primary placeholder:text-fg-tertiary border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-accent-primary/30 mb-3"
-                      autoFocus
-                    />
-                    <div className="grid grid-cols-2 gap-2 mb-3">
+              {/* Template roles followed by custom roles in one unified list */}
+              <div className="space-y-3">
+                {Object.entries(TEMPLATE_ROLES).map(([name, perms]) => (
+                  <div
+                    key={name}
+                    className="p-4 rounded-xl border border-white/[0.1] bg-white/[0.03] dark:bg-white/[0.04]"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-semibold text-fg-primary">{name}</h4>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-bg-tertiary text-fg-tertiary font-medium">
+                        Template
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
                       {PERMISSION_KEYS.map((key) => (
                         <label
                           key={key}
-                          className="flex items-center gap-2 text-xs text-fg-secondary cursor-pointer hover:text-fg-primary transition"
+                          className="flex items-center gap-2 text-xs text-fg-secondary"
                         >
-                          <input
-                            type="checkbox"
-                            checked={newRolePerms[key]}
-                            onChange={(e) =>
-                              setNewRolePerms((prev) => ({ ...prev, [key]: e.target.checked }))
-                            }
-                            className="sr-only"
-                          />
                           <div
-                            className={`w-4 h-4 rounded border flex items-center justify-center transition ${
-                              newRolePerms[key]
+                            className={`w-4 h-4 rounded border flex items-center justify-center ${
+                              perms[key]
                                 ? "bg-accent-primary/20 border-accent-primary/50"
                                 : "bg-bg-tertiary border-white/[0.06]"
                             }`}
                           >
-                            {newRolePerms[key] && <Check size={10} className="text-accent-primary" />}
+                            {perms[key] && <Check size={10} className="text-accent-primary" />}
                           </div>
                           {PERMISSION_LABELS[key]}
                         </label>
                       ))}
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => {
-                          if (newRoleName.trim() && activeOrgId) {
-                            createRole.mutate({
-                              organizationId: activeOrgId,
-                              name: newRoleName,
-                              ...newRolePerms,
-                            });
-                          }
-                        }}
-                        disabled={!newRoleName.trim() || createRole.isPending}
-                        className="flex-1 px-4 py-2 rounded-lg kairos-neon-btn text-white text-sm font-medium disabled:opacity-50"
-                      >
-                        {createRole.isPending ? <Loader2 size={14} className="animate-spin" /> : "Create Role"}
-                      </button>
-                      <button
-                        onClick={() => setShowCreateRole(false)}
-                        className="px-4 py-2 rounded-lg border border-white/[0.06] text-fg-secondary text-sm hover:bg-bg-elevated transition"
-                      >
-                        Cancel
-                      </button>
+                  </div>
+                ))}
+                {roles?.map((role) => (
+                  <div
+                    key={role.id}
+                    className="p-4 rounded-xl border border-accent-primary/15 bg-accent-primary/[0.02] dark:bg-accent-primary/[0.03]"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-semibold text-fg-primary">{role.name}</h4>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent-primary/10 text-accent-primary font-medium">
+                          Custom
+                        </span>
+                        {isAdmin && (
+                          <button
+                            onClick={() => {
+                              if (confirm(`Delete the role "${role.name}"?`)) {
+                                deleteRole.mutate({
+                                  organizationId: activeOrgId!,
+                                  roleId: role.id,
+                                });
+                              }
+                            }}
+                            disabled={deleteRole.isPending}
+                            className="p-1.5 rounded-lg hover:bg-red-500/10 text-fg-tertiary hover:text-red-400 transition"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {PERMISSION_KEYS.map((key) => (
+                        <label
+                          key={key}
+                          className="flex items-center gap-2 text-xs text-fg-secondary"
+                        >
+                          <div
+                            className={`w-4 h-4 rounded border flex items-center justify-center ${
+                              role[key]
+                                ? "bg-accent-primary/20 border-accent-primary/50"
+                                : "bg-bg-tertiary border-white/[0.06]"
+                            }`}
+                          >
+                            {role[key] && <Check size={10} className="text-accent-primary" />}
+                          </div>
+                          {PERMISSION_LABELS[key]}
+                        </label>
+                      ))}
                     </div>
                   </div>
-                )}
-
-                {/* Existing custom roles */}
-                <div className="space-y-3">
-                  {roles && roles.length > 0 ? (
-                    roles.map((role) => (
-                      <div
-                        key={role.id}
-                        className="p-4 rounded-xl border border-white/[0.1] bg-white/[0.03] dark:bg-white/[0.04]"
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <h4 className="text-sm font-semibold text-fg-primary">{role.name}</h4>
-                          {isAdmin && (
-                            <button
-                              onClick={() => {
-                                if (confirm(`Delete the role "${role.name}"?`)) {
-                                  deleteRole.mutate({
-                                    organizationId: activeOrgId!,
-                                    roleId: role.id,
-                                  });
-                                }
-                              }}
-                              disabled={deleteRole.isPending}
-                              className="p-1.5 rounded-lg hover:bg-red-500/10 text-fg-tertiary hover:text-red-400 transition"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          {PERMISSION_KEYS.map((key) => (
-                            <label
-                              key={key}
-                              className="flex items-center gap-2 text-xs text-fg-secondary"
-                            >
-                              <div
-                                className={`w-4 h-4 rounded border flex items-center justify-center ${
-                                  role[key]
-                                    ? "bg-accent-primary/20 border-accent-primary/50"
-                                    : "bg-bg-tertiary border-white/[0.06]"
-                                }`}
-                              >
-                                {role[key] && <Check size={10} className="text-accent-primary" />}
-                              </div>
-                              {PERMISSION_LABELS[key]}
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-4 rounded-xl border border-white/[0.1] bg-white/[0.03] dark:bg-white/[0.04] text-center">
-                      <p className="text-xs text-fg-tertiary">
-                        No custom roles yet.{" "}
-                        {isAdmin ? "Create one to define specific permissions." : ""}
-                      </p>
-                    </div>
-                  )}
-                </div>
+                ))}
               </div>
             </div>
           )}

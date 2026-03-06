@@ -51,6 +51,11 @@ type OrgActivityEntry = {
     email: string | null;
     image: string | null;
   } | null;
+  assignee: {
+    id: string | null;
+    name: string | null;
+    image: string | null;
+  } | null;
 };
 
 type OrgActivityResponse = {
@@ -191,7 +196,6 @@ const PRIORITY_OPTIONS: { value: TaskPriority; label: string; color: string }[] 
 function TimelineEntry({
   entry,
   isLast,
-  index,
   onToggleDone,
   onDelete,
   isToggling,
@@ -201,7 +205,6 @@ function TimelineEntry({
 }: {
   entry: OrgActivityEntry;
   isLast: boolean;
-  index: number;
   onToggleDone: (taskId: number, currentlyDone: boolean) => void;
   onDelete: (taskId: number) => void;
   isToggling: boolean;
@@ -210,18 +213,6 @@ function TimelineEntry({
   taskCurrentStatus: TaskStatus | undefined;
 }) {
   const entryRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const el = entryRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([e]) => { if (e?.isIntersecting) setIsVisible(true); },
-      { threshold: 0.15, rootMargin: "0px 0px -40px 0px" },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
 
   const date = new Date(entry.createdAt);
   const dateStr = date
@@ -236,11 +227,6 @@ function TimelineEntry({
     <div
       ref={entryRef}
       className="relative flex gap-3 sm:gap-4 timeline-entry-wrapper"
-      style={{
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible ? "translateY(0)" : "translateY(8px)",
-        transition: `all 0.4s ease ${index * 0.04}s`,
-      }}
     >
       {/* Vertical line + circle with tick */}
       <div className="flex flex-col items-center">
@@ -301,7 +287,7 @@ function TimelineEntry({
                     <button
                       type="button"
                       onClick={() => setConfirmDelete(true)}
-                      className="p-1 rounded text-fg-quaternary hover:text-red-400 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
+                      className="p-1 rounded text-fg-quaternary hover:text-red-400 hover:bg-red-500/10 transition-colors"
                       title="Delete task"
                     >
                       <Trash2 size={12} />
@@ -318,10 +304,25 @@ function TimelineEntry({
           }`}>
             {entry.taskTitle}
           </h4>
-          <p className="text-xs text-fg-tertiary">
-            {entry.projectTitle}
-            {entry.user ? ` · ${entry.user.name ?? "Unknown"}` : ""}
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-fg-tertiary">
+              {entry.projectTitle}
+              {entry.user ? ` · ${entry.user.name ?? "Unknown"}` : ""}
+            </p>
+            {entry.assignee && (
+              <div className="flex items-center gap-1.5 ml-2 flex-shrink-0" title={entry.assignee.name ?? "Assigned"}>
+                <div className="w-5 h-5 rounded-full overflow-hidden bg-accent-primary/20 flex-shrink-0">
+                  {entry.assignee.image ? (
+                    <Image src={entry.assignee.image} alt={entry.assignee.name ?? ""} width={20} height={20} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent-primary to-accent-secondary">
+                      <User size={10} className="text-white" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -457,16 +458,17 @@ function CreateNewEntryForm({
   projects,
   onCreated,
   members,
+  selectedProjectId,
+  onProjectChange,
 }: {
   projects: ProjectCard[];
   onCreated: () => void;
   members: OrgMember[];
+  selectedProjectId: number | null;
+  onProjectChange: (id: number | null) => void;
 }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
-    projects[0]?.id ?? null,
-  );
   const [priority, setPriority] = useState<TaskPriority>("medium");
   const [dueDate, setDueDate] = useState("");
   const [assignedToId, setAssignedToId] = useState<string>("");
@@ -532,7 +534,8 @@ function CreateNewEntryForm({
       setDueDate("");
       setAssignedToId("");
       setError("");
-      setAttachedFiles([]);
+      // Keep PDF attachments visible after task creation; only clear non-PDFs
+      setAttachedFiles((prev) => prev.filter((f) => f.type === "application/pdf"));
       localStorage.removeItem(taskDraftKey);
       onCreated();
     },
@@ -599,7 +602,7 @@ function CreateNewEntryForm({
             ? new Date(Date.now() + t.estimatedDueDays * 86400000)
             : undefined,
         });
-        setTimeout(createNext, 400);
+        setTimeout(createNext, 80);
       };
       createNext();
     },
@@ -632,7 +635,7 @@ function CreateNewEntryForm({
             <div className="relative">
               <select
                 value={selectedProjectId ?? ""}
-                onChange={(e) => setSelectedProjectId(Number(e.target.value))}
+                onChange={(e) => onProjectChange(Number(e.target.value))}
                 className="w-full rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-accent-primary/30 text-slate-900 dark:text-slate-100 focus:border-accent-primary focus:ring-1 focus:ring-accent-primary h-12 px-4 appearance-none pr-10 transition-all hover:border-accent-primary/50"
               >
                 {projects.map((p) => (
@@ -975,6 +978,7 @@ export function TaskTimelineClient() {
   const { data: session } = useSession();
   const { permissions } = useRolePermissions();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
 
   /* Get user profile to determine active org */
   const { data: profile } = typedApi.user.getProfile.useQuery(undefined, {
@@ -1003,7 +1007,7 @@ export function TaskTimelineClient() {
     isLoading: isLoadingActivity,
     error: actError,
   } = typedApi.task.getOrgActivity.useQuery(
-    { limit: 50, scope: "organization" },
+    { limit: 50, scope: "all" },
     { staleTime: 15_000 },
   );
 
@@ -1053,38 +1057,58 @@ export function TaskTimelineClient() {
     deleteTask.mutate({ taskId });
   };
 
-  /* Computed stats — percentage uses ALL tasks regardless of filter */
+  /* Computed stats — percentage uses tasks of the selected project */
   const { percentage, timelineEntries, taskStatusMap } = useMemo(() => {
     const allProjects = projects ?? [];
-    const allTasks = allProjects.flatMap((p) => p.tasks ?? []);
-    const total = allTasks.length;
-    const completed = allTasks.filter((t) => t.status === "completed").length;
+    const effectivePid = selectedProjectId ?? allProjects[0]?.id ?? null;
+    const scopedProjects = effectivePid
+      ? allProjects.filter((p) => p.id === effectivePid)
+      : allProjects;
+    const scopedTasks = scopedProjects.flatMap((p) => p.tasks ?? []);
+    const total = scopedTasks.length;
+    const completed = scopedTasks.filter((t) => t.status === "completed").length;
     const pct = total > 0 ? (completed / total) * 100 : 0;
 
-    // Build a map of taskId -> current status from the actual project data
+    // Build a map of taskId -> current status from ALL project data (needed for toggle)
+    const allTasks = allProjects.flatMap((p) => p.tasks ?? []);
     const statusMap = new Map<number, TaskStatus>();
     for (const t of allTasks) {
       statusMap.set(t.id, t.status);
     }
 
-    const entries = (activity?.rows ?? [])
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 50);
+    const sorted = (activity?.rows ?? [])
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    // Deduplicate by taskId — keep only the most recent activity entry per task
+    const seen = new Set<number>();
+    const entries = sorted.filter((e) => {
+      if (seen.has(e.taskId)) return false;
+      seen.add(e.taskId);
+      return true;
+    }).slice(0, 50);
 
     return { percentage: pct, timelineEntries: entries, taskStatusMap: statusMap };
-  }, [projects, activity]);
+  }, [projects, activity, selectedProjectId]);
 
-  /* Filter timeline entries by status */
+  /* Resolve the effective project filter — default to first project if user hasn't chosen */
+  const effectiveProjectId = selectedProjectId ?? projects?.[0]?.id ?? null;
+
+  /* Filter timeline entries by project + status */
   const filteredEntries = useMemo(() => {
-    if (statusFilter === "all") return timelineEntries;
-    return timelineEntries.filter((entry) => {
+    let entries = timelineEntries;
+    // Filter by selected project
+    if (effectiveProjectId) {
+      entries = entries.filter((entry) => entry.projectId === effectiveProjectId);
+    }
+    if (statusFilter === "all") return entries;
+    return entries.filter((entry) => {
       if (statusFilter === "completed") return entry.action === "status_changed" && entry.newValue === "completed";
       if (statusFilter === "pending") return entry.action === "created" || (entry.action === "status_changed" && entry.newValue === "pending");
       if (statusFilter === "in_progress") return entry.action === "status_changed" && entry.newValue === "in_progress";
       if (statusFilter === "blocked") return entry.action === "status_changed" && entry.newValue === "blocked";
       return true;
     });
-  }, [timelineEntries, statusFilter]);
+  }, [timelineEntries, statusFilter, effectiveProjectId]);
 
   const isLoading = isLoadingProjects || isLoadingActivity;
   const errorMsg = projError?.message ?? actError?.message;
@@ -1160,6 +1184,8 @@ export function TaskTimelineClient() {
             projects={projects ?? []}
             onCreated={handleCreated}
             members={orgMembers ?? []}
+            selectedProjectId={selectedProjectId ?? projects?.[0]?.id ?? null}
+            onProjectChange={setSelectedProjectId}
           />
         </div>
 
@@ -1208,7 +1234,6 @@ export function TaskTimelineClient() {
                   key={entry.id}
                   entry={entry}
                   isLast={i === filteredEntries.length - 1}
-                  index={i}
                   onToggleDone={handleToggleDone}
                   onDelete={handleDelete}
                   isToggling={togglingId === entry.taskId}

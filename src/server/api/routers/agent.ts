@@ -1,26 +1,26 @@
 import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { agentOrchestrator } from "~/server/agents/orchestrator/agentOrchestrator";
+import { agentOrchestrator } from "~/server/llm/orchestrator/agentOrchestrator";
 import {
   GenerateTaskDraftsInputSchema,
   ExtractTasksFromPdfInputSchema,
-} from "~/server/agents/schemas/taskGenerationSchemas";
+} from "~/server/llm/schemas/taskGenerationSchemas";
 import {
   TaskPlannerDraftInputSchema,
   TaskPlannerConfirmInputSchema,
   TaskPlannerApplyInputSchema,
-} from "~/server/agents/schemas/a2TaskPlannerSchemas";
+} from "~/server/llm/schemas/a2TaskPlannerSchemas";
 import {
   NotesVaultDraftInputSchema,
   NotesVaultConfirmInputSchema,
   NotesVaultApplyInputSchema,
-} from "~/server/agents/schemas/a3NotesVaultSchemas";
+} from "~/server/llm/schemas/a3NotesVaultSchemas";
 import {
   EventsPublisherDraftInputSchema,
   EventsPublisherConfirmInputSchema,
   EventsPublisherApplyInputSchema,
-} from "~/server/agents/schemas/a4EventsPublisherSchemas";
+} from "~/server/llm/schemas/a4EventsPublisherSchemas";
 
 export const agentRouter = createTRPCRouter({
   /**

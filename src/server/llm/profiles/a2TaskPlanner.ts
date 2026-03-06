@@ -1,4 +1,4 @@
-import { TaskPlanDraftSchema } from "~/server/agents/schemas/a2TaskPlannerSchemas";
+import { TaskPlanDraftSchema } from "~/server/llm/schemas/a2TaskPlannerSchemas";
 
 export type A2ReadToolName =
   | "getSessionContext"

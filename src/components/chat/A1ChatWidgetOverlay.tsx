@@ -289,7 +289,7 @@ export function A1ChatWidgetOverlay(props: {
       >
         <GripVertical className="h-4 w-4" style={{ color: 'rgb(var(--fg-tertiary))', opacity: 0.7 }} />
         <MessageCircle className="h-4 w-4" style={{ color: 'rgb(var(--fg-secondary))' }} />
-        <span className="flex-1 text-sm font-medium truncate" style={{ color: 'rgb(var(--fg-primary))' }}>A1 Intelligence</span>
+        <span className="flex-1 text-sm font-medium truncate" style={{ color: 'rgb(var(--fg-primary))' }}>KAIROS AI</span>
 
         <button
           type="button"

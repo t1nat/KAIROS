@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { tasks, projects, projectCollaborators, taskActivityLog, organizationMembers, users, organizations, events } from "~/server/db/schema";
 import { eq, and, desc, sql, isNull, gte, lte, isNotNull, or } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 export const taskRouter = createTRPCRouter({
  
@@ -688,6 +689,7 @@ export const taskRouter = createTRPCRouter({
         returnScope = "personal";
       }
 
+      const assigneeUsers = alias(users, "assignee_users");
       const rows = await ctx.db
         .select({
           id: taskActivityLog.id,
@@ -705,11 +707,17 @@ export const taskRouter = createTRPCRouter({
             email: users.email,
             image: users.image,
           },
+          assignee: {
+            id: assigneeUsers.id,
+            name: assigneeUsers.name,
+            image: assigneeUsers.image,
+          },
         })
         .from(taskActivityLog)
         .innerJoin(tasks, eq(taskActivityLog.taskId, tasks.id))
         .innerJoin(projects, eq(tasks.projectId, projects.id))
         .leftJoin(users, eq(taskActivityLog.userId, users.id))
+        .leftJoin(assigneeUsers, eq(tasks.assignedToId, assigneeUsers.id))
         .where(whereCondition)
         .orderBy(desc(taskActivityLog.createdAt))
         .limit(limit);

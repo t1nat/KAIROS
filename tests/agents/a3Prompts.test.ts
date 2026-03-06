@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getA3SystemPrompt } from "~/server/agents/prompts/a3Prompts";
+import { getA3SystemPrompt } from "~/server/llm/prompts/a3Prompts";
 
 const mockContext = {
   userId: "user-1",

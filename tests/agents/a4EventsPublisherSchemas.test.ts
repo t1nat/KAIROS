@@ -14,7 +14,7 @@ import {
   EventsPublisherDraftOutputSchema,
   EventsPublisherConfirmOutputSchema,
   EventsPublisherApplyOutputSchema,
-} from "~/server/agents/schemas/a4EventsPublisherSchemas";
+} from "~/server/llm/schemas/a4EventsPublisherSchemas";
 
 /* ─────────── EventCreateSchema ─────────── */
 

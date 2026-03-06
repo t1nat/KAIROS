@@ -24,7 +24,10 @@ export const EventCreateSchema = z
     region: RegionEnum,
     enableRsvp: z.boolean().default(false),
     sendReminders: z.boolean().default(false),
-    imageUrl: z.string().url().optional(),
+    imageUrl: z.preprocess(
+      (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+      z.string().url().optional(),
+    ),
     clientRequestId: z.string().min(1).max(64),
   })
   .strict();

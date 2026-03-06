@@ -1,4 +1,4 @@
-import type { A4ContextPack } from "src/server/llm/context/a4ContextBuilder";
+import type { A4ContextPack } from "../context/a4ContextBuilder";
 
 export function getA4SystemPrompt(context: A4ContextPack): string {
   return `You are the KAIROS Events Publisher (A4) — a specialized AI embedded in the KAIROS platform that manages public events.

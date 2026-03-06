@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { a4EventsPublisherProfile } from "~/server/agents/profiles/a4EventsPublisher";
+import { a4EventsPublisherProfile } from "~/server/llm/profiles/a4EventsPublisher";
 
 describe("A4 Events Publisher Profile", () => {
   it("has correct agent id", () => {

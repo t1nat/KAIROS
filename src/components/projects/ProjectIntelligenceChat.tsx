@@ -300,18 +300,131 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
 
       /* ---- A1 returned a handoff to task_planner → auto-execute ---- */
       if (output?.handoff?.targetAgent === "task_planner") {
-        // Replace thinking with "Handing off..." message, then run task planner
         setMessages((prev) =>
           replaceThinking(prev, {
             text: t("handoffTaskPlanner"),
             createdAt: new Date(),
           }),
         );
-        // Start the task planner pipeline
+        // Add a sub-agent working indicator and run the pipeline
+        setMessages((prev) => [
+          ...prev,
+          { role: "agent", text: SUBAGENT_SENTINEL, createdAt: new Date() },
+        ]);
         void runTaskPlannerPipeline(
           output.handoff.userIntent,
           output.handoff.context,
         );
+        return;
+      }
+
+      /* ---- A1 returned a handoff to notes_vault → run notes draft ---- */
+      if (output?.handoff?.targetAgent === "notes_vault") {
+        setMessages((prev) =>
+          replaceThinking(prev, {
+            text: THINKING_SENTINEL,
+            createdAt: new Date(),
+          }),
+        );
+        void (async () => {
+          try {
+            const res = (await notesDraftMutation.mutateAsync({
+              message: clampText(output!.handoff!.userIntent),
+              handoffContext: output!.handoff!.context,
+            })) as NotesDraftResponse;
+
+            const plan = res?.plan;
+            const draftId = res?.draftId ?? "";
+            const operations = Array.isArray(plan?.operations) ? plan.operations : [];
+            const blocked = Array.isArray(plan?.blocked) ? plan.blocked : [];
+
+            const creates = operations.filter((o) => (o as Record<string, unknown>)?.type === "create").length;
+            const updates = operations.filter((o) => (o as Record<string, unknown>)?.type === "update").length;
+            const deletes = operations.filter((o) => (o as Record<string, unknown>)?.type === "delete").length;
+
+            const chatbotSummary = creates > 0 ? t("noteCreate") : updates > 0 ? t("noteUpdate") : deletes > 0 ? t("noteDelete") : t("noNoteChanges");
+            const ops = [
+              creates > 0 ? t("createOps", { count: creates }) : null,
+              updates > 0 ? t("updateOps", { count: updates }) : null,
+              deletes > 0 ? t("deleteOps", { count: deletes }) : null,
+              blocked.length > 0 ? t("blockedOps", { count: blocked.length }) : null,
+            ].filter(Boolean).join(" \u00b7 ");
+
+            const agentText = [chatbotSummary, ops, operations.length > 0 ? t("clickConfirm") : ""].filter(Boolean).join("\n");
+
+            setMessages((prev) =>
+              replaceThinking(prev, {
+                text: agentText,
+                createdAt: new Date(),
+                actions: operations.length > 0 && draftId ? [{ type: "notes_confirm" as const, draftId }] : undefined,
+              }),
+            );
+          } catch (err) {
+            const errMsg = err instanceof Error ? err.message : "Notes request failed";
+            setMessages((prev) =>
+              replaceThinking(prev, {
+                text: t("somethingWentWrong", { error: errMsg }),
+                createdAt: new Date(),
+              }),
+            );
+          }
+        })();
+        return;
+      }
+
+      /* ---- A1 returned a handoff to events_publisher → run events draft ---- */
+      if (output?.handoff?.targetAgent === "events_publisher") {
+        setMessages((prev) =>
+          replaceThinking(prev, {
+            text: THINKING_SENTINEL,
+            createdAt: new Date(),
+          }),
+        );
+        void (async () => {
+          try {
+            const res = (await eventsDraftMutation.mutateAsync({
+              message: clampText(output!.handoff!.userIntent),
+              handoffContext: output!.handoff!.context,
+            })) as EventsDraftResponse;
+
+            const plan = res?.plan;
+            const draftId = res?.draftId ?? "";
+            const creates = Array.isArray(plan?.creates) ? plan.creates.length : 0;
+            const updates = Array.isArray(plan?.updates) ? plan.updates.length : 0;
+            const deletes = Array.isArray(plan?.deletes) ? plan.deletes.length : 0;
+            const questions = Array.isArray(plan?.questionsForUser) ? plan.questionsForUser : [];
+
+            let agentText: string;
+            if (questions.length > 0) {
+              agentText = `${t("needMoreInfo")}\n${questions.map((q) => `\u2022 ${q}`).join("\n")}`;
+            } else {
+              const summaryLine = plan?.summary ?? "Here\u2019s what I\u2019ll do:";
+              const ops = [
+                creates > 0 ? t("createOps", { count: creates }) : null,
+                updates > 0 ? t("updateOps", { count: updates }) : null,
+                deletes > 0 ? t("deleteOps", { count: deletes }) : null,
+              ].filter(Boolean).join(" \u00b7 ");
+              agentText = [summaryLine, ops || t("noChanges"), creates + updates + deletes > 0 ? t("clickConfirm") : ""].filter(Boolean).join("\n");
+            }
+
+            const hasOps = creates + updates + deletes > 0;
+            setMessages((prev) =>
+              replaceThinking(prev, {
+                text: agentText,
+                createdAt: new Date(),
+                actions: hasOps && draftId ? [{ type: "events_confirm" as const, draftId }] : undefined,
+              }),
+            );
+          } catch (err) {
+            const errMsg = err instanceof Error ? err.message : "Events request failed";
+            setMessages((prev) =>
+              replaceThinking(prev, {
+                text: t("somethingWentWrong", { error: errMsg }),
+                createdAt: new Date(),
+              }),
+            );
+          }
+        })();
         return;
       }
 
@@ -352,54 +465,8 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
 
   /* ---------- Intent detection ---------- */
 
-  const isTaskIntent = useCallback((text: string) => {
-    const t = text.toLowerCase();
-    return (
-      t.includes("build task") ||
-      t.includes("create task") ||
-      t.includes("generate task") ||
-      t.includes("plan task") ||
-      t.includes("add task") ||
-      t.includes("break down") ||
-      t.includes("break it down") ||
-      t.includes("make task") ||
-      t.includes("build the task") ||
-      t.includes("create the task") ||
-      t.includes("tasks for") ||
-      t.includes("tasks into") ||
-      t.includes("task breakdown") ||
-      t.includes("task plan") ||
-      // Extended phrases
-      t.includes("build me task") ||
-      t.includes("create me task") ||
-      t.includes("hand it off") ||
-      t.includes("hand off") ||
-      // Bulgarian
-      t.includes("създай задач") ||
-      t.includes("генерирай задач") ||
-      t.includes("планирай задач") ||
-      t.includes("добави задач") ||
-      t.includes("раздели на задач") ||
-      // Spanish
-      t.includes("crear tarea") ||
-      t.includes("generar tarea") ||
-      t.includes("planificar tarea") ||
-      t.includes("añadir tarea") ||
-      t.includes("desglosar") ||
-      // French
-      t.includes("créer des tâche") ||
-      t.includes("générer des tâche") ||
-      t.includes("planifier des tâche") ||
-      t.includes("ajouter des tâche") ||
-      t.includes("découper") ||
-      // German
-      t.includes("aufgaben erstellen") ||
-      t.includes("aufgaben generieren") ||
-      t.includes("aufgaben planen") ||
-      t.includes("aufgaben hinzufügen") ||
-      t.includes("aufteilen")
-    );
-  }, []);
+  // Client-side intent detection is used only as a fast-path hint.
+  // A1 is the authoritative orchestrator and handles all languages.
 
   const isNotesIntent = useCallback((text: string) => {
     const t = text.toLowerCase();
@@ -425,9 +492,6 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
       t.includes("organize an event")
     );
   }, []);
-
-  // Keep task-intent detection closest to the "default A1" path so it can't regress.
-  const isTaskIntentRuntime = isTaskIntent;
 
   /* ---------- Task Planner Pipeline (auto draft → confirm → apply) ---------- */
 
@@ -591,25 +655,7 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
       }
 
       const run = async () => {
-        /* ---- Task planner path (auto draft → confirm → apply) ---- */
-        if (isTaskIntentRuntime(msg)) {
-          setMessages((prev) => [
-            ...prev,
-            { role: "user", text: msg, createdAt: new Date() },
-            {
-              role: "agent",
-              text: t("handoffTaskPlanner"),
-              createdAt: new Date(),
-            },
-            // "thinking..." field (sub-agent work indicator)
-            { role: "agent", text: SUBAGENT_SENTINEL, createdAt: new Date() },
-          ]);
-
-          await runTaskPlannerPipeline(msg);
-          return;
-        }
-
-        /* ---- Events path ---- */
+        /* ---- Events path (fast-path: needs confirm/apply UI) ---- */
         if (isEventsIntent(msg)) {
           setMessages((prev) => [
             ...prev,
@@ -690,7 +736,7 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
           return;
         }
 
-        /* ---- Notes path ---- */
+        /* ---- Notes path (fast-path: needs confirm/apply UI) ---- */
         if (isNotesIntent(msg)) {
           setMessages((prev) => [
             ...prev,
@@ -782,7 +828,7 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
           return;
         }
 
-        /* ---- Default: A1 workspace chatbot ---- */
+        /* ---- Default: A1 central orchestrator (handles all routing) ---- */
         setMessages((prev) => [
           ...prev,
           { role: "user", text: msg, createdAt: new Date() },
@@ -797,39 +843,9 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
 
       void run();
     },
-    [
-      projectId,
-      t,
-      a1Mutation,
-      isTaskIntent,
-      isNotesIntent,
-      isEventsIntent,
-      notesDraftMutation,
-      eventsDraftMutation,
-      runTaskPlannerPipeline,
-    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [projectId, t],
   );
-
-  /* ---------- Derived state ---------- */
-
-  const isAnyMutationPending = (): boolean => {
-    const eventsPending =
-      Boolean(eventsDraftMutation.isPending) ||
-      Boolean(eventsConfirmMutation.isPending) ||
-      Boolean(eventsApplyMutation.isPending);
-    const taskPending =
-      Boolean(taskDraftMutation.isPending) ||
-      Boolean(taskConfirmMutation.isPending) ||
-      Boolean(taskApplyMutation.isPending);
-    return (
-      Boolean(a1Mutation.isPending) ||
-      Boolean(notesDraftMutation.isPending) ||
-      Boolean(notesConfirmMutation.isPending) ||
-      Boolean(notesApplyMutation.isPending) ||
-      eventsPending ||
-      taskPending
-    );
-  };
 
   const isThinking =
     messages.length > 0 &&
@@ -1528,11 +1544,11 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
               className="h-10 shrink-0 px-4 rounded-full text-sm font-medium transition-all disabled:opacity-60 disabled:cursor-not-allowed text-white hover:scale-[1.03] active:scale-95"
               style={{
                 backgroundColor:
-                  !isAnyMutationPending() && draft.trim()
+                  !isThinking && draft.trim()
                     ? "rgb(var(--accent-primary))"
                     : "rgb(var(--bg-tertiary))",
               }}
-              disabled={isAnyMutationPending() || !draft.trim()}
+              disabled={isThinking || !draft.trim()}
             >
               {t("send")}
             </button>

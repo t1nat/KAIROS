@@ -10,7 +10,8 @@
     "events": "Events",
     "quickActions": "Quick Actions",
     "newProject": "New Project",
-    "calendar": "Calendar"
+    "calendar": "Calendar",
+    "organizations": "Organizations"
   },
   "progress": {
     "title": "Progress",
