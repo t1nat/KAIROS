@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Search,
   Plus,
@@ -37,6 +38,7 @@ type TabId = "all" | "notebooks" | "shared";
 export function NotesDashboard() {
   const toast = useToast();
   const utils = api.useUtils();
+  const searchParams = useSearchParams();
 
   // ---- Tab / filter state ----
   const [activeTab, setActiveTab] = useState<TabId>("all");
@@ -264,6 +266,36 @@ export function NotesDashboard() {
     onError: (e) => toast.error(e.message),
   });
 
+  // ---- Handle shared note from notification ----
+  useEffect(() => {
+    const noteId = searchParams.get("noteId");
+    const tab = searchParams.get("tab");
+    
+    if (noteId && tab) {
+      const id = parseInt(noteId, 10);
+      if (!isNaN(id)) {
+        // Switch to the appropriate tab
+        if (tab === "shared") {
+          setActiveTab("shared");
+          // Open the shared note after a brief delay to ensure data is loaded
+          setTimeout(() => {
+            const sharedNote = sharedNotes?.find(n => n.id === id);
+            if (sharedNote) {
+              setSelectedSharedNoteId(id);
+              setSharedEditTitle(sharedNote.title ?? "");
+              setSharedEditContent(sharedNote.content ?? "");
+            }
+          }, 300);
+        } else {
+          // Open the user's own note
+          setTimeout(() => {
+            setSelectedNoteId(id);
+          }, 300);
+        }
+      }
+    }
+  }, [searchParams, sharedNotes]);
+
   // ---- Handlers ----
   const requestDeleteNote = useCallback((noteId: number) => {
     if (pendingDeleteNoteId === noteId) {
@@ -335,7 +367,7 @@ export function NotesDashboard() {
   // Render
   // ---------------------------------------------------------------------------
   return (
-    <div className="flex h-[calc(100vh-65px)]">
+    <div className="flex h-[calc(100vh-65px)] kairos-page-enter">
       {/* ---- Secondary sidebar ---- */}
       <aside className="w-56 border-r border-white/[0.06] bg-bg-primary flex flex-col p-4 hidden md:flex">
         <button
@@ -424,7 +456,7 @@ export function NotesDashboard() {
                     <div
                       key={note.id}
                       onClick={() => setSelectedNoteId(note.id)}
-                      className="group relative p-5 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-[0_0_20px_rgba(var(--accent-primary),0.12)] border border-white/[0.08] dark:bg-[#1a1625] bg-[#f8f7fa] backdrop-blur-sm hover:bg-[rgba(var(--accent-primary),0.07)] hover:border-[rgba(var(--accent-primary),0.25)] max-h-[220px] flex flex-col"
+                      className="group relative p-5 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-[0_0_20px_rgba(var(--accent-primary),0.12)] border border-white/[0.08] dark:bg-[#1f1b2e] bg-[#efedf4] backdrop-blur-sm hover:bg-[rgba(var(--accent-primary),0.07)] hover:border-[rgba(var(--accent-primary),0.25)] max-h-[220px] flex flex-col"
                     >
                       <div className="flex items-start justify-between mb-3">
                         {note.shareStatus !== "private" ? (
@@ -511,9 +543,14 @@ export function NotesDashboard() {
                         >
                           <button
                             onClick={() => { setShareModalNoteId(note.id); setContextMenuNoteId(null); }}
-                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-fg-secondary hover:bg-white/[0.06] hover:text-fg-primary transition"
+                            className={cn(
+                              "w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition",
+                              note.shareStatus !== "private"
+                                ? "bg-accent-primary/15 text-accent-primary hover:bg-accent-primary/25"
+                                : "text-fg-secondary hover:bg-white/[0.06] hover:text-fg-primary"
+                            )}
                           >
-                            <Share2 size={13} /> Share
+                            <Share2 size={13} /> {note.shareStatus !== "private" ? "Manage Sharing" : "Share"}
                           </button>
                           {notebooksList && notebooksList.length > 0 && (
                             <div className="border-t border-white/[0.06] my-1" />
@@ -873,8 +910,13 @@ export function NotesDashboard() {
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => { setShareModalNoteId(note.id); }}
-                    className="p-1.5 rounded-lg text-fg-tertiary hover:text-accent-primary hover:bg-accent-primary/10 transition"
-                    title="Share"
+                    className={cn(
+                      "p-1.5 rounded-lg transition",
+                      note.shareStatus !== "private"
+                        ? "bg-accent-primary/15 text-accent-primary hover:bg-accent-primary/25"
+                        : "text-fg-tertiary hover:text-accent-primary hover:bg-accent-primary/10"
+                    )}
+                    title={note.shareStatus !== "private" ? "Manage sharing" : "Share"}
                   >
                     <Share2 size={15} />
                   </button>

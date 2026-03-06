@@ -1,10 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
 import Image from "next/image";
-import { ArrowLeft, Folder } from "lucide-react";
+import { ArrowLeft, Folder, CheckCircle, Clock, AlertTriangle, CalendarDays, Calendar } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Doughnut, Bar } from "react-chartjs-2";
 import { ensureChartJsRegistered } from "~/components/charts/chartjs";
@@ -228,101 +227,6 @@ function PieChart(props: {
   );
 }
 
-function LargePieChart(props: {
-  title: string;
-  subtitle: string;
-  percent: number;
-  completed: number;
-  total: number;
-  segments: PieSegment[];
-}) {
-  ensureChartJsRegistered();
-  const colors = useResolvedThemeColors();
-
-  const chartSegments = useMemo(
-    () => props.segments.filter((s) => s.value > 0),
-    [props.segments]
-  );
-  const clampedPercent = Math.max(0, Math.min(100, props.percent));
-
-  const data = useMemo(
-    () => ({
-      labels: chartSegments.map((s) => s.label),
-      datasets: [
-        {
-          data: chartSegments.map((s) => s.value),
-          backgroundColor: chartSegments.map((s) => s.strokeColor),
-          borderColor: colors.border,
-          borderWidth: 1,
-          hoverOffset: 12,
-        },
-      ],
-    }),
-    [chartSegments, colors.border]
-  );
-
-  const options = useMemo(
-    () => ({
-      cutout: "60%",
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          enabled: true,
-          backgroundColor: colors.bgOverlay,
-          titleColor: colors.fgPrimary,
-          bodyColor: colors.fgPrimary,
-          borderColor: colors.border,
-          borderWidth: 1,
-          padding: 16,
-          displayColors: true,
-          boxWidth: 14,
-          boxHeight: 14,
-          usePointStyle: true,
-          cornerRadius: 8,
-        },
-      },
-      interaction: {
-        mode: 'nearest' as const,
-        intersect: true,
-      },
-    }),
-    [colors.bgOverlay, colors.fgPrimary, colors.border]
-  );
-
-  return (
-    <div className="flex flex-col items-center p-6 rounded-2xl bg-gradient-to-br from-bg-elevated/80 to-bg-surface/40 backdrop-blur-sm shadow-lg">
-      <div className="text-center mb-4">
-        <h3 className="text-lg font-bold text-fg-primary">{props.title}</h3>
-        <p className="text-xs text-fg-tertiary mt-1">{props.subtitle}</p>
-      </div>
-
-      <div className="relative w-48 h-48 drop-shadow-xl">
-        <Doughnut data={data} options={options} aria-label={props.title} />
-        {/* Center overlay with percentage */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <p className="text-4xl font-bold bg-gradient-to-r from-accent-primary to-accent-secondary bg-clip-text text-transparent">
-            {Math.round(clampedPercent)}%
-          </p>
-          <p className="text-xs text-fg-tertiary font-medium">{props.completed}/{props.total}</p>
-        </div>
-      </div>
-
-      <div className="mt-5 flex flex-wrap justify-center gap-3">
-        {chartSegments.map((s) => (
-          <span
-            key={s.key}
-            className="inline-flex items-center gap-2 text-xs bg-white/5 hover:bg-white/10 rounded-full px-3 py-1.5 transition-colors"
-          >
-            <span className="h-2.5 w-2.5 rounded-full flex-shrink-0 ring-2 ring-white/10" style={{ backgroundColor: s.strokeColor }} />
-            <span className="text-fg-primary font-medium">{s.label}</span>
-            <span className="text-fg-tertiary tabular-nums">{s.value}</span>
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function ActivityBarChart(props: {
   title: string;
   subtitle?: string;
@@ -405,13 +309,53 @@ function ActivityBarChart(props: {
   );
 
   return (
-    <div className="flex flex-col p-4 rounded-2xl bg-gradient-to-br from-bg-elevated/80 to-bg-surface/40 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300">
+    <div className="flex flex-col p-6 rounded-2xl bg-bg-elevated/70 backdrop-blur-xl border border-white/5 shadow-lg min-h-[200px]">
       <div className="mb-3">
         <p className="text-sm font-semibold text-fg-primary">{props.title}</p>
         {props.subtitle && <p className="text-xs text-fg-tertiary mt-0.5">{props.subtitle}</p>}
       </div>
-      <div className="relative h-40">
+      <div className="relative h-40 flex-1">
         <Bar data={data} options={options} aria-label={props.title} role="img" />
+      </div>
+    </div>
+  );
+}
+
+/* --------------- SVG Progress Ring (matches progress.html) --------------- */
+function ProgressRing(props: {
+  percent: number;
+  completed: number;
+  total: number;
+  segments: PieSegment[];
+}) {
+  const radius = 80;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - Math.min(1, Math.max(0, props.percent / 100)));
+
+  return (
+    <div className="flex flex-col items-center justify-center py-6 relative">
+      <svg className="w-48 h-48" style={{ transform: "rotate(-90deg)" }}>
+        <circle
+          cx="96" cy="96" r={radius}
+          fill="transparent" stroke="currentColor" strokeWidth="12"
+          className="text-border-medium"
+        />
+        <circle
+          cx="96" cy="96" r={radius}
+          fill="transparent" stroke="currentColor" strokeWidth="12"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          className="text-accent-primary"
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-5xl font-bold text-accent-primary">
+          {Math.round(props.percent)}%
+        </span>
+        <span className="text-sm text-fg-tertiary font-medium mt-1">
+          {props.completed}/{props.total} Tasks
+        </span>
       </div>
     </div>
   );
@@ -434,7 +378,6 @@ export function ProgressFeedClient() {
 
   const locale = useLocale();
   const colors = useResolvedThemeColors();
-  const router = useRouter();
 
 
   
@@ -531,29 +474,8 @@ export function ProgressFeedClient() {
       { key: "remaining", label: t("labels.remaining"), value: remainingAll, strokeColor: colors.remaining },
     ];
 
-    const completedByProjectSorted = [...completedByProjectSegments].sort((a, b) => b.value - a.value);
-    const perProjectTop = completedByProjectSorted.slice(0, 6);
-    const perProjectOtherTotal = completedByProjectSorted.slice(6).reduce((s, seg) => s + seg.value, 0);
-    const perProjectPieSegments: PieSegment[] = [
-      ...perProjectTop.map(seg => ({
-        ...seg,
-        projectId: projects.find(p => getProjectDisplayName(p, t("project.untitled")) === seg.label)?.id,
-      })),
-      ...(perProjectOtherTotal > 0
-        ? [{
-            key: "other_projects",
-            label: t("perProject.otherProjects"),
-            value: perProjectOtherTotal,
-            strokeColor: colors.other,
-          }]
-        : []),
-      {
-        key: "remaining",
-        label: t("labels.remaining"),
-        value: Math.max(0, totalTasksAll - completedTasksAll),
-        strokeColor: colors.remaining,
-      },
-    ].filter((s) => s.value > 0);
+
+
 
     const completionRows = activityRows.filter(
       (r) => r.action === "status_changed" && r.newValue === "completed"
@@ -573,20 +495,7 @@ export function ProgressFeedClient() {
       );
     }
     const globalSorted = Array.from(globalContributorCounts.entries()).sort((a, b) => b[1] - a[1]);
-    const globalTop = globalSorted.slice(0, 5);
-    const globalOtherTotal = globalSorted.slice(5).reduce((s, [, v]) => s + v, 0);
 
-    const contributorShareSegments: PieSegment[] = [
-      ...globalTop.map(([name, value], idx) => ({
-        key: name,
-        label: name,
-        value,
-        strokeColor: colors.palette[idx % colors.palette.length] ?? colors.other,
-      })),
-      ...(globalOtherTotal > 0
-        ? [{ key: "other", label: t("labels.other"), value: globalOtherTotal, strokeColor: colors.other }]
-        : []),
-    ];
 
     // Task Status Distribution
     const statusCounts = {
@@ -596,12 +505,7 @@ export function ProgressFeedClient() {
       blocked: allTasks.filter((t) => t.status === "blocked").length,
     };
 
-    const statusSegments: PieSegment[] = [
-      { key: "completed", label: "Completed", value: statusCounts.completed, strokeColor: colors.completed },
-      { key: "in_progress", label: "In Progress", value: statusCounts.in_progress, strokeColor: colors.palette[1] ?? colors.info },
-      { key: "pending", label: "Pending", value: statusCounts.pending, strokeColor: colors.palette[2] ?? colors.warning },
-      { key: "blocked", label: "Blocked", value: statusCounts.blocked, strokeColor: colors.error },
-    ].filter((s) => s.value > 0);
+
 
     // Due Dates Tracking
     const now = new Date();
@@ -627,32 +531,188 @@ export function ProgressFeedClient() {
     }).length;
 
     return (
-      <div className="min-h-screen p-4 lg:p-6">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-fg-primary">{t("title")}</h2>
+      <div className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-[1400px] mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold tracking-tight text-fg-primary">{t("title")}</h2>
         </div>
 
-        {/* Main charts layout - 2 column design */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Left column - Project Analytics (large) + Task Status below */}
-          <div className="flex flex-col gap-6">
-            <LargePieChart
-              title={t("overall.title")}
-              subtitle={t("overall.subtitle")}
+        {/* Row 1: Project Analytics + Contributor Share / Created vs Completed */}
+        <div className="grid grid-cols-12 gap-6">
+          {/* Project Analytics - large glass card */}
+          <div className="col-span-12 lg:col-span-7 bg-bg-elevated/70 backdrop-blur-xl border border-white/5 p-8 rounded-2xl shadow-lg shadow-accent-primary/[0.08]">
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold text-fg-primary">{t("overall.title")}</h3>
+              <p className="text-sm text-fg-tertiary">{t("overall.subtitle")}</p>
+            </div>
+
+            <ProgressRing
               percent={overallPercent}
               completed={completedTasksAll}
               total={totalTasksAll}
               segments={overallSegments}
             />
-            
-            {/* Task Status Distribution - below Project Analytics */}
-            <PieChart
-              title="Task Status Distribution"
-              subtitle="Breakdown by status"
-              segments={statusSegments}
-            />
 
-            {/* New chart: Activity trend (last 7 days) */}
+            {/* Legend below ring */}
+            <div className="flex justify-center gap-8 mt-8">
+              {completedByProjectSegments.slice(0, 4).map((seg) => (
+                <div key={seg.key} className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: seg.strokeColor }} />
+                  <span className="text-sm text-fg-primary">
+                    {seg.label} <span className="text-fg-tertiary ml-1">{seg.value}</span>
+                  </span>
+                </div>
+              ))}
+              {remainingAll > 0 && (
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-border-medium" />
+                  <span className="text-sm text-fg-primary">
+                    {t("labels.remaining")} <span className="text-fg-tertiary ml-1">{remainingAll}</span>
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right column: Contributor Share + Created vs Completed */}
+          <div className="col-span-12 lg:col-span-5 flex flex-col gap-6">
+            {/* Contributor Share */}
+            <div className="bg-bg-elevated/70 backdrop-blur-xl border border-white/5 p-6 rounded-2xl flex-1">
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-fg-tertiary">{t("contributors.title")}</h3>
+                <p className="text-xs text-fg-tertiary/70">{t("contributors.subtitle")}</p>
+              </div>
+              <div className="space-y-3">
+                {globalSorted.slice(0, 5).map(([name, count], idx) => {
+                  const maxVal = globalSorted[0]?.[1] ?? 1;
+                  const barPercent = Math.round((count / maxVal) * 100);
+                  const initials = name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+                  return (
+                    <div key={name} className="flex items-center gap-3 p-3 rounded-xl bg-accent-primary/5 border border-accent-primary/10">
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] text-white font-bold flex-shrink-0"
+                        style={{ backgroundColor: colors.palette[idx % colors.palette.length] }}
+                      >
+                        {initials}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-fg-primary truncate">{name}</p>
+                        <div className="w-full bg-border-medium h-1 rounded-full mt-1 overflow-hidden">
+                          <div className="bg-accent-primary h-full rounded-full transition-all" style={{ width: `${barPercent}%` }} />
+                        </div>
+                      </div>
+                      <span className="text-sm font-bold text-accent-primary">{count}</span>
+                    </div>
+                  );
+                })}
+                {globalSorted.length === 0 && (
+                  <p className="text-sm text-fg-tertiary text-center py-4">No activity yet</p>
+                )}
+              </div>
+            </div>
+
+            {/* Created vs Completed */}
+            <div className="bg-bg-elevated/70 backdrop-blur-xl border border-white/5 p-6 rounded-2xl flex-1">
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-fg-tertiary">{t("createdVsCompleted.title")}</h3>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-blue-500" />
+                    <span className="text-xs text-fg-secondary">{t("labels.created")}</span>
+                  </div>
+                  <span className="text-xs font-bold text-fg-primary">{createdRows.length}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-accent-primary" />
+                    <span className="text-xs text-fg-secondary">{t("labels.completed")}</span>
+                  </div>
+                  <span className="text-xs font-bold text-accent-primary">{completionRows.length}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Row 2: Task Status Distribution + Upcoming Due Dates */}
+        <div className="grid grid-cols-12 gap-6">
+          {/* Task Status Distribution */}
+          <div className="col-span-12 lg:col-span-4 bg-bg-elevated/70 backdrop-blur-xl border border-white/5 p-6 rounded-2xl">
+            <h3 className="text-sm font-semibold text-fg-primary mb-6">Task Status Distribution</h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-green-500/5 border border-green-500/10">
+                <div className="flex items-center gap-3">
+                  <CheckCircle size={16} className="text-green-500" />
+                  <span className="text-sm font-medium text-fg-primary">Completed</span>
+                </div>
+                <span className="text-sm font-bold text-fg-primary">{statusCounts.completed}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-xl bg-orange-500/5 border border-orange-500/10">
+                <div className="flex items-center gap-3">
+                  <Clock size={16} className="text-orange-500" />
+                  <span className="text-sm font-medium text-fg-primary">Pending</span>
+                </div>
+                <span className="text-sm font-bold text-fg-primary">{statusCounts.pending}</span>
+              </div>
+              {statusCounts.in_progress > 0 && (
+                <div className="flex items-center justify-between p-3 rounded-xl bg-blue-500/5 border border-blue-500/10">
+                  <div className="flex items-center gap-3">
+                    <Clock size={16} className="text-blue-500" />
+                    <span className="text-sm font-medium text-fg-primary">In Progress</span>
+                  </div>
+                  <span className="text-sm font-bold text-fg-primary">{statusCounts.in_progress}</span>
+                </div>
+              )}
+              {statusCounts.blocked > 0 && (
+                <div className="flex items-center justify-between p-3 rounded-xl bg-red-500/5 border border-red-500/10">
+                  <div className="flex items-center gap-3">
+                    <AlertTriangle size={16} className="text-red-500" />
+                    <span className="text-sm font-medium text-fg-primary">Blocked</span>
+                  </div>
+                  <span className="text-sm font-bold text-fg-primary">{statusCounts.blocked}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Upcoming Due Dates */}
+          <div className="col-span-12 lg:col-span-8 space-y-4">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-fg-tertiary">Upcoming Due Dates</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-6 rounded-2xl bg-red-500/10 border border-red-500/20 group hover:bg-red-500/15 transition-all">
+                <div className="flex items-center gap-2 text-red-500 mb-2">
+                  <AlertTriangle size={18} />
+                  <span className="text-xs font-bold uppercase tracking-wider">Overdue</span>
+                </div>
+                <p className="text-4xl font-bold text-red-500 mb-1">{overdueTasks}</p>
+                <p className="text-xs text-fg-tertiary">Tasks past due date</p>
+              </div>
+              <div className="p-6 rounded-2xl bg-orange-500/10 border border-orange-500/20 group hover:bg-orange-500/15 transition-all">
+                <div className="flex items-center gap-2 text-orange-500 mb-2">
+                  <CalendarDays size={18} />
+                  <span className="text-xs font-bold uppercase tracking-wider">Due Today</span>
+                </div>
+                <p className="text-4xl font-bold text-orange-500 mb-1">{dueTodayTasks}</p>
+                <p className="text-xs text-fg-tertiary">Tasks due today</p>
+              </div>
+              <div className="p-6 rounded-2xl bg-blue-500/10 border border-blue-500/20 group hover:bg-blue-500/15 transition-all">
+                <div className="flex items-center gap-2 text-blue-400 mb-2">
+                  <Calendar size={18} />
+                  <span className="text-xs font-bold uppercase tracking-wider">This Week</span>
+                </div>
+                <p className="text-4xl font-bold text-blue-400 mb-1">{dueThisWeekTasks}</p>
+                <p className="text-xs text-fg-tertiary">Tasks due within 7 days</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Row 3: Activity Trend + Per-project share */}
+        <div className="grid grid-cols-12 gap-6">
+          {/* Activity Trend */}
+          <div className="col-span-12 lg:col-span-8">
             <ActivityBarChart
               title={t("activityTrend.title")}
               subtitle={t("activityTrend.subtitle")}
@@ -660,66 +720,44 @@ export function ProgressFeedClient() {
             />
           </div>
 
-          {/* Right column - Contributor and Per-project share stacked */}
-          <div className="flex flex-col gap-6">
-            <PieChart
-              title={t("contributors.title")}
-              subtitle={t("contributors.subtitle")}
-              segments={contributorShareSegments}
-            />
-
-            {/* New/different data: tasks created vs completed */}
-            <PieChart
-              title={t("createdVsCompleted.title")}
-              subtitle={t("createdVsCompleted.subtitle")}
-              segments={([
-                { key: "created", label: t("labels.created"), value: createdRows.length, strokeColor: colors.info },
-                { key: "completed", label: t("labels.completed"), value: completionRows.length, strokeColor: colors.completed },
-              ] as PieSegment[]).filter((s) => s.value > 0)}
-            />
-
-            <PieChart
-              title={t("perProject.title")}
-              subtitle={t("perProject.subtitle")}
-              segments={perProjectPieSegments}
-              onSegmentClick={(projectId) => {
-                router.push(`/create?projectId=${projectId}`);
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Due Dates Section */}
-        <div className="mb-8">
-          <p className="text-sm font-semibold text-fg-primary mb-4">Due Dates</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-5 rounded-2xl bg-gradient-to-br from-red-500/10 to-red-600/5 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-                <p className="text-xs font-medium text-fg-tertiary">Overdue</p>
-              </div>
-              <p className="text-3xl font-bold text-red-500">{overdueTasks}</p>
-              <p className="text-xs text-fg-tertiary mt-2">Tasks past due date</p>
-            </div>
-            <div className="p-5 rounded-2xl bg-gradient-to-br from-orange-500/10 to-orange-600/5 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />
-                <p className="text-xs font-medium text-fg-tertiary">Due Today</p>
-              </div>
-              <p className="text-3xl font-bold text-orange-500">{dueTodayTasks}</p>
-              <p className="text-xs text-fg-tertiary mt-2">Tasks due today</p>
-            </div>
-            <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-500/10 to-blue-600/5 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                <p className="text-xs font-medium text-fg-tertiary">Due This Week</p>
-              </div>
-              <p className="text-3xl font-bold text-blue-500">{dueThisWeekTasks}</p>
-              <p className="text-xs text-fg-tertiary mt-2">Tasks due within 7 days</p>
+          {/* Per-project share */}
+          <div className="col-span-12 lg:col-span-4 bg-bg-elevated/70 backdrop-blur-xl border border-white/5 p-6 rounded-2xl">
+            <h3 className="text-sm font-semibold text-fg-primary mb-4">{t("perProject.title")}</h3>
+            <div className="space-y-3">
+              {projectsSorted.slice(0, 6).map((project, idx) => {
+                const title = getProjectDisplayName(project, t("project.untitled"));
+                const projectCompleted = (project.tasks ?? []).filter(tk => tk.status === "completed").length;
+                const projectTotal = project.tasks?.length ?? 0;
+                const barPct = projectTotal > 0 ? Math.round((projectCompleted / projectTotal) * 100) : 0;
+                return (
+                  <div key={project.id}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-2 h-2 rounded-full"
+                          style={{ backgroundColor: colors.palette[idx % colors.palette.length] }}
+                        />
+                        <span className="text-xs font-medium text-fg-primary">{title}</span>
+                      </div>
+                      <span className="text-xs font-bold text-fg-primary">{projectCompleted}/{projectTotal}</span>
+                    </div>
+                    <div className="w-full bg-border-medium h-2 rounded-full overflow-hidden mt-1">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${barPct}%`,
+                          backgroundColor: colors.palette[idx % colors.palette.length],
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
 
+        {/* Project Cards Grid */}
         <div>
           <p className="text-sm font-medium text-fg-primary mb-3">{t("projectsList.title")}</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">

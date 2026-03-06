@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Shield, Check } from "lucide-react";
+import { Shield } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { api } from "~/trpc/react";
@@ -69,8 +69,8 @@ export function SecuritySettingsClient() {
  const onToggle2fa = async () => {
  try {
  await updateSecurity.mutateAsync({ twoFactorEnabled: !twoFactorEnabled });
- } catch (e) {
- // Error is handled silently or via UI states
+ } catch {
+ // Error displayed via updateSecurity.error in the UI
  }
  };
 
@@ -79,8 +79,8 @@ export function SecuritySettingsClient() {
  await updateSecurity.mutateAsync({
  notesKeepUnlockedUntilClose: !notesKeepUnlockedUntilClose,
  });
- } catch (e) {
- // Error is handled silently or via UI states
+ } catch {
+ // Error displayed via updateSecurity.error in the UI
  }
  };
 
@@ -94,8 +94,8 @@ export function SecuritySettingsClient() {
  await deleteAllData.mutateAsync();
  await utils.settings.get.cancel();
  await signOut({ callbackUrl: "/" });
- } catch (e) {
- // Error is handled silently
+ } catch {
+ // Error displayed via deleteAllData.error in the UI
  }
  };
 
