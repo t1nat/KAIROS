@@ -1018,6 +1018,7 @@ export function TaskTimelineClient() {
   const updateStatus = typedApi.task.updateStatus.useMutation({
     onSuccess: () => {
       setTogglingId(null);
+      // Refetch the project data to get updated stats
       void utils.project.getMyProjects.invalidate();
       void utils.task.getOrgActivity.invalidate();
     },
