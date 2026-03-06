@@ -7,7 +7,7 @@ import { TRPCError } from "@trpc/server";
 
 const createEventSchema = z.object({
   title: z.string().min(1, "Title is required").max(256),
-  description: z.string().min(1, "Description is required"),
+  description: z.string().min(1, "Description is required").max(5000),
   eventDate: z.date(),
   region: z.enum([
     "sofia", "plovdiv", "varna", "burgas", "ruse", 

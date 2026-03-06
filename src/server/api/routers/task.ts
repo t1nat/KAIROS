@@ -15,6 +15,7 @@ export const taskRouter = createTRPCRouter({
         assignedToId: z.string().optional(),
         priority: z.enum(["low", "medium", "high", "urgent"]),
         dueDate: z.date().optional(),
+        clientRequestId: z.string().max(128).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -86,6 +87,22 @@ export const taskRouter = createTRPCRouter({
 
       const nextOrderIndex = (maxRow?.max ?? 0) + 1;
 
+      // Deduplication: if clientRequestId is provided, check for existing task
+      if (input.clientRequestId) {
+        const [existing] = await ctx.db
+          .select()
+          .from(tasks)
+          .where(
+            and(
+              eq(tasks.projectId, input.projectId),
+              eq(tasks.clientRequestId, input.clientRequestId)
+            )
+          );
+        if (existing) {
+          return existing;
+        }
+      }
+
       const [task] = await ctx.db
         .insert(tasks)
         .values({
@@ -98,6 +115,7 @@ export const taskRouter = createTRPCRouter({
           status: "pending",
           createdById: ctx.session.user.id,
           orderIndex: nextOrderIndex,
+          clientRequestId: input.clientRequestId,
         })
         .returning();
 

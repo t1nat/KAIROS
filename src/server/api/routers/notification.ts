@@ -36,8 +36,10 @@ export const notificationRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const idParts = input.notificationId.split("-");
-      const actualId = idParts.length > 1 ? parseInt(idParts[1]!) : parseInt(input.notificationId);
+      // Parse ID consistently: strip any prefix before a dash, take the numeric part
+      const raw = input.notificationId;
+      const numericPart = raw.includes("-") ? raw.split("-").pop()! : raw;
+      const actualId = parseInt(numericPart, 10);
 
       if (isNaN(actualId)) {
         return { success: true, message: "Client-side notification marked as read" };
@@ -88,7 +90,9 @@ export const notificationRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const id = parseInt(input.notificationId);
+      const raw = input.notificationId;
+      const numericPart = raw.includes("-") ? raw.split("-").pop()! : raw;
+      const id = parseInt(numericPart, 10);
       
       if (isNaN(id)) {
         return { success: true, message: "Client-side notification removed" };

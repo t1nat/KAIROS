@@ -618,7 +618,7 @@ export const accounts = createTable(
     userId: d
       .varchar({ length: 255 })
       .notNull()
-      .references(() => users.id),
+      .references(() => users.id, { onDelete: "cascade" }),
     type: d.varchar({ length: 255 }).$type<AdapterAccount["type"]>().notNull(),
     provider: d.varchar({ length: 255 }).notNull(),
     providerAccountId: d.varchar({ length: 255 }).notNull(),
@@ -643,7 +643,7 @@ export const sessions = createTable(
     userId: d
       .varchar({ length: 255 })
       .notNull()
-      .references(() => users.id),
+      .references(() => users.id, { onDelete: "cascade" }),
     expires: d.timestamp({ mode: "date", withTimezone: true }).notNull(),
   }),
   (t) => [index("session_user_idx").on(t.userId)],

@@ -160,24 +160,30 @@ export const projectRouter = createTRPCRouter({
       : [];
     const createdByUserMap = new Map(createdByUsers.map((u) => [u.id, u] as const));
 
-    const projectsWithTasks = await Promise.all(
-      projectsList.map(async (project) => {
-        const projectTasks = await ctx.db
+    // Batch-fetch all tasks for visible projects (avoid N+1 queries)
+    const projectIds = projectsList.map((p) => p.id);
+    const allTasks = projectIds.length
+      ? await ctx.db
           .select({
             id: tasks.id,
             status: tasks.status,
             dueDate: tasks.dueDate,
+            projectId: tasks.projectId,
           })
           .from(tasks)
-          .where(eq(tasks.projectId, project.id));
+          .where(inArray(tasks.projectId, projectIds))
+      : [];
 
-        return {
-          ...project,
-          createdByUser: createdByUserMap.get(project.createdById) ?? null,
-          tasks: projectTasks,
-        };
-      })
-    );
+    const tasksByProjectId = allTasks.reduce((acc, t) => {
+      (acc[t.projectId] ??= []).push({ id: t.id, status: t.status, dueDate: t.dueDate });
+      return acc;
+    }, {} as Record<number, { id: number; status: string; dueDate: Date | null }[]>);
+
+    const projectsWithTasks = projectsList.map((project) => ({
+      ...project,
+      createdByUser: createdByUserMap.get(project.createdById) ?? null,
+      tasks: tasksByProjectId[project.id] ?? [],
+    }));
 
 
     if (process.env.NODE_ENV !== "production") {

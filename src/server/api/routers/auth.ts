@@ -5,9 +5,12 @@ import { eq, and, gt } from "drizzle-orm";
 import * as argon2 from "argon2";
 import { TRPCError } from "@trpc/server";
 import { sendWelcomeEmail, sendPasswordResetCode } from "~/server/email";
+import crypto from "node:crypto";
 
 function generateResetCode(): string {
-  return Math.floor(10000000 + Math.random() * 90000000).toString();
+  const buf = crypto.randomBytes(4);
+  const num = buf.readUInt32BE(0) % 90000000 + 10000000;
+  return num.toString();
 }
 
 export const authRouter = createTRPCRouter({
@@ -55,7 +58,7 @@ export const authRouter = createTRPCRouter({
         email,
         userName: name ?? email,
       }).catch((err) => {
-        console.error("Failed to send welcome email:", err);
+        console.error("Failed to send welcome email to:", email, err);
       });
 
       return {

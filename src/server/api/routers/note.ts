@@ -218,7 +218,7 @@ export const noteRouter = createTRPCRouter({
         type: "system",
         title: "Note shared with you",
         message: `${sharerName} shared "${noteTitle}" with you (${input.permission === "write" ? "can edit" : "view only"}).`,
-        link: "/create?action=new_note",
+        link: `/notes?noteId=${input.noteId}&tab=shared`,
         read: false,
       });
 
@@ -417,8 +417,10 @@ export const noteRouter = createTRPCRouter({
         try {
           content = decryptContent(note.content, input.attemptedPassword, note.passwordSalt);
         } catch {
-          // Fallback: content may be plaintext (legacy notes created before encryption)
-          content = note.content;
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to decrypt note content. The note may need to be re-saved.",
+          });
         }
       }
 
@@ -462,9 +464,15 @@ export const noteRouter = createTRPCRouter({
       }
 
       // Re-encrypt if the note is password-protected and password is provided
-      const storedContent = (note.passwordHash && note.passwordSalt && input.password)
-        ? encryptContent(input.content, input.password, note.passwordSalt)
-        : input.content;
+      let storedContent = input.content;
+      if (note.passwordHash && note.passwordSalt && input.password) {
+        // Verify password matches before re-encrypting
+        const isMatch = await argon2.verify(note.passwordHash, input.password);
+        if (!isMatch) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Incorrect note password." });
+        }
+        storedContent = encryptContent(input.content, input.password, note.passwordSalt);
+      }
 
       await ctx.db.update(stickyNotes)
         .set({
@@ -536,8 +544,10 @@ export const noteRouter = createTRPCRouter({
         try {
           content = decryptContent(note.content, input.password, note.passwordSalt);
         } catch {
-          // Fallback: content may be plaintext (legacy notes)
-          content = note.content;
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to decrypt note content. The note may need to be re-saved.",
+          });
         }
       }
 
@@ -633,26 +643,21 @@ export const noteRouter = createTRPCRouter({
       const salt = crypto.randomBytes(32).toString("hex");
       const newPasswordHash = await argon2.hash(input.newPassword, ARGON2_OPTS);
 
-      // Re-encrypt content with the new password if it was previously encrypted
-      let newContent: string | undefined;
-      if (note.passwordSalt) {
-        try {
-          // Try to decrypt with old salt (content is encrypted). If it fails, treat as plaintext.
-          // Since we don't have the old password, we re-encrypt the raw content (which may be ciphertext).
-          // The content will be re-encrypted freshly when the user next saves via update.
-          // For now, store plaintext (the note was just reset — user will edit next).
-          newContent = note.content;
-        } catch {
-          newContent = note.content;
-        }
-      }
+      // When resetting via PIN we don't have the old password, so we cannot
+      // decrypt the existing content. Store it as plain encrypted blob and
+      // re-encrypt with the new password+salt. The user will need to re-save
+      // content after resetting. We strip encryption so the note content
+      // becomes the raw (possibly garbled) ciphertext — the user should
+      // re-enter or paste content after a PIN reset.
+      // Best-effort: mark content as needing re-entry.
+      const resetPlaceholder = "[Content reset — please re-enter your note content]";
 
       await ctx.db
         .update(stickyNotes)
         .set({
           passwordHash: newPasswordHash,
           passwordSalt: salt,
-          ...(newContent !== undefined ? { content: newContent } : {}),
+          content: encryptContent(resetPlaceholder, input.newPassword, salt),
         })
         .where(eq(stickyNotes.id, input.noteId));
 

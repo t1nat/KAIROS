@@ -238,6 +238,7 @@ export class EmailService {
     email,
     userName,
   }: WelcomeEmailParams): Promise<{ id: string } | null> {
+    console.log('[Email Service] Sending welcome email to:', email);
     try {
       const { data, error } = await this.resend.emails.send({
         from: this.options.fromEmail,
@@ -248,13 +249,14 @@ export class EmailService {
       });
 
       if (error) {
-        console.error('Resend Error (welcome):', error);
+        console.error('[Email Service] Resend Error (welcome):', JSON.stringify(error, null, 2));
         return null;
       }
 
+      console.log('[Email Service] Welcome email sent successfully:', data?.id);
       return data;
     } catch (error) {
-      console.error('Email Service Error (welcome):', error);
+      console.error('[Email Service] Email Service Error (welcome):', error);
       return null;
     }
   }
@@ -264,6 +266,7 @@ export class EmailService {
     userName,
     code,
   }: PasswordResetCodeParams): Promise<{ id: string } | null> {
+    console.log('[Email Service] Sending password reset code to:', email);
     try {
       const { data, error } = await this.resend.emails.send({
         from: this.options.fromEmail,
@@ -274,13 +277,14 @@ export class EmailService {
       });
 
       if (error) {
-        console.error('Resend Error (reset code):', error);
+        console.error('[Email Service] Resend Error (reset code):', JSON.stringify(error, null, 2));
         throw new Error(`Failed to send reset code: ${error.message}`);
       }
 
+      console.log('[Email Service] Reset code email sent successfully:', data?.id);
       return data;
     } catch (error) {
-      console.error('Email Service Error (reset code):', error);
+      console.error('[Email Service] Email Service Error (reset code):', error);
       throw error;
     }
   }
@@ -293,17 +297,24 @@ export function getEmailService(): EmailService {
 
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
+    console.error('[Email Service] RESEND_API_KEY is not set in environment variables');
     throw new Error('RESEND_API_KEY is not set in environment variables');
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
   if (!appUrl) {
+    console.error('[Email Service] NEXT_PUBLIC_APP_URL is not set in environment variables');
     throw new Error('NEXT_PUBLIC_APP_URL is not set in environment variables');
   }
 
+  const rawFromEmail = process.env.RESEND_FROM_EMAIL?.trim() ?? 'Kairos <onboarding@resend.dev>';
+  // Normalize accidental surrounding quotes in env values, e.g. "Kairos <noreply@domain.com>"
+  const fromEmail = rawFromEmail.replace(/^['"]|['"]$/g, '');
+  console.log('[Email Service] Initialized with:', { appUrl, fromEmail: fromEmail.replace(/<.*>/, '<***>') });
+
   cachedEmailService = new EmailService(new Resend(apiKey), {
     appUrl,
-    fromEmail: process.env.RESEND_FROM_EMAIL ?? 'Kairos <onboarding@resend.dev>',
+    fromEmail,
   });
   return cachedEmailService;
 }

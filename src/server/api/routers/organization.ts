@@ -1,25 +1,29 @@
 
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { organizations, organizationMembers, organizationRoles, organizationInvites, users } from "~/server/db/schema";
 import { eq, and } from "drizzle-orm";
 
 
 function generateAccessCode(): string {
-  // SECURITY: use cryptographically secure randomness (Math.random() is predictable).
-  // Generates a code like XXXX-XXXX-XXXX.
+  // SECURITY: use cryptographically secure randomness with rejection sampling
+  // to avoid modulo bias. Generates a code like XXXX-XXXX-XXXX.
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
-  // 12 chars => 12 * log2(36) ~= 62 bits of entropy.
-  // With rate limiting on join, this is fine for an org invite code.
-  const bytes = new Uint8Array(12);
-  // node runtime in Next.js supports WebCrypto.
-  crypto.getRandomValues(bytes);
+  const maxValid = 256 - (256 % alphabet.length); // reject values >= maxValid
 
   let code = "";
-  for (let i = 0; i < bytes.length; i++) {
-    if (i > 0 && i % 4 === 0) code += "-";
-    code += alphabet[bytes[i]! % alphabet.length];
+  let generated = 0;
+  while (generated < 12) {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    for (const b of bytes) {
+      if (generated >= 12) break;
+      if (b >= maxValid) continue; // rejection sampling to eliminate bias
+      if (generated > 0 && generated % 4 === 0) code += "-";
+      code += alphabet[b % alphabet.length];
+      generated++;
+    }
   }
 
   return code;
@@ -143,7 +147,10 @@ export const organizationRouter = createTRPCRouter({
         .limit(1);
 
       if (!membership) {
-        throw new Error("You are not a member of this organization");
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not a member of this organization",
+        });
       }
 
       await ctx.db
@@ -247,7 +254,10 @@ export const organizationRouter = createTRPCRouter({
           .where(eq(organizations.accessCode, input.code.toUpperCase()));
 
         if (!organization) {
-          throw new Error("Invalid access code. Please check and try again.");
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Invalid access code. Please check and try again.",
+          });
         }
 
         
@@ -262,7 +272,10 @@ export const organizationRouter = createTRPCRouter({
           );
 
         if (existingMember) {
-          throw new Error("You are already a member of this organization.");
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "You are already a member of this organization.",
+          });
         }
 
         
@@ -361,7 +374,10 @@ export const organizationRouter = createTRPCRouter({
         );
 
       if (!membership) {
-        throw new Error("You are not a member of this organization");
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not a member of this organization",
+        });
       }
 
       
@@ -474,14 +490,31 @@ export const organizationRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // Check if the current user is the org owner
-      const [org] = await ctx.db
+      // SECURITY: Verify the caller is an admin with canManageRoles permission
+      const [caller] = await ctx.db
         .select()
-        .from(organizations)
-        .where(eq(organizations.id, input.organizationId));
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.organizationId, input.organizationId),
+            eq(organizationMembers.userId, ctx.session.user.id),
+          ),
+        )
+        .limit(1);
 
-      if (org?.createdById !== ctx.session.user.id) {
-        throw new Error("Only the organization owner can update member permissions");
+      if (!caller || caller.role !== "admin" || !caller.canManageRoles) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to update member permissions",
+        });
+      }
+
+      // SECURITY: Prevent users from modifying their own permissions
+      if (input.userId === ctx.session.user.id) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "You cannot modify your own permissions",
+        });
       }
 
       // Update the member's permissions
@@ -522,8 +555,38 @@ export const organizationRouter = createTRPCRouter({
         )
         .limit(1);
 
-      if (!caller || caller.role !== "admin") {
-        throw new Error("Only admins can change member roles");
+      if (!caller || caller.role !== "admin" || !caller.canManageRoles) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only admins with role management permission can change member roles",
+        });
+      }
+
+      // SECURITY: Prevent users from changing their own role
+      if (input.userId === ctx.session.user.id) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "You cannot change your own role",
+        });
+      }
+
+      // SECURITY: Verify the target user is actually a member
+      const [targetMember] = await ctx.db
+        .select()
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.organizationId, input.organizationId),
+            eq(organizationMembers.userId, input.userId),
+          ),
+        )
+        .limit(1);
+
+      if (!targetMember) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User is not a member of this organization",
+        });
       }
 
       // Determine permissions based on the template role
@@ -599,12 +662,63 @@ export const organizationRouter = createTRPCRouter({
         .limit(1);
 
       if (!caller || caller.role !== "admin" || !caller.canKickMembers) {
-        throw new Error("You do not have permission to remove members");
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to remove members",
+        });
       }
 
-      // Prevent removing yourself
+      // SECURITY: Prevent removing yourself
       if (input.userId === ctx.session.user.id) {
-        throw new Error("You cannot remove yourself. Use the leave action instead.");
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "You cannot remove yourself. Use the leave action instead.",
+        });
+      }
+
+      // SECURITY: Verify target user exists in the organization
+      const [targetMember] = await ctx.db
+        .select()
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.organizationId, input.organizationId),
+            eq(organizationMembers.userId, input.userId),
+          ),
+        )
+        .limit(1);
+
+      if (!targetMember) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User is not a member of this organization",
+        });
+      }
+
+      // SECURITY: Prevent removing the organization creator if they're the only admin
+      const [org] = await ctx.db
+        .select()
+        .from(organizations)
+        .where(eq(organizations.id, input.organizationId))
+        .limit(1);
+
+      if (org?.createdById === input.userId) {
+        const adminCount = await ctx.db
+          .select()
+          .from(organizationMembers)
+          .where(
+            and(
+              eq(organizationMembers.organizationId, input.organizationId),
+              eq(organizationMembers.role, "admin"),
+            ),
+          );
+
+        if (adminCount.length === 1) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Cannot remove the organization creator when they are the only admin",
+          });
+        }
       }
 
       // Delete the membership
@@ -663,7 +777,10 @@ export const organizationRouter = createTRPCRouter({
         .limit(1);
 
       if (!membership) {
-        throw new Error("You are not a member of this organization");
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not a member of this organization",
+        });
       }
 
       const roles = await ctx.db
@@ -702,8 +819,11 @@ export const organizationRouter = createTRPCRouter({
         )
         .limit(1);
 
-      if (!caller || caller.role !== "admin") {
-        throw new Error("Only admins can create roles");
+      if (!caller || caller.role !== "admin" || !caller.canManageRoles) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only admins with role management permission can create roles",
+        });
       }
 
       const [role] = await ctx.db
@@ -745,8 +865,11 @@ export const organizationRouter = createTRPCRouter({
         )
         .limit(1);
 
-      if (!caller || caller.role !== "admin") {
-        throw new Error("Only admins can delete roles");
+      if (!caller || caller.role !== "admin" || !caller.canManageRoles) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only admins with role management permission can delete roles",
+        });
       }
 
       // Verify the role belongs to this organization
@@ -762,7 +885,10 @@ export const organizationRouter = createTRPCRouter({
         .limit(1);
 
       if (!role) {
-        throw new Error("Role not found in this organization");
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Role not found in this organization",
+        });
       }
 
       await ctx.db
@@ -794,7 +920,10 @@ export const organizationRouter = createTRPCRouter({
         .limit(1);
 
       if (!caller || (caller.role !== "admin" && !caller.canAddMembers)) {
-        throw new Error("You do not have permission to invite members");
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to invite members",
+        });
       }
 
       // Map custom role names to a valid DB enum value
@@ -839,7 +968,10 @@ export const organizationRouter = createTRPCRouter({
         .limit(1);
 
       if (!caller || caller.role !== "admin") {
-        throw new Error("Only admins can view invites");
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only admins can view invites",
+        });
       }
 
       const invites = await ctx.db
@@ -876,7 +1008,10 @@ export const organizationRouter = createTRPCRouter({
         .limit(1);
 
       if (!caller || caller.role !== "admin") {
-        throw new Error("Only admins can cancel invites");
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only admins can cancel invites",
+        });
       }
 
       // Verify the invite belongs to this organization
@@ -893,7 +1028,10 @@ export const organizationRouter = createTRPCRouter({
         .limit(1);
 
       if (!invite) {
-        throw new Error("Invite not found or already processed");
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Invite not found or already processed",
+        });
       }
 
       await ctx.db
