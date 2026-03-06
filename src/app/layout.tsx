@@ -42,7 +42,28 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} className={`${sans.variable} ${display.variable}`} suppressHydrationWarning>
-      <body className="min-h-dvh bg-bg-primary text-fg-primary font-sans antialiased">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+(function() {
+  try {
+    // Prevent theme flash - sync with next-themes
+    var theme = localStorage.getItem('theme') || 'dark';
+    var classList = document.documentElement.classList;
+    classList.remove('light', 'dark');
+    classList.add(theme);
+    
+    // Prevent accent color flash  
+    var accent = sessionStorage.getItem('user-accent') || 'purple';
+    document.documentElement.dataset.accent = accent;
+  } catch (e) {}
+})();
+            `,
+          }}
+        />
+      </head>
+      <body className="min-h-dvh bg-bg-primary text-fg-primary font-sans antialiased" suppressHydrationWarning>
         <a href="#main-content" className="skip-link">
           Skip to content
         </a>
