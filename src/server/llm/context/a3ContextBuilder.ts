@@ -1,6 +1,6 @@
 import type { TRPCContext } from "~/server/api/trpc";
 import { stickyNotes } from "~/server/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 export type NotesVaultHandoffContext = {
   unlockedNotes?: Array<{ noteId: number; content: string }>;

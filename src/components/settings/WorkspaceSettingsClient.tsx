@@ -238,13 +238,19 @@ export function WorkspaceSettingsClient() {
   });
 
   const createRole = api.organization.createRole.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success("Role created");
       setNewRoleName("");
       setNewRolePerms(
         Object.fromEntries(PERMISSION_KEYS.map((k) => [k, false])) as Record<PermissionKey, boolean>,
       );
       setShowCreateRole(false);
+      if (data && activeOrgId) {
+        utils.organization.getRoles.setData(
+          { organizationId: activeOrgId },
+          (old) => (old ? [...old, data] : [data]),
+        );
+      }
       void utils.organization.getRoles.invalidate();
     },
     onError: (e) => toast.error(e.message),
