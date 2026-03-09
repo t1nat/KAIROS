@@ -107,6 +107,7 @@ export function WorkspaceSettingsClient() {
   const [newRolePerms, setNewRolePerms] = useState<Record<PermissionKey, boolean>>(
     Object.fromEntries(PERMISSION_KEYS.map((k) => [k, false])) as Record<PermissionKey, boolean>,
   );
+  const [pendingRoles, setPendingRoles] = useState<Array<{ id: number; name: string } & Record<PermissionKey, boolean>>>([]);
 
   // ---- Expand/collapse sections ----
   const [expandedSection, setExpandedSection] = useState<string | null>("org");
@@ -237,24 +238,7 @@ export function WorkspaceSettingsClient() {
     onError: (e) => toast.error(e.message),
   });
 
-  const createRole = api.organization.createRole.useMutation({
-    onSuccess: (data) => {
-      toast.success("Role created");
-      setNewRoleName("");
-      setNewRolePerms(
-        Object.fromEntries(PERMISSION_KEYS.map((k) => [k, false])) as Record<PermissionKey, boolean>,
-      );
-      setShowCreateRole(false);
-      if (data && activeOrgId) {
-        utils.organization.getRoles.setData(
-          { organizationId: activeOrgId },
-          (old) => (old ? [...old, data] : [data]),
-        );
-      }
-      void utils.organization.getRoles.invalidate();
-    },
-    onError: (e) => toast.error(e.message),
-  });
+  const createRole = api.organization.createRole.useMutation();
 
   const deleteRole = api.organization.deleteRole.useMutation({
     onSuccess: () => {
@@ -796,13 +780,27 @@ export function WorkspaceSettingsClient() {
                   </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => {
-                        if (newRoleName.trim() && activeOrgId) {
-                          createRole.mutate({
+                      onClick={async () => {
+                        if (!newRoleName.trim() || !activeOrgId) return;
+                        try {
+                          const created = await createRole.mutateAsync({
                             organizationId: activeOrgId,
                             name: newRoleName,
                             ...newRolePerms,
                           });
+                          if (created) {
+                            setPendingRoles((prev) => [...prev, created as { id: number; name: string } & Record<PermissionKey, boolean>]);
+                          }
+                          toast.success("Role created");
+                          setNewRoleName("");
+                          setNewRolePerms(
+                            Object.fromEntries(PERMISSION_KEYS.map((k) => [k, false])) as Record<PermissionKey, boolean>,
+                          );
+                          setShowCreateRole(false);
+                          await utils.organization.getRoles.invalidate();
+                          setPendingRoles([]);
+                        } catch (e) {
+                          toast.error(e instanceof Error ? e.message : "Failed to create role");
                         }
                       }}
                       disabled={!newRoleName.trim() || createRole.isPending}
@@ -854,7 +852,7 @@ export function WorkspaceSettingsClient() {
                     </div>
                   </div>
                 ))}
-                {roles?.map((role) => (
+                {[...(roles ?? []), ...pendingRoles.filter((pr) => !(roles ?? []).some((r) => r.id === pr.id))].map((role) => (
                   <div
                     key={role.id}
                     className="p-4 rounded-xl border border-accent-primary/15 bg-accent-primary/[0.02] dark:bg-accent-primary/[0.03]"

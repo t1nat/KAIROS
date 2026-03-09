@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { api } from "~/trpc/react";
-import { Sparkles, Copy, Check, CheckCircle2 } from "lucide-react";
+import { Sparkles, Copy, Check, CheckCircle2, Calendar, FileText, MapPin, Trash2, Pencil } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                             */
@@ -12,6 +12,23 @@ import { Sparkles, Copy, Check, CheckCircle2 } from "lucide-react";
 interface InlineTask {
   title: string;
   priority?: string;
+}
+
+interface EventPreviewItem {
+  kind: "create" | "update" | "delete";
+  title?: string;
+  description?: string;
+  eventDate?: string;
+  region?: string;
+  eventId?: number;
+  reason?: string;
+}
+
+interface NotePreviewItem {
+  kind: "create" | "update" | "delete";
+  content?: string;
+  noteId?: number;
+  reason?: string;
 }
 
 type ChatMsg =
@@ -33,6 +50,8 @@ type ChatMsg =
         | { type: "task_apply"; draftId: string; confirmationToken: string }
       >;
       inlineTasks?: InlineTask[];
+      eventPreviews?: EventPreviewItem[];
+      notePreviews?: NotePreviewItem[];
     };
 
 interface NotesDraftResponse {
@@ -234,12 +253,116 @@ function CopyButton({ text, tooltip }: { text: string; tooltip: string }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Event Preview Card                                                */
+/* ------------------------------------------------------------------ */
+
+function EventPreviewCard({ item, index }: { item: EventPreviewItem; index: number }) {
+  const icon = item.kind === "create" ? Calendar : item.kind === "update" ? Pencil : Trash2;
+  const Icon = icon;
+  const label = item.kind === "create" ? "New Event" : item.kind === "update" ? "Update Event" : "Delete Event";
+  const accent =
+    item.kind === "create"
+      ? "rgb(var(--accent-primary))"
+      : item.kind === "update"
+        ? "rgb(234 179 8)"
+        : "rgb(239 68 68)";
+
+  let dateStr = "";
+  if (item.eventDate) {
+    try {
+      dateStr = new Date(item.eventDate).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch { /* invalid date */ }
+  }
+
+  return (
+    <div
+      className="kairos-preview-card"
+      style={{ animationDelay: `${index * 60}ms`, borderLeftColor: accent }}
+    >
+      <div className="flex items-center gap-2 mb-1.5">
+        <Icon size={12} style={{ color: accent }} />
+        <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: accent }}>
+          {label}
+        </span>
+      </div>
+      {item.title && (
+        <p className="text-sm font-semibold text-fg-primary leading-snug">{item.title}</p>
+      )}
+      {item.description && (
+        <p className="text-xs text-fg-secondary mt-0.5 line-clamp-2">{item.description}</p>
+      )}
+      <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+        {dateStr && (
+          <span className="text-[10px] text-fg-tertiary flex items-center gap-1">
+            <Calendar size={10} /> {dateStr}
+          </span>
+        )}
+        {item.region && (
+          <span className="text-[10px] text-fg-tertiary flex items-center gap-1">
+            <MapPin size={10} /> {item.region.replace("_", " ")}
+          </span>
+        )}
+      </div>
+      {item.reason && (
+        <p className="text-[10px] text-fg-quaternary mt-1 italic">{item.reason}</p>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Note Preview Card                                                 */
+/* ------------------------------------------------------------------ */
+
+function NotePreviewCard({ item, index }: { item: NotePreviewItem; index: number }) {
+  const icon = item.kind === "create" ? FileText : item.kind === "update" ? Pencil : Trash2;
+  const Icon = icon;
+  const label = item.kind === "create" ? "New Note" : item.kind === "update" ? "Update Note" : "Delete Note";
+  const accent =
+    item.kind === "create"
+      ? "rgb(var(--accent-primary))"
+      : item.kind === "update"
+        ? "rgb(234 179 8)"
+        : "rgb(239 68 68)";
+
+  return (
+    <div
+      className="kairos-preview-card"
+      style={{ animationDelay: `${index * 60}ms`, borderLeftColor: accent }}
+    >
+      <div className="flex items-center gap-2 mb-1.5">
+        <Icon size={12} style={{ color: accent }} />
+        <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: accent }}>
+          {label}
+        </span>
+        {item.noteId && (
+          <span className="text-[10px] text-fg-quaternary">#{item.noteId}</span>
+        )}
+      </div>
+      {item.content && (
+        <p className="text-xs text-fg-secondary line-clamp-3 whitespace-pre-wrap">{item.content.slice(0, 200)}{item.content.length > 200 ? "…" : ""}</p>
+      )}
+      {item.reason && (
+        <p className="text-[10px] text-fg-quaternary mt-1 italic">{item.reason}</p>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Main Component                                                    */
 /* ------------------------------------------------------------------ */
 
 export function ProjectIntelligenceChat(props: { projectId?: number }) {
   const { projectId } = props;
   const t = useTranslations("chat");
+  const utils = api.useUtils();
 
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<ChatMsg[]>([]);
@@ -352,11 +475,23 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
 
             const agentText = [chatbotSummary, ops, operations.length > 0 ? t("clickConfirm") : ""].filter(Boolean).join("\n");
 
+            // Build note previews from operations
+            const notePreviews: NotePreviewItem[] = operations.map((o) => {
+              const op = o as Record<string, unknown>;
+              return {
+                kind: (op.type as "create" | "update" | "delete") ?? "create",
+                content: (op.content as string) ?? (op.nextContent as string) ?? undefined,
+                noteId: (op.noteId as number) ?? undefined,
+                reason: (op.reason as string) ?? undefined,
+              };
+            });
+
             setMessages((prev) =>
               replaceThinking(prev, {
                 text: agentText,
                 createdAt: new Date(),
                 actions: operations.length > 0 && draftId ? [{ type: "notes_confirm" as const, draftId }] : undefined,
+                notePreviews: notePreviews.length > 0 ? notePreviews : undefined,
               }),
             );
           } catch (err) {
@@ -408,11 +543,37 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
             }
 
             const hasOps = creates + updates + deletes > 0;
+
+            // Build event previews from plan data
+            const eventPreviews: EventPreviewItem[] = [
+              ...(Array.isArray(plan?.creates) ? (plan.creates as Array<Record<string, unknown>>).map((c) => ({
+                kind: "create" as const,
+                title: c.title as string | undefined,
+                description: c.description as string | undefined,
+                eventDate: c.eventDate as string | undefined,
+                region: c.region as string | undefined,
+              })) : []),
+              ...(Array.isArray(plan?.updates) ? (plan.updates as Array<Record<string, unknown>>).map((u) => ({
+                kind: "update" as const,
+                eventId: u.eventId as number | undefined,
+                title: (u.patch as Record<string, unknown> | undefined)?.title as string | undefined,
+                description: (u.patch as Record<string, unknown> | undefined)?.description as string | undefined,
+                eventDate: (u.patch as Record<string, unknown> | undefined)?.eventDate as string | undefined,
+                reason: u.reason as string | undefined,
+              })) : []),
+              ...(Array.isArray(plan?.deletes) ? (plan.deletes as Array<Record<string, unknown>>).map((d) => ({
+                kind: "delete" as const,
+                eventId: d.eventId as number | undefined,
+                reason: d.reason as string | undefined,
+              })) : []),
+            ];
+
             setMessages((prev) =>
               replaceThinking(prev, {
                 text: agentText,
                 createdAt: new Date(),
                 actions: hasOps && draftId ? [{ type: "events_confirm" as const, draftId }] : undefined,
+                eventPreviews: eventPreviews.length > 0 ? eventPreviews : undefined,
               }),
             );
           } catch (err) {
@@ -596,6 +757,9 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
             inlineTasks: inlineTasks.length > 0 ? inlineTasks : undefined,
           }),
         );
+        // Instant update: invalidate task/project caches
+        void utils.task.invalidate();
+        void utils.project.invalidate();
       } catch (err) {
         const errMsg =
           err instanceof Error ? err.message : "Unknown error";
@@ -613,6 +777,7 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
       taskDraftMutation,
       taskConfirmMutation,
       taskApplyMutation,
+      utils,
     ],
   );
 
@@ -712,6 +877,30 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
 
             const hasOps = creates + updates + deletes > 0;
 
+            // Build event previews from plan data
+            const eventPreviews: EventPreviewItem[] = [
+              ...(Array.isArray(plan?.creates) ? (plan.creates as Array<Record<string, unknown>>).map((c) => ({
+                kind: "create" as const,
+                title: c.title as string | undefined,
+                description: c.description as string | undefined,
+                eventDate: c.eventDate as string | undefined,
+                region: c.region as string | undefined,
+              })) : []),
+              ...(Array.isArray(plan?.updates) ? (plan.updates as Array<Record<string, unknown>>).map((u) => ({
+                kind: "update" as const,
+                eventId: u.eventId as number | undefined,
+                title: (u.patch as Record<string, unknown> | undefined)?.title as string | undefined,
+                description: (u.patch as Record<string, unknown> | undefined)?.description as string | undefined,
+                eventDate: (u.patch as Record<string, unknown> | undefined)?.eventDate as string | undefined,
+                reason: u.reason as string | undefined,
+              })) : []),
+              ...(Array.isArray(plan?.deletes) ? (plan.deletes as Array<Record<string, unknown>>).map((d) => ({
+                kind: "delete" as const,
+                eventId: d.eventId as number | undefined,
+                reason: d.reason as string | undefined,
+              })) : []),
+            ];
+
             setMessages((prev) =>
               replaceThinking(prev, {
                 text: agentText,
@@ -720,6 +909,7 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
                   hasOps && draftId
                     ? [{ type: "events_confirm", draftId }]
                     : undefined,
+                eventPreviews: eventPreviews.length > 0 ? eventPreviews : undefined,
               }),
             );
           } catch (err) {
@@ -804,6 +994,17 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
 
             const shouldShowConfirm = operations.length > 0;
 
+            // Build note previews from operations
+            const notePreviews: NotePreviewItem[] = operations.map((o) => {
+              const op = o as Record<string, unknown>;
+              return {
+                kind: (op.type as "create" | "update" | "delete") ?? "create",
+                content: (op.content as string) ?? (op.nextContent as string) ?? undefined,
+                noteId: (op.noteId as number) ?? undefined,
+                reason: (op.reason as string) ?? undefined,
+              };
+            });
+
             setMessages((prev) =>
               replaceThinking(prev, {
                 text: agentText,
@@ -812,6 +1013,7 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
                   shouldShowConfirm && draftId
                     ? [{ type: "notes_confirm", draftId }]
                     : undefined,
+                notePreviews: notePreviews.length > 0 ? notePreviews : undefined,
               }),
             );
           } catch (err) {
@@ -985,6 +1187,14 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
                 m.role === "agent" &&
                 Array.isArray((m as { inlineTasks?: InlineTask[] }).inlineTasks) &&
                 ((m as { inlineTasks?: InlineTask[] }).inlineTasks?.length ?? 0) > 0;
+              const hasEventPreviews =
+                m.role === "agent" &&
+                Array.isArray((m as { eventPreviews?: EventPreviewItem[] }).eventPreviews) &&
+                ((m as { eventPreviews?: EventPreviewItem[] }).eventPreviews?.length ?? 0) > 0;
+              const hasNotePreviews =
+                m.role === "agent" &&
+                Array.isArray((m as { notePreviews?: NotePreviewItem[] }).notePreviews) &&
+                ((m as { notePreviews?: NotePreviewItem[] }).notePreviews?.length ?? 0) > 0;
 
               return (
                 <div
@@ -1071,6 +1281,38 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
                             key={`task-${tIdx}`}
                             task={task}
                             index={tIdx}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Event previews (shown before user confirms) */}
+                    {hasEventPreviews && (
+                      <div className="kairos-preview-list" data-testid="event-previews">
+                        {(
+                          (m as { eventPreviews?: EventPreviewItem[] })
+                            .eventPreviews ?? []
+                        ).map((ev, eIdx) => (
+                          <EventPreviewCard
+                            key={`ev-${eIdx}`}
+                            item={ev}
+                            index={eIdx}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Note previews (shown before user confirms) */}
+                    {hasNotePreviews && (
+                      <div className="kairos-preview-list" data-testid="note-previews">
+                        {(
+                          (m as { notePreviews?: NotePreviewItem[] })
+                            .notePreviews ?? []
+                        ).map((n, nIdx) => (
+                          <NotePreviewCard
+                            key={`note-${nIdx}`}
+                            item={n}
+                            index={nIdx}
                           />
                         ))}
                       </div>
@@ -1195,6 +1437,8 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
                                         createdAt: new Date(),
                                       },
                                     ]);
+                                    // Instant update: invalidate notes cache
+                                    void utils.note.invalidate();
                                   } catch (err) {
                                     const msg =
                                       err instanceof Error
@@ -1332,6 +1576,8 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
                                         createdAt: new Date(),
                                       },
                                     ]);
+                                    // Instant update: invalidate events cache
+                                    void utils.event.invalidate();
                                   } catch (err) {
                                     const msg =
                                       err instanceof Error
@@ -1475,6 +1721,9 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
                                         createdAt: new Date(),
                                       },
                                     ]);
+                                    // Instant update: invalidate task/project caches
+                                    void utils.task.invalidate();
+                                    void utils.project.invalidate();
                                   } catch (err) {
                                     const msg =
                                       err instanceof Error

@@ -226,7 +226,7 @@ function TimelineEntry({
   return (
     <div
       ref={entryRef}
-      className="relative flex gap-3 sm:gap-4 timeline-entry-wrapper"
+      className="relative flex gap-3 sm:gap-4"
     >
       {/* Vertical line + circle with tick */}
       <div className="flex flex-col items-center">
@@ -1228,19 +1228,19 @@ export function TaskTimelineClient() {
             </div>
           ) : (
             <div className="timeline-list relative">
-              <div className="timeline-scroll-fade pointer-events-none" />
               {filteredEntries.map((entry, i) => (
-                <TimelineEntry
-                  key={entry.id}
-                  entry={entry}
-                  isLast={i === filteredEntries.length - 1}
-                  onToggleDone={handleToggleDone}
-                  onDelete={handleDelete}
-                  isToggling={togglingId === entry.taskId}
-                  isDeleting={deletingId === entry.taskId}
-                  canDelete={canDeleteTask(entry)}
-                  taskCurrentStatus={taskStatusMap.get(entry.taskId)}
-                />
+                <div key={entry.id} style={{ animationDelay: `${i * 60}ms` }} className="timeline-entry-wrapper">
+                  <TimelineEntry
+                    entry={entry}
+                    isLast={i === filteredEntries.length - 1}
+                    onToggleDone={handleToggleDone}
+                    onDelete={handleDelete}
+                    isToggling={togglingId === entry.taskId}
+                    isDeleting={deletingId === entry.taskId}
+                    canDelete={canDeleteTask(entry)}
+                    taskCurrentStatus={taskStatusMap.get(entry.taskId)}
+                  />
+                </div>
               ))}
             </div>
           )}
