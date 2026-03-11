@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Building2,
   Plus,
@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { api } from "~/trpc/react";
 import { useToast } from "~/components/providers/ToastProvider";
+import { useSocketEvent } from "~/lib/useSocketEvent";
 
 // ---------------------------------------------------------------------------
 // Permission labels
@@ -157,6 +158,19 @@ export function WorkspaceSettingsClient() {
     { email: emailLookupDebouncedEmail },
     { enabled: !!emailLookupDebouncedEmail, retry: false, refetchOnWindowFocus: false },
   );
+
+  // Real-time: refresh members and invites when notifications about invites/joins arrive
+  const handleInviteNotification = useCallback(
+    (data: { title?: string }) => {
+      const t = data.title?.toLowerCase() ?? "";
+      if (t.includes("invite") || t.includes("joined") || t.includes("member")) {
+        void utils.organization.getInvites.invalidate();
+        void utils.organization.getMembers.invalidate();
+      }
+    },
+    [utils.organization.getInvites, utils.organization.getMembers],
+  );
+  useSocketEvent("notification:new", handleInviteNotification);
 
   // ---- Mutations ----
   const createOrg = api.organization.create.useMutation({

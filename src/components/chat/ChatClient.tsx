@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "~/trpc/react";
 import type { RouterOutputs } from "~/trpc/react";
 import Image from "next/image";
 import { Send, Paperclip, Search, MoreVertical, X, Plus, MessageCircle } from "lucide-react";
 import { useToast } from "~/components/providers/ToastProvider";
 import { useUploadThing } from "~/lib/uploadthing";
+import { useSocket } from "~/components/providers/SocketProvider";
+import { useSocketEvent } from "~/lib/useSocketEvent";
 
 type ChatMessage = RouterOutputs["chat"]["listMessages"][number];
 
@@ -26,19 +28,16 @@ export function ChatClient({ userId }: { userId: string }) {
   const utils = api.useUtils();
   const { startUpload } = useUploadThing("chatAttachment");
 
-  // Get all conversations
-  const conversationsQuery = api.chat.listAllConversations.useQuery(undefined, {
-    refetchInterval: 5000,
-  });
+  // Get all conversations (real-time updates via Socket.IO)
+  const conversationsQuery = api.chat.listAllConversations.useQuery(undefined);
 
   const conversations = conversationsQuery.data ?? [];
 
-  // Get messages for selected conversation
+  // Get messages for selected conversation (real-time updates via Socket.IO)
   const messagesQuery = api.chat.listMessages.useQuery(
     { conversationId: selectedConversationId ?? -1 },
     {
       enabled: selectedConversationId !== null,
-      refetchInterval: 2000,
     }
   );
 
@@ -115,6 +114,57 @@ export function ChatClient({ userId }: { userId: string }) {
       createConversation.mutate({ otherUserId: searchUserQuery.data.id });
     }
   };
+
+  // -----------------------------------------------------------------------
+  // Socket.IO: room management + real-time event listeners
+  // -----------------------------------------------------------------------
+  const socket = useSocket();
+
+  // Join / leave conversation rooms when the selected conversation changes.
+  useEffect(() => {
+    if (!socket || selectedConversationId === null) return;
+    socket.emit("join:conversation", selectedConversationId);
+    return () => {
+      socket.emit("leave:conversation", selectedConversationId);
+    };
+  }, [socket, selectedConversationId]);
+
+  // On new message pushed via socket → append to the local cache.
+  const handleNewMessage = useCallback(
+    (data: {
+      messageId: number;
+      conversationId: number;
+      senderId: string;
+      body: string;
+      senderName: string | null;
+      senderImage: string | null;
+      createdAt: string | Date;
+    }) => {
+      if (data.conversationId !== selectedConversationId) return;
+      // Don't duplicate our own messages (already handled via optimistic update).
+      if (data.senderId === userId) return;
+      const newMsg: ChatMessage = {
+        id: data.messageId,
+        body: data.body,
+        createdAt: new Date(data.createdAt),
+        senderId: data.senderId,
+        senderName: data.senderName,
+        senderImage: data.senderImage,
+      };
+      utils.chat.listMessages.setData(
+        { conversationId: data.conversationId },
+        (prev) => (prev ? [...prev, newMsg] : [newMsg]),
+      );
+    },
+    [selectedConversationId, userId, utils.chat.listMessages],
+  );
+  useSocketEvent("message:new", handleNewMessage);
+
+  // On conversation updated → invalidate conversations list to refresh ordering.
+  const handleConversationUpdated = useCallback(() => {
+    void utils.chat.listAllConversations.invalidate();
+  }, [utils.chat.listAllConversations]);
+  useSocketEvent("conversation:updated", handleConversationUpdated);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {

@@ -2,6 +2,7 @@
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { projects, tasks, projectCollaborators, users, organizationMembers, notifications } from "~/server/db/schema";
 import { eq, and, desc, inArray, isNull, sql, ne, or } from "drizzle-orm";
+import { emitNotification } from "~/server/socket/emit";
 
 export const projectRouter = createTRPCRouter({
   
@@ -558,6 +559,16 @@ export const projectRouter = createTRPCRouter({
           link: projectLink,
           read: false,
         }).returning();
+
+        if (notification) {
+          emitNotification(userToAdd.id, {
+            id: notification.id,
+            type: "project",
+            title: "New Project Invitation",
+            message: `${ownerName} invited you to ${permissionText} "${project.title}"`,
+            link: projectLink,
+          });
+        }
 
         if (process.env.NODE_ENV !== "production") {
           console.log("Notification created:", notification);

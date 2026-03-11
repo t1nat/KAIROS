@@ -4,12 +4,14 @@ import { createTRPCRouter, protectedProcedure, type TRPCContext } from "~/server
 import {
   directConversations,
   directMessages,
+  notifications,
   organizationMembers,
   projectCollaborators,
   projects,
   users,
 } from "~/server/db/schema";
 import { and, asc, desc, eq, inArray, or, sql, isNull } from "drizzle-orm";
+import { emitNewMessage, emitConversationUpdated, emitNotification } from "~/server/socket/emit";
 
 async function assertProjectAccess(ctx: TRPCContext, projectId: number) {
   if (!ctx.session?.user?.id) throw new TRPCError({ code: "UNAUTHORIZED" });
@@ -227,11 +229,51 @@ export const chatRouter = createTRPCRouter({
         .where(eq(users.id, selfId))
         .limit(1);
 
-      return {
+      const result = {
         ...message,
         senderName: sender?.name ?? null,
         senderImage: sender?.image ?? null,
       };
+
+      // Push real-time events via Socket.IO (no-op if server not initialised).
+      if (message) {
+        emitNewMessage({
+          messageId: message.id,
+          conversationId: input.conversationId,
+          senderId: selfId,
+          body: message.body,
+          senderName: sender?.name ?? null,
+          senderImage: sender?.image ?? null,
+          createdAt: message.createdAt,
+        });
+        emitConversationUpdated(
+          [convo.userOneId, convo.userTwoId],
+          { conversationId: input.conversationId, lastMessageAt: new Date() },
+        );
+
+        // Create a persistent notification for the other user (for offline/away users)
+        const otherId = convo.userOneId === selfId ? convo.userTwoId : convo.userOneId;
+        const senderName = sender?.name ?? "Someone";
+        const preview = message.body.length > 80 ? message.body.slice(0, 80) + "…" : message.body;
+
+        await ctx.db.insert(notifications).values({
+          userId: otherId,
+          type: "system",
+          title: "New message",
+          message: `${senderName}: ${preview}`,
+          link: "/chat",
+          read: false,
+        });
+        emitNotification(otherId, {
+          id: `chat-${message.id}`,
+          type: "system",
+          title: "New message",
+          message: `${senderName}: ${preview}`,
+          link: "/chat",
+        });
+      }
+
+      return result;
     }),
 
   listProjectConversations: protectedProcedure

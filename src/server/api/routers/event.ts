@@ -4,6 +4,7 @@ import { events, eventComments, eventLikes, eventRsvps, users, notifications } f
 import { eq, desc, and, sql, inArray } from "drizzle-orm";
 import { type NewEvent } from "~/server/db/schema";
 import { TRPCError } from "@trpc/server";
+import { emitNotification, emitEventDeleted, emitEventUpdated } from "~/server/socket/emit";
 
 const createEventSchema = z.object({
   title: z.string().min(1, "Title is required").max(256),
@@ -220,7 +221,17 @@ export const eventRouter = createTRPCRouter({
           link: `/publish#event-${input.eventId}`,
           read: false,
         });
+        emitNotification(eventRow.createdById, {
+          id: `comment-${input.eventId}-${Date.now()}`,
+          type: "comment",
+          title: "New comment on your event",
+          message: `${commenterName} commented on "${eventRow.title}"`,
+          link: `/publish#event-${input.eventId}`,
+        });
       }
+
+      // Real-time update for all clients viewing the event feed
+      emitEventUpdated(input.eventId);
 
       return { success: true };
     }),
@@ -251,6 +262,7 @@ export const eventRouter = createTRPCRouter({
               eq(eventLikes.createdById, currentUserId)
             )
           );
+        emitEventUpdated(input.eventId);
         return { action: 'unliked', hasLiked: false };
       } else {
         await ctx.db.insert(eventLikes).values({
@@ -280,8 +292,16 @@ export const eventRouter = createTRPCRouter({
             link: `/publish#event-${input.eventId}`,
             read: false,
           });
+          emitNotification(eventRow.createdById, {
+            id: `like-${input.eventId}-${Date.now()}`,
+            type: "like",
+            title: "New like on your event",
+            message: `${likerName} liked your event "${eventRow.title}"`,
+            link: `/publish#event-${input.eventId}`,
+          });
         }
 
+        emitEventUpdated(input.eventId);
         return { action: 'liked', hasLiked: true };
       }
     }),
@@ -333,6 +353,7 @@ export const eventRouter = createTRPCRouter({
         });
       }
 
+      emitEventUpdated(input.eventId);
       return { success: true, status: input.status };
     }),
 
@@ -354,6 +375,9 @@ export const eventRouter = createTRPCRouter({
       }
 
       await ctx.db.delete(events).where(eq(events.id, input.eventId));
+
+      // Notify all connected clients about the deletion in real-time
+      emitEventDeleted(input.eventId);
 
       return { success: true };
     }),

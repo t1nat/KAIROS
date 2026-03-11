@@ -13,20 +13,18 @@ import {
   Menu,
   X,
   SquarePen,
+  MessageCircle,
   Sparkles,
   CalendarDays,
   CalendarCheck,
   Plus,
 } from "lucide-react";
 
-import { A1ChatWidgetOverlay } from "~/components/chat/A1ChatWidgetOverlay";
-
 export function SideNav() {
   const t = useTranslations("nav");
   const tCommon = useTranslations("common");
   const tOrg = useTranslations("org");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isA1WidgetOpen, setIsA1WidgetOpen] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const mobileNavId = "mobile-nav-menu";
@@ -52,7 +50,8 @@ export function SideNav() {
     { href: "/notes", icon: BookText, label: t("notes") },
     { href: "/progress", icon: TrendingUp, label: t("progress") },
     { href: "/calendar", icon: CalendarCheck, label: t("calendar") },
-    { href: "/chat", icon: Sparkles, label: "Chat" },
+    { href: "/chat", icon: MessageCircle, label: "Chat" },
+    { href: "/chat/ai", icon: Sparkles, label: "Kairos AI" },
     { href: "/publish", icon: CalendarDays, label: t("events") },
   ];
 
@@ -69,6 +68,9 @@ export function SideNav() {
     }
     if (href === "/chat") {
       return pathname === "/chat";
+    }
+    if (href === "/chat/ai") {
+      return pathname === "/chat/ai";
     }
     if (href === "/publish") {
       return pathname === "/publish";
@@ -93,8 +95,6 @@ export function SideNav() {
 
   return (
     <>
-      <A1ChatWidgetOverlay isOpen={isA1WidgetOpen} onClose={() => setIsA1WidgetOpen(false)} />
-
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-bg-primary/95 backdrop-blur-md shadow-sm px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center shadow-lg shadow-accent-primary/25">
@@ -200,29 +200,6 @@ export function SideNav() {
         <div className="flex flex-col items-center gap-6">
           {mainNavItems.map((item) => {
             const isActive = isItemActive(item.href);
-
-            if (item.href === "/chat") {
-              return (
-                <button
-                  key={item.href}
-                  type="button"
-                  aria-label={item.label}
-                  onClick={() => setIsA1WidgetOpen(true)}
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors group relative ${
-                    isActive
-                      ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 shadow-sm"
-                      : "text-fg-secondary hover:bg-bg-secondary/60 hover:text-fg-primary"
-                  }`}
-                  title={item.label}
-                >
-                  <item.icon size={20} />
-
-                  <span className="absolute left-full ml-4 px-3 py-1.5 bg-bg-elevated border border-slate-200 dark:border-white/[0.06] text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
-                    {item.label}
-                  </span>
-                </button>
-              );
-            }
 
             return (
               <Link

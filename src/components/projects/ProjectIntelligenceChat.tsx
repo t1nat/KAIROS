@@ -367,6 +367,13 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [showAssumptions, setShowAssumptions] = useState(false);
+  const [rateLimitPopup, setRateLimitPopup] = useState<{ show: boolean; message: string }>({ show: false, message: "" });
+
+  /* ---- Rate limit status query ---- */
+  const rateLimitQuery = api.agent.rateLimitStatus.useQuery(undefined, {
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
+  });
 
   /* ---- Greeting responses (i18n) ---- */
   const greetingResponses = [
@@ -389,6 +396,17 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
     ]!;
   }
 
+  /** Show popup when a TOO_MANY_REQUESTS error is caught from any agent mutation. */
+  const handleRateLimitError = useCallback((err: unknown): boolean => {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("reached your limit") || msg.includes("TOO_MANY_REQUESTS")) {
+      setRateLimitPopup({ show: true, message: msg });
+      void rateLimitQuery.refetch();
+      return true;
+    }
+    return false;
+  }, [rateLimitQuery]);
+
   /* ---------- A1 Mutation (general workspace chat) ---------- */
 
   const a1Mutation = api.agent.projectChatbot.useMutation({
@@ -398,6 +416,15 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
       void message;
     },
     onError: (err) => {
+      if (handleRateLimitError(err)) {
+        setMessages((prev) =>
+          replaceThinking(prev, {
+            text: "You\u2019ve reached your daily message limit.",
+            createdAt: new Date(),
+          }),
+        );
+        return;
+      }
       setMessages((prev) =>
         replaceThinking(prev, {
           text: t("somethingWentWrong", { error: err.message }),
@@ -913,14 +940,23 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
               }),
             );
           } catch (err) {
-            const errMsg =
-              err instanceof Error ? err.message : "Events request failed";
-            setMessages((prev) =>
-              replaceThinking(prev, {
-                text: t("somethingWentWrong", { error: errMsg }),
-                createdAt: new Date(),
-              }),
-            );
+            if (!handleRateLimitError(err)) {
+              const errMsg =
+                err instanceof Error ? err.message : "Events request failed";
+              setMessages((prev) =>
+                replaceThinking(prev, {
+                  text: t("somethingWentWrong", { error: errMsg }),
+                  createdAt: new Date(),
+                }),
+              );
+            } else {
+              setMessages((prev) =>
+                replaceThinking(prev, {
+                  text: "You\u2019ve reached your daily message limit.",
+                  createdAt: new Date(),
+                }),
+              );
+            }
           }
 
           return;
@@ -1017,14 +1053,23 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
               }),
             );
           } catch (err) {
-            const errMsg =
-              err instanceof Error ? err.message : "Notes request failed";
-            setMessages((prev) =>
-              replaceThinking(prev, {
-                text: t("somethingWentWrong", { error: errMsg }),
-                createdAt: new Date(),
-              }),
-            );
+            if (!handleRateLimitError(err)) {
+              const errMsg =
+                err instanceof Error ? err.message : "Notes request failed";
+              setMessages((prev) =>
+                replaceThinking(prev, {
+                  text: t("somethingWentWrong", { error: errMsg }),
+                  createdAt: new Date(),
+                }),
+              );
+            } else {
+              setMessages((prev) =>
+                replaceThinking(prev, {
+                  text: "You\u2019ve reached your daily message limit.",
+                  createdAt: new Date(),
+                }),
+              );
+            }
           }
 
           return;
@@ -1063,6 +1108,49 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
       className="h-full w-full flex flex-col"
       style={{ backgroundColor: "rgb(var(--bg-primary))" }}
     >
+      {/* ---- Rate Limit Popup ---- */}
+      {rateLimitPopup.show && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div
+            className="w-[90vw] max-w-md rounded-2xl p-6 shadow-2xl border"
+            style={{
+              backgroundColor: "rgb(var(--bg-primary))",
+              borderColor: "rgb(var(--border-medium))",
+            }}
+          >
+            <div className="flex flex-col items-center text-center gap-4">
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: "rgb(var(--accent-primary) / 0.12)" }}
+              >
+                <Sparkles size={28} style={{ color: "rgb(var(--accent-primary))" }} />
+              </div>
+              <h3 className="text-lg font-bold text-fg-primary">
+                You&apos;ve reached your limit for messages to KAIROS
+              </h3>
+              <p className="text-sm text-fg-secondary leading-relaxed">
+                You can send up to {rateLimitQuery.data?.limit ?? 50} AI messages per day.
+                {rateLimitQuery.data?.resetsAt && (
+                  <> Your limit resets at{" "}
+                    <span className="font-semibold text-fg-primary">
+                      {new Date(rateLimitQuery.data.resetsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </span>.
+                  </>
+                )}
+              </p>
+              <button
+                type="button"
+                onClick={() => setRateLimitPopup({ show: false, message: "" })}
+                className="mt-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95"
+                style={{ backgroundColor: "rgb(var(--accent-primary))" }}
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ---- Header ---- */}
       <div
         className="px-4 py-3 flex items-center justify-between gap-3 border-b"

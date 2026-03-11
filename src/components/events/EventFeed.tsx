@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import {
   Heart,
@@ -27,6 +27,7 @@ import { api } from "~/trpc/react";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { CreateEventForm } from "~/components/events/CreateEventForm";
+import { useSocketEvent } from "~/lib/useSocketEvent";
 
 export const REGIONS = [
   { value: '', label: 'All Regions' },
@@ -544,7 +545,11 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                 <div className="absolute right-0 top-full mt-1 z-50 dark:bg-[#16151A] bg-white rounded-xl dark:border-white/[0.06] border border-slate-200 shadow-xl min-w-[160px] py-1 animate-in fade-in slide-in-from-top-1 duration-150">
                   {event.isOwner && (
                     <button
-                      onClick={() => { handleDeleteEvent(); setShowMoreMenu(false); }}
+                      onClick={() => {
+                        handleDeleteEvent();
+                        // Only close menu after confirming (second click), not when arming (first click)
+                        if (deleteEventArmed) setShowMoreMenu(false);
+                      }}
                       disabled={deleteEvent.isPending}
                       className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium transition-colors ${
                         deleteEventArmed
@@ -816,9 +821,26 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false, ex
   
   const activeRegion = externalRegion ?? selectedRegion;
 
+  const utils = api.useUtils();
+
   const { data: eventsData, isLoading, error } = api.event.getPublicEvents.useQuery(undefined, {
     enabled: true,
   });
+
+  // Real-time: remove deleted events instantly
+  const handleEventDeleted = useCallback((data: { eventId: number }) => {
+    utils.event.getPublicEvents.setData(undefined, (old) => {
+      if (!old) return old;
+      return old.filter((e) => e.id !== data.eventId);
+    });
+  }, [utils.event.getPublicEvents]);
+  useSocketEvent("event:deleted", handleEventDeleted);
+
+  // Real-time: refresh when events are updated (comments, likes, RSVPs)
+  const handleEventUpdated = useCallback(() => {
+    void utils.event.getPublicEvents.invalidate();
+  }, [utils.event.getPublicEvents]);
+  useSocketEvent("event:updated", handleEventUpdated);
 
   if (isLoading) {
     return (

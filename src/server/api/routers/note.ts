@@ -4,6 +4,7 @@ import crypto from "node:crypto";
 import { protectedProcedure, createTRPCRouter } from "~/server/api/trpc";
 import { stickyNotes, users, notebooks, noteShares, notifications } from "~/server/db/schema";
 import { eq, and, or } from "drizzle-orm";
+import { emitNotification } from "~/server/socket/emit";
 import * as argon2 from "argon2";
 import { encryptContent, decryptContent } from "~/server/encryption";
 
@@ -220,6 +221,13 @@ export const noteRouter = createTRPCRouter({
         message: `${sharerName} shared "${noteTitle}" with you (${input.permission === "write" ? "can edit" : "view only"}).`,
         link: `/notes?noteId=${input.noteId}&tab=shared`,
         read: false,
+      });
+      emitNotification(targetUser.id, {
+        id: `note-share-${input.noteId}-${Date.now()}`,
+        type: "system",
+        title: "Note shared with you",
+        message: `${sharerName} shared "${noteTitle}" with you (${input.permission === "write" ? "can edit" : "view only"}).`,
+        link: `/notes?noteId=${input.noteId}&tab=shared`,
       });
 
       // Update note share status

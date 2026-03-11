@@ -21,12 +21,30 @@ import {
   EventsPublisherConfirmInputSchema,
   EventsPublisherApplyInputSchema,
 } from "~/server/llm/schemas/a4EventsPublisherSchemas";
+import { consumeRateLimit, checkRateLimit } from "~/server/rateLimit";
+
+/**
+ * Rate-limited protected procedure — consumes one AI request from the user's
+ * daily quota. Used for all LLM-calling mutations (drafts, generation, extraction).
+ * Confirm/Apply procedures are NOT rate-limited since they don't call the LLM.
+ */
+const rateLimitedProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+  consumeRateLimit(ctx.session.user.id);
+  return next();
+});
 
 export const agentRouter = createTRPCRouter({
+
+  /**
+   * Check the caller's remaining AI request quota.
+   */
+  rateLimitStatus: protectedProcedure.query(({ ctx }) => {
+    return checkRateLimit(ctx.session.user.id);
+  }),
   /**
    * General A1 draft — workspace concierge answers questions with LLM.
    */
-  draft: protectedProcedure
+  draft: rateLimitedProcedure
     .input(
       z.object({
         agentId: z.literal("workspace_concierge"),
@@ -52,7 +70,7 @@ export const agentRouter = createTRPCRouter({
    * A1 Project Chatbot — can run either project-scoped or workspace-scoped.
    * Used by the Project Intelligence UI with a project picker.
    */
-  projectChatbot: protectedProcedure
+  projectChatbot: rateLimitedProcedure
     .input(
       z.object({
         projectId: z.number().optional(),
@@ -72,7 +90,7 @@ export const agentRouter = createTRPCRouter({
   // A2 Task Planner
   // -------------------------------------------------------------------------
 
-  taskPlannerDraft: protectedProcedure
+  taskPlannerDraft: rateLimitedProcedure
     .input(TaskPlannerDraftInputSchema)
     .mutation(async ({ ctx, input }) => {
       return agentOrchestrator.taskPlannerDraft({
@@ -106,7 +124,7 @@ export const agentRouter = createTRPCRouter({
   // A3 Notes Vault
   // -------------------------------------------------------------------------
 
-  notesVaultDraft: protectedProcedure
+  notesVaultDraft: rateLimitedProcedure
     .input(NotesVaultDraftInputSchema)
     .mutation(async ({ ctx, input }) => {
       return agentOrchestrator.notesVaultDraft({
@@ -141,7 +159,7 @@ export const agentRouter = createTRPCRouter({
    * The agent analyzes the project description and existing tasks
    * to produce intelligent, non-duplicate task suggestions.
    */
-  generateTaskDrafts: protectedProcedure
+  generateTaskDrafts: rateLimitedProcedure
     .input(GenerateTaskDraftsInputSchema)
     .mutation(async ({ ctx, input }) => {
       return agentOrchestrator.generateTaskDrafts({
@@ -155,7 +173,7 @@ export const agentRouter = createTRPCRouter({
    * Extract tasks from an uploaded PDF document.
    * Supports documents in EN, BG, ES, DE, FR.
    */
-  extractTasksFromPdf: protectedProcedure
+  extractTasksFromPdf: rateLimitedProcedure
     .input(ExtractTasksFromPdfInputSchema)
     .mutation(async ({ ctx, input }) => {
       return agentOrchestrator.extractTasksFromPdf({
@@ -171,7 +189,7 @@ export const agentRouter = createTRPCRouter({
   // A4 Events Publisher
   // -------------------------------------------------------------------------
 
-  eventsPublisherDraft: protectedProcedure
+  eventsPublisherDraft: rateLimitedProcedure
     .input(EventsPublisherDraftInputSchema)
     .mutation(async ({ ctx, input }) => {
       return agentOrchestrator.eventsPublisherDraft({

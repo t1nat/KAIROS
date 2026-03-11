@@ -2,9 +2,9 @@ import { auth } from "~/server/auth";
 import { redirect } from "next/navigation";
 
 import { SideNav } from "~/components/layout/SideNav";
-import { ChatClient } from "~/components/chat/ChatClient";
+import { ProjectIntelligenceChat } from "~/components/projects/ProjectIntelligenceChat";
 
-export default async function ChatPage() {
+export default async function KairosAIPage() {
   const session = await auth();
   if (!session?.user) {
     redirect("/api/auth/signin");
@@ -15,7 +15,7 @@ export default async function ChatPage() {
       <SideNav />
 
       <main id="main-content" className="lg:ml-16 h-[100dvh] overflow-hidden kairos-page-enter pt-16 lg:pt-0">
-        <ChatClient userId={session.user.id} />
+        <ProjectIntelligenceChat />
       </main>
     </div>
   );

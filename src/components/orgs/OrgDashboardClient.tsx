@@ -1,7 +1,10 @@
 "use client";
 
+import { useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { api } from "~/trpc/react";
+import { useToast } from "~/components/providers/ToastProvider";
+import { useSocketEvent } from "~/lib/useSocketEvent";
 
 function roleLabel(role: string, tOrg: (key: string) => string) {
   if (role === "admin") return tOrg("roleAdmin");
@@ -12,16 +15,53 @@ function roleLabel(role: string, tOrg: (key: string) => string) {
 export function OrgDashboardClient() {
   const tOrg = useTranslations("org");
   const tCommon = useTranslations("common");
+  const toast = useToast();
 
   const utils = api.useUtils();
   const activeQuery = api.organization.getActive.useQuery();
   const orgsQuery = api.organization.listMine.useQuery();
+  const invitesQuery = api.organization.getMyInvites.useQuery(undefined, {
+    refetchInterval: 30_000,
+  });
+
+  // Real-time: refresh invites when a new notification arrives (may include invite updates)
+  const handleNotification = useCallback(
+    (data: { type?: string; title?: string }) => {
+      if (data.title?.toLowerCase().includes("invitation") || data.title?.toLowerCase().includes("invite")) {
+        void utils.organization.getMyInvites.invalidate();
+      }
+    },
+    [utils.organization.getMyInvites],
+  );
+  useSocketEvent("notification:new", handleNotification);
 
   const setActive = api.organization.setActive.useMutation({
     onSuccess: async () => {
       await utils.organization.getActive.invalidate();
       await utils.organization.listMine.invalidate();
       await utils.user.getProfile.invalidate();
+    },
+  });
+
+  const acceptInvite = api.organization.acceptInvite.useMutation({
+    onSuccess: async (data) => {
+      toast.success(`Joined ${data.organizationName}!`);
+      await utils.organization.getMyInvites.invalidate();
+      await utils.organization.listMine.invalidate();
+      await utils.organization.getActive.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const declineInvite = api.organization.declineInvite.useMutation({
+    onSuccess: async () => {
+      toast.success("Invite declined");
+      await utils.organization.getMyInvites.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
@@ -46,6 +86,44 @@ export function OrgDashboardClient() {
 
   return (
     <div className="space-y-4">
+      {/* Pending Invitations */}
+      {(invitesQuery.data?.length ?? 0) > 0 && (
+        <div className="surface-card p-6">
+          <h2 className="text-lg font-bold text-fg-primary mb-3">Pending Invitations</h2>
+          <div className="space-y-3">
+            {invitesQuery.data?.map((invite) => (
+              <div
+                key={invite.id}
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl bg-accent-primary/5 border border-accent-primary/20"
+              >
+                <div className="min-w-0">
+                  <p className="font-semibold text-fg-primary">{invite.orgName}</p>
+                  <p className="text-sm text-fg-secondary">
+                    You&apos;ve been invited as <span className="font-medium">{invite.displayRole ?? invite.role}</span>
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => acceptInvite.mutate({ inviteId: invite.id })}
+                    disabled={acceptInvite.isPending}
+                    className="px-4 py-2 rounded-xl bg-accent-primary text-white text-sm font-semibold hover:bg-accent-primary/90 transition disabled:opacity-50"
+                  >
+                    {acceptInvite.isPending ? "Joining..." : "Accept"}
+                  </button>
+                  <button
+                    onClick={() => declineInvite.mutate({ inviteId: invite.id })}
+                    disabled={declineInvite.isPending}
+                    className="px-4 py-2 rounded-xl bg-bg-surface shadow-sm text-sm text-fg-secondary hover:bg-bg-elevated transition disabled:opacity-50"
+                  >
+                    Decline
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="surface-card p-6">
         <h1 className="text-2xl font-bold text-fg-primary">{tOrg("yourOrgs")}</h1>
         <p className="mt-1 text-sm text-fg-secondary">{tOrg("activeOrgHint")}</p>

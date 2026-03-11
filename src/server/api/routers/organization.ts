@@ -2,8 +2,9 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { organizations, organizationMembers, organizationRoles, organizationInvites, users } from "~/server/db/schema";
+import { organizations, organizationMembers, organizationRoles, organizationInvites, users, notifications } from "~/server/db/schema";
 import { eq, and } from "drizzle-orm";
+import { emitNotification } from "~/server/socket/emit";
 
 
 function generateAccessCode(): string {
@@ -292,6 +293,43 @@ export const organizationRouter = createTRPCRouter({
           .update(users)
           .set({ usageMode: "organization", activeOrganizationId: organization.id })
           .where(eq(users.id, ctx.session.user.id));
+
+        // Notify org admins that a new member joined
+        const [joinerUser] = await ctx.db
+          .select({ name: users.name })
+          .from(users)
+          .where(eq(users.id, ctx.session.user.id))
+          .limit(1);
+        const joinerName = joinerUser?.name ?? "Someone";
+
+        const orgAdmins = await ctx.db
+          .select({ userId: organizationMembers.userId })
+          .from(organizationMembers)
+          .where(
+            and(
+              eq(organizationMembers.organizationId, organization.id),
+              eq(organizationMembers.role, "admin"),
+            ),
+          );
+
+        for (const admin of orgAdmins) {
+          if (admin.userId === ctx.session.user.id) continue;
+          await ctx.db.insert(notifications).values({
+            userId: admin.userId,
+            type: "system",
+            title: "New Member Joined",
+            message: `${joinerName} joined "${organization.name}" via access code`,
+            link: "/settings",
+            read: false,
+          });
+          emitNotification(admin.userId, {
+            id: `org-join-${organization.id}-${Date.now()}`,
+            type: "system",
+            title: "New Member Joined",
+            message: `${joinerName} joined "${organization.name}" via access code`,
+            link: "/settings",
+          });
+        }
 
         return {
           success: true,
@@ -992,11 +1030,250 @@ export const organizationRouter = createTRPCRouter({
         })
         .returning();
 
-      console.log(
-        `[Organization Invite] Org ${input.organizationId}: ${ctx.session.user.id} invited ${input.email} as ${input.role} (invite id: ${invite?.id})`,
-      );
+      // Notify the invited user (if they have an account)
+      if (existingUser) {
+        const [org] = await ctx.db
+          .select({ name: organizations.name })
+          .from(organizations)
+          .where(eq(organizations.id, input.organizationId))
+          .limit(1);
+
+        const inviterUser = await ctx.db.query.users.findFirst({
+          where: eq(users.id, ctx.session.user.id),
+          columns: { name: true },
+        });
+        const inviterName = inviterUser?.name ?? "Someone";
+        const orgName = org?.name ?? "a workspace";
+
+        await ctx.db.insert(notifications).values({
+          userId: existingUser.id,
+          type: "system",
+          title: "Workspace Invitation",
+          message: `${inviterName} invited you to join "${orgName}" as ${input.role}`,
+          link: "/orgs",
+          read: false,
+        });
+        emitNotification(existingUser.id, {
+          id: `org-invite-${invite?.id ?? Date.now()}`,
+          type: "system",
+          title: "Workspace Invitation",
+          message: `${inviterName} invited you to join "${orgName}" as ${input.role}`,
+          link: "/orgs",
+        });
+      }
 
       return invite;
+    }),
+
+  getMyInvites: protectedProcedure.query(async ({ ctx }) => {
+    // Get current user's email
+    const [currentUser] = await ctx.db
+      .select({ email: users.email })
+      .from(users)
+      .where(eq(users.id, ctx.session.user.id))
+      .limit(1);
+
+    if (!currentUser?.email) return [];
+
+    const invites = await ctx.db
+      .select({
+        id: organizationInvites.id,
+        organizationId: organizationInvites.organizationId,
+        role: organizationInvites.role,
+        displayRole: organizationInvites.displayRole,
+        status: organizationInvites.status,
+        createdAt: organizationInvites.createdAt,
+        orgName: organizations.name,
+      })
+      .from(organizationInvites)
+      .innerJoin(organizations, eq(organizations.id, organizationInvites.organizationId))
+      .where(
+        and(
+          eq(organizationInvites.email, currentUser.email),
+          eq(organizationInvites.status, "pending"),
+        ),
+      );
+
+    return invites;
+  }),
+
+  acceptInvite: protectedProcedure
+    .input(z.object({ inviteId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const [currentUser] = await ctx.db
+        .select({ email: users.email })
+        .from(users)
+        .where(eq(users.id, ctx.session.user.id))
+        .limit(1);
+
+      if (!currentUser?.email) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "No email on account" });
+      }
+
+      const [invite] = await ctx.db
+        .select()
+        .from(organizationInvites)
+        .where(
+          and(
+            eq(organizationInvites.id, input.inviteId),
+            eq(organizationInvites.email, currentUser.email),
+            eq(organizationInvites.status, "pending"),
+          ),
+        )
+        .limit(1);
+
+      if (!invite) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Invite not found or already processed" });
+      }
+
+      // Check not already a member
+      const [existingMember] = await ctx.db
+        .select({ userId: organizationMembers.userId })
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.organizationId, invite.organizationId),
+            eq(organizationMembers.userId, ctx.session.user.id),
+          ),
+        )
+        .limit(1);
+
+      if (existingMember) {
+        // Mark invite as accepted and return
+        await ctx.db
+          .update(organizationInvites)
+          .set({ status: "accepted" })
+          .where(eq(organizationInvites.id, input.inviteId));
+        return { success: true, alreadyMember: true };
+      }
+
+      // Add as member
+      await ctx.db.insert(organizationMembers).values({
+        organizationId: invite.organizationId,
+        userId: ctx.session.user.id,
+        role: invite.role ?? "member",
+        canAddMembers: false,
+        canAssignTasks: false,
+      });
+
+      // Mark invite as accepted
+      await ctx.db
+        .update(organizationInvites)
+        .set({ status: "accepted" })
+        .where(eq(organizationInvites.id, input.inviteId));
+
+      // Switch to this org
+      await ctx.db
+        .update(users)
+        .set({ usageMode: "organization", activeOrganizationId: invite.organizationId })
+        .where(eq(users.id, ctx.session.user.id));
+
+      const [org] = await ctx.db
+        .select({ name: organizations.name })
+        .from(organizations)
+        .where(eq(organizations.id, invite.organizationId))
+        .limit(1);
+
+      const orgName = org?.name ?? "Workspace";
+
+      // Get the current user's name for the notification
+      const [acceptingUser] = await ctx.db
+        .select({ name: users.name })
+        .from(users)
+        .where(eq(users.id, ctx.session.user.id))
+        .limit(1);
+      const acceptorName = acceptingUser?.name ?? "Someone";
+
+      // Notify the person who sent the invite
+      if (invite.invitedById) {
+        await ctx.db.insert(notifications).values({
+          userId: invite.invitedById,
+          type: "system",
+          title: "Invite Accepted",
+          message: `${acceptorName} accepted your invitation to join "${orgName}"`,
+          link: "/settings",
+          read: false,
+        });
+        emitNotification(invite.invitedById, {
+          id: `invite-accepted-${input.inviteId}`,
+          type: "system",
+          title: "Invite Accepted",
+          message: `${acceptorName} accepted your invitation to join "${orgName}"`,
+          link: "/settings",
+        });
+      }
+
+      return { success: true, organizationName: orgName };
+    }),
+
+  declineInvite: protectedProcedure
+    .input(z.object({ inviteId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const [currentUser] = await ctx.db
+        .select({ email: users.email })
+        .from(users)
+        .where(eq(users.id, ctx.session.user.id))
+        .limit(1);
+
+      if (!currentUser?.email) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "No email on account" });
+      }
+
+      const [invite] = await ctx.db
+        .select()
+        .from(organizationInvites)
+        .where(
+          and(
+            eq(organizationInvites.id, input.inviteId),
+            eq(organizationInvites.email, currentUser.email),
+            eq(organizationInvites.status, "pending"),
+          ),
+        )
+        .limit(1);
+
+      if (!invite) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Invite not found or already processed" });
+      }
+
+      await ctx.db
+        .update(organizationInvites)
+        .set({ status: "declined" })
+        .where(eq(organizationInvites.id, input.inviteId));
+
+      // Notify the person who sent the invite
+      if (invite.invitedById) {
+        const [decliningUser] = await ctx.db
+          .select({ name: users.name })
+          .from(users)
+          .where(eq(users.id, ctx.session.user.id))
+          .limit(1);
+        const declinerName = decliningUser?.name ?? "Someone";
+
+        const [org] = await ctx.db
+          .select({ name: organizations.name })
+          .from(organizations)
+          .where(eq(organizations.id, invite.organizationId))
+          .limit(1);
+        const orgName = org?.name ?? "a workspace";
+
+        await ctx.db.insert(notifications).values({
+          userId: invite.invitedById,
+          type: "system",
+          title: "Invite Declined",
+          message: `${declinerName} declined your invitation to join "${orgName}"`,
+          link: "/settings",
+          read: false,
+        });
+        emitNotification(invite.invitedById, {
+          id: `invite-declined-${input.inviteId}`,
+          type: "system",
+          title: "Invite Declined",
+          message: `${declinerName} declined your invitation to join "${orgName}"`,
+          link: "/settings",
+        });
+      }
+
+      return { success: true };
     }),
 
   getInvites: protectedProcedure

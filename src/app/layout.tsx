@@ -12,6 +12,7 @@ import NextAuthSessionProvider from "~/components/providers/SessionProvider";
 import { ThemeProvider } from "~/components/providers/ThemeProvider";
 import { ToastProvider } from "~/components/providers/ToastProvider";
 import { UserPreferencesProvider } from "~/components/providers/UserPreferencesProvider";
+import { SocketProvider } from "~/components/providers/SocketProvider";
 
 export const metadata: Metadata = {
   title: "KAIROS",
@@ -70,11 +71,13 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages} locale={locale}>
           <TRPCReactProvider>
             <NextAuthSessionProvider session={session}>
-              <ThemeProvider>
-                <ToastProvider>
-                  <UserPreferencesProvider>{children}</UserPreferencesProvider>
-                </ToastProvider>
-              </ThemeProvider>
+              <SocketProvider>
+                <ThemeProvider>
+                  <ToastProvider>
+                    <UserPreferencesProvider>{children}</UserPreferencesProvider>
+                  </ToastProvider>
+                </ThemeProvider>
+              </SocketProvider>
             </NextAuthSessionProvider>
           </TRPCReactProvider>
         </NextIntlClientProvider>

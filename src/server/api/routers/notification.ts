@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { notifications } from "~/server/db/schema";
 import { eq, and, desc } from "drizzle-orm";
+import { emitNotification } from "~/server/socket/emit";
 
 export const notificationRouter = createTRPCRouter({
   getAll: protectedProcedure.query(async ({ ctx }) => {
@@ -139,6 +140,16 @@ export const notificationRouter = createTRPCRouter({
           read: false,
         })
         .returning();
+
+      if (notification) {
+        emitNotification(ctx.session.user.id, {
+          id: notification.id,
+          type: notification.type,
+          title: notification.title,
+          message: notification.message,
+          link: notification.link,
+        });
+      }
 
       return notification;
     }),
