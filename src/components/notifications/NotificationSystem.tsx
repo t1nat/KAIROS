@@ -71,7 +71,7 @@ export function NotificationSystem() {
             id: floatId,
             type: (data.type === "event" || data.type === "task" || data.type === "project" || data.type === "system")
               ? data.type : "system",
-            title: data.title,
+            title: data.title ?? "",
             message: data.message ?? "",
             createdAt: new Date(),
             read: false,
