@@ -1,7 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 /**
- * Centralized Next.js middleware for route protection.
+ * Centralized Next.js proxy for route protection.
+ *
+ * Migrated from middleware.ts → proxy.ts per Next.js 16 deprecation:
+ * https://nextjs.org/docs/messages/middleware-to-proxy
  *
  * IMPORTANT: This runs in the Edge Runtime so it CANNOT import Node.js modules
  * (node:crypto, argon2, etc.). Instead of calling the full `auth()` helper we
@@ -27,7 +30,7 @@ function isPublicPath(pathname: string): boolean {
   return false;
 }
 
-export default function middleware(req: NextRequest) {
+export default function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (isPublicPath(pathname)) {
