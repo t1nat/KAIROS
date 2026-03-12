@@ -83,7 +83,7 @@ export function handleConnection(socket: Socket<DefaultEventsMap, DefaultEventsM
   // Disconnect
   // -----------------------------------------------------------------------
 
-  socket.on("disconnect", (reason) => {
+  socket.on("disconnect", (reason: string) => {
     console.log(`[Socket.IO] client disconnected — userId=${userId}, reason=${reason}`);
     // Rooms are automatically cleaned up by Socket.IO on disconnect.
   });

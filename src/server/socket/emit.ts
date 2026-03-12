@@ -23,7 +23,14 @@ export interface SocketNewMessage {
 
 export function emitNewMessage(msg: SocketNewMessage) {
   const io = getIOSafe();
-  if (!io) return;
+  if (!io) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("[Socket.IO] emitNewMessage dropped: io not initialised", {
+        conversationId: msg.conversationId,
+      });
+    }
+    return;
+  }
   io.to(`conversation:${msg.conversationId}`).emit("message:new", msg);
 }
 
@@ -52,7 +59,15 @@ export interface SocketNewNotification {
 
 export function emitNotification(userId: string, notif: SocketNewNotification) {
   const io = getIOSafe();
-  if (!io) return;
+  if (!io) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("[Socket.IO] emitNotification dropped: io not initialised", {
+        userId,
+        type: notif.type,
+      });
+    }
+    return;
+  }
   io.to(`user:${userId}`).emit("notification:new", notif);
 }
 
@@ -62,14 +77,24 @@ export function emitNotification(userId: string, notif: SocketNewNotification) {
 
 export function emitEventDeleted(eventId: number) {
   const io = getIOSafe();
-  if (!io) return;
+  if (!io) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("[Socket.IO] emitEventDeleted dropped: io not initialised", { eventId });
+    }
+    return;
+  }
   // Broadcast to all connected clients
   io.emit("event:deleted", { eventId });
 }
 
 export function emitEventUpdated(eventId: number) {
   const io = getIOSafe();
-  if (!io) return;
+  if (!io) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("[Socket.IO] emitEventUpdated dropped: io not initialised", { eventId });
+    }
+    return;
+  }
   io.emit("event:updated", { eventId });
 }
 
@@ -82,7 +107,15 @@ export function emitAgentThinking(
   payload: { agentId: string; status: "thinking" | "done" | "error" },
 ) {
   const io = getIOSafe();
-  if (!io) return;
+  if (!io) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("[Socket.IO] emitAgentThinking dropped: io not initialised", {
+        userId,
+        agentId: payload.agentId,
+      });
+    }
+    return;
+  }
   io.to(`user:${userId}`).emit("agent:thinking", payload);
 }
 
@@ -91,6 +124,14 @@ export function emitAgentResult(
   payload: { agentId: string; draftId?: number; summary: string },
 ) {
   const io = getIOSafe();
-  if (!io) return;
+  if (!io) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("[Socket.IO] emitAgentResult dropped: io not initialised", {
+        userId,
+        agentId: payload.agentId,
+      });
+    }
+    return;
+  }
   io.to(`user:${userId}`).emit("agent:result", payload);
 }
