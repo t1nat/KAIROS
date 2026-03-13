@@ -1,16 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { api } from "~/trpc/react";
 import type { RouterOutputs } from "~/trpc/react";
 import Image from "next/image";
-import { Send, Paperclip, Search, MoreVertical, X, Plus, MessageCircle } from "lucide-react";
+import { Send, Paperclip, Search, MoreVertical, X, Plus, MessageCircle, Users } from "lucide-react";
 import { useToast } from "~/components/providers/ToastProvider";
 import { useUploadThing } from "~/lib/uploadthing";
 import { useSocket } from "~/components/providers/SocketProvider";
 import { useSocketEvent } from "~/lib/useSocketEvent";
 
 type ChatMessage = RouterOutputs["chat"]["listMessages"][number];
+type WorkspaceMember = RouterOutputs["organization"]["getMembers"][number];
 
 export function ChatClient({ userId }: { userId: string }) {
   const toast = useToast();
@@ -27,6 +28,17 @@ export function ChatClient({ userId }: { userId: string }) {
 
   const utils = api.useUtils();
   const { startUpload } = useUploadThing("chatAttachment");
+
+  // Get user profile to find active organization
+  const profileQuery = api.user.getProfile.useQuery();
+  const activeOrgId = profileQuery.data?.activeOrganizationId;
+
+  // Get workspace members from active organization
+  const workspaceMembersQuery = api.organization.getMembers.useQuery(
+    { organizationId: activeOrgId ?? -1 },
+    { enabled: !!activeOrgId }
+  );
+  const workspaceMembers = workspaceMembersQuery.data ?? [];
 
   // Get all conversations (real-time updates via Socket.IO)
   const conversationsQuery = api.chat.listAllConversations.useQuery(undefined);
@@ -95,6 +107,17 @@ export function ChatClient({ userId }: { userId: string }) {
     { enabled: newChatEmail.trim().length > 3 && newChatEmail.includes("@"), retry: false }
   );
 
+  // Filter workspace members based on search input
+  const filteredMemberSuggestions = useMemo(() => {
+    if (!newChatEmail.trim()) return workspaceMembers;
+
+    const query = newChatEmail.toLowerCase().trim();
+    return workspaceMembers.filter(member =>
+      (member.name?.toLowerCase() ?? "").includes(query) ||
+      (member.email?.toLowerCase() ?? "").includes(query)
+    ).filter(member => member.id !== userId); // Exclude self
+  }, [workspaceMembers, newChatEmail, userId]);
+
   // Create new conversation
   const createConversation = api.chat.getOrCreateDirectConversation.useMutation({
     onSuccess: async (data) => {
@@ -113,6 +136,10 @@ export function ChatClient({ userId }: { userId: string }) {
     if (searchUserQuery.data) {
       createConversation.mutate({ otherUserId: searchUserQuery.data.id });
     }
+  };
+
+  const handleSelectMember = (member: WorkspaceMember) => {
+    createConversation.mutate({ otherUserId: member.id });
   };
 
   // -----------------------------------------------------------------------
@@ -220,8 +247,8 @@ export function ChatClient({ userId }: { userId: string }) {
 <div className="flex flex-col sm:flex-row h-full w-full dark:bg-gray-900 bg-white">      
       {showNewChatModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-bg-secondary rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in fade-in slide-in-from-bottom-4">
-            <div className="flex items-center justify-between mb-4">
+          <div className="bg-bg-secondary rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in fade-in slide-in-from-bottom-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4 sticky top-0 bg-bg-secondary pb-2">
               <h3 className="text-lg font-bold text-fg-primary">Start New Chat</h3>
               <button
                 onClick={() => { setShowNewChatModal(false); setNewChatEmail(""); }}
@@ -232,49 +259,101 @@ export function ChatClient({ userId }: { userId: string }) {
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-fg-secondary mb-2">Enter email address</label>
+                <label className="block text-sm font-medium text-fg-secondary mb-2">Search or enter email</label>
                 <input
-                  type="email"
+                  type="text"
                   value={newChatEmail}
                   onChange={(e) => setNewChatEmail(e.target.value)}
-                  placeholder="user@example.com"
+                  placeholder="Search by name or email..."
                   className="w-full px-4 py-3 bg-bg-surface rounded-xl text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
                 />
               </div>
-              {searchUserQuery.data && (
-                <div className="flex items-center gap-3 p-3 bg-success/10 rounded-xl">
-                  {searchUserQuery.data.image ? (
-                    <Image
-                      src={searchUserQuery.data.image}
-                      alt={searchUserQuery.data.name ?? "User"}
-                      width={40}
-                      height={40}
-                      className="rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center text-white font-bold">
-                      {searchUserQuery.data.name?.[0]?.toUpperCase() ?? "?"}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-fg-primary truncate">{searchUserQuery.data.name ?? "User"}</p>
-                    <p className="text-xs text-fg-tertiary truncate">{searchUserQuery.data.email}</p>
+
+              {/* Workspace Members Section */}
+              {activeOrgId && filteredMemberSuggestions.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 px-3 py-2">
+                    <Users size={16} className="text-fg-tertiary" />
+                    <p className="text-xs font-semibold text-fg-tertiary uppercase">Workspace Members</p>
+                  </div>
+                  <div className="space-y-1 max-h-48 overflow-y-auto">
+                    {filteredMemberSuggestions.map((member) => (
+                      <button
+                        key={member.id}
+                        onClick={() => handleSelectMember(member)}
+                        disabled={createConversation.isPending}
+                        className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-bg-elevated transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-left"
+                      >
+                        {member.image ? (
+                          <Image
+                            src={member.image}
+                            alt={member.name ?? "User"}
+                            width={40}
+                            height={40}
+                            className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                            {member.name?.[0]?.toUpperCase() ?? "?"}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-fg-primary truncate">{member.name ?? "User"}</p>
+                          <p className="text-xs text-fg-tertiary truncate">{member.email}</p>
+                        </div>
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
-              {searchUserQuery.isLoading && newChatEmail.includes("@") && (
-                <p className="text-sm text-fg-tertiary text-center">Searching...</p>
+
+              {/* Email Search Section */}
+              {newChatEmail.trim().includes("@") && (
+                <div className="border-t border-bg-elevated pt-4 space-y-2">
+                  <p className="text-xs font-semibold text-fg-tertiary uppercase px-3">Search Results</p>
+                  {searchUserQuery.data && (
+                    <button
+                      onClick={handleStartNewChat}
+                      disabled={createConversation.isPending}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-bg-elevated transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-left"
+                    >
+                      {searchUserQuery.data.image ? (
+                        <Image
+                          src={searchUserQuery.data.image}
+                          alt={searchUserQuery.data.name ?? "User"}
+                          width={40}
+                          height={40}
+                          className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                          {searchUserQuery.data.name?.[0]?.toUpperCase() ?? "?"}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-fg-primary truncate">{searchUserQuery.data.name ?? "User"}</p>
+                        <p className="text-xs text-fg-tertiary truncate">{searchUserQuery.data.email}</p>
+                      </div>
+                    </button>
+                  )}
+                  {searchUserQuery.isLoading && (
+                    <p className="text-sm text-fg-tertiary text-center py-2">Searching...</p>
+                  )}
+                  {searchUserQuery.isError && (
+                    <p className="text-sm text-error text-center py-2">User not found</p>
+                  )}
+                </div>
               )}
-              {searchUserQuery.isError && (
-                <p className="text-sm text-error text-center">User not found</p>
+
+              {/* No Results Message */}
+              {newChatEmail.trim() && filteredMemberSuggestions.length === 0 && !newChatEmail.includes("@") && (
+                <p className="text-sm text-fg-tertiary text-center py-4">No workspace members match your search</p>
               )}
-              <button
-                onClick={handleStartNewChat}
-                disabled={!searchUserQuery.data || createConversation.isPending}
-                className="w-full py-3 bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-all"
-              >
-                {createConversation.isPending ? "Starting chat..." : "Start Chat"}
-              </button>
+
+              {/* Empty State */}
+              {!newChatEmail.trim() && filteredMemberSuggestions.length === 0 && activeOrgId && (
+                <p className="text-sm text-fg-tertiary text-center py-4">No workspace members available</p>
+              )}
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { api } from "~/trpc/react";
 import { useToast } from "~/components/providers/ToastProvider";
@@ -16,6 +17,7 @@ export function OrgDashboardClient() {
   const tOrg = useTranslations("org");
   const tCommon = useTranslations("common");
   const toast = useToast();
+  const router = useRouter();
 
   const utils = api.useUtils();
   const activeQuery = api.organization.getActive.useQuery();
@@ -49,6 +51,7 @@ export function OrgDashboardClient() {
       await utils.organization.getMyInvites.invalidate();
       await utils.organization.listMine.invalidate();
       await utils.organization.getActive.invalidate();
+      router.push("/projects");
     },
     onError: (error) => {
       toast.error(error.message);

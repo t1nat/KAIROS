@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { api } from "~/trpc/react";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
@@ -20,7 +21,12 @@ import {
   AlertTriangle,
   Filter,
   X,
+  Clock,
+  CheckSquare,
+  AlertCircle,
+  Zap,
 } from "lucide-react";
+import { MilestoneTimeline } from "./MilestoneTimeline";
 
 /* ─── Types ─── */
 
@@ -973,12 +979,40 @@ const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
   { value: "blocked", label: "Blocked" },
 ];
 
+/* ─── Task Status Visualization Card ─── */
+function TaskStatusCard({
+  title,
+  count,
+  icon: Icon,
+  color,
+}: {
+  title: string;
+  count: number;
+  icon: any;
+  color: string;
+}) {
+  return (
+    <div className={`rounded-lg border-2 p-4 ${color} flex flex-col gap-3 flex-1 min-w-[200px]`}>
+      <div className="flex items-center gap-3">
+        <div className={`p-2 rounded-lg ${color.replace("bg-", "bg-").replace("border-", "border-").split(" ")[0]}/20`}>
+          <Icon size={20} />
+        </div>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide opacity-75">{title}</p>
+          <p className="text-2xl font-bold">{count}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main Export ─── */
 export function TaskTimelineClient() {
   const { data: session } = useSession();
   const { permissions } = useRolePermissions();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+  const [activeView, setActiveView] = useState<"creation" | "timeline">("creation");
 
   /* Get user profile to determine active org */
   const { data: profile } = typedApi.user.getProfile.useQuery(undefined, {
@@ -1058,7 +1092,7 @@ export function TaskTimelineClient() {
   };
 
   /* Computed stats — percentage uses tasks of the selected project */
-  const { percentage, timelineEntries, taskStatusMap } = useMemo(() => {
+  const { percentage, timelineEntries, taskStatusMap, allTasksByStatus } = useMemo(() => {
     const allProjects = projects ?? [];
     const effectivePid = selectedProjectId ?? allProjects[0]?.id ?? null;
     const scopedProjects = effectivePid
@@ -1076,6 +1110,17 @@ export function TaskTimelineClient() {
       statusMap.set(t.id, t.status);
     }
 
+    // Group tasks by status for visualization
+    const tasksByStatus: Record<TaskStatus, typeof allTasks> = {
+      pending: [],
+      in_progress: [],
+      completed: [],
+      blocked: [],
+    };
+    for (const t of scopedTasks) {
+      tasksByStatus[t.status].push(t);
+    }
+
     const sorted = (activity?.rows ?? [])
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
@@ -1087,7 +1132,7 @@ export function TaskTimelineClient() {
       return true;
     }).slice(0, 50);
 
-    return { percentage: pct, timelineEntries: entries, taskStatusMap: statusMap };
+    return { percentage: pct, timelineEntries: entries, taskStatusMap: statusMap, allTasksByStatus: tasksByStatus };
   }, [projects, activity, selectedProjectId]);
 
   /* Resolve the effective project filter — default to first project if user hasn't chosen */
@@ -1165,89 +1210,186 @@ export function TaskTimelineClient() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6">
-      {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 leading-tight tracking-tight">
-          Task Creation & Timeline
-        </h1>
-        <p className="text-base font-medium text-slate-600 dark:text-slate-400 mt-1">
-          Add new tasks and track your historical progress.
-        </p>
-      </div>
-
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] gap-6 xl:gap-8">
-        {/* Left: Create Entry */}
-        <div>
-          <CreateNewEntryForm
-            projects={projects ?? []}
-            onCreated={handleCreated}
-            members={orgMembers ?? []}
-            selectedProjectId={selectedProjectId ?? projects?.[0]?.id ?? null}
-            onProjectChange={setSelectedProjectId}
-          />
-        </div>
-
-        {/* Right: Timeline */}
-        <div>
-          <MasterProgressBar percentage={percentage} />
-
-          {/* Status filter */}
-          <div className="flex items-center gap-2 mb-5 flex-wrap">
-            <Filter size={14} className="text-fg-tertiary" />
-            {STATUS_FILTERS.map((f) => (
-              <button
-                key={f.value}
-                type="button"
-                onClick={() => setStatusFilter(f.value)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                  statusFilter === f.value
-                    ? "bg-accent-primary text-white"
-                    : "bg-slate-100 dark:bg-white/[0.06] text-fg-secondary hover:bg-slate-200 dark:hover:bg-white/[0.1]"
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
+    <div className="w-full min-h-screen flex flex-col">
+      {/* Header with Page Title and Toggle Buttons */}
+      <div className="px-4 sm:px-6 md:px-8 py-6 border-b border-border-medium/50">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 leading-tight tracking-tight">
+              Task Creation & Timeline
+            </h1>
+            <p className="text-base font-medium text-slate-600 dark:text-slate-400 mt-1">
+              Add new tasks and track your historical progress.
+            </p>
           </div>
 
-          {timelineEntries.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-16 h-16 rounded-full bg-accent-primary/10 flex items-center justify-center mb-4">
-                <Calendar size={28} className="text-accent-primary" />
-              </div>
-              <h3 className="text-lg font-bold text-fg-primary mb-2">No activity yet</h3>
-              <p className="text-sm text-fg-secondary max-w-sm">
-                Create tasks and track your progress here. Activity will appear on the timeline.
-              </p>
-            </div>
-          ) : filteredEntries.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-sm text-fg-tertiary">No entries match this filter.</p>
-            </div>
-          ) : (
-            <div className="timeline-list relative">
-              {filteredEntries.map((entry, i) => (
-                <div key={entry.id} style={{ animationDelay: `${i * 60}ms` }} className="timeline-entry-wrapper">
-                  <TimelineEntry
-                    entry={entry}
-                    isLast={i === filteredEntries.length - 1}
-                    onToggleDone={handleToggleDone}
-                    onDelete={handleDelete}
-                    isToggling={togglingId === entry.taskId}
-                    isDeleting={deletingId === entry.taskId}
-                    canDelete={canDeleteTask(entry)}
-                    taskCurrentStatus={taskStatusMap.get(entry.taskId)}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Toggle Buttons - Enhanced Segmented Control */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex items-center gap-1 bg-white dark:bg-slate-900/50 rounded-full p-1.5 border border-slate-200 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-shadow"
+          >
+            <button
+              onClick={() => setActiveView("creation")}
+              className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+                activeView === "creation"
+                  ? "bg-gradient-to-r from-accent-primary to-purple-600 text-white shadow-lg shadow-accent-primary/30"
+                  : "text-fg-secondary hover:text-fg-primary"
+              }`}
+            >
+              Task Creation
+            </button>
+            <button
+              onClick={() => setActiveView("timeline")}
+              className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+                activeView === "timeline"
+                  ? "bg-gradient-to-r from-accent-primary to-purple-600 text-white shadow-lg shadow-accent-primary/30"
+                  : "text-fg-secondary hover:text-fg-primary"
+              }`}
+            >
+              Timeline
+            </button>
+          </motion.div>
         </div>
       </div>
 
-      {/* Bottom user badge removed - role shown in user display modal */}
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-auto">
+        <AnimatePresence mode="wait">
+          {activeView === "creation" ? (
+            <motion.div
+              key="creation"
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -30 }}
+              transition={{ duration: 0.3 }}
+              className="w-full"
+            >
+              <div className="flex flex-col w-full">
+                {/* Full-width Form — fills the entire page */}
+                <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 py-8">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                  >
+                    <CreateNewEntryForm
+                      projects={projects ?? []}
+                      onCreated={handleCreated}
+                      members={orgMembers ?? []}
+                      selectedProjectId={selectedProjectId ?? projects?.[0]?.id ?? null}
+                      onProjectChange={setSelectedProjectId}
+                    />
+                  </motion.div>
+                </div>
+
+                {/* Task Visualization Below Form */}
+                <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-8 pb-12 border-t border-border-medium/30">
+                  <div className="pt-8">
+                    <h2 className="text-xl font-bold text-fg-primary mb-4 flex items-center gap-2">
+                      <span className="w-1 h-6 bg-gradient-to-b from-accent-primary to-purple-600 rounded-full" />
+                      Existing Tasks by Status
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <TaskStatusCard
+                        title="Pending"
+                        count={allTasksByStatus.pending.length}
+                        icon={Clock}
+                        color="bg-slate-50 dark:bg-slate-500/10 border-slate-200 dark:border-slate-500/30 text-slate-600 dark:text-slate-300"
+                      />
+                      <TaskStatusCard
+                        title="In Progress"
+                        count={allTasksByStatus.in_progress.length}
+                        icon={Zap}
+                        color="bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-300"
+                      />
+                      <TaskStatusCard
+                        title="Completed"
+                        count={allTasksByStatus.completed.length}
+                        icon={CheckSquare}
+                        color="bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-300"
+                      />
+                      <TaskStatusCard
+                        title="Blocked"
+                        count={allTasksByStatus.blocked.length}
+                        icon={AlertCircle}
+                        color="bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-300"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="timeline"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 30 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="w-full"
+            >
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8">
+                {/* Timeline header with title and filters */}
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.1 }}
+                  className="mb-8"
+                >
+                  <h2 className="text-xl font-bold text-fg-primary mb-4 flex items-center gap-2">
+                    <span className="w-1 h-6 bg-gradient-to-b from-accent-primary to-purple-600 rounded-full" />
+                    Project Timeline
+                  </h2>
+
+                  {/* Status filters */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {[
+                      { value: "all", label: "All Events" },
+                      { value: "completed", label: "Completed" },
+                      { value: "in_progress", label: "In Progress" },
+                      { value: "pending", label: "Pending" },
+                      { value: "blocked", label: "Blocked" },
+                    ].map((filter) => (
+                      <motion.button
+                        key={filter.value}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setStatusFilter(filter.value as "all" | "completed" | "in_progress" | "pending" | "blocked")}
+                        className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                          statusFilter === filter.value
+                            ? "bg-gradient-to-r from-accent-primary to-purple-600 text-white shadow-lg shadow-accent-primary/30"
+                            : "bg-white dark:bg-slate-900/50 text-fg-secondary border border-slate-200 dark:border-white/[0.08] hover:text-fg-primary hover:border-slate-300 dark:hover:border-white/[0.1]"
+                        }`}
+                      >
+                        {filter.label}
+                      </motion.button>
+                    ))}
+                  </div>
+                </motion.div>
+
+                {/* Horizontal timeline — scrolls internally */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3, delay: 0.2 }}
+                  className="w-full overflow-visible"
+                >
+                  <MilestoneTimeline
+                    entries={filteredEntries}
+                    taskStatusMap={taskStatusMap}
+                    canDeleteTask={canDeleteTask}
+                    onToggleDone={handleToggleDone}
+                    onDelete={handleDelete}
+                    togglingId={togglingId}
+                    deletingId={deletingId}
+                  />
+                </motion.div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

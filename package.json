@@ -46,6 +46,7 @@
     "d3": "^7.9.0",
     "date-fns": "^3.0.0",
     "drizzle-orm": "^0.41.0",
+    "framer-motion": "^12.36.0",
     "gsap": "^3.13.0",
     "lucide-react": "^0.554.0",
     "motion": "^12.23.24",
