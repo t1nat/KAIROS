@@ -13,6 +13,7 @@ import { ThemeProvider } from "~/components/providers/ThemeProvider";
 import { ToastProvider } from "~/components/providers/ToastProvider";
 import { UserPreferencesProvider } from "~/components/providers/UserPreferencesProvider";
 import { SocketProvider } from "~/components/providers/SocketProvider";
+import WebSocketInitializer from "~/components/layout/WebSocketInitializer";
 
 export const metadata: Metadata = {
   title: "KAIROS",
@@ -72,6 +73,7 @@ export default async function RootLayout({
           <TRPCReactProvider>
             <NextAuthSessionProvider session={session}>
               <SocketProvider>
+                <WebSocketInitializer />
                 <ThemeProvider>
                   <ToastProvider>
                     <UserPreferencesProvider>{children}</UserPreferencesProvider>

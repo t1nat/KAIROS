@@ -4,11 +4,14 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import { io, type Socket } from "socket.io-client";
 import { useSession } from "next-auth/react";
+
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? "http://localhost:3001";
 
 interface SocketContextValue {
   socket: Socket | null;
@@ -21,62 +24,81 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [connected, setConnected] = useState(false);
   const { status, data: session } = useSession();
- 
+
+  // Token ref for HMAC ticket auth — reconnections always use the latest
+  const tokenRef = useRef<string | null>(null);
+  const tokenTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Fetch WS ticket from the API
+  const fetchToken = async (): Promise<string | null> => {
+    try {
+      const res = await fetch("/api/ws/token");
+      if (!res.ok) return null;
+      const data = (await res.json()) as { token: string; expiresAt: number };
+      tokenRef.current = data.token;
+
+      // Schedule refresh before expiry (90s of 120s TTL)
+      if (tokenTimerRef.current) clearTimeout(tokenTimerRef.current);
+      tokenTimerRef.current = setTimeout(() => {
+        void fetchToken();
+      }, 90_000);
+
+      return data.token;
+    } catch {
+      return null;
+    }
+  };
+
   useEffect(() => {
-    // Only connect when the user is authenticated.
-    //
-    // Important: NextAuth session status can flip to "authenticated" slightly
-    // before the session cookie is reliably present for the Socket.IO handshake.
-    // Waiting until we have a user id (and a short tick) avoids a common
-    // "connect_error" on first load that makes real-time updates appear to only
-    // work after a refresh.
     if (status !== "authenticated") return;
     if (!session?.user?.id) return;
- 
+
     let cancelled = false;
- 
+
     const start = async () => {
-      // small delay to ensure cookies/state are settled before handshake
-      await new Promise((r) => setTimeout(r, 50));
-      if (cancelled) return;
- 
-      const s = io({
-        path: "/api/socketio",
-        withCredentials: true,
+      const token = await fetchToken();
+      if (cancelled || !token) return;
+
+      const s = io(WS_URL, {
+        // Auth as a function so reconnections always use the latest token
+        auth: (cb) => {
+          cb({ token: tokenRef.current });
+        },
         transports: ["websocket", "polling"],
         reconnection: true,
         reconnectionAttempts: Infinity,
-        reconnectionDelay: 1000,
-        reconnectionDelayMax: 10000,
+        reconnectionDelay: 1_000,
+        reconnectionDelayMax: 10_000,
       });
- 
+
       s.on("connect", () => {
         console.log("[Socket.IO] connected:", s.id);
         setConnected(true);
       });
- 
+
       s.on("disconnect", (reason: string) => {
         console.log("[Socket.IO] disconnected:", reason);
         setConnected(false);
       });
- 
+
       s.on("reconnect", (attempt: number) => {
         console.log("[Socket.IO] reconnected after", attempt, "attempts");
         setConnected(true);
       });
- 
+
       s.on("connect_error", (err: Error) => {
         console.error("[Socket.IO] connection error:", err.message);
         setConnected(false);
       });
- 
+
       setSocket(s);
     };
- 
+
     void start();
 
     return () => {
       cancelled = true;
+      if (tokenTimerRef.current) clearTimeout(tokenTimerRef.current);
       setSocket((prev: Socket | null) => {
         prev?.disconnect();
         return null;

@@ -27,6 +27,10 @@ export const env = createEnv({
     // Used for building absolute URLs in emails
     NEXT_PUBLIC_APP_URL: z.string().optional(),
 
+    // WebSocket (standalone WS server)
+    WS_SECRET: z.string().optional(),
+    WS_INTERNAL_URL: z.string().optional(),
+
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -34,6 +38,7 @@ export const env = createEnv({
 
   client: {
     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: z.string().optional(),
+    NEXT_PUBLIC_WS_URL: z.string().optional(),
   },
 
 
@@ -59,6 +64,9 @@ export const env = createEnv({
 
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+    NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL,
+    WS_SECRET: process.env.WS_SECRET,
+    WS_INTERNAL_URL: process.env.WS_INTERNAL_URL,
   },
 
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,

@@ -1,11 +1,19 @@
 /**
  * Socket.IO emit helpers — safe to import from any tRPC router.
  *
- * Uses `getIOSafe()` so calls are no-ops when Socket.IO hasn't been
- * initialised (e.g. during tests or `next dev --turbo` without custom server).
+ * Routes events through the publisher -> standalone WS server pipeline
+ * (Redis pub/sub in production, HTTP /internal/emit fallback in dev).
+ *
+ * This file preserves the same public API as the old in-process approach
+ * so existing router call sites don't need to change.
  */
 
-import { getIOSafe } from "./index";
+import {
+  publishUserEvent,
+  publishNotificationToUser,
+  publishConversationEvent,
+  publishBroadcast,
+} from "~/server/redis/publisher";
 
 // -------------------------------------------------------------------------
 // Chat events
@@ -22,26 +30,15 @@ export interface SocketNewMessage {
 }
 
 export function emitNewMessage(msg: SocketNewMessage) {
-  const io = getIOSafe();
-  if (!io) {
-    if (process.env.NODE_ENV !== "production") {
-      console.warn("[Socket.IO] emitNewMessage dropped: io not initialised", {
-        conversationId: msg.conversationId,
-      });
-    }
-    return;
-  }
-  io.to(`conversation:${msg.conversationId}`).emit("message:new", msg);
+  publishConversationEvent(msg.conversationId, "message:new", msg);
 }
 
 export function emitConversationUpdated(
   userIds: string[],
   payload: { conversationId: number; lastMessageAt: Date },
 ) {
-  const io = getIOSafe();
-  if (!io) return;
   for (const uid of userIds) {
-    io.to(`user:${uid}`).emit("conversation:updated", payload);
+    publishUserEvent(uid, "conversation:updated", payload);
   }
 }
 
@@ -58,17 +55,7 @@ export interface SocketNewNotification {
 }
 
 export function emitNotification(userId: string, notif: SocketNewNotification) {
-  const io = getIOSafe();
-  if (!io) {
-    if (process.env.NODE_ENV !== "production") {
-      console.warn("[Socket.IO] emitNotification dropped: io not initialised", {
-        userId,
-        type: notif.type,
-      });
-    }
-    return;
-  }
-  io.to(`user:${userId}`).emit("notification:new", notif);
+  publishNotificationToUser(userId, notif);
 }
 
 // -------------------------------------------------------------------------
@@ -76,26 +63,11 @@ export function emitNotification(userId: string, notif: SocketNewNotification) {
 // -------------------------------------------------------------------------
 
 export function emitEventDeleted(eventId: number) {
-  const io = getIOSafe();
-  if (!io) {
-    if (process.env.NODE_ENV !== "production") {
-      console.warn("[Socket.IO] emitEventDeleted dropped: io not initialised", { eventId });
-    }
-    return;
-  }
-  // Broadcast to all connected clients
-  io.emit("event:deleted", { eventId });
+  publishBroadcast("event:deleted", { eventId });
 }
 
 export function emitEventUpdated(eventId: number) {
-  const io = getIOSafe();
-  if (!io) {
-    if (process.env.NODE_ENV !== "production") {
-      console.warn("[Socket.IO] emitEventUpdated dropped: io not initialised", { eventId });
-    }
-    return;
-  }
-  io.emit("event:updated", { eventId });
+  publishBroadcast("event:updated", { eventId });
 }
 
 // -------------------------------------------------------------------------
@@ -106,32 +78,12 @@ export function emitAgentThinking(
   userId: string,
   payload: { agentId: string; status: "thinking" | "done" | "error" },
 ) {
-  const io = getIOSafe();
-  if (!io) {
-    if (process.env.NODE_ENV !== "production") {
-      console.warn("[Socket.IO] emitAgentThinking dropped: io not initialised", {
-        userId,
-        agentId: payload.agentId,
-      });
-    }
-    return;
-  }
-  io.to(`user:${userId}`).emit("agent:thinking", payload);
+  publishUserEvent(userId, "agent:thinking", payload);
 }
 
 export function emitAgentResult(
   userId: string,
   payload: { agentId: string; draftId?: number; summary: string },
 ) {
-  const io = getIOSafe();
-  if (!io) {
-    if (process.env.NODE_ENV !== "production") {
-      console.warn("[Socket.IO] emitAgentResult dropped: io not initialised", {
-        userId,
-        agentId: payload.agentId,
-      });
-    }
-    return;
-  }
-  io.to(`user:${userId}`).emit("agent:result", payload);
+  publishUserEvent(userId, "agent:result", payload);
 }

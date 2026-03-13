@@ -1,14 +1,17 @@
 /**
- * Custom Next.js server that attaches Socket.IO to the same HTTP server.
+ * Custom Next.js server.
+ *
+ * WebSocket handling has moved to a standalone process (ws-server/).
+ * This server only handles HTTP requests via Next.js.
  *
  * Usage:
- *   dev:   tsx watch server.ts
- *   prod:  node --import tsx server.ts   (after `next build`)
+ *   dev:   tsx watch server.ts        (Next.js)
+ *          pnpm ws:dev                (WS server — separate terminal)
+ *   prod:  node --import tsx server.ts
  */
 
 import { createServer } from "node:http";
 import next from "next";
-import { initSocketIO } from "./src/server/socket/index";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = process.env.HOSTNAME ?? "localhost";
@@ -21,8 +24,6 @@ app.prepare().then(() => {
   const httpServer = createServer((req, res) => {
     void handle(req, res);
   });
-
-  initSocketIO(httpServer);
 
   httpServer.listen(port, () => {
     console.log(`> Ready on http://${hostname}:${port}`);

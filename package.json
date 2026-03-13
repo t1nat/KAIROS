@@ -12,6 +12,7 @@
     "db:studio": "dotenv -e .env -- drizzle-kit studio --config=config/drizzle.config.ts",
     "dev": "tsx watch server.ts",
     "dev:next": "next dev --turbo",
+    "ws:dev": "dotenv -e .env -- tsx watch ws-server/index.ts",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "lint": "eslint .",
