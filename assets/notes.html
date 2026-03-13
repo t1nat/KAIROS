@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kairos Notes Dashboard - Dark Theme</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#a855f7",
+                        "accent": "#7f13ec",
+                        "background-dark": "#0f0913",
+                        "sidebar-dark": "#160d1e",
+                        "card-dark": "rgba(30, 20, 45, 0.6)",
+                    },
+                    fontFamily: {
+                        "display": ["Spline Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .glass-card {
+                background: rgba(30, 20, 45, 0.4);
+                backdrop-filter: blur(12px);
+                border: 1px solid rgba(168, 85, 247, 0.15);
+                box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            }
+            .glass-card:hover {
+                background: rgba(45, 30, 65, 0.6);
+                border-color: rgba(168, 85, 247, 0.4);
+                box-shadow: 0 0 20px rgba(127, 19, 236, 0.15);
+            }
+            .sidebar-link-active {
+                background: linear-gradient(90deg, rgba(127, 19, 236, 0.15) 0%, rgba(127, 19, 236, 0) 100%);
+                border-left: 3px solid #a855f7;
+            }
+        }
+        body {
+            font-family: "Spline Sans", sans-serif;
+            background-color: #0f0913;
+        }
+    </style>
+</head>
+<body class="bg-background-dark text-slate-100 font-display min-h-screen flex">
+<aside class="w-64 border-r border-white/5 bg-sidebar-dark h-screen sticky top-0 flex flex-col p-6">
+<div class="flex items-center gap-3 mb-10">
+<div class="bg-primary size-10 rounded-lg flex items-center justify-center text-white shadow-[0_0_15px_rgba(168,85,247,0.4)]">
+<span class="material-symbols-outlined">auto_awesome</span>
+</div>
+<div>
+<h1 class="text-white text-lg font-bold leading-none">Kairos</h1>
+<p class="text-slate-400 text-xs font-medium">Workspace</p>
+</div>
+</div>
+<nav class="flex flex-col gap-1 flex-grow">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-r-lg sidebar-link-active text-primary font-semibold" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="text-sm">All Notes</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined">folder</span>
+<span class="text-sm">Notebooks</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-sm">Shared</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined">delete</span>
+<span class="text-sm">Trash</span>
+</a>
+<div class="mt-8 pt-8 border-t border-white/5">
+<p class="px-3 text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-4">Labels</p>
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-1.5 text-sm text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="size-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></span> Work
+                    </a>
+<a class="flex items-center gap-3 px-3 py-1.5 text-sm text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="size-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span> Personal
+                    </a>
+<a class="flex items-center gap-3 px-3 py-1.5 text-sm text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="size-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]"></span> Ideas
+                    </a>
+</div>
+</div>
+</nav>
+<div class="mt-auto">
+<button class="w-full bg-accent hover:bg-primary text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-bold transition-all shadow-lg shadow-accent/20">
+<span class="material-symbols-outlined text-xl">add</span>
+<span>New Note</span>
+</button>
+</div>
+</aside>
+<main class="flex-1 flex flex-col min-w-0 bg-background-dark">
+<header class="h-16 border-b border-white/5 px-8 flex items-center justify-between sticky top-0 bg-background-dark/80 backdrop-blur-md z-10">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xl">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:ring-2 focus:ring-primary/40 focus:border-primary/40 text-sm text-white placeholder-slate-500" placeholder="Search notes, tags, or content..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-400 hover:bg-white/5 rounded-lg transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-400 hover:bg-white/5 rounded-lg transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="h-8 w-[1px] bg-white/10 mx-2"></div>
+<div class="flex items-center gap-3 pl-2">
+<div class="text-right hidden sm:block">
+<p class="text-sm font-bold text-white leading-none">Alex Rivera</p>
+<p class="text-xs text-primary font-medium">Pro Member</p>
+</div>
+<img class="size-10 rounded-full border-2 border-primary/20 object-cover" data-alt="User profile avatar of Alex Rivera" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDSEOf0E6pfvXH2084SCt9hC6-bDqYCQqyo4dAtJFhyAEZkxkcAseEU5YGcq38juaLfb3ttr3E6YnPMbocxHoNqAz0HaTZ56S864gaxxj-4U2csVB4mr58tdyPW0AD8nXJEqiQJ8PPrfrIQtxJcJPkfWTIIwfP0S-2iTVe8GsmvWX-9emFsFmQbz6Wbt45oN51nFAUQGGsaZPqYRPmzp5JG3glqBA_-AMn4RFB4axOT_0YjZ8cllki_3rjAfOm1YkS0MW9EZ_qdByjf"/>
+</div>
+</div>
+</header>
+<div class="p-8 max-w-6xl mx-auto w-full">
+<div class="flex items-end justify-between mb-8">
+<div>
+<div class="flex items-center gap-2 text-slate-500 text-sm mb-1">
+<span>Workspace</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="text-slate-300 font-medium">Notes</span>
+</div>
+<h2 class="text-4xl font-black text-white tracking-tight">Recent Notes</h2>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm font-bold text-slate-300 hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-lg">filter_list</span>
+                        Filter
+                    </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm font-bold text-slate-300 hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-lg">grid_view</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<div class="glass-card p-6 rounded-xl transition-all group cursor-pointer">
+<div class="flex items-start justify-between mb-4">
+<span class="px-2 py-1 rounded bg-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-wider border border-blue-500/30">Work</span>
+<span class="text-slate-500 text-xs">2h ago</span>
+</div>
+<h3 class="text-lg font-bold text-white mb-2 group-hover:text-primary transition-colors">Q4 Growth Strategy</h3>
+<p class="text-slate-400 text-sm leading-relaxed mb-6 line-clamp-3">Focus on expanding user acquisition through organic channels. We need to audit the current SEO landscape and identify quick wins for high-intent keywords...</p>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-2">
+<img class="size-6 rounded-full ring-2 ring-sidebar-dark" data-alt="Contributor profile image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCv3C92pVZsd8pa3yarGavklTbhCmWZ6y6ir-0IH7bvdg4zZbhsOflifcvHriyk8RLJgWf-kWv05W5FY3Djj1OM2QqU4a--ij2UOJzcPMvVvzXov2ORkgptL5poU_gKJ54bXP5dufcrAgipcy6QateDjUyv454QWfQfJLJhLzIPOfyBWR6dqyo33bmzU_IW_r0ICxiAa1LfkI_X3ztGa4JOT7z7znMUjyyYVA9steUg2HNbOedCxXgcPVYlNDt4WxP3m22rmUE1xBps"/>
+<img class="size-6 rounded-full ring-2 ring-sidebar-dark" data-alt="Contributor profile image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzTThUEFogkZIxFrRNPHnT7oy-2uhVRSsFZt-k94_5u5Pnoow-2XntIurkohuyCxoUBjL654VEwKfj9BxMyzfAVtkCksQFLcbxsV8yf5MVUZzSf_449MYHlZ3mRYPRinEt0JkTenKewsi7i64mFCiXk_XxYDfAdM3R43fH0uWMZkP8ApQIJcQL9_5pVkPH-UU47AfpdRzcBo9HncfS59BEjmNgc-1ianZRbIRkO4G7Xk49u41ebH39O1aS-PduQerMLC3NOZx8aMZO"/>
+</div>
+<button class="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-primary transition-all">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+<div class="glass-card p-6 rounded-xl transition-all group cursor-pointer">
+<div class="flex items-start justify-between mb-4">
+<span class="px-2 py-1 rounded bg-amber-500/20 text-amber-400 text-[10px] font-bold uppercase tracking-wider border border-amber-500/30">Ideas</span>
+<span class="text-slate-500 text-xs">Oct 24</span>
+</div>
+<h3 class="text-lg font-bold text-white mb-2 group-hover:text-primary transition-colors">Podcast Concept: Future Bloom</h3>
+<p class="text-slate-400 text-sm leading-relaxed mb-6 line-clamp-3">Exploring the intersection of biotechnology and urban design. Weekly interviews with designers and biologists working on living architecture...</p>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined text-sm">attach_file</span>
+<span class="text-xs">3 files</span>
+</div>
+<button class="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-primary transition-all">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+<div class="glass-card p-6 rounded-xl transition-all group cursor-pointer">
+<div class="flex items-start justify-between mb-4">
+<span class="px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/30">Personal</span>
+<span class="text-slate-500 text-xs">Oct 22</span>
+</div>
+<h3 class="text-lg font-bold text-white mb-2 group-hover:text-primary transition-colors">Winter Reading List</h3>
+<ul class="text-slate-400 text-sm leading-relaxed mb-6 space-y-1">
+<li class="flex items-center gap-2"><span class="size-1 rounded-full bg-slate-600"></span> The Midnight Library</li>
+<li class="flex items-center gap-2"><span class="size-1 rounded-full bg-slate-600"></span> Project Hail Mary</li>
+<li class="flex items-center gap-2"><span class="size-1 rounded-full bg-slate-600"></span> Thinking, Fast and Slow</li>
+</ul>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined text-sm">schedule</span>
+<span class="text-xs">Remind me</span>
+</div>
+<button class="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-primary transition-all">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+<div class="glass-card p-6 rounded-xl transition-all group cursor-pointer">
+<div class="flex items-start justify-between mb-4">
+<span class="px-2 py-1 rounded bg-white/10 text-slate-400 text-[10px] font-bold uppercase tracking-wider border border-white/10">Draft</span>
+<span class="text-slate-500 text-xs">Oct 21</span>
+</div>
+<h3 class="text-lg font-bold text-white mb-2 group-hover:text-primary transition-colors">New Website Copy</h3>
+<p class="text-slate-400 text-sm leading-relaxed mb-6 line-clamp-3">The future of notes is here. Join 10,000+ creators who use Kairos to streamline their creative process and ship faster...</p>
+<div class="flex items-center justify-between">
+<div class="text-xs text-slate-500">Draft saved</div>
+<button class="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-primary transition-all">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+<div class="border-2 border-dashed border-white/10 bg-white/[0.02] p-6 rounded-xl flex flex-col items-center justify-center text-slate-500 hover:border-primary/40 hover:text-primary transition-all group cursor-pointer min-h-[220px]">
+<span class="material-symbols-outlined text-4xl mb-2 group-hover:scale-110 transition-transform">add_circle</span>
+<p class="font-bold">Create new note</p>
+</div>
+</div>
+</div>
+</main>
+<div class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
+<div class="bg-accent shadow-[0_8px_32px_rgba(127,19,236,0.5)] border border-primary/20 rounded-full px-4 py-2 flex items-center gap-1">
+<button class="flex flex-col items-center gap-1 p-2 min-w-[80px] rounded-2xl hover:bg-white/10 text-white transition-all">
+<span class="material-symbols-outlined">trending_up</span>
+<span class="text-[10px] font-bold uppercase tracking-tight">Progress</span>
+</button>
+<div class="w-[1px] h-8 bg-white/20 mx-1"></div>
+<button class="flex flex-col items-center gap-1 p-2 min-w-[80px] rounded-2xl hover:bg-white/10 text-white transition-all">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="text-[10px] font-bold uppercase tracking-tight">Calendar</span>
+</button>
+</div>
+</div>
+
+</body></html>

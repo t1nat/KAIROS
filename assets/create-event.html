@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kairos | Event Creation Modal (Dark)</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Outfit:wght@400;600;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#8B5CF6", // Vibrant Purple
+              "background-light": "#F9FAFB",
+              "background-dark": "#0B0A0F",
+              "card-light": "#FFFFFF",
+              "card-dark": "#16151A",
+              "charcoal": "#1A191E",
+            },
+            fontFamily: {
+              display: ["Outfit", "sans-serif"],
+              sans: ["Inter", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "12px",
+            },
+          },
+        },
+      };
+    </script>
+<style type="text/tailwindcss">
+        .font-display {
+            font-family: 'Outfit', sans-serif;
+        }
+        .purple-glow {
+            box-shadow: 0 0 50px rgba(139, 92, 246, 0.15);
+        }
+        .modal-gradient {
+            background: radial-gradient(circle at top right, rgba(139, 92, 246, 0.08), transparent);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator,
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+        }
+    </style>
+</head>
+<body class="bg-background-dark text-gray-100 min-h-screen transition-colors duration-300 relative overflow-hidden">
+<div class="absolute inset-0 z-0 opacity-40 blur-md pointer-events-none scale-105">
+<nav class="sticky top-0 z-50 border-b border-gray-800 bg-background-dark/80 backdrop-blur-md">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex justify-between h-16 items-center">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-icons-round text-xl">auto_awesome</span>
+</div>
+<span class="text-2xl font-display font-bold tracking-tight">KAIROS</span>
+</div>
+</div>
+</div>
+</nav>
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-12 gap-8">
+<section class="col-span-12 lg:col-span-8 space-y-6">
+<div class="bg-card-dark rounded-2xl border border-gray-800 p-6 h-64"></div>
+<div class="bg-card-dark rounded-2xl border border-gray-800 p-6 h-96"></div>
+</section>
+<aside class="col-span-4 space-y-6 hidden lg:block">
+<div class="bg-card-dark rounded-2xl border border-gray-800 p-6 h-64"></div>
+</aside>
+</main>
+</div>
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+<div class="bg-charcoal rounded-[32px] w-full max-w-2xl purple-glow border border-white/5 overflow-hidden modal-gradient">
+<div class="px-8 py-6 border-b border-white/5 flex items-center justify-between">
+<h2 class="text-xl font-display font-bold text-white tracking-tight">Create Event</h2>
+<button class="text-gray-400 hover:text-white transition-colors rounded-full p-2 hover:bg-white/5">
+<span class="material-icons-round text-2xl">close</span>
+</button>
+</div>
+<div class="p-8 space-y-8">
+<div>
+<input class="w-full text-3xl font-bold font-display text-white placeholder-gray-600 border-none focus:ring-0 px-0 bg-transparent" placeholder="Event Title" type="text"/>
+</div>
+<div class="space-y-4">
+<div class="flex items-center gap-3 bg-white/5 rounded-2xl p-4 border border-primary/20 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/40 transition-all">
+<span class="material-symbols-outlined text-primary">location_on</span>
+<input class="w-full bg-transparent border-none focus:ring-0 text-base placeholder-gray-500 text-gray-200" placeholder="Add Location" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="flex items-center gap-3 bg-white/5 rounded-2xl p-4 border border-primary/20 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/40 transition-all">
+<span class="material-symbols-outlined text-primary">calendar_today</span>
+<input class="w-full bg-transparent border-none focus:ring-0 text-base placeholder-gray-500 text-gray-200" placeholder="Date" type="date"/>
+</div>
+<div class="flex items-center gap-3 bg-white/5 rounded-2xl p-4 border border-primary/20 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/40 transition-all">
+<span class="material-symbols-outlined text-primary">schedule</span>
+<input class="w-full bg-transparent border-none focus:ring-0 text-base placeholder-gray-500 text-gray-200" placeholder="Time" type="time"/>
+</div>
+</div>
+<div class="bg-white/5 rounded-2xl p-4 border border-primary/20 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/40 transition-all">
+<textarea class="w-full bg-transparent border-none focus:ring-0 text-base resize-none placeholder-gray-500 text-gray-200 leading-relaxed" placeholder="Tell everyone about your event..." rows="4"></textarea>
+</div>
+</div>
+<div>
+<label class="block text-xs font-bold text-gray-500 uppercase tracking-[0.2em] mb-3">Tag Collaborators</label>
+<div class="flex items-center gap-3">
+<div class="flex -space-x-3">
+<div class="relative group">
+<img alt="User" class="w-10 h-10 rounded-full border-2 border-primary ring-2 ring-charcoal" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0cSK2_hzHfECSKZ3vTLJf1CH8GhCSKBM2-oN-5frux4LHUdsQyRE3YG39Y_l9M4u-u1xQ__d8TaVWKGrK8MZWoMbr-u6rbB4aJ0YeaG15v9DJSg5Wpe4Gw7pP4oNvd_o4KB4P7Iq-YlL6iz2ENprJJgHZ-3ALmFQMOEGrBR4J9pDCsuL_CXnbXDRm6WAcw069JvJ59-oPBknAEgnfAWsVp98cNCw345DyTgT2umqy6serC78IgZy9MiEpb9Ejfcvt8zqnThWkk3lY"/>
+</div>
+<div class="relative group">
+<img alt="User" class="w-10 h-10 rounded-full border-2 border-primary ring-2 ring-charcoal" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWpfhZIy1aWOkDzrv6Om2EZVxY1QibjBC78_amXE_PikzXJaO0hKiS9hVvXiSbb9t98gZFQX5ai4HXOKt9iu23Lfql0G7lSC4ZWdIcQ11HiwCQ7TvHO9QW2scmUE0WHRtsNkSMQVs9kaTXAI9JIjdkXK_tWn4B1dOqG0e5MxR3_VR_6WrSEnXehYAJ1gr3jdkuSkfIHe_ay4Q1Ucp_isup1etfFu-oui7Jwb0EaQq6U-esD6UkHxlHAYmJGlVqGSBM1B_HVqBL5qug"/>
+</div>
+</div>
+<button class="w-10 h-10 rounded-full border-2 border-dashed border-gray-700 flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary transition-all">
+<span class="material-icons-round text-xl">add</span>
+</button>
+<span class="text-sm text-gray-500 font-medium ml-1">Add guest hosts</span>
+</div>
+</div>
+</div>
+<div class="px-8 py-6 bg-white/[0.02] border-t border-white/5 flex items-center justify-between">
+<div class="flex gap-2">
+<button class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition-all group">
+<span class="material-symbols-outlined group-hover:text-primary">image</span>
+<span class="text-sm font-semibold">Media</span>
+</button>
+</div>
+<button class="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-2xl font-bold text-base shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                Publish Event
+            </button>
+</div>
+</div>
+</div>
+
+</body></html>

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kairos | Event Creation Feed</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Outfit:wght@400;600;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#8B5CF6", // Vibrant Purple
+              "background-light": "#F9FAFB",
+              "background-dark": "#0B0A0F",
+              "card-light": "#FFFFFF",
+              "card-dark": "#16151A",
+            },
+            fontFamily: {
+              display: ["Outfit", "sans-serif"],
+              sans: ["Inter", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "12px",
+            },
+          },
+        },
+      };
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .font-display {
+            font-family: 'Outfit', sans-serif;
+        }
+        .purple-glow {
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.15);
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-300">
+<nav class="sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex justify-between h-16 items-center">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-icons-round text-xl">auto_awesome</span>
+</div>
+<span class="text-2xl font-display font-bold tracking-tight">KAIROS</span>
+</div>
+<div class="hidden md:flex flex-1 justify-center max-w-md px-8">
+<div class="relative w-full">
+<span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+<span class="material-icons-round text-sm">search</span>
+</span>
+<input class="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-full bg-gray-50 dark:bg-gray-800 focus:ring-primary focus:border-primary text-sm" placeholder="Search events, teams..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
+<span class="material-icons-round">notifications</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30">
+<span class="text-primary font-bold text-xs">JD</span>
+</div>
+</div>
+</div>
+</div>
+</nav>
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 md:grid-cols-12 gap-8">
+<aside class="hidden lg:block lg:col-span-3 space-y-6">
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 bg-primary/10 text-primary font-semibold rounded-xl" href="#">
+<span class="material-icons-round">home</span>
+<span>Feed</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors" href="#">
+<span class="material-icons-round">explore</span>
+<span>Discover</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors" href="#">
+<span class="material-icons-round">group</span>
+<span>Teams</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors" href="#">
+<span class="material-icons-round">bookmark</span>
+<span>Saved</span>
+</a>
+</nav>
+<div class="p-4 bg-primary rounded-2xl text-white overflow-hidden relative">
+<div class="relative z-10">
+<h4 class="font-bold mb-1">Kairos Pro</h4>
+<p class="text-xs text-white/80 mb-4">Unlock advanced analytics and unlimited team spaces.</p>
+<button class="w-full bg-white text-primary font-bold py-2 rounded-lg text-sm hover:bg-gray-50 transition-colors">Upgrade Now</button>
+</div>
+<div class="absolute -right-4 -bottom-4 opacity-20 transform rotate-12">
+<span class="material-icons-round text-8xl">rocket_launch</span>
+</div>
+</div>
+</aside>
+<section class="col-span-1 md:col-span-12 lg:col-span-6 space-y-6">
+<div class="bg-card-light dark:bg-card-dark rounded-2xl border border-gray-200 dark:border-gray-800 p-6 purple-glow">
+<div class="flex gap-4">
+<div class="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0">
+<img alt="Profile" class="w-full h-full rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_daC7r2kBV7-7Ye6Wu-p3FRxU2UCnNl7-9mvwBbxa3ksWDh4gY4PypSv_ygFuoTe77khnDxboDlU_jwDIYHDcKRNH5bM0FsgZieEtgTOGv80VKgqzHXOdFr61ruqYaJ-3HIWCRw4UzlPTokup8M4MU2IZcasF-AnyKMta4V_-z5i7091TVIhwdXPgUN-TYSBwIl-YfOgfzxGFY6YnkG2zpdme5Vp_ihPoU1f1OGwPEQVfI_PREOcrx4ISgppwntPbR-wPqVQfbbeA"/>
+</div>
+<div class="flex-1">
+<textarea class="w-full bg-transparent border-none focus:ring-0 text-lg resize-none placeholder-gray-400 dark:placeholder-gray-500" placeholder="What are you planning today?" rows="2"></textarea>
+</div>
+</div>
+<div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+<div class="flex gap-2">
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-primary transition-colors">
+<span class="material-icons-round text-lg text-primary">image</span>
+<span class="text-xs font-medium">Media</span>
+</button>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-primary transition-colors">
+<span class="material-icons-round text-lg text-indigo-500">poll</span>
+<span class="text-xs font-medium">Poll</span>
+</button>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-primary transition-colors">
+<span class="material-icons-round text-lg text-emerald-500">event</span>
+<span class="text-xs font-medium">Date</span>
+</button>
+</div>
+<button class="bg-primary text-white px-6 py-2 rounded-full font-bold text-sm hover:opacity-90 transition-opacity">Post Event</button>
+</div>
+</div>
+<div class="space-y-6">
+<article class="bg-card-light dark:bg-card-dark rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+<div class="p-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+<span class="material-icons-round text-primary text-lg">celebration</span>
+</div>
+<div>
+<h3 class="font-bold text-sm">Product Launch 2024</h3>
+<p class="text-xs text-gray-500">Sarah Connor · 2h ago</p>
+</div>
+</div>
+<button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+<span class="material-icons-round">more_horiz</span>
+</button>
+</div>
+<div class="px-4 pb-3">
+<p class="text-sm leading-relaxed">Excited to announce the venue for our upcoming annual showcase! We've secured the Grand Horizon Hall. Can't wait for everyone to see the setup. 🚀</p>
+<div class="mt-4 rounded-xl overflow-hidden aspect-video bg-gray-100 dark:bg-gray-800">
+<img alt="Event Venue" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAIfleaFQaHpcL3Ok-92P7gykiSRK9GvksXxU9oCejJFr4vEKffsNhhL9u7vveoGLeGB7mzdrRWv-yZH1NxU6tzWquC-4pRaKDC82HFi9_LAfjmhE7_HkVYhqu5dOCZfWhXuxUzNjxRggvTbsiQH36fv6OYCyYcITbAchyKBedH3mraOj9iGEVe_zK8thVREw-592-g42ZnH5VczMiBWRwy7sTvUWWaGMZsjDVHK8NndJ8frZyD3rtRV8kASDLNeFQ1H_4b3TEa5ZUQ"/>
+</div>
+</div>
+<div class="px-4 py-3 border-t border-gray-50 dark:border-gray-800 flex items-center gap-6">
+<button class="flex items-center gap-1.5 text-gray-500 hover:text-primary transition-colors">
+<span class="material-icons-round text-xl">favorite_border</span>
+<span class="text-xs font-semibold">24</span>
+</button>
+<button class="flex items-center gap-1.5 text-gray-500 hover:text-primary transition-colors">
+<span class="material-icons-round text-xl">chat_bubble_outline</span>
+<span class="text-xs font-semibold">8</span>
+</button>
+<button class="flex items-center gap-1.5 text-gray-500 hover:text-primary transition-colors">
+<span class="material-icons-round text-xl">share</span>
+</button>
+</div>
+</article>
+<article class="bg-card-light dark:bg-card-dark rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+<div class="p-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+<span class="material-icons-round text-emerald-500 text-lg">analytics</span>
+</div>
+<div>
+<h3 class="font-bold text-sm">Marketing Strategy Workshop</h3>
+<p class="text-xs text-gray-500">Marcus Wright · 5h ago</p>
+</div>
+</div>
+<button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+<span class="material-icons-round">more_horiz</span>
+</button>
+</div>
+<div class="px-4 pb-3">
+<p class="text-sm leading-relaxed">Quick poll for the team: which time works best for the creative brainstorming session next week?</p>
+<div class="mt-4 space-y-2">
+<div class="relative w-full p-3 rounded-lg border border-primary/30 bg-primary/5 flex items-center justify-between group cursor-pointer overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 bg-primary/10 w-[70%]"></div>
+<span class="relative z-10 text-sm font-medium">Monday, 10:00 AM</span>
+<span class="relative z-10 text-xs font-bold text-primary">70%</span>
+</div>
+<div class="relative w-full p-3 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between cursor-pointer overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 bg-gray-200 dark:bg-gray-700 w-[30%]"></div>
+<span class="relative z-10 text-sm font-medium">Wednesday, 2:00 PM</span>
+<span class="relative z-10 text-xs font-bold text-gray-500">30%</span>
+</div>
+</div>
+</div>
+<div class="px-4 py-3 border-t border-gray-50 dark:border-gray-800 flex items-center gap-6">
+<button class="flex items-center gap-1.5 text-gray-500 hover:text-primary transition-colors">
+<span class="material-icons-round text-xl">favorite</span>
+<span class="text-xs font-semibold">12</span>
+</button>
+<button class="flex items-center gap-1.5 text-gray-500 hover:text-primary transition-colors">
+<span class="material-icons-round text-xl">chat_bubble_outline</span>
+<span class="text-xs font-semibold">3</span>
+</button>
+</div>
+</article>
+</div>
+</section>
+<aside class="hidden md:block md:col-span-12 lg:col-span-3 space-y-6">
+<div class="bg-card-light dark:bg-card-dark rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+<div class="p-4 border-b border-gray-100 dark:border-gray-800">
+<h3 class="font-bold text-sm">Quick Links</h3>
+</div>
+<div class="p-2 space-y-1">
+<a class="flex items-center justify-between p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl group transition-all" href="#">
+<div class="flex items-center gap-3">
+<div class="p-2 bg-primary/10 rounded-lg text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-icons-round text-xl">calendar_today</span>
+</div>
+<span class="text-sm font-medium">Calendar</span>
+</div>
+<span class="material-icons-round text-gray-400 text-sm">chevron_right</span>
+</a>
+<a class="flex items-center justify-between p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl group transition-all" href="#">
+<div class="flex items-center gap-3">
+<div class="p-2 bg-primary/10 rounded-lg text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-icons-round text-xl">analytics</span>
+</div>
+<span class="text-sm font-medium">Progress</span>
+</div>
+<span class="material-icons-round text-gray-400 text-sm">chevron_right</span>
+</a>
+<a class="flex items-center justify-between p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl group transition-all" href="#">
+<div class="flex items-center gap-3">
+<div class="p-2 bg-indigo-500/10 rounded-lg text-indigo-500 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
+<span class="material-icons-round text-xl">task_alt</span>
+</div>
+<span class="text-sm font-medium">Tasks</span>
+</div>
+<span class="material-icons-round text-gray-400 text-sm">chevron_right</span>
+</a>
+</div>
+</div>
+<div class="bg-card-light dark:bg-card-dark rounded-2xl border border-gray-200 dark:border-gray-800 p-5">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-bold text-sm">Event Progress</h3>
+<span class="text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded">Active</span>
+</div>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between items-end mb-2">
+<span class="text-xs font-medium text-gray-500">Conference 2024</span>
+<span class="text-xs font-bold">85%</span>
+</div>
+<div class="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 85%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-end mb-2">
+<span class="text-xs font-medium text-gray-500">Charity Gala</span>
+<span class="text-xs font-bold">42%</span>
+</div>
+<div class="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+<div class="h-full bg-indigo-400 rounded-full" style="width: 42%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-end mb-2">
+<span class="text-xs font-medium text-gray-500">Webinar Series</span>
+<span class="text-xs font-bold">15%</span>
+</div>
+<div class="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+<div class="h-full bg-gray-300 dark:bg-gray-600 rounded-full" style="width: 15%"></div>
+</div>
+</div>
+</div>
+<button class="w-full mt-6 py-2.5 text-xs font-bold text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">View Dashboard</button>
+</div>
+<div class="bg-card-light dark:bg-card-dark rounded-2xl border border-gray-200 dark:border-gray-800 p-5">
+<h3 class="font-bold text-sm mb-4">Suggested Collaborators</h3>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<img alt="User" class="w-8 h-8 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0cSK2_hzHfECSKZ3vTLJf1CH8GhCSKBM2-oN-5frux4LHUdsQyRE3YG39Y_l9M4u-u1xQ__d8TaVWKGrK8MZWoMbr-u6rbB4aJ0YeaG15v9DJSg5Wpe4Gw7pP4oNvd_o4KB4P7Iq-YlL6iz2ENprJJgHZ-3ALmFQMOEGrBR4J9pDCsuL_CXnbXDRm6WAcw069JvJ59-oPBknAEgnfAWsVp98cNCw345DyTgT2umqy6serC78IgZy9MiEpb9Ejfcvt8zqnThWkk3lY"/>
+<div>
+<p class="text-xs font-bold">Alex Rivers</p>
+<p class="text-[10px] text-gray-500">Event Manager</p>
+</div>
+</div>
+<button class="text-xs font-bold text-primary hover:underline">Invite</button>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<img alt="User" class="w-8 h-8 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWpfhZIy1aWOkDzrv6Om2EZVxY1QibjBC78_amXE_PikzXJaO0hKiS9hVvXiSbb9t98gZFQX5ai4HXOKt9iu23Lfql0G7lSC4ZWdIcQ11HiwCQ7TvHO9QW2scmUE0WHRtsNkSMQVs9kaTXAI9JIjdkXK_tWn4B1dOqG0e5MxR3_VR_6WrSEnXehYAJ1gr3jdkuSkfIHe_ay4Q1Ucp_isup1etfFu-oui7Jwb0EaQq6U-esD6UkHxlHAYmJGlVqGSBM1B_HVqBL5qug"/>
+<div>
+<p class="text-xs font-bold">Tom Holland</p>
+<p class="text-[10px] text-gray-500">Tech Lead</p>
+</div>
+</div>
+<button class="text-xs font-bold text-primary hover:underline">Invite</button>
+</div>
+</div>
+</div>
+</aside>
+</main>
+<div class="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-card-dark border-t border-gray-200 dark:border-gray-800 px-6 py-3 flex justify-between items-center z-50">
+<button class="text-primary"><span class="material-icons-round">home</span></button>
+<button class="text-gray-400"><span class="material-icons-round">search</span></button>
+<button class="bg-primary text-white p-2 rounded-full -mt-10 border-4 border-background-light dark:border-background-dark shadow-xl"><span class="material-icons-round">add</span></button>
+<button class="text-gray-400"><span class="material-icons-round">calendar_today</span></button>
+<button class="text-gray-400"><span class="material-icons-round">person</span></button>
+</div>
+
+</body></html>
