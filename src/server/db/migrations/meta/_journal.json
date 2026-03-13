@@ -113,6 +113,13 @@
       "when": 1772746395852,
       "tag": "0017_password_reset_codes",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1773440618414,
+      "tag": "0018_supreme_valkyrie",
+      "breakpoints": true
     }
   ]
 }
