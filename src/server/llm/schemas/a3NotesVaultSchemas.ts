@@ -6,7 +6,8 @@ export const NotesVaultOperationCreateSchema = z
     content: z.string().min(1).max(20_000),
     reason: z.string().max(500).optional(),
   })
-  .strict();
+  // Use strip() instead of strict() — LLMs sometimes add extra keys
+  .strip();
 
 export const NotesVaultOperationUpdateSchema = z
   .object({
@@ -20,7 +21,7 @@ export const NotesVaultOperationUpdateSchema = z
      */
     requiresUnlocked: z.boolean(),
   })
-  .strict();
+  .strip();
 
 export const NotesVaultOperationDeleteSchema = z
   .object({
@@ -30,7 +31,7 @@ export const NotesVaultOperationDeleteSchema = z
     /** Must be true for deletes to be considered at all */
     dangerous: z.literal(true),
   })
-  .strict();
+  .strip();
 
 export const NotesVaultOperationSchema = z.discriminatedUnion("type", [
   NotesVaultOperationCreateSchema,
@@ -49,7 +50,7 @@ export const NotesVaultDraftSchema = z
             noteId: z.number().int().positive(),
             reason: z.string().min(1).max(500),
           })
-          .strict(),
+          .strip(),
       )
       .max(50)
       .default([]),
@@ -57,7 +58,7 @@ export const NotesVaultDraftSchema = z
     /** Computed server-side from normalized plan JSON; model may omit */
     planHash: z.string().min(8).max(128).optional(),
   })
-  .strict();
+  .strip();
 
 export type NotesVaultDraft = z.infer<typeof NotesVaultDraftSchema>;
 

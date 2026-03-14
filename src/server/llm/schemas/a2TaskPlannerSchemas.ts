@@ -21,9 +21,9 @@ export const TaskStatusSchema = z.enum([
 
 const ISODateTimeStringSchema = z
   .string()
-  // basic ISO-ish check; server should parse/validate as Date during apply
-  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:.+Z$/)
-  .describe("ISO 8601 UTC timestamp, e.g. 2026-02-09T07:03:00.000Z");
+  // Accept both full ISO-8601 timestamp and date-only formats from the LLM
+  .regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}.*Z)?$/)
+  .describe("ISO 8601 UTC timestamp, e.g. 2026-02-09T07:03:00.000Z, or date-only 2026-02-09");
 
 export const TaskCreateDraftSchema = z
   .object({
@@ -40,7 +40,7 @@ export const TaskCreateDraftSchema = z
     /** Required for idempotency; must be unique per project for a given plan */
     clientRequestId: z.string().min(8).max(128),
   })
-  .strict();
+  .strip();
 
 export const TaskUpdateDraftSchema = z
   .object({
@@ -53,10 +53,10 @@ export const TaskUpdateDraftSchema = z
         assignedToId: z.string().min(1).nullable().optional(),
         dueDate: ISODateTimeStringSchema.nullable().optional(),
       })
-      .strict(),
+      .strip(),
     reason: z.string().max(500).optional(),
   })
-  .strict();
+  .strip();
 
 export const TaskStatusChangeDraftSchema = z
   .object({
@@ -64,7 +64,7 @@ export const TaskStatusChangeDraftSchema = z
     status: TaskStatusSchema,
     reason: z.string().max(500).optional(),
   })
-  .strict();
+  .strip();
 
 export const TaskDeleteDraftSchema = z
   .object({
@@ -73,7 +73,7 @@ export const TaskDeleteDraftSchema = z
     /** Must be true for deletes to be considered at all */
     dangerous: z.boolean(),
   })
-  .strict();
+  .strip();
 
 export const TaskPlanDiffPreviewSchema = z
   .object({
@@ -83,14 +83,14 @@ export const TaskPlanDiffPreviewSchema = z
     statusChanges: z.array(z.string().min(1)).max(50).default([]),
     deletes: z.array(z.string().min(1)).max(50).default([]),
   })
-  .strict();
+  .strip();
 
 export const TaskPlannerScopeSchema = z
   .object({
     orgId: z.union([z.string(), z.number()]).optional(),
     projectId: z.number().int().positive(),
   })
-  .strict();
+  .strip();
 
 export const TaskPlanDraftSchema = z
   .object({
@@ -119,7 +119,9 @@ export const TaskPlanDraftSchema = z
     /** Computed server-side from normalized plan JSON; model may omit */
     planHash: z.string().min(8).max(128).optional(),
   })
-  .strict();
+  // Use strip() instead of strict() — LLMs sometimes add extra keys like "type"
+  // that would cause validation to fail. strip() silently removes unknown keys.
+  .strip();
 
 export type TaskPlanDraft = z.infer<typeof TaskPlanDraftSchema>;
 

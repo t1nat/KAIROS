@@ -30,7 +30,7 @@ export const EventCreateSchema = z
     ),
     clientRequestId: z.string().min(1).max(64),
   })
-  .strict();
+  .strip();
 
 export const EventUpdateSchema = z
   .object({
@@ -44,10 +44,10 @@ export const EventUpdateSchema = z
         enableRsvp: z.boolean().optional(),
         sendReminders: z.boolean().optional(),
       })
-      .strict(),
+      .strip(),
     reason: z.string().max(500).optional(),
   })
-  .strict();
+  .strip();
 
 export const EventDeleteSchema = z
   .object({
@@ -55,14 +55,14 @@ export const EventDeleteSchema = z
     reason: z.string().min(1).max(500),
     dangerous: z.literal(true),
   })
-  .strict();
+  .strip();
 
 export const EventCommentAddSchema = z
   .object({
     eventId: z.number().int().positive(),
     text: z.string().min(1).max(500),
   })
-  .strict();
+  .strip();
 
 export const EventCommentDeleteSchema = z
   .object({
@@ -71,20 +71,20 @@ export const EventCommentDeleteSchema = z
     reason: z.string().min(1).max(500),
     dangerous: z.literal(true),
   })
-  .strict();
+  .strip();
 
 export const EventRsvpSchema = z
   .object({
     eventId: z.number().int().positive(),
     status: z.enum(["going", "maybe", "not_going"]),
   })
-  .strict();
+  .strip();
 
 export const EventLikeToggleSchema = z
   .object({
     eventId: z.number().int().positive(),
   })
-  .strict();
+  .strip();
 
 /* ─── Draft plan (full LLM output) ─── */
 
@@ -99,7 +99,7 @@ export const EventsPublisherDraftSchema = z
         add: z.array(EventCommentAddSchema).max(20).default([]),
         remove: z.array(EventCommentDeleteSchema).max(10).default([]),
       })
-      .strict()
+      .strip()
       .default({ add: [], remove: [] }),
     rsvps: z.array(EventRsvpSchema).max(20).default([]),
     likes: z.array(EventLikeToggleSchema).max(20).default([]),
@@ -114,11 +114,11 @@ export const EventsPublisherDraftSchema = z
         comments: z.array(z.string()).default([]),
         rsvps: z.array(z.string()).default([]),
       })
-      .strict()
+      .strip()
       .default({ creates: [], updates: [], deletes: [], comments: [], rsvps: [] }),
     planHash: z.string().min(8).max(128).optional(),
   })
-  .strict();
+  .strip();
 
 export type EventsPublisherDraft = z.infer<typeof EventsPublisherDraftSchema>;
 

@@ -10,7 +10,7 @@ export const ConciergeIntentSchema = z
       })
       .default({}),
   })
-  .strict();
+  .strip();
 
 export const HandoffPlanSchema = z
   .object({
@@ -23,7 +23,7 @@ export const HandoffPlanSchema = z
     context: z.record(z.unknown()),
     userIntent: z.string().min(1),
   })
-  .strict();
+  .strip();
 
 export const ActionPlanDraftSchema = z
   .object({
@@ -33,7 +33,7 @@ export const ActionPlanDraftSchema = z
           tool: z.string().min(1),
           input: z.unknown(),
         })
-        .strict(),
+        .strip(),
     ),
     proposedChanges: z.array(
       z
@@ -45,10 +45,10 @@ export const ActionPlanDraftSchema = z
                 type: z.string().min(1),
                 id: z.union([z.string(), z.number()]).optional(),
               })
-              .strict(),
+              .strip(),
           ),
         })
-        .strict(),
+        .strip(),
     ),
     applyCalls: z.array(
       z
@@ -56,10 +56,10 @@ export const ActionPlanDraftSchema = z
           tool: z.string().min(1),
           input: z.unknown(),
         })
-        .strict(),
+        .strip(),
     ),
   })
-  .strict();
+  .strip();
 
 export const A1OutputSchema = z
   .object({
@@ -69,7 +69,7 @@ export const A1OutputSchema = z
         summary: z.string().min(1),
         details: z.array(z.string()).optional(),
       })
-      .strict()
+      .strip()
       .optional(),
     handoff: HandoffPlanSchema.optional(),
     draftPlan: ActionPlanDraftSchema.optional(),
@@ -80,10 +80,10 @@ export const A1OutputSchema = z
             label: z.string().min(1),
             ref: z.string().min(1),
           })
-          .strict(),
+          .strip(),
       )
       .optional(),
   })
-  .strict();
+  .strip();
 
 export type A1Output = z.infer<typeof A1OutputSchema>;
