@@ -124,7 +124,7 @@ export function ProjectsListWorkspace({ userId }: { userId: string }) {
  <p className="text-fg-secondary mb-6">Create your first project to get started.</p>
  <a
  href="/create?action=new_project"
- className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-accent-primary to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-accent-primary/25 transition-all hover:scale-[1.02]"
+ className="inline-flex items-center gap-2 px-6 py-3 bg-accent-primary text-white font-semibold rounded-xl hover:bg-accent-hover hover:shadow-lg hover:shadow-accent-primary/25 transition-all hover:scale-[1.02]"
  >
  <Plus size={18} />
  New Project

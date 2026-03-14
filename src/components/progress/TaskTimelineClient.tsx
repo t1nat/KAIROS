@@ -25,6 +25,8 @@ import {
   CheckSquare,
   AlertCircle,
   Zap,
+  GripVertical,
+  LayoutGrid,
 } from "lucide-react";
 import { MilestoneTimeline } from "./MilestoneTimeline";
 
@@ -151,10 +153,31 @@ const typedApi = api as unknown as {
           title: string;
           description?: string;
           priority: TaskPriority;
+          status?: TaskStatus;
           dueDate?: Date;
           assignedToId?: string;
         }) => void;
         isPending: boolean;
+      };
+    };
+    getByProject: {
+      useQuery: (
+        input: { projectId: number },
+        opts?: { staleTime?: number; enabled?: boolean },
+      ) => {
+        data: Array<{
+          id: number;
+          title: string;
+          description: string | null;
+          status: TaskStatus;
+          priority: TaskPriority;
+          dueDate: Date | null;
+          orderIndex: number;
+          createdAt: Date;
+          creator: { id: string | null; name: string | null; image: string | null } | null;
+          assignee: { id: string | null; name: string | null; image: string | null } | null;
+        }> | undefined;
+        isLoading: boolean;
       };
     };
     updateStatus: {
@@ -196,6 +219,14 @@ const PRIORITY_OPTIONS: { value: TaskPriority; label: string; color: string }[] 
   { value: "medium", label: "Medium", color: "bg-amber-500/15 text-amber-400 border-amber-500/20" },
   { value: "high", label: "High", color: "bg-orange-500/15 text-orange-400 border-orange-500/20" },
   { value: "urgent", label: "Urgent", color: "bg-red-500/15 text-red-400 border-red-500/20" },
+];
+
+/* ─── Status helpers ─── */
+const STATUS_OPTIONS: { value: TaskStatus; label: string; color: string }[] = [
+  { value: "pending", label: "Pending", color: "bg-slate-500/15 text-slate-400 border-slate-500/20" },
+  { value: "in_progress", label: "In Progress", color: "bg-blue-500/15 text-blue-400 border-blue-500/20" },
+  { value: "completed", label: "Completed", color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20" },
+  { value: "blocked", label: "Blocked", color: "bg-red-500/15 text-red-400 border-red-500/20" },
 ];
 
 /* ─── Timeline Entry ─── */
@@ -476,6 +507,7 @@ function CreateNewEntryForm({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<TaskPriority>("medium");
+  const [status, setStatus] = useState<TaskStatus>("pending");
   const [dueDate, setDueDate] = useState("");
   const [assignedToId, setAssignedToId] = useState<string>("");
   const [showAssignDropdown, setShowAssignDropdown] = useState(false);
@@ -539,6 +571,7 @@ function CreateNewEntryForm({
       setDescription("");
       setDueDate("");
       setAssignedToId("");
+      setStatus("pending");
       setError("");
       // Keep PDF attachments visible after task creation; only clear non-PDFs
       setAttachedFiles((prev) => prev.filter((f) => f.type === "application/pdf"));
@@ -569,6 +602,7 @@ function CreateNewEntryForm({
       title: title.trim(),
       description: description.trim() || undefined,
       priority,
+      status,
       dueDate: dueDate ? new Date(dueDate) : undefined,
       assignedToId: assignedToId || undefined,
     });
@@ -616,12 +650,12 @@ function CreateNewEntryForm({
   );
 
   return (
-    <div className="create-entry-card bg-white dark:bg-[#20152b] rounded-xl border border-slate-200 dark:border-accent-primary/20 shadow-sm p-6 flex flex-col gap-6 relative overflow-hidden">
+    <div className="create-entry-card bg-white dark:bg-[rgb(18,18,24)] rounded-xl border border-slate-200 dark:border-white/[0.08] shadow-sm p-6 flex flex-col gap-6 relative overflow-hidden">
       {/* Glow orb */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-accent-primary/10 blur-[60px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/4" />
-      <h3 className="text-slate-900 dark:text-slate-100 text-xl font-bold border-b border-slate-100 dark:border-accent-primary/10 pb-4 flex items-center gap-2 relative z-10">
-        <Plus size={20} className="text-accent-primary" />
-        Create New Entry
+      <div className="absolute top-0 right-0 w-64 h-64 bg-accent-primary/5 blur-[60px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/4" />
+      <h3 className="text-fg-primary text-lg font-bold border-b border-border-medium/40 dark:border-white/[0.06] pb-4 flex items-center gap-2 relative z-10">
+        <Plus size={18} className="text-accent-primary" />
+        New Task
       </h3>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5 relative z-10">
@@ -672,13 +706,13 @@ function CreateNewEntryForm({
           />
         </div>
 
-        {/* Priority / Assign To / Date row */}
+        {/* Priority / Status / Assign To / Date row */}
         <div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-2">
             {/* Priority selector — dropdown */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-2">
-                Category
+                Priority
               </label>
               <div className="relative">
                 <select
@@ -697,6 +731,33 @@ function CreateNewEntryForm({
                     priority === "low" ? "bg-emerald-400" :
                     priority === "medium" ? "bg-amber-400" :
                     priority === "high" ? "bg-orange-400" : "bg-red-400"
+                  }`} />
+                  <ChevronDown size={12} className="text-fg-tertiary" />
+                </div>
+              </div>
+            </div>
+            {/* Status selector — dropdown */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-2">
+                Status
+              </label>
+              <div className="relative">
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as TaskStatus)}
+                  className="w-full rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-accent-primary/30 text-slate-900 dark:text-slate-100 focus:border-accent-primary focus:ring-1 focus:ring-accent-primary h-12 px-4 appearance-none transition-all hover:border-accent-primary/50"
+                >
+                  {STATUS_OPTIONS.map((s) => (
+                    <option key={s.value} value={s.value} className="bg-bg-primary text-fg-primary">
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none flex items-center gap-1.5">
+                  <span className={`w-2 h-2 rounded-full ${
+                    status === "pending" ? "bg-slate-400" :
+                    status === "in_progress" ? "bg-blue-400" :
+                    status === "completed" ? "bg-emerald-400" : "bg-red-400"
                   }`} />
                   <ChevronDown size={12} className="text-fg-tertiary" />
                 </div>
@@ -921,7 +982,7 @@ function CreateNewEntryForm({
         <button
           type="submit"
           disabled={createTask.isPending || !title.trim() || !selectedProjectId}
-          className="w-full bg-gradient-to-r from-accent-primary to-purple-600 hover:from-accent-primary/90 hover:to-purple-500 text-white px-8 py-3 rounded-lg font-semibold shadow-[0_0_15px_rgb(var(--accent-primary)/0.4)] transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-accent-primary hover:bg-accent-hover text-white px-8 py-3 rounded-lg font-semibold shadow-lg shadow-accent-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {createTask.isPending ? (
             <>
@@ -958,10 +1019,10 @@ function MasterProgressBar({
       </div>
       <div className="w-full bg-slate-200 dark:bg-white/10 rounded-full h-2">
         <div
-          className="h-2 rounded-full transition-all duration-700 ease-out shadow-[0_0_10px_rgb(var(--accent-primary)/0.5)]"
+          className="h-2 rounded-full transition-all duration-700 ease-out shadow-[0_0_10px_rgb(var(--accent-primary)/0.3)]"
           style={{
             width: `${percentage}%`,
-            background: "linear-gradient(90deg, rgb(var(--accent-primary)), rgb(168 85 247))",
+            background: "linear-gradient(90deg, rgb(var(--accent-primary)), rgb(var(--accent-secondary)))",
           }}
         />
       </div>
@@ -1006,13 +1067,212 @@ function TaskStatusCard({
   );
 }
 
+/* ─── Task Board Column ─── */
+type BoardTask = {
+  id: number;
+  title: string;
+  description: string | null;
+  status: TaskStatus;
+  priority: TaskPriority;
+  dueDate: Date | null;
+  orderIndex: number;
+  createdAt: Date;
+  creator: { id: string | null; name: string | null; image: string | null } | null;
+  assignee: { id: string | null; name: string | null; image: string | null } | null;
+};
+
+const BOARD_COLUMNS: { status: TaskStatus; label: string; dotColor: string; headerBg: string }[] = [
+  { status: "pending", label: "Pending", dotColor: "bg-slate-400", headerBg: "bg-slate-100 dark:bg-slate-500/10" },
+  { status: "in_progress", label: "In Progress", dotColor: "bg-blue-400", headerBg: "bg-blue-50 dark:bg-blue-500/10" },
+  { status: "completed", label: "Completed", dotColor: "bg-emerald-400", headerBg: "bg-emerald-50 dark:bg-emerald-500/10" },
+  { status: "blocked", label: "Blocked", dotColor: "bg-red-400", headerBg: "bg-red-50 dark:bg-red-500/10" },
+];
+
+function TaskBoard({
+  tasks,
+  onStatusChange,
+  onDelete,
+  isUpdating,
+  deletingId,
+}: {
+  tasks: BoardTask[];
+  onStatusChange: (taskId: number, newStatus: TaskStatus) => void;
+  onDelete: (taskId: number) => void;
+  isUpdating: boolean;
+  deletingId: number | null;
+}) {
+  const grouped = useMemo(() => {
+    const map: Record<TaskStatus, BoardTask[]> = {
+      pending: [],
+      in_progress: [],
+      completed: [],
+      blocked: [],
+    };
+    for (const t of tasks) {
+      map[t.status].push(t);
+    }
+    return map;
+  }, [tasks]);
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+      {BOARD_COLUMNS.map((col) => (
+        <div key={col.status} className="flex flex-col rounded-xl border border-border-medium/40 dark:border-white/[0.06] bg-white dark:bg-[rgb(18,18,24)] overflow-hidden">
+          {/* Column header */}
+          <div className={`px-4 py-3 ${col.headerBg} border-b border-border-medium/30 dark:border-white/[0.06] flex items-center justify-between`}>
+            <div className="flex items-center gap-2">
+              <span className={`w-2.5 h-2.5 rounded-full ${col.dotColor}`} />
+              <span className="text-sm font-bold text-fg-primary">{col.label}</span>
+            </div>
+            <span className="text-xs font-semibold text-fg-quaternary bg-bg-tertiary/50 dark:bg-white/[0.06] px-2 py-0.5 rounded-full">
+              {grouped[col.status].length}
+            </span>
+          </div>
+
+          {/* Cards */}
+          <div className="flex flex-col gap-2 p-2 min-h-[120px]">
+            {grouped[col.status].length === 0 ? (
+              <div className="flex items-center justify-center py-8 text-xs text-fg-quaternary">
+                No tasks
+              </div>
+            ) : (
+              grouped[col.status].map((task) => (
+                <BoardTaskCard
+                  key={task.id}
+                  task={task}
+                  onStatusChange={onStatusChange}
+                  onDelete={onDelete}
+                  isUpdating={isUpdating}
+                  isDeleting={deletingId === task.id}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function BoardTaskCard({
+  task,
+  onStatusChange,
+  onDelete,
+  isUpdating,
+  isDeleting,
+}: {
+  task: BoardTask;
+  onStatusChange: (taskId: number, newStatus: TaskStatus) => void;
+  onDelete: (taskId: number) => void;
+  isUpdating: boolean;
+  isDeleting: boolean;
+}) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const priorityOption = PRIORITY_OPTIONS.find((p) => p.value === task.priority);
+  const dueStr = task.dueDate
+    ? new Date(task.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    : null;
+  const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== "completed";
+
+  return (
+    <div className="rounded-lg border border-border-medium/30 dark:border-white/[0.06] bg-bg-primary dark:bg-[rgb(14,14,18)] p-3 hover:border-accent-primary/30 transition-all group">
+      {/* Title */}
+      <h4 className="text-sm font-semibold text-fg-primary mb-2 leading-snug">{task.title}</h4>
+
+      {/* Description snippet */}
+      {task.description && (
+        <p className="text-xs text-fg-tertiary mb-2 line-clamp-2">{task.description}</p>
+      )}
+
+      {/* Priority + due date row */}
+      <div className="flex items-center gap-2 flex-wrap mb-2">
+        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${priorityOption?.color ?? ""}`}>
+          {task.priority.toUpperCase()}
+        </span>
+        {dueStr && (
+          <span className={`text-[10px] flex items-center gap-1 ${isOverdue ? "text-red-400" : "text-fg-quaternary"}`}>
+            <Calendar size={10} />
+            {dueStr}
+          </span>
+        )}
+      </div>
+
+      {/* Status change dropdown */}
+      <div className="mb-2">
+        <select
+          value={task.status}
+          onChange={(e) => onStatusChange(task.id, e.target.value as TaskStatus)}
+          disabled={isUpdating}
+          className="w-full text-xs rounded-md bg-bg-tertiary/30 dark:bg-white/[0.04] border border-border-medium/30 dark:border-white/[0.06] text-fg-secondary px-2 py-1.5 focus:border-accent-primary focus:ring-1 focus:ring-accent-primary appearance-none cursor-pointer hover:border-accent-primary/40 transition-colors"
+        >
+          {STATUS_OPTIONS.map((s) => (
+            <option key={s.value} value={s.value} className="bg-bg-primary text-fg-primary">
+              {s.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Footer: assignee + actions */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          {task.assignee?.id && (
+            <div className="flex items-center gap-1" title={task.assignee.name ?? "Assigned"}>
+              <div className="w-5 h-5 rounded-full overflow-hidden bg-accent-primary/20 flex-shrink-0">
+                {task.assignee.image ? (
+                  <Image src={task.assignee.image} alt={task.assignee.name ?? ""} width={20} height={20} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent-primary to-accent-secondary">
+                    <User size={10} className="text-white" />
+                  </div>
+                )}
+              </div>
+              <span className="text-[10px] text-fg-tertiary">{task.assignee.name?.split(" ")[0]}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Delete */}
+        {confirmDelete ? (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => { onDelete(task.id); setConfirmDelete(false); }}
+              disabled={isDeleting}
+              className="px-2 py-0.5 rounded bg-red-500/15 text-red-400 text-[10px] font-bold hover:bg-red-500/25 transition-colors"
+            >
+              {isDeleting ? <Loader2 size={10} className="animate-spin" /> : "Yes"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(false)}
+              className="px-2 py-0.5 rounded bg-bg-tertiary/50 text-fg-tertiary text-[10px] font-bold hover:text-fg-secondary transition-colors"
+            >
+              No
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setConfirmDelete(true)}
+            className="p-1 rounded text-fg-quaternary opacity-0 group-hover:opacity-100 hover:text-red-400 hover:bg-red-500/10 transition-all"
+            title="Delete task"
+          >
+            <Trash2 size={12} />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main Export ─── */
 export function TaskTimelineClient() {
   const { data: session } = useSession();
   const { permissions } = useRolePermissions();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
-  const [activeView, setActiveView] = useState<"creation" | "timeline">("creation");
+  const [activeView, setActiveView] = useState<"creation" | "timeline" | "board">("creation");
 
   /* Get user profile to determine active org */
   const { data: profile } = typedApi.user.getProfile.useQuery(undefined, {
@@ -1045,6 +1305,16 @@ export function TaskTimelineClient() {
     { staleTime: 15_000 },
   );
 
+  /* Get tasks for the board view */
+  const effectivePidForBoard = selectedProjectId ?? projects?.[0]?.id ?? null;
+  const {
+    data: boardTasks,
+    isLoading: isLoadingBoard,
+  } = typedApi.task.getByProject.useQuery(
+    { projectId: effectivePidForBoard! },
+    { staleTime: 15_000, enabled: !!effectivePidForBoard && activeView === "board" },
+  );
+
   const utils = api.useUtils();
 
   const handleCreated = () => {
@@ -1056,9 +1326,9 @@ export function TaskTimelineClient() {
   const updateStatus = typedApi.task.updateStatus.useMutation({
     onSuccess: () => {
       setTogglingId(null);
-      // Refetch the project data to get updated stats
       void utils.project.getMyProjects.invalidate();
       void utils.task.getOrgActivity.invalidate();
+      void utils.task.getByProject.invalidate();
     },
     onError: () => {
       setTogglingId(null);
@@ -1080,9 +1350,11 @@ export function TaskTimelineClient() {
       setDeletingId(null);
       void utils.project.getMyProjects.invalidate();
       void utils.task.getOrgActivity.invalidate();
+      void utils.task.getByProject.invalidate();
     },
-    onError: () => {
+    onError: (err) => {
       setDeletingId(null);
+      console.error("[TaskDelete]", err.message);
     },
   });
 
@@ -1199,7 +1471,7 @@ export function TaskTimelineClient() {
           <p className="text-fg-secondary mb-6">Task creation and timeline become active after you create a project.</p>
           <a
             href="/projects"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-accent-primary to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-accent-primary/25 transition-all hover:scale-[1.02]"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-accent-primary text-white font-semibold rounded-xl hover:bg-accent-hover hover:shadow-lg hover:shadow-accent-primary/25 transition-all hover:scale-[1.02]"
           >
             <Plus size={18} />
             Create one now
@@ -1215,11 +1487,11 @@ export function TaskTimelineClient() {
       <div className="px-4 sm:px-6 md:px-8 py-6 border-b border-border-medium/50">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 leading-tight tracking-tight">
-              Task Creation & Timeline
+            <h1 className="text-2xl sm:text-3xl font-bold text-fg-primary leading-tight tracking-tight">
+              Tasks
             </h1>
-            <p className="text-base font-medium text-slate-600 dark:text-slate-400 mt-1">
-              Add new tasks and track your historical progress.
+            <p className="text-sm text-fg-tertiary mt-0.5">
+              Create and track your team&apos;s workflow
             </p>
           </div>
 
@@ -1233,7 +1505,7 @@ export function TaskTimelineClient() {
               onClick={() => setActiveView("creation")}
               className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
                 activeView === "creation"
-                  ? "bg-gradient-to-r from-accent-primary to-purple-600 text-white shadow-lg shadow-accent-primary/30"
+                  ? "bg-accent-primary text-white shadow-md shadow-accent-primary/20"
                   : "text-fg-secondary hover:text-fg-primary"
               }`}
             >
@@ -1243,11 +1515,21 @@ export function TaskTimelineClient() {
               onClick={() => setActiveView("timeline")}
               className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
                 activeView === "timeline"
-                  ? "bg-gradient-to-r from-accent-primary to-purple-600 text-white shadow-lg shadow-accent-primary/30"
+                  ? "bg-accent-primary text-white shadow-md shadow-accent-primary/20"
                   : "text-fg-secondary hover:text-fg-primary"
               }`}
             >
               Timeline
+            </button>
+            <button
+              onClick={() => setActiveView("board")}
+              className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+                activeView === "board"
+                  ? "bg-accent-primary text-white shadow-md shadow-accent-primary/20"
+                  : "text-fg-secondary hover:text-fg-primary"
+              }`}
+            >
+              Board
             </button>
           </motion.div>
         </div>
@@ -1256,7 +1538,7 @@ export function TaskTimelineClient() {
       {/* Main Content Area */}
       <div className="flex-1 overflow-auto">
         <AnimatePresence mode="wait">
-          {activeView === "creation" ? (
+          {activeView === "creation" && (
             <motion.div
               key="creation"
               initial={{ opacity: 0, x: -30 }}
@@ -1286,9 +1568,9 @@ export function TaskTimelineClient() {
                 {/* Task Visualization Below Form */}
                 <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-8 pb-12 border-t border-border-medium/30">
                   <div className="pt-8">
-                    <h2 className="text-xl font-bold text-fg-primary mb-4 flex items-center gap-2">
-                      <span className="w-1 h-6 bg-gradient-to-b from-accent-primary to-purple-600 rounded-full" />
-                      Existing Tasks by Status
+                    <h2 className="text-lg font-bold text-fg-primary mb-4 flex items-center gap-2">
+                      <span className="w-1 h-5 bg-accent-primary rounded-full" />
+                      Tasks by Status
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       <TaskStatusCard
@@ -1320,7 +1602,8 @@ export function TaskTimelineClient() {
                 </div>
               </div>
             </motion.div>
-          ) : (
+          )}
+          {activeView === "timeline" && (
             <motion.div
               key="timeline"
               initial={{ opacity: 0, x: 30 }}
@@ -1330,6 +1613,9 @@ export function TaskTimelineClient() {
               className="w-full"
             >
               <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8">
+                {/* Progress bar */}
+                <MasterProgressBar percentage={percentage} />
+
                 {/* Timeline header with title and filters */}
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
@@ -1337,10 +1623,15 @@ export function TaskTimelineClient() {
                   transition={{ duration: 0.3, delay: 0.1 }}
                   className="mb-8"
                 >
-                  <h2 className="text-xl font-bold text-fg-primary mb-4 flex items-center gap-2">
-                    <span className="w-1 h-6 bg-gradient-to-b from-accent-primary to-purple-600 rounded-full" />
-                    Project Timeline
-                  </h2>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-bold text-fg-primary flex items-center gap-2">
+                      <span className="w-1 h-5 bg-accent-primary rounded-full" />
+                      Activity Timeline
+                    </h2>
+                    <span className="text-xs font-medium text-fg-quaternary">
+                      {filteredEntries.length} {filteredEntries.length === 1 ? "event" : "events"}
+                    </span>
+                  </div>
 
                   {/* Status filters */}
                   <div className="flex items-center gap-2 flex-wrap">
@@ -1358,7 +1649,7 @@ export function TaskTimelineClient() {
                         onClick={() => setStatusFilter(filter.value as "all" | "completed" | "in_progress" | "pending" | "blocked")}
                         className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
                           statusFilter === filter.value
-                            ? "bg-gradient-to-r from-accent-primary to-purple-600 text-white shadow-lg shadow-accent-primary/30"
+                            ? "bg-accent-primary text-white shadow-md shadow-accent-primary/20"
                             : "bg-white dark:bg-slate-900/50 text-fg-secondary border border-slate-200 dark:border-white/[0.08] hover:text-fg-primary hover:border-slate-300 dark:hover:border-white/[0.1]"
                         }`}
                       >
@@ -1385,6 +1676,60 @@ export function TaskTimelineClient() {
                     deletingId={deletingId}
                   />
                 </motion.div>
+              </div>
+            </motion.div>
+          )}
+          {activeView === "board" && (
+            <motion.div
+              key="board"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 30 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="w-full"
+            >
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8">
+                <MasterProgressBar percentage={percentage} />
+
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-bold text-fg-primary flex items-center gap-2">
+                    <span className="w-1 h-5 bg-accent-primary rounded-full" />
+                    Task Board
+                  </h2>
+                  {projects && projects.length > 1 && (
+                    <div className="relative">
+                      <select
+                        value={effectivePidForBoard ?? ""}
+                        onChange={(e) => setSelectedProjectId(Number(e.target.value))}
+                        className="text-sm rounded-lg bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/[0.08] text-fg-primary px-3 py-1.5 pr-7 appearance-none cursor-pointer hover:border-accent-primary/40 transition-colors"
+                      >
+                        {projects.map((p) => (
+                          <option key={p.id} value={p.id} className="bg-bg-primary text-fg-primary">
+                            {p.title}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-fg-tertiary pointer-events-none" />
+                    </div>
+                  )}
+                </div>
+
+                {isLoadingBoard ? (
+                  <div className="flex items-center justify-center py-16">
+                    <Loader2 className="animate-spin w-6 h-6 text-accent-primary" />
+                  </div>
+                ) : (
+                  <TaskBoard
+                    tasks={boardTasks ?? []}
+                    onStatusChange={(taskId, newStatus) => {
+                      setTogglingId(taskId);
+                      updateStatus.mutate({ taskId, status: newStatus });
+                    }}
+                    onDelete={handleDelete}
+                    isUpdating={updateStatus.isPending}
+                    deletingId={deletingId}
+                  />
+                )}
               </div>
             </motion.div>
           )}

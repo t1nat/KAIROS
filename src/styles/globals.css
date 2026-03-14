@@ -866,11 +866,13 @@ summary,
 .pop-up-delay-18 { animation-delay: 1.8s; }
 
 ::selection {
-  background-color: rgba(var(--accent-primary), 0.2);
+  background-color: rgba(var(--accent-primary), 0.35);
+  color: white;
 }
 
 ::-moz-selection {
-  background-color: rgba(var(--accent-primary), 0.2);
+  background-color: rgba(var(--accent-primary), 0.35);
+  color: white;
 }
 
 /* Global focus — inherits the element's own border-radius */
