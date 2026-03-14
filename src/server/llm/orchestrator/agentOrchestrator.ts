@@ -74,6 +74,7 @@ export interface AgentDraftInput {
     orgId?: string | number;
     projectId?: string | number;
   };
+  conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>;
 }
 
 export interface AgentDraftResult {
@@ -448,11 +449,21 @@ export const agentOrchestrator = {
     const userId = requireUserId(input.ctx);
 
     // Allow draft calls without projectId. A2 will respond with questionsForUser.
-    // If a project name is provided, try to resolve it to a projectId.
-    const requestedNameRaw = (input.handoffContext as Record<string, unknown> | undefined)?.projectName;
+    // Try to resolve projectId from handoffContext (A1 may pass it there) or from project name.
+    const hc = (input.handoffContext ?? {}) as Record<string, unknown>;
+    const requestedNameRaw = hc.projectName;
     const requestedName = typeof requestedNameRaw === "string" ? requestedNameRaw.trim() : "";
 
     let resolvedProjectId: number | undefined = input.scope?.projectId;
+
+    // A1 may include projectId directly in the handoff context
+    if (!resolvedProjectId && typeof hc.projectId === "number") {
+      resolvedProjectId = hc.projectId;
+    }
+    if (!resolvedProjectId && typeof hc.projectId === "string") {
+      const parsed = parseInt(hc.projectId, 10);
+      if (!isNaN(parsed) && parsed > 0) resolvedProjectId = parsed;
+    }
 
     if (!resolvedProjectId && requestedName) {
       const userProjects = await input.ctx.db
@@ -461,7 +472,14 @@ export const agentOrchestrator = {
         .where(eq(projects.createdById, userId));
 
       const norm = (s: string) => s.trim().toLowerCase();
-      const matches = userProjects.filter((p) => norm(p.title) === norm(requestedName));
+      // Exact match first
+      let matches = userProjects.filter((p) => norm(p.title) === norm(requestedName));
+      // Fallback: partial/includes match (e.g. "Test" matches "Test project")
+      if (matches.length === 0) {
+        matches = userProjects.filter(
+          (p) => norm(p.title).includes(norm(requestedName)) || norm(requestedName).includes(norm(p.title)),
+        );
+      }
 
       if (matches.length === 1) {
         resolvedProjectId = matches[0]!.id;
@@ -513,8 +531,31 @@ export const agentOrchestrator = {
     const planHash = computePlanHash(parseResult.data);
     const plan: TaskPlanDraft = { ...parseResult.data, planHash };
 
-    // Persist the draft only when we have a resolved projectId.
-    // If projectId is missing/ambiguous, A2 should return questionsForUser and we skip persistence.
+    // Check if the plan has actual operations that require a project
+    const hasOperations =
+      (plan.creates?.length ?? 0) +
+      (plan.updates?.length ?? 0) +
+      (plan.statusChanges?.length ?? 0) +
+      (plan.deletes?.length ?? 0) > 0;
+
+    if (typeof resolvedProjectId !== "number" && hasOperations) {
+      // The LLM generated tasks but we have no project to put them in.
+      // Return the plan with a questionsForUser entry so the frontend stops the pipeline.
+      const planWithQuestion: TaskPlanDraft = {
+        ...plan,
+        creates: [],
+        updates: [],
+        statusChanges: [],
+        deletes: [],
+        questionsForUser: [
+          ...(plan.questionsForUser ?? []),
+          "Which project should I add these tasks to? Please specify the project name.",
+        ],
+      };
+      return { draftId, plan: planWithQuestion };
+    }
+
+    // Persist the draft when we have a resolved projectId.
     if (typeof resolvedProjectId === "number") {
       await input.ctx.db.insert(agentTaskPlannerDrafts).values({
         id: draftId,
@@ -798,9 +839,17 @@ export const agentOrchestrator = {
     // 3. Call LLM
     let outputJson: A1Output | TaskPlanDraft;
     try {
+      // Build messages: system → conversation history → current user message
+      const historyMessages: Array<{ role: "system" | "user" | "assistant"; content: string }> =
+        (input.conversationHistory ?? []).map((m) => ({
+          role: m.role,
+          content: m.content,
+        }));
+
       const llmResponse = await chatCompletion({
         messages: [
           { role: "system", content: systemPrompt },
+          ...historyMessages,
           { role: "user", content: input.message },
         ],
         temperature: 0.2,
@@ -859,7 +908,11 @@ export const agentOrchestrator = {
         outputJson = plan;
       }
     } catch (err) {
-      // LLM call failed — return a safe fallback using context pack
+      // LLM call failed — log the real error, then return a safe fallback
+      console.error(
+        `[AgentOrchestrator] LLM call failed for agent=${input.agentId}:`,
+        err instanceof Error ? err.message : err,
+      );
       if (input.agentId === "workspace_concierge") {
         const contextFallback = await buildFallbackResponse(
           contextPack as Parameters<typeof buildFallbackResponse>[0],
@@ -867,7 +920,15 @@ export const agentOrchestrator = {
         );
         outputJson = contextFallback;
       } else {
-        throw err;
+        throw err instanceof TRPCError
+          ? err
+          : new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message:
+                err instanceof Error
+                  ? `Agent error: ${err.message}`
+                  : "An unexpected error occurred while processing your request",
+            });
       }
     }
 
