@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MessageCircle, Minus, X, Maximize2, Minimize2, GripVertical } from "lucide-react";
+import { Minus, X, Maximize2, Minimize2, GripVertical, Sparkles } from "lucide-react";
 import { ProjectIntelligenceChat } from "~/components/projects/ProjectIntelligenceChat";
 
 /* ────────────── types ────────────── */
@@ -106,7 +106,6 @@ export function A1ChatWidgetOverlay(props: {
   const [maximised, setMaximised] = useState(false);
   const [rect, setRect] = useState<Rect>(defaultRect);
   const [prevRect, setPrevRect] = useState<Rect | null>(null);
-  const [hasUnread, setHasUnread] = useState(false);
 
   const panelRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
@@ -149,11 +148,6 @@ export function A1ChatWidgetOverlay(props: {
     return () => window.removeEventListener("kairos:openAI", handler);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  /* clear unread badge when the panel is visible */
-  useEffect(() => {
-    if (open && !minimised) setHasUnread(false);
-  }, [open, minimised]);
 
   /* ─── drag / resize pointer handlers ─── */
   const handlePointerDown = useCallback(
@@ -256,24 +250,8 @@ export function A1ChatWidgetOverlay(props: {
     setMinimised((v) => !v);
   };
 
-  /* ─── FAB button (only in standalone/uncontrolled mode) ─── */
-  if (!open) {
-    if (controlled) return null;
-    return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="kairos-btn fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95"
-        style={{ backgroundColor: "rgb(var(--accent-primary))" }}
-        aria-label="Open AI assistant"
-      >
-        <MessageCircle className="h-6 w-6 text-white" />
-        {hasUnread && (
-          <span className="absolute top-1 right-1 h-3 w-3 rounded-full bg-red-500 border-2 border-white" />
-        )}
-      </button>
-    );
-  }
+  /* ─── hidden when closed ─── */
+  if (!open) return null;
 
   /* ─── panel styles ─── */
   const panelStyle: React.CSSProperties = maximised
@@ -310,7 +288,7 @@ export function A1ChatWidgetOverlay(props: {
         }}
       >
         <GripVertical className="h-4 w-4" style={{ color: 'rgb(var(--fg-tertiary))', opacity: 0.7 }} />
-        <MessageCircle className="h-4 w-4" style={{ color: 'rgb(var(--fg-secondary))' }} />
+        <Sparkles className="h-4 w-4" style={{ color: 'rgb(var(--fg-secondary))' }} />
         <span className="flex-1 text-sm font-medium truncate" style={{ color: 'rgb(var(--fg-primary))' }}>KAIROS AI</span>
 
         <button
@@ -366,12 +344,7 @@ export function A1ChatWidgetOverlay(props: {
       {/* ─── body ─── */}
       {!minimised && (
         <div className="flex-1 min-h-0 overflow-hidden">
-          <ProjectIntelligenceChat
-            projectId={props.projectId}
-            onAgentMessage={() => {
-              if (!open || minimised) setHasUnread(true);
-            }}
-          />
+          <ProjectIntelligenceChat projectId={props.projectId} />
         </div>
       )}
 
