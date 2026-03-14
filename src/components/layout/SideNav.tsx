@@ -51,7 +51,6 @@ export function SideNav() {
     { href: "/progress", icon: TrendingUp, label: t("progress") },
     { href: "/calendar", icon: CalendarCheck, label: t("calendar") },
     { href: "/chat", icon: MessageCircle, label: "Chat" },
-    { href: "/chat/ai", icon: Sparkles, label: "Kairos AI" },
     { href: "/publish", icon: CalendarDays, label: t("events") },
   ];
 
@@ -68,9 +67,6 @@ export function SideNav() {
     }
     if (href === "/chat") {
       return pathname === "/chat";
-    }
-    if (href === "/chat/ai") {
-      return pathname === "/chat/ai";
     }
     if (href === "/publish") {
       return pathname === "/publish";
@@ -153,6 +149,18 @@ export function SideNav() {
                 );
               })}
 
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  window.dispatchEvent(new CustomEvent("kairos:openAI"));
+                }}
+                className="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-colors font-medium text-fg-secondary hover:bg-bg-secondary/60 hover:text-fg-primary w-full"
+              >
+                <Sparkles size={20} />
+                <span>Kairos AI</span>
+              </button>
+
               <Link
                 href={profileItem.href}
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -221,6 +229,19 @@ export function SideNav() {
               </Link>
             );
           })}
+
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent("kairos:openAI"))}
+            aria-label="Kairos AI"
+            title="Kairos AI"
+            className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors group relative text-fg-secondary hover:bg-bg-secondary/60 hover:text-fg-primary"
+          >
+            <Sparkles size={20} />
+            <span className="absolute left-full ml-4 px-3 py-1.5 bg-bg-elevated border border-slate-200 dark:border-white/[0.06] text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
+              Kairos AI
+            </span>
+          </button>
         </div>
 
         <div className="mt-auto flex flex-col items-center gap-4">

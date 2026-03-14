@@ -14,6 +14,7 @@ import { ToastProvider } from "~/components/providers/ToastProvider";
 import { UserPreferencesProvider } from "~/components/providers/UserPreferencesProvider";
 import { SocketProvider } from "~/components/providers/SocketProvider";
 import WebSocketInitializer from "~/components/layout/WebSocketInitializer";
+import { GlobalAIWidget } from "~/components/layout/GlobalAIWidget";
 
 export const metadata: Metadata = {
   title: "KAIROS",
@@ -76,7 +77,10 @@ export default async function RootLayout({
                 <WebSocketInitializer />
                 <ThemeProvider>
                   <ToastProvider>
-                    <UserPreferencesProvider>{children}</UserPreferencesProvider>
+                    <UserPreferencesProvider>
+                      {children}
+                      <GlobalAIWidget />
+                    </UserPreferencesProvider>
                   </ToastProvider>
                 </ThemeProvider>
               </SocketProvider>

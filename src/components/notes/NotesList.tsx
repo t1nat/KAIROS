@@ -66,7 +66,11 @@ export function NotesList() {
       if (selectedNoteId) {
         setSelectedNoteId(null);
       }
+      toast.success(t("notes.deleted") || "Note deleted");
       void refetch();
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to delete note");
     },
   });
 
