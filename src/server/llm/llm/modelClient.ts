@@ -132,6 +132,7 @@ async function singleCompletion(
   const apiKey = getApiKey();
 
   if (!apiKey) {
+    console.error("[ModelClient] LLM_API_KEY is not set. AI features will not work.");
     throw new Error(
       "LLM_API_KEY is not set. Please add your HuggingFace token to .env",
     );
@@ -229,7 +230,12 @@ export async function chatCompletion(req: ChatRequest): Promise<ChatResponse> {
   }
 
   // All models exhausted
-  throw lastError ?? new Error("All models in the fallback chain failed");
+  if (lastError instanceof Error) throw lastError;
+  throw new Error(
+    typeof lastError === "string"
+      ? lastError
+      : "All models in the fallback chain failed",
+  );
 }
 
 /**

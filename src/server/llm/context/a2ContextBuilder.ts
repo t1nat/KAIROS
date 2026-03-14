@@ -18,6 +18,8 @@ export interface A2ContextPack {
     description: string | null;
     createdById: string;
   };
+  /** Available projects when no specific projectId is in scope */
+  availableProjects?: Array<{ id: number; title: string }>;
   collaborators: Array<{ id: string; name: string | null }>;
   existingTasks: Array<{
     id: number;
@@ -49,13 +51,19 @@ export async function buildA2Context(input: {
   const scope = input.scope ?? {};
   const projectId = scope.projectId;
 
-  // Minimal pack when projectId missing; A2 will ask user.
+  // Minimal pack when projectId missing; include available projects so A2 can reference them.
   if (!projectId) {
+    const userProjects = await input.ctx.db
+      .select({ id: projects.id, title: projects.title })
+      .from(projects)
+      .where(eq(projects.createdById, userId));
+
     return {
       session: { userId, activeOrganizationId },
       scope,
       collaborators: [],
       existingTasks: [],
+      availableProjects: userProjects,
       handoffContext: input.handoffContext,
     };
   }
