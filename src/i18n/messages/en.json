@@ -542,6 +542,7 @@
     "taskPlannerDoneNoCount": "Your changes have been successfully applied! Check your project board for the updates.",
     "taskPlannerPlanReady": "The Task Planner prepared a plan:",
     "taskPlannerFailed": "The Task Planner ran into an issue: {error}",
+    "taskPlannerModifyHint": "Want to modify? Tell me what to change.",
     "confirmTaskPlan": "Confirm Task Plan",
     "applyTaskPlan": "Apply Task Plan",
     "confirm": "Confirm",
