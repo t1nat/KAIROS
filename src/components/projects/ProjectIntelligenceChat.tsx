@@ -240,7 +240,7 @@ function CopyButton({ text, tooltip }: { text: string; tooltip: string }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-white/10 text-fg-tertiary hover:text-fg-secondary shrink-0"
+      className="opacity-50 hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-white/10 text-fg-tertiary hover:text-fg-secondary shrink-0"
       title={tooltip}
     >
       {copied ? (
