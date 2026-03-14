@@ -55,6 +55,15 @@ export const agentRouter = createTRPCRouter({
             projectId: z.union([z.string(), z.number()]).optional(),
           })
           .optional(),
+        conversationHistory: z
+          .array(
+            z.object({
+              role: z.enum(["user", "assistant"]),
+              content: z.string(),
+            }),
+          )
+          .max(16)
+          .optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -63,6 +72,7 @@ export const agentRouter = createTRPCRouter({
         agentId: input.agentId,
         message: input.message,
         scope: input.scope,
+        conversationHistory: input.conversationHistory,
       });
     }),
 
@@ -75,6 +85,15 @@ export const agentRouter = createTRPCRouter({
       z.object({
         projectId: z.number().optional(),
         message: z.string().min(1).max(20_000),
+        conversationHistory: z
+          .array(
+            z.object({
+              role: z.enum(["user", "assistant"]),
+              content: z.string(),
+            }),
+          )
+          .max(16)
+          .optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -83,6 +102,7 @@ export const agentRouter = createTRPCRouter({
         agentId: "workspace_concierge",
         message: input.message,
         scope: input.projectId ? { projectId: input.projectId } : undefined,
+        conversationHistory: input.conversationHistory,
       });
     }),
 

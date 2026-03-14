@@ -10,7 +10,7 @@ import {
   projects,
   users,
 } from "~/server/db/schema";
-import { and, asc, desc, eq, inArray, or, sql, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, lt, or, sql, isNull } from "drizzle-orm";
 import { emitNewMessage, emitConversationUpdated, emitNotification } from "~/server/socket/emit";
 
 async function assertProjectAccess(ctx: TRPCContext, projectId: number) {
@@ -154,7 +154,11 @@ export const chatRouter = createTRPCRouter({
     }),
 
   listMessages: protectedProcedure
-    .input(z.object({ conversationId: z.number() }))
+    .input(z.object({
+      conversationId: z.number(),
+      cursor: z.number().optional(),
+      limit: z.number().min(1).max(100).default(50),
+    }))
     .query(async ({ ctx, input }) => {
       const selfId: string = ctx.session.user.id;
 
@@ -171,7 +175,12 @@ export const chatRouter = createTRPCRouter({
       if (!convo) throw new TRPCError({ code: "NOT_FOUND", message: "Conversation not found" });
       if (convo.userOneId !== selfId && convo.userTwoId !== selfId) throw new TRPCError({ code: "FORBIDDEN" });
 
-      return ctx.db
+      const conditions = [eq(directMessages.conversationId, input.conversationId)];
+      if (input.cursor) {
+        conditions.push(lt(directMessages.id, input.cursor));
+      }
+
+      const rows = await ctx.db
         .select({
           id: directMessages.id,
           body: directMessages.body,
@@ -182,8 +191,17 @@ export const chatRouter = createTRPCRouter({
         })
         .from(directMessages)
         .innerJoin(users, eq(users.id, directMessages.senderId))
-        .where(eq(directMessages.conversationId, input.conversationId))
-        .orderBy(asc(directMessages.createdAt));
+        .where(and(...conditions))
+        .orderBy(desc(directMessages.id))
+        .limit(input.limit + 1);
+
+      const hasMore = rows.length > input.limit;
+      if (hasMore) rows.pop();
+
+      return {
+        messages: rows.reverse(),
+        nextCursor: hasMore ? rows[0]?.id : undefined,
+      };
     }),
 
   sendMessage: protectedProcedure

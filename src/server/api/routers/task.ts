@@ -15,6 +15,7 @@ export const taskRouter = createTRPCRouter({
         description: z.string().optional(),
         assignedToId: z.string().optional(),
         priority: z.enum(["low", "medium", "high", "urgent"]),
+        status: z.enum(["pending", "in_progress", "completed", "blocked"]).default("pending"),
         dueDate: z.date().optional(),
         clientRequestId: z.string().max(128).optional(),
       })
@@ -113,7 +114,7 @@ export const taskRouter = createTRPCRouter({
           assignedToId: input.assignedToId,
           priority: input.priority,
           dueDate: input.dueDate,
-          status: "pending",
+          status: input.status,
           createdById: ctx.session.user.id,
           orderIndex: nextOrderIndex,
           clientRequestId: input.clientRequestId,
@@ -532,7 +533,80 @@ export const taskRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  
+  getByProject: protectedProcedure
+    .input(z.object({ projectId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const [project] = await ctx.db
+        .select()
+        .from(projects)
+        .where(eq(projects.id, input.projectId));
+
+      if (!project) throw new Error("Project not found");
+
+      const isOwner = project.createdById === ctx.session.user.id;
+
+      let hasOrgAccess = false;
+      if (project.organizationId) {
+        const [membership] = await ctx.db
+          .select()
+          .from(organizationMembers)
+          .where(
+            and(
+              eq(organizationMembers.organizationId, project.organizationId),
+              eq(organizationMembers.userId, ctx.session.user.id)
+            )
+          )
+          .limit(1);
+        hasOrgAccess = !!membership;
+      }
+
+      if (!isOwner && !hasOrgAccess) {
+        const [collaboration] = await ctx.db
+          .select()
+          .from(projectCollaborators)
+          .where(
+            and(
+              eq(projectCollaborators.projectId, input.projectId),
+              eq(projectCollaborators.collaboratorId, ctx.session.user.id)
+            )
+          )
+          .limit(1);
+        if (!collaboration) throw new Error("Access denied");
+      }
+
+      const creatorUsers = alias(users, "creator_users");
+      const assigneeUsers = alias(users, "assignee_users");
+
+      const rows = await ctx.db
+        .select({
+          id: tasks.id,
+          title: tasks.title,
+          description: tasks.description,
+          status: tasks.status,
+          priority: tasks.priority,
+          dueDate: tasks.dueDate,
+          orderIndex: tasks.orderIndex,
+          createdAt: tasks.createdAt,
+          creator: {
+            id: creatorUsers.id,
+            name: creatorUsers.name,
+            image: creatorUsers.image,
+          },
+          assignee: {
+            id: assigneeUsers.id,
+            name: assigneeUsers.name,
+            image: assigneeUsers.image,
+          },
+        })
+        .from(tasks)
+        .leftJoin(creatorUsers, eq(tasks.createdById, creatorUsers.id))
+        .leftJoin(assigneeUsers, eq(tasks.assignedToId, assigneeUsers.id))
+        .where(eq(tasks.projectId, input.projectId))
+        .orderBy(tasks.orderIndex);
+
+      return rows;
+    }),
+
   getActivityLog: protectedProcedure
     .input(z.object({ taskId: z.number() }))
     .query(async ({ ctx, input }) => {
