@@ -359,7 +359,7 @@ function NotePreviewCard({ item, index }: { item: NotePreviewItem; index: number
 /*  Main Component                                                    */
 /* ------------------------------------------------------------------ */
 
-export function ProjectIntelligenceChat(props: { projectId?: number }) {
+export function ProjectIntelligenceChat(props: { projectId?: number; onAgentMessage?: () => void }) {
   const { projectId } = props;
   const t = useTranslations("chat");
   const utils = api.useUtils();
@@ -681,7 +681,7 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
     );
   }, []);
 
-  /* ---------- Task Planner Pipeline (auto draft → confirm → apply) ---------- */
+  /* ---------- Task Planner Pipeline (draft only → preview for user) ---------- */
 
   const runTaskPlannerPipeline = useCallback(
     async (
@@ -692,7 +692,7 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
       // Keep this function pure to avoid duplicate "thinking" bubbles.
 
       try {
-        /* Step 1: Draft */
+        /* Step 1: Draft only — do NOT auto-confirm or auto-apply */
         const draftRes = (await taskDraftMutation.mutateAsync({
           message: clampText(userMessage),
           scope: projectId ? { projectId } : undefined,
@@ -739,33 +739,28 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
           return;
         }
 
-        /* Step 2: Confirm */
-        const confirmRes = (await taskConfirmMutation.mutateAsync({
-          draftId,
-        })) as TaskPlannerConfirmResponse;
+        // Build a diff summary from the plan's diffPreview
+        const diffLines: string[] = [];
+        if (plan?.diffPreview) {
+          for (const c of plan.diffPreview.creates ?? []) diffLines.push(`+ ${c}`);
+          for (const u of plan.diffPreview.updates ?? []) diffLines.push(`~ ${u}`);
+          for (const s of plan.diffPreview.statusChanges ?? []) diffLines.push(`\u2192 ${s}`);
+          for (const d of plan.diffPreview.deletes ?? []) diffLines.push(`- ${d}`);
+        }
 
-        const token = confirmRes.confirmationToken;
+        const ops = [
+          creates > 0 ? t("createOps", { count: creates }) : null,
+          updates > 0 ? t("updateOps", { count: updates }) : null,
+          statusChanges > 0 ? `${statusChanges} status change${statusChanges > 1 ? "s" : ""}` : null,
+          deletes > 0 ? t("deleteOps", { count: deletes }) : null,
+        ].filter(Boolean).join(" \u00b7 ");
 
-        /* Step 3: Apply */
-        const applyRes = (await taskApplyMutation.mutateAsync({
-          draftId,
-          confirmationToken: token,
-        })) as TaskPlannerApplyResponse;
-
-        const createdCount =
-          applyRes?.results?.createdTaskIds?.length ?? creates;
-        const totalApplied =
-          (applyRes?.results?.createdTaskIds?.length ?? 0) +
-          (applyRes?.results?.updatedTaskIds?.length ?? 0) +
-          (applyRes?.results?.statusChangedTaskIds?.length ?? 0) +
-          (applyRes?.results?.deletedTaskIds?.length ?? 0);
-
-        const doneText =
-          createdCount > 0
-            ? t("taskPlannerDone", { count: createdCount })
-            : totalApplied > 0
-              ? t("taskPlannerDoneNoCount")
-              : t("noChanges");
+        const agentText = [
+          ops,
+          diffLines.length > 0 ? diffLines.join("\n") : null,
+          t("clickConfirm"),
+          t("taskPlannerModifyHint") || "Want to modify? Tell me what to change.",
+        ].filter(Boolean).join("\n");
 
         // Extract task titles from the draft plan for inline display
         const inlineTasks: InlineTask[] = Array.isArray(plan?.creates)
@@ -779,14 +774,12 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
 
         setMessages((prev) =>
           replaceThinking(prev, {
-            text: doneText,
+            text: agentText,
             createdAt: new Date(),
+            actions: [{ type: "task_confirm" as const, draftId }],
             inlineTasks: inlineTasks.length > 0 ? inlineTasks : undefined,
           }),
         );
-        // Instant update: invalidate task/project caches
-        void utils.task.invalidate();
-        void utils.project.invalidate();
       } catch (err) {
         const errMsg =
           err instanceof Error ? err.message : "Unknown error";
@@ -802,9 +795,6 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
       projectId,
       t,
       taskDraftMutation,
-      taskConfirmMutation,
-      taskApplyMutation,
-      utils,
     ],
   );
 
@@ -1082,9 +1072,24 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
           { role: "agent", text: THINKING_SENTINEL, createdAt: new Date() },
         ]);
 
+        // Build conversation history from messages state (filter sentinels, take last 16)
+        const history = messages
+          .filter(
+            (m) =>
+              m.text !== THINKING_SENTINEL && m.text !== SUBAGENT_SENTINEL,
+          )
+          .slice(-16)
+          .map((m) => ({
+            role: (m.role === "user" ? "user" : "assistant") as
+              | "user"
+              | "assistant",
+            content: m.text,
+          }));
+
         await a1Mutation.mutateAsync({
           projectId,
           message: clampText(msg),
+          conversationHistory: history.length > 0 ? history : undefined,
         });
       };
 
@@ -1098,6 +1103,16 @@ export function ProjectIntelligenceChat(props: { projectId?: number }) {
     messages.length > 0 &&
     (messages[messages.length - 1]?.text === THINKING_SENTINEL ||
      messages[messages.length - 1]?.text === SUBAGENT_SENTINEL);
+
+  /* fire callback when AI finishes responding (thinking → done) */
+  const wasThinkingRef = useRef(false);
+  useEffect(() => {
+    if (wasThinkingRef.current && !isThinking && messages.length > 0) {
+      props.onAgentMessage?.();
+    }
+    wasThinkingRef.current = isThinking;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isThinking]);
 
   /* ---------------------------------------------------------------- */
   /*  Render                                                          */

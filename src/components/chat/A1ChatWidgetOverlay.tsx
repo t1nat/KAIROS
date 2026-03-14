@@ -106,6 +106,7 @@ export function A1ChatWidgetOverlay(props: {
   const [maximised, setMaximised] = useState(false);
   const [rect, setRect] = useState<Rect>(defaultRect);
   const [prevRect, setPrevRect] = useState<Rect | null>(null);
+  const [hasUnread, setHasUnread] = useState(false);
 
   const panelRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
@@ -138,12 +139,30 @@ export function A1ChatWidgetOverlay(props: {
     return () => window.removeEventListener("resize", handler);
   }, []);
 
+  /* listen for external open signal (e.g. from SideNav) */
+  useEffect(() => {
+    const handler = () => {
+      setOpen(true);
+      setMinimised(false);
+    };
+    window.addEventListener("kairos:openAI", handler);
+    return () => window.removeEventListener("kairos:openAI", handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /* clear unread badge when the panel is visible */
+  useEffect(() => {
+    if (open && !minimised) setHasUnread(false);
+  }, [open, minimised]);
+
   /* ─── drag / resize pointer handlers ─── */
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
       if (maximised) return;
       const el = panelRef.current;
       if (!el) return;
+      // Never intercept clicks on interactive elements
+      if ((e.target as HTMLElement).closest("button, input, textarea, a, select")) return;
 
       const edge = detectEdge(el, e.clientX, e.clientY);
       if (edge) {
@@ -249,6 +268,9 @@ export function A1ChatWidgetOverlay(props: {
         aria-label="Open AI assistant"
       >
         <MessageCircle className="h-6 w-6 text-white" />
+        {hasUnread && (
+          <span className="absolute top-1 right-1 h-3 w-3 rounded-full bg-red-500 border-2 border-white" />
+        )}
       </button>
     );
   }
@@ -344,7 +366,12 @@ export function A1ChatWidgetOverlay(props: {
       {/* ─── body ─── */}
       {!minimised && (
         <div className="flex-1 min-h-0 overflow-hidden">
-          <ProjectIntelligenceChat projectId={props.projectId} />
+          <ProjectIntelligenceChat
+            projectId={props.projectId}
+            onAgentMessage={() => {
+              if (!open || minimised) setHasUnread(true);
+            }}
+          />
         </div>
       )}
 
