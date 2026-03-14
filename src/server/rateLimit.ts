@@ -17,7 +17,7 @@ import { TRPCError } from "@trpc/server";
 // ---------------------------------------------------------------------------
 
 /** Maximum AI requests per user per sliding window */
-const MAX_REQUESTS_PER_WINDOW = 50;
+const MAX_REQUESTS_PER_WINDOW = parseInt(process.env.AI_RATE_LIMIT ?? "50", 10);
 
 /** Sliding window duration in milliseconds (24 hours) */
 const WINDOW_MS = 24 * 60 * 60 * 1000;
