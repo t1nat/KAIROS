@@ -10,7 +10,7 @@ import { useUploadThing } from "~/lib/uploadthing";
 import { useSocket } from "~/components/providers/SocketProvider";
 import { useSocketEvent } from "~/lib/useSocketEvent";
 
-type ChatMessage = RouterOutputs["chat"]["listMessages"][number];
+type ChatMessage = RouterOutputs["chat"]["listMessages"]["messages"][number];
 type WorkspaceMember = RouterOutputs["organization"]["getMembers"][number];
 
 export function ChatClient({ userId }: { userId: string }) {
@@ -45,24 +45,28 @@ export function ChatClient({ userId }: { userId: string }) {
 
   const conversations = conversationsQuery.data ?? [];
 
-  // Get messages for selected conversation (real-time updates via Socket.IO)
-  const messagesQuery = api.chat.listMessages.useQuery(
-    { conversationId: selectedConversationId ?? -1 },
+  // Get messages for selected conversation (cursor-based pagination)
+  const messagesQuery = api.chat.listMessages.useInfiniteQuery(
+    { conversationId: selectedConversationId ?? -1, limit: 50 },
     {
       enabled: selectedConversationId !== null,
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
     }
   );
 
-  const messages = messagesQuery.data ?? [];
+  const messages = useMemo(
+    () => messagesQuery.data?.pages.flatMap((p) => p.messages) ?? [],
+    [messagesQuery.data],
+  );
 
   // Send message
   const sendMessage = api.chat.sendMessage.useMutation({
     onMutate: async (variables) => {
       if (!selectedConversationId) return;
 
-      await utils.chat.listMessages.cancel({ conversationId: selectedConversationId });
+      await utils.chat.listMessages.cancel({ conversationId: selectedConversationId, limit: 50 });
 
-      const previous = utils.chat.listMessages.getData({ conversationId: selectedConversationId });
+      const previous = utils.chat.listMessages.getInfiniteData({ conversationId: selectedConversationId, limit: 50 });
 
       const optimistic: ChatMessage = {
         id: -Date.now(),
@@ -73,31 +77,64 @@ export function ChatClient({ userId }: { userId: string }) {
         senderImage: null,
       };
 
-      utils.chat.listMessages.setData({ conversationId: selectedConversationId }, 
-        previous ? [...previous, optimistic] : [optimistic]
+      utils.chat.listMessages.setInfiniteData(
+        { conversationId: selectedConversationId, limit: 50 },
+        (old) => {
+          if (!old) return { pages: [{ messages: [optimistic], nextCursor: undefined }], pageParams: [null] as (number | null)[] };
+          const lastPageIdx = old.pages.length - 1;
+          return {
+            ...old,
+            pages: old.pages.map((page, i) =>
+              i === lastPageIdx
+                ? { ...page, messages: [...page.messages, optimistic] }
+                : page,
+            ),
+          };
+        },
       );
 
       setDraft("");
       return { previous };
     },
     onError: (_err, _variables, context) => {
+      console.error("[ChatClient] sendMessage error:", _err);
       if (!selectedConversationId || !context?.previous) return;
-      utils.chat.listMessages.setData({ conversationId: selectedConversationId }, context.previous);
+      utils.chat.listMessages.setInfiniteData(
+        { conversationId: selectedConversationId, limit: 50 },
+        context.previous,
+      );
       toast.error("Failed to send message");
     },
-    onSuccess: async (message) => {
+    onSuccess: async (msg) => {
       if (selectedConversationId === null) return;
-      
-      const previous = utils.chat.listMessages.getData({ conversationId: selectedConversationId });
-      if (previous) {
-        const cleaned = previous.filter((m) => m.id > 0);
-        utils.chat.listMessages.setData({ conversationId: selectedConversationId }, [...cleaned, message] as typeof previous);
-      }
+
+      const realMsg: ChatMessage = {
+        id: msg.id ?? -1,
+        body: msg.body ?? "",
+        createdAt: msg.createdAt ?? new Date(),
+        senderId: msg.senderId ?? userId,
+        senderName: msg.senderName ?? null,
+        senderImage: msg.senderImage ?? null,
+      };
+
+      // Replace optimistic message with real one
+      utils.chat.listMessages.setInfiniteData(
+        { conversationId: selectedConversationId, limit: 50 },
+        (old) => {
+          if (!old) return old!;
+          const lastPageIdx = old.pages.length - 1;
+          return {
+            ...old,
+            pages: old.pages.map((page, i) =>
+              i === lastPageIdx
+                ? { ...page, messages: [...page.messages.filter((m) => m.id > 0), realMsg] }
+                : page,
+            ),
+          };
+        },
+      );
 
       await utils.chat.listAllConversations.invalidate();
-      
-      // Show notification for new message
-      toast.success("Message sent");
     },
   });
 
@@ -178,9 +215,20 @@ export function ChatClient({ userId }: { userId: string }) {
         senderName: data.senderName,
         senderImage: data.senderImage,
       };
-      utils.chat.listMessages.setData(
-        { conversationId: data.conversationId },
-        (prev) => (prev ? [...prev, newMsg] : [newMsg]),
+      utils.chat.listMessages.setInfiniteData(
+        { conversationId: data.conversationId, limit: 50 },
+        (old) => {
+          if (!old) return old!;
+          const lastPageIdx = old.pages.length - 1;
+          return {
+            ...old,
+            pages: old.pages.map((page, i) =>
+              i === lastPageIdx
+                ? { ...page, messages: [...page.messages, newMsg] }
+                : page,
+            ),
+          };
+        },
       );
     },
     [selectedConversationId, userId, utils.chat.listMessages],
@@ -193,12 +241,31 @@ export function ChatClient({ userId }: { userId: string }) {
   }, [utils.chat.listAllConversations]);
   useSocketEvent("conversation:updated", handleConversationUpdated);
 
-  // Auto-scroll to bottom when messages change
+  // Auto-scroll to bottom when new messages arrive (not when loading older)
+  const prevMsgCount = useRef(0);
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    el.scrollTop = el.scrollHeight;
+    // Only auto-scroll if messages were appended (new ones), not prepended (older ones)
+    if (messages.length > prevMsgCount.current) {
+      el.scrollTop = el.scrollHeight;
+    }
+    prevMsgCount.current = messages.length;
   }, [messages.length]);
+
+  // Load older messages when scrolled to the top
+  const handleMessagesScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    if (el.scrollTop < 80 && messagesQuery.hasNextPage && !messagesQuery.isFetchingNextPage) {
+      const prevHeight = el.scrollHeight;
+      void messagesQuery.fetchNextPage().then(() => {
+        requestAnimationFrame(() => {
+          el.scrollTop = el.scrollHeight - prevHeight;
+        });
+      });
+    }
+  }, [messagesQuery]);
 
   const selectedUser = conversations
     .flatMap((c) => [c.userOne, c.userTwo])
@@ -244,7 +311,7 @@ export function ChatClient({ userId }: { userId: string }) {
   };
 
   return (
-<div className="flex flex-col sm:flex-row h-full w-full dark:bg-gray-900 bg-white">      
+<div className="flex flex-col sm:flex-row h-full w-full bg-bg-primary">      
       {showNewChatModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-bg-secondary rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in fade-in slide-in-from-bottom-4 max-h-[90vh] overflow-y-auto">
@@ -490,10 +557,6 @@ export function ChatClient({ userId }: { userId: string }) {
                   <h2 className="text-sm sm:text-base font-bold text-fg-primary truncate">
                     {selectedUser.name ?? selectedUser.email}
                   </h2>
-                  <p className="text-xs text-success flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></span>
-                    Active
-                  </p>
                 </div>
               </div>
               <button className="p-1.5 sm:p-2 hover:bg-bg-surface rounded-lg transition-colors text-fg-secondary flex-shrink-0">
@@ -502,7 +565,7 @@ export function ChatClient({ userId }: { userId: string }) {
             </div>
 
             {/* Messages */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4">
+            <div ref={scrollRef} onScroll={handleMessagesScroll} className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4">
               {messages.length === 0 ? (
                 <div className="h-full flex items-center justify-center">
                   <div className="text-center">
@@ -598,7 +661,7 @@ export function ChatClient({ userId }: { userId: string }) {
             </div>
 
             {/* Message Input */}
-            <form onSubmit={handleSubmit} className="p-3 sm:p-4 shadow-sm bg-gray-800">
+            <form onSubmit={handleSubmit} className="p-3 sm:p-4 shadow-sm bg-bg-elevated">
               {attachments.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-3 p-2 bg-bg-surface rounded-lg">
                   {attachments.map((file, idx) => (

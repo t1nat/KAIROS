@@ -21,9 +21,9 @@ type ChatUser = {
   image: string | null;
 };
 
-type ListMessagesOutput = RouterOutputs["chat"]["listMessages"];
+type ListMessagesPage = RouterOutputs["chat"]["listMessages"];
 type SendMessageOutput = RouterOutputs["chat"]["sendMessage"];
-type ChatMessage = ListMessagesOutput[number];
+type ChatMessage = ListMessagesPage["messages"][number];
 
 export function ProjectChat({ projectId, currentUserId }: { projectId: number; currentUserId: string }) {
   const utils = api.useUtils();
@@ -56,26 +56,28 @@ export function ProjectChat({ projectId, currentUserId }: { projectId: number; c
     void getOrCreate.mutateAsync({ projectId, otherUserId: selectedUserId });
   }, [selectedUserId, projectId, getOrCreate.isPending, getOrCreate]);
 
-  const messagesQuery = api.chat.listMessages.useQuery(
-    { conversationId: conversationId ?? -1 },
+  const messagesQuery = api.chat.listMessages.useInfiniteQuery(
+    { conversationId: conversationId ?? -1, limit: 50 },
     {
       enabled: conversationId !== null,
       refetchInterval: 500,
       refetchOnWindowFocus: true,
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
     },
   );
 
-  const messages = (messagesQuery.data ?? []) as unknown as ListMessagesOutput;
+  const messages: ChatMessage[] = useMemo(
+    () => messagesQuery.data?.pages.flatMap((p) => p.messages) ?? [],
+    [messagesQuery.data],
+  );
 
   const sendMessage = api.chat.sendMessage.useMutation({
     onMutate: async (variables) => {
       if (!conversationId) return;
 
-      await utils.chat.listMessages.cancel({ conversationId });
+      await utils.chat.listMessages.cancel({ conversationId, limit: 50 });
 
-      const previous = utils.chat.listMessages.getData({ conversationId }) as unknown as
-        | ListMessagesOutput
-        | undefined;
+      const previous = utils.chat.listMessages.getInfiniteData({ conversationId, limit: 50 });
 
       const optimistic: ChatMessage = {
         id: -Date.now(),
@@ -86,32 +88,55 @@ export function ProjectChat({ projectId, currentUserId }: { projectId: number; c
         senderImage: null,
       };
 
-      utils.chat.listMessages.setData({ conversationId }, (old) => {
-        const arr = (old ?? []) as unknown as ListMessagesOutput;
-        return [...arr, optimistic] as unknown as typeof old;
-      });
+      utils.chat.listMessages.setInfiniteData(
+        { conversationId, limit: 50 },
+        (old) => {
+          if (!old) return { pages: [{ messages: [optimistic], nextCursor: undefined }], pageParams: [null] as (number | null)[] };
+          const lastIdx = old.pages.length - 1;
+          return {
+            ...old,
+            pages: old.pages.map((page, i) =>
+              i === lastIdx ? { ...page, messages: [...page.messages, optimistic] } : page,
+            ),
+          };
+        },
+      );
 
       setDraft("");
 
       return { previous };
     },
     onError: (_err, _variables, context) => {
-      if (!conversationId) return;
-      if (context?.previous) utils.chat.listMessages.setData({ conversationId }, context.previous);
+      if (!conversationId || !context?.previous) return;
+      utils.chat.listMessages.setInfiniteData(
+        { conversationId, limit: 50 },
+        context.previous,
+      );
     },
-    onSuccess: async (message: SendMessageOutput) => {
+    onSuccess: async (msg: SendMessageOutput) => {
       if (conversationId === null) return;
-      utils.chat.listMessages.setData({ conversationId }, (old) => {
-        const arr = (old ?? []) as unknown as ListMessagesOutput;
-        // Drop optimistic placeholders, append confirmed message.
-        const cleaned = arr.filter((m) => m.id > 0);
-        return [...cleaned, message] as unknown as typeof old;
-      });
+      const realMsg: ChatMessage = {
+        id: msg.id ?? -1, body: msg.body ?? "", createdAt: msg.createdAt ?? new Date(),
+        senderId: msg.senderId ?? currentUserId, senderName: msg.senderName ?? null, senderImage: msg.senderImage ?? null,
+      };
+      utils.chat.listMessages.setInfiniteData(
+        { conversationId, limit: 50 },
+        (old) => {
+          if (!old) return old!;
+          const lastIdx = old.pages.length - 1;
+          return {
+            ...old,
+            pages: old.pages.map((page, i) =>
+              i === lastIdx ? { ...page, messages: [...page.messages.filter((m) => m.id > 0), realMsg] } : page,
+            ),
+          };
+        },
+      );
 
       await utils.chat.listProjectConversations.invalidate({ projectId });
     },
     onSettled: async () => {
-      if (conversationId !== null) await utils.chat.listMessages.invalidate({ conversationId });
+      if (conversationId !== null) await utils.chat.listMessages.invalidate({ conversationId, limit: 50 });
     },
   });
 
@@ -138,7 +163,7 @@ export function ProjectChat({ projectId, currentUserId }: { projectId: number; c
           <div>
             <p className="text-sm font-semibold text-fg-primary">{selectedUser ? selectedUser.name ?? "User" : "Chat"}</p>
             <p className="text-xs text-fg-tertiary truncate">
-              {selectedUser ? "Active" : "Select a user to start"}
+              {selectedUser ? "Direct message" : "Select a user to start"}
             </p>
           </div>
         </div>
