@@ -250,14 +250,14 @@ export class EmailService {
 
       if (error) {
         console.error('[Email Service] Resend Error (welcome):', JSON.stringify(error, null, 2));
-        return null;
+        throw new Error(`Failed to send welcome email: ${error.message}`);
       }
 
       console.log('[Email Service] Welcome email sent successfully:', data?.id);
       return data;
     } catch (error) {
       console.error('[Email Service] Email Service Error (welcome):', error);
-      return null;
+      throw error;
     }
   }
 
