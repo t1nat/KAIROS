@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
+import { useDateFormat } from "~/lib/hooks/useDateFormat";
 import {
   Search,
   Plus,
@@ -39,6 +40,7 @@ export function NotesDashboard() {
   const toast = useToast();
   const utils = api.useUtils();
   const searchParams = useSearchParams();
+  const { formatDate: formatDatePref } = useDateFormat();
 
   // ---- Tab / filter state ----
   const [activeTab, setActiveTab] = useState<TabId>("all");
@@ -70,8 +72,7 @@ export function NotesDashboard() {
   // ---- Edit state ----
   const [editingContent, setEditingContent] = useState<Record<number, string>>({});
   const [editingTitle, setEditingTitle] = useState<Record<number, string>>({});
-  const [pendingDeleteNoteId, setPendingDeleteNoteId] = useState<number | null>(null);
-  const pendingDeleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [confirmDeleteNoteId, setConfirmDeleteNoteId] = useState<number | null>(null);
 
   // ---- Share modal state ----
   const [shareModalNoteId, setShareModalNoteId] = useState<number | null>(null);
@@ -298,18 +299,16 @@ export function NotesDashboard() {
 
   // ---- Handlers ----
   const requestDeleteNote = useCallback((noteId: number) => {
-    if (pendingDeleteNoteId === noteId) {
-      if (pendingDeleteTimerRef.current) clearTimeout(pendingDeleteTimerRef.current);
-      pendingDeleteTimerRef.current = null;
-      setPendingDeleteNoteId(null);
-      deleteNote.mutate({ id: noteId });
-      return;
+    setConfirmDeleteNoteId(noteId);
+    setContextMenuNoteId(null);
+  }, []);
+
+  const confirmDeleteNote = useCallback(() => {
+    if (confirmDeleteNoteId !== null) {
+      deleteNote.mutate({ id: confirmDeleteNoteId });
+      setConfirmDeleteNoteId(null);
     }
-    setPendingDeleteNoteId(noteId);
-    if (pendingDeleteTimerRef.current) clearTimeout(pendingDeleteTimerRef.current);
-    pendingDeleteTimerRef.current = setTimeout(() => setPendingDeleteNoteId(null), 4000);
-    toast.info("Click again to confirm delete");
-  }, [pendingDeleteNoteId, deleteNote, toast]);
+  }, [confirmDeleteNoteId, deleteNote]);
 
   const closeExpandedNote = useCallback(() => {
     setSelectedNoteId(null);
@@ -360,7 +359,7 @@ export function NotesDashboard() {
 
   const formatFullDate = (date: Date | string) => {
     const d = new Date(date);
-    return d.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    return formatDatePref(d, "long");
   };
 
   // ---------------------------------------------------------------------------
@@ -368,6 +367,30 @@ export function NotesDashboard() {
   // ---------------------------------------------------------------------------
   return (
     <div className="flex h-[calc(100vh-65px)] kairos-page-enter">
+      {/* Delete Note Confirmation Dialog */}
+      {confirmDeleteNoteId !== null && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-bg-secondary rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-in fade-in slide-in-from-bottom-4">
+            <h3 className="text-lg font-bold text-fg-primary mb-2">Delete Note</h3>
+            <p className="text-sm text-fg-secondary mb-6">Are you sure you want to delete this note? This action cannot be undone.</p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => setConfirmDeleteNoteId(null)}
+                className="px-4 py-2 text-sm font-medium text-fg-secondary hover:bg-bg-surface rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteNote}
+                disabled={deleteNote.isPending}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {deleteNote.isPending ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* ---- Secondary sidebar ---- */}
       <aside className="w-56 border-r border-white/[0.06] bg-bg-primary flex flex-col p-4 hidden md:flex">
         <button
@@ -572,6 +595,17 @@ export function NotesDashboard() {
                               <X size={13} /> Remove from notebook
                             </button>
                           )}
+                          <div className="border-t border-white/[0.06] my-1" />
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              requestDeleteNote(note.id);
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition text-fg-secondary hover:bg-white/[0.06] hover:text-red-400"
+                          >
+                            <Trash2 size={13} />
+                            Delete
+                          </button>
                         </div>
                       )}
                     </div>
@@ -906,7 +940,7 @@ export function NotesDashboard() {
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={closeExpandedNote}>
             <div className="bg-bg-elevated rounded-2xl shadow-2xl max-w-lg w-full max-h-[80vh] overflow-auto p-6 border border-white/[0.08]" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-4">
-                <span className="text-xs text-fg-tertiary">{new Date(note.createdAt).toLocaleDateString()}</span>
+                <span className="text-xs text-fg-tertiary">{formatDatePref(new Date(note.createdAt), "full")}</span>
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => { setShareModalNoteId(note.id); }}
@@ -993,7 +1027,7 @@ export function NotesDashboard() {
                       </button>
                       <button
                         onClick={() => requestDeleteNote(note.id)}
-                        className={cn("p-1.5 rounded-lg transition", pendingDeleteNoteId === note.id ? "bg-red-500/20 text-red-400" : "text-fg-tertiary hover:text-red-400 hover:bg-red-500/10")}
+                        className="p-1.5 rounded-lg transition text-fg-tertiary hover:text-red-400 hover:bg-red-500/10"
                       >
                         <Trash2 size={15} />
                       </button>

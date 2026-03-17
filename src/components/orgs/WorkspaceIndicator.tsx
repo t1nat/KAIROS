@@ -5,6 +5,7 @@ import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { api } from "~/trpc/react";
+import Image from "next/image";
 
 export function WorkspaceIndicator({ compact = false }: { compact?: boolean }) {
   const tOrg = useTranslations("org");
@@ -34,6 +35,7 @@ export function WorkspaceIndicator({ compact = false }: { compact?: boolean }) {
   if (compact) {
     return (
       <div className="flex items-center gap-3">
+        <Image src="/workspace.png" alt="Workspace" width={28} height={28} className="invert dark:invert-0 opacity-70" />
         <button
           onClick={() => router.push("/orgs")}
           className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider hover:opacity-80 transition-opacity cursor-pointer"

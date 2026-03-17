@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { useDateFormat } from "~/lib/hooks/useDateFormat";
 import {
   Heart,
   MessageCircle,
@@ -213,24 +214,14 @@ const InfoMessageToast: React.FC<{
 };
 
 const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> = ({ event, onClose }) => {
+  const { formatDate: formatDatePref } = useDateFormat();
   const totalRsvps = event.rsvpCounts.going + event.rsvpCounts.maybe + event.rsvpCounts.notGoing;
   const goingPercentage = totalRsvps > 0 ? (event.rsvpCounts.going / totalRsvps) * 100 : 0;
   const maybePercentage = totalRsvps > 0 ? (event.rsvpCounts.maybe / totalRsvps) * 100 : 0;
   const notGoingPercentage = totalRsvps > 0 ? (event.rsvpCounts.notGoing / totalRsvps) * 100 : 0;
 
   const formatEventDateTime = (date: Date) => {
-    const eventDate = new Date(date);
-    const dateStr = eventDate.toLocaleDateString('en-US', { 
-      year: 'numeric',
-      month: 'long', 
-      day: 'numeric' 
-    });
-    const timeStr = eventDate.toLocaleTimeString('en-US', { 
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-    return `${dateStr} at ${timeStr}`;
+    return formatDatePref(date, "long");
   };
 
   return (
@@ -333,6 +324,7 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
 
 const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
   const { data: session } = useSession();
+  const { formatDate: formatDatePref } = useDateFormat();
   const utils = api.useUtils();
   const [showAllComments, setShowAllComments] = useState(false);
   const [commentText, setCommentText] = useState("");
@@ -479,18 +471,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
   };
 
   const formatDate = (date: Date) => {
-    const eventDate = new Date(date);
-    const dateStr = eventDate.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-    const timeStr = eventDate.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-    return `${dateStr} at ${timeStr}`;
+    return formatDatePref(date, "long");
   };
 
   const getRegionLabel = (value: string) => {
@@ -528,7 +509,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
             <div>
               <h3 className="font-bold text-sm dark:text-white text-slate-900">{event.title}</h3>
               <p className="text-xs text-fg-tertiary">
-                {event.author.name}{event.createdAt ? ` · ${new Date(event.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : ""}
+                {event.author.name}{event.createdAt ? ` · ${formatDatePref(new Date(event.createdAt), "withYear")}` : ""}
               </p>
             </div>
           </div>

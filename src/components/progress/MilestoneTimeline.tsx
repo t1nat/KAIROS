@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { useDateFormat } from "~/lib/hooks/useDateFormat";
 import {
   Calendar,
   User,
@@ -190,6 +191,7 @@ export function MilestoneTimeline({
 }: MilestoneTimelineProps) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [hoveredId, setHoveredId] = useState<number | null>(null);
+  const { formatDate: formatDatePref } = useDateFormat();
   const scrollRef = useRef<HTMLDivElement>(null);
   const dotRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
@@ -290,7 +292,7 @@ export function MilestoneTimeline({
                   transition={{ delay: idx * 0.03 + 0.1 }}
                   className="mb-4 text-center h-[42px] flex flex-col justify-end"
                 >
-                  <p className="text-[11px] font-semibold text-fg-tertiary leading-tight">{formatDate(date)}</p>
+                  <p className="text-[11px] font-semibold text-fg-tertiary leading-tight">{formatDatePref(date, "short")}</p>
                   <p className="text-[10px] text-fg-quaternary truncate max-w-[120px] leading-tight mt-0.5">{formatTime(date)}</p>
                 </motion.div>
 
@@ -340,7 +342,7 @@ export function MilestoneTimeline({
                           </div>
                           <div className="flex items-center gap-1.5">
                             <Calendar size={10} className="text-fg-quaternary shrink-0" />
-                            <span>{formatFullDate(date)} at {formatTime(date)}</span>
+                            <span>{formatDatePref(date, "withYear")} at {formatTime(date)}</span>
                           </div>
                           {entry.user && (
                             <div className="flex items-center gap-1.5">
@@ -449,6 +451,7 @@ function ExpandedMilestoneCard({
   onDelete: (taskId: number) => void;
 }) {
   const isCompleted = status === "completed";
+  const { formatDate: formatDatePref } = useDateFormat();
   const date = new Date(entry.createdAt);
   const IconComponent = getStatusIcon(status);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -475,7 +478,7 @@ function ExpandedMilestoneCard({
         </div>
         <div className="flex items-center gap-1.5">
           <Calendar size={11} className="text-fg-quaternary shrink-0" />
-          <span>{formatFullDate(date)} at {formatTime(date)}</span>
+          <span>{formatDatePref(date, "withYear")} at {formatTime(date)}</span>
         </div>
         {entry.user && (
           <div className="flex items-center gap-1.5">
@@ -519,25 +522,32 @@ function ExpandedMilestoneCard({
         </button>
         {canDelete && (
           <>
-            {confirmDelete ? (
-              <>
-                <button type="button" onClick={() => { onDelete(entry.taskId); setConfirmDelete(false); }} disabled={isDeleting}
-                  className="flex items-center justify-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold bg-red-50 dark:bg-red-500/15 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/25 transition-all"
-                >
-                  {isDeleting ? <Loader2 size={12} className="animate-spin" /> : <><Trash2 size={12} /> Yes</>}
-                </button>
-                <button type="button" onClick={() => setConfirmDelete(false)}
-                  className="px-3 py-2 rounded-lg text-xs font-semibold bg-bg-tertiary/50 text-fg-secondary hover:bg-bg-tertiary transition-all"
-                >No</button>
-              </>
-            ) : (
-              <button type="button" onClick={() => setConfirmDelete(true)}
-                className="px-3 py-2 rounded-lg text-xs font-semibold bg-bg-tertiary/50 text-fg-tertiary hover:bg-red-50 dark:hover:bg-red-500/15 hover:text-red-500 dark:hover:text-red-400 transition-all"
-                title="Delete task"
-              >
-                <Trash2 size={12} />
-              </button>
+            {confirmDelete && (
+              <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setConfirmDelete(false)}>
+                <div className="bg-bg-secondary rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-in fade-in slide-in-from-bottom-4" onClick={(e) => e.stopPropagation()}>
+                  <h3 className="text-lg font-bold text-fg-primary mb-2">Delete Task</h3>
+                  <p className="text-sm text-fg-secondary mb-6">Are you sure you want to delete this task? This action cannot be undone.</p>
+                  <div className="flex items-center justify-end gap-3">
+                    <button type="button" onClick={() => setConfirmDelete(false)}
+                      className="px-4 py-2 text-sm font-medium text-fg-secondary hover:bg-bg-surface rounded-lg transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button type="button" onClick={() => { onDelete(entry.taskId); setConfirmDelete(false); }} disabled={isDeleting}
+                      className="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      {isDeleting ? "Deleting..." : "Delete"}
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
+            <button type="button" onClick={() => setConfirmDelete(true)}
+              className="px-3 py-2 rounded-lg text-xs font-semibold bg-bg-tertiary/50 text-fg-tertiary hover:bg-red-50 dark:hover:bg-red-500/15 hover:text-red-500 dark:hover:text-red-400 transition-all"
+              title="Delete task"
+            >
+              <Trash2 size={12} />
+            </button>
           </>
         )}
       </div>

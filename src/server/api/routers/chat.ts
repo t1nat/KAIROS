@@ -395,4 +395,30 @@ export const chatRouter = createTRPCRouter({
       if (!created) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create conversation" });
       return { conversationId: created.id };
     }),
+
+  deleteConversation: protectedProcedure
+    .input(z.object({ conversationId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const selfId: string = ctx.session.user.id;
+
+      const [convo] = await ctx.db
+        .select({
+          id: directConversations.id,
+          userOneId: directConversations.userOneId,
+          userTwoId: directConversations.userTwoId,
+        })
+        .from(directConversations)
+        .where(eq(directConversations.id, input.conversationId))
+        .limit(1);
+
+      if (!convo) throw new TRPCError({ code: "NOT_FOUND", message: "Conversation not found" });
+      if (convo.userOneId !== selfId && convo.userTwoId !== selfId) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You are not part of this conversation" });
+      }
+
+      // Messages cascade-delete via FK constraint
+      await ctx.db.delete(directConversations).where(eq(directConversations.id, input.conversationId));
+
+      return { success: true };
+    }),
 });

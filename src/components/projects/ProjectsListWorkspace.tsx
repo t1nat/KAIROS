@@ -2,12 +2,20 @@
 
 import { useState, useEffect } from"react";
 import { api } from"~/trpc/react";
-import { Folder, ChevronDown, ChevronUp, CheckCircle2, Clock, AlertCircle } from"lucide-react";
+import { AlertCircle } from"lucide-react";
 import { useRouter } from"next/navigation";
 import { useTranslations } from"next-intl";
 import { Doughnut } from"react-chartjs-2";
 import { ensureChartJsRegistered } from"~/components/charts/chartjs";
 import { useResolvedThemeColors } from "~/components/charts/themeColors";
+import Image from "next/image";
+import { formatDistanceToNow } from "date-fns";
+
+interface Collaborator {
+ id: string;
+ name: string | null;
+ image: string | null;
+}
 
 interface ProjectWithStats {
  id: number;
@@ -18,6 +26,8 @@ interface ProjectWithStats {
  inProgressTasks: number;
  pendingTasks: number;
  completionPercentage: number;
+ collaborators: Collaborator[];
+ updatedAt: string | Date | null;
 }
 
 function toFiniteNumberArray(value: unknown): number[] {
@@ -43,9 +53,21 @@ function hasTasks(value: unknown): value is { tasks: Array<{ status: string }> }
  });
 }
 
+function hasCollaborators(value: unknown): value is { collaborators: Array<{ id: string; name: string | null; image: string | null }> } {
+ if (value == null || typeof value !=="object") return false;
+ const v = value as Record<string, unknown>;
+ return Array.isArray(v.collaborators);
+}
+
+function getUpdatedAt(value: unknown): string | Date | null {
+ if (value == null || typeof value !=="object") return null;
+ const v = value as Record<string, unknown>;
+ if (v.updatedAt instanceof Date || typeof v.updatedAt === "string") return v.updatedAt as string | Date;
+ return null;
+}
+
 export function ProjectsListWorkspace() {
  const [mounted, setMounted] = useState(false);
- const [showProjects, setShowProjects] = useState(false);
  const [animateCharts, setAnimateCharts] = useState(false);
  const router = useRouter();
  
@@ -104,6 +126,8 @@ export function ProjectsListWorkspace() {
  inProgressTasks,
  pendingTasks,
  completionPercentage,
+ collaborators: hasCollaborators(project) ? (project.collaborators as Collaborator[]) : [],
+ updatedAt: getUpdatedAt(project),
  };
  });
 
@@ -113,9 +137,8 @@ export function ProjectsListWorkspace() {
  const totalInProgressTasks = projectsWithStats.reduce((sum, p) => sum + p.inProgressTasks, 0);
  const totalPendingTasks = projectsWithStats.reduce((sum, p) => sum + p.pendingTasks, 0);
  const overallCompletion = totalAllTasks > 0 ? Math.round((totalCompletedTasks / totalAllTasks) * 100) : 0;
- const fullyCompletedProjects = projectsWithStats.filter((p) => p.completionPercentage === 100 && p.totalTasks > 0).length;
 
- const getProgressColor = (percentage: number): string => {
+ const getProgressColor= (percentage: number): string => {
  if (percentage === 0) return"text-fg-tertiary";
  if (percentage < 30) return"text-error";
  if (percentage < 60) return"text-warning";
@@ -171,6 +194,26 @@ export function ProjectsListWorkspace() {
  },
  };
 
+ const getStatusBadge = (percentage: number) => {
+ if (percentage === 100) return { label: "Complete", color: "bg-success/10 text-success border-success/20" };
+ if (percentage >= 60) return { label: "On Track", color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" };
+ if (percentage >= 30) return { label: "In Progress", color: "bg-warning/10 text-warning border-warning/20" };
+ return { label: "At Risk", color: "bg-error/10 text-error border-error/20" };
+ };
+
+ const getBarColor = (percentage: number) => {
+ if (percentage === 100) return "bg-success";
+ if (percentage >= 60) return "bg-emerald-500";
+ if (percentage >= 30) return "bg-warning";
+ return "bg-error";
+ };
+
+ const getGradientColor = (percentage: number) => {
+ if (percentage >= 60) return "from-emerald-500";
+ if (percentage >= 30) return "from-warning";
+ return "from-error";
+ };
+
  return (
  <div className="w-full max-w-6xl mx-auto px-4 sm:px-6">
  {/* Header */}
@@ -181,6 +224,138 @@ export function ProjectsListWorkspace() {
  <p className="text-[15px] leading-[1.4667] tracking-[-0.01em] text-fg-tertiary">
  {t("projectsList.subtitle")}
  </p>
+ </div>
+
+ {/* Active Projects Section */}
+ <div className="mb-8">
+ <div className="flex items-center justify-between mb-4">
+ <h2 className="text-lg font-semibold text-fg-secondary">
+ Active Projects
+ <span className="ml-2 px-2 py-0.5 text-xs bg-bg-tertiary rounded-full text-fg-tertiary">{totalProjects}</span>
+ </h2>
+ </div>
+
+ <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+ {projectsWithStats.map((project) => {
+ const status = getStatusBadge(project.completionPercentage);
+ const barColor = getBarColor(project.completionPercentage);
+ const gradientFrom = getGradientColor(project.completionPercentage);
+
+ return (
+ <button
+ key={project.id}
+ onClick={() => router.push(`/create?action=new_project&projectId=${project.id}`)}
+ className="w-full text-left bg-bg-secondary rounded-2xl p-6 border border-white/[0.06] hover:border-accent-primary/30 transition-all duration-300 relative overflow-hidden group"
+ >
+ {/* Gradient top bar */}
+ <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${gradientFrom} to-transparent opacity-50`} />
+
+ {/* Header: chart + title + status badge */}
+ <div className="flex items-start gap-5 mb-5">
+ <div className="flex-shrink-0">
+ {project.totalTasks > 0 ? (
+ <div className={`relative w-[72px] h-[72px] drop-shadow-lg ${getProgressGlow(project.completionPercentage)}`}>
+ <Doughnut
+ data={buildRingData(project.completedTasks, project.inProgressTasks, project.pendingTasks)}
+ options={ringOptions}
+ aria-label={project.title}
+ />
+ <div className="absolute inset-0 flex items-center justify-center">
+ <span className={`text-sm font-bold ${getProgressColor(project.completionPercentage)}`}>
+ {project.completionPercentage}%
+ </span>
+ </div>
+ </div>
+ ) : (
+ <div className="w-[72px] h-[72px] rounded-full bg-bg-tertiary border border-border-light/30 flex items-center justify-center">
+ <AlertCircle size={24} className="text-fg-tertiary" />
+ </div>
+ )}
+ </div>
+
+ <div className="flex-1 min-w-0">
+ <div className="flex items-center gap-3 mb-1">
+ <h3 className="text-xl font-bold text-fg-primary truncate">{project.title}</h3>
+ {project.totalTasks > 0 && (
+ <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${status.color}`}>
+ {status.label}
+ </span>
+ )}
+ </div>
+ {project.description && (
+ <p className="text-sm text-fg-tertiary line-clamp-1">{project.description}</p>
+ )}
+ </div>
+ </div>
+
+ {/* Task status blocks */}
+ {project.totalTasks > 0 ? (
+ <div className="grid grid-cols-3 gap-3 mb-5">
+ <div className="bg-bg-primary/50 rounded-xl p-3 border border-white/[0.04]">
+ <span className="block text-fg-tertiary text-[10px] uppercase font-bold tracking-widest mb-1">To Do</span>
+ <span className="text-lg font-bold text-fg-primary">{project.pendingTasks}</span>
+ </div>
+ <div className="bg-bg-primary/50 rounded-xl p-3 border border-white/[0.04]">
+ <span className="block text-fg-tertiary text-[10px] uppercase font-bold tracking-widest mb-1">In Progress</span>
+ <span className="text-lg font-bold text-warning">{project.inProgressTasks}</span>
+ </div>
+ <div className="bg-bg-primary/50 rounded-xl p-3 border border-white/[0.04]">
+ <span className="block text-fg-tertiary text-[10px] uppercase font-bold tracking-widest mb-1">Done</span>
+ <span className="text-lg font-bold text-success">{project.completedTasks}</span>
+ </div>
+ </div>
+ ) : (
+ <div className="inline-flex items-center gap-2 text-[13px] text-fg-tertiary bg-bg-tertiary/30 px-3 py-1.5 rounded-lg mb-5">
+ <AlertCircle size={12} />
+ <span className="italic">{t("projectsList.noTasksYet")}</span>
+ </div>
+ )}
+
+ {/* Footer: avatars + updated time */}
+ <div className="flex items-center justify-between pt-4 border-t border-white/[0.04]">
+ <div className="flex -space-x-2">
+ {project.collaborators.slice(0, 4).map((collab) => (
+ collab.image ? (
+ <Image
+ key={collab.id}
+ src={collab.image}
+ alt={collab.name ?? "User"}
+ width={28}
+ height={28}
+ className="w-7 h-7 rounded-full border-2 border-bg-secondary object-cover"
+ />
+ ) : (
+ <div key={collab.id} className="w-7 h-7 rounded-full border-2 border-bg-secondary bg-bg-tertiary flex items-center justify-center text-[10px] font-bold text-fg-tertiary">
+ {(collab.name ?? "?").charAt(0).toUpperCase()}
+ </div>
+ )
+ ))}
+ {project.collaborators.length > 4 && (
+ <div className="w-7 h-7 rounded-full border-2 border-bg-secondary bg-bg-tertiary flex items-center justify-center text-[10px] font-bold text-fg-tertiary">
+ +{project.collaborators.length - 4}
+ </div>
+ )}
+ </div>
+ {project.updatedAt && (
+ <span className="text-xs text-fg-tertiary italic">
+ Updated {formatDistanceToNow(new Date(project.updatedAt), { addSuffix: false })} ago
+ </span>
+ )}
+ </div>
+
+ {/* Bottom progress bar */}
+ {project.totalTasks > 0 && (
+ <div className="mt-4 h-1 w-full bg-bg-tertiary/30 rounded-full overflow-hidden">
+ <div
+ className={`h-full ${barColor} rounded-full transition-all duration-500`}
+ style={{ width: `${project.completionPercentage}%` }}
+ />
+ </div>
+ )}
+ </button>
+ );
+ })}
+ </div>
  </div>
 
  {/* Stats Grid */}
@@ -234,8 +409,8 @@ export function ProjectsListWorkspace() {
 
  <div>
  <div className="bg-bg-secondary rounded-[10px] p-4 sm:p-6 flex flex-col items-center justify-center border border-white/[0.06] hover:bg-bg-tertiary transition-colors">
- <div className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-br from-success to-success/80 bg-clip-text text-transparent">
- {fullyCompletedProjects}
+ <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-success to-success/80 bg-clip-text text-transparent">
+ {totalCompletedTasks}
  </div>
  <p className="text-[10px] sm:text-xs text-fg-tertiary mt-2 sm:mt-3 uppercase tracking-wider font-semibold text-center">
  {t("stats.completed")}
@@ -243,132 +418,6 @@ export function ProjectsListWorkspace() {
  </div>
  </div>
  </div>
-
- {/* Projects Toggle */}
- <div className="relative mb-6">
- <div className="h-[0.33px] border-t border-white/[0.04] mb-4" />
- 
- <button
- onClick={() => setShowProjects((s) => !s)}
- className="w-full flex items-center justify-between pl-4 pr-[18px] py-[11px] bg-bg-secondary rounded-[10px] border border-white/[0.06] active:bg-bg-tertiary transition-colors"
- >
- <div className="flex items-center gap-3">
- <div className="w-[30px] h-[30px] rounded-full bg-bg-tertiary flex items-center justify-center">
- <Folder size={18} className="text-fg-secondary" strokeWidth={2.2} />
- </div>
- <span className="text-[17px] leading-[1.235] tracking-[-0.016em] text-fg-primary">
- {showProjects ? t("projectsList.hideAll") : t("projectsList.viewAll")}
- </span>
- <span className="text-[13px] text-fg-tertiary bg-bg-tertiary/50 px-2 py-0.5 rounded-full">
- {totalProjects}
- </span>
- </div>
- {showProjects ? (
- <ChevronUp size={20} className="text-fg-tertiary" strokeWidth={2.5} />
- ) : (
- <ChevronDown size={20} className="text-fg-tertiary" strokeWidth={2.5} />
- )}
- </button>
- </div>
-
- {/* Projects Grid */}
- {showProjects && (
- <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6 animate-in fade-in slide-in-from-top-2 duration-300">
- {projectsWithStats.map((project) => (
- <button
- key={project.id}
- onClick={() => {
- router.push(`/create?action=new_project&projectId=${project.id}`);
- setShowProjects(false);
- }}
- className="w-full text-left bg-bg-secondary rounded-[10px] p-4 sm:p-6 border border-white/[0.06] active:bg-bg-tertiary transition-colors"
- >
- <div className="flex items-start gap-4">
- <div className="flex-shrink-0">
- {project.totalTasks > 0 ? (
- <div className={`relative w-20 h-20 drop-shadow-lg ${getProgressGlow(project.completionPercentage)}`}>
- <Doughnut
- data={buildRingData(project.completedTasks, project.inProgressTasks, project.pendingTasks)}
- options={ringOptions}
- aria-label={project.title}
- />
- <div className="absolute inset-0 flex items-center justify-center">
- <span className={`text-sm font-bold ${getProgressColor(project.completionPercentage)}`}>
- {project.completionPercentage}%
- </span>
- </div>
- </div>
- ) : (
- <div className="w-20 h-20 rounded-full bg-bg-tertiary border border-border-light/30 flex items-center justify-center">
- <AlertCircle size={24} className="text-fg-tertiary" />
- </div>
- )}
- </div>
-
- <div className="flex-1 min-w-0">
- <h4 className="text-[17px] leading-[1.235] tracking-[-0.016em] text-fg-primary font-[590] mb-1">
- {project.title}
- </h4>
- 
- {project.description && (
- <p className="text-[15px] leading-[1.4667] tracking-[-0.01em] text-fg-secondary mb-3 line-clamp-2">
- {project.description}
- </p>
- )}
-
- {project.totalTasks > 0 ? (
- <div className="flex flex-wrap items-center gap-2">
- <div className="flex items-center gap-1 text-success bg-success/10 px-2.5 py-1 rounded-lg">
- <CheckCircle2 size={14} />
- <span className="text-[13px] font-semibold">{project.completedTasks}</span>
- <span className="text-[13px] text-success/70 hidden xs:inline">
- {t("projectsList.done")}
- </span>
- </div>
- <div className="flex items-center gap-1 text-warning bg-warning/10 px-2.5 py-1 rounded-lg">
- <Clock size={14} />
- <span className="text-[13px] font-semibold">{project.inProgressTasks}</span>
- <span className="text-[13px] text-warning/70 hidden xs:inline">
- {t("projectsList.active")}
- </span>
- </div>
- <div className="flex items-center gap-1 text-fg-tertiary bg-bg-tertiary/30 px-2.5 py-1 rounded-lg">
- <AlertCircle size={14} />
- <span className="text-[13px] font-semibold">{project.pendingTasks}</span>
- <span className="text-[13px] text-fg-tertiary hidden xs:inline">
- {t("projectsList.pending")}
- </span>
- </div>
- </div>
- ) : (
- <div className="inline-flex items-center gap-2 text-[13px] text-fg-tertiary bg-bg-tertiary/30 px-3 py-1.5 rounded-lg">
- <AlertCircle size={12} />
- <span className="italic">{t("projectsList.noTasksYet")}</span>
- </div>
- )}
- </div>
- </div>
-
- {project.totalTasks > 0 && (
- <div className="mt-4 w-full h-0.5 bg-bg-tertiary/30 rounded-full overflow-hidden">
- <div
- className={`h-full transition-all duration-500 rounded-full ${
- project.completionPercentage === 100
- ?"bg-gradient-to-r from-success to-success/80"
- : project.completionPercentage >= 60
- ?"bg-gradient-to-r from-warning to-warning/80"
- : project.completionPercentage >= 30
- ?"bg-gradient-to-r from-orange-400 to-orange-400/80"
- :"bg-gradient-to-r from-red-400 to-red-400/80"
- }`}
- style={{ width: `${project.completionPercentage}%` }}
- />
- </div>
- )}
- </button>
- ))}
- </div>
- )}
 
  {/* Bottom Spacing */}
  <div className="h-8"></div>

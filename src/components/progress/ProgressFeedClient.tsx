@@ -328,21 +328,21 @@ function ProgressRing(props: {
   total: number;
   segments: PieSegment[];
 }) {
-  const radius = 80;
+  const radius = 45;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference * (1 - Math.min(1, Math.max(0, props.percent / 100)));
 
   return (
-    <div className="flex flex-col items-center justify-center py-6 relative">
-      <svg className="w-48 h-48" style={{ transform: "rotate(-90deg)" }}>
+    <div className="flex flex-col items-center justify-center py-4 relative">
+      <svg className="w-28 h-28" viewBox="0 0 120 120" style={{ transform: "rotate(-90deg)" }}>
         <circle
-          cx="96" cy="96" r={radius}
-          fill="transparent" stroke="currentColor" strokeWidth="12"
+          cx="60" cy="60" r={radius}
+          fill="transparent" stroke="currentColor" strokeWidth="10"
           className="text-border-medium"
         />
         <circle
-          cx="96" cy="96" r={radius}
-          fill="transparent" stroke="currentColor" strokeWidth="12"
+          cx="60" cy="60" r={radius}
+          fill="transparent" stroke="currentColor" strokeWidth="10"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
@@ -350,10 +350,10 @@ function ProgressRing(props: {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-5xl font-bold text-accent-primary">
+        <span className="text-2xl font-bold text-accent-primary">
           {Math.round(props.percent)}%
         </span>
-        <span className="text-sm text-fg-tertiary font-medium mt-1">
+        <span className="text-[10px] text-fg-tertiary font-medium mt-0.5">
           {props.completed}/{props.total} Tasks
         </span>
       </div>
@@ -531,19 +531,19 @@ export function ProgressFeedClient() {
     }).length;
 
     return (
-      <div className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-[1400px] mx-auto">
+      <div className="p-3 sm:p-4 lg:p-6 space-y-4 max-w-[1400px] mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-3xl font-bold tracking-tight text-fg-primary">{t("title")}</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-fg-primary">{t("title")}</h2>
         </div>
 
         {/* Row 1: Project Analytics + Contributor Share / Created vs Completed */}
-        <div className="grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-12 gap-4">
           {/* Project Analytics - large glass card */}
-          <div className="col-span-12 lg:col-span-7 bg-bg-elevated/70 backdrop-blur-xl border border-white/5 p-8 rounded-2xl shadow-lg shadow-accent-primary/[0.08]">
-            <div className="mb-8">
-              <h3 className="text-lg font-semibold text-fg-primary">{t("overall.title")}</h3>
-              <p className="text-sm text-fg-tertiary">{t("overall.subtitle")}</p>
+          <div className="col-span-12 lg:col-span-7 bg-bg-elevated/70 backdrop-blur-xl border border-white/5 p-5 rounded-2xl shadow-lg shadow-accent-primary/[0.08]">
+            <div className="mb-4">
+              <h3 className="text-base font-semibold text-fg-primary">{t("overall.title")}</h3>
+              <p className="text-xs text-fg-tertiary">{t("overall.subtitle")}</p>
             </div>
 
             <ProgressRing
@@ -554,7 +554,7 @@ export function ProgressFeedClient() {
             />
 
             {/* Legend below ring */}
-            <div className="flex justify-center gap-8 mt-8">
+            <div className="flex justify-center gap-4 mt-4 flex-wrap">
               {completedByProjectSegments.slice(0, 4).map((seg) => (
                 <div key={seg.key} className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: seg.strokeColor }} />
@@ -575,22 +575,22 @@ export function ProgressFeedClient() {
           </div>
 
           {/* Right column: Contributor Share + Created vs Completed */}
-          <div className="col-span-12 lg:col-span-5 flex flex-col gap-6">
+          <div className="col-span-12 lg:col-span-5 flex flex-col gap-4">
             {/* Contributor Share */}
-            <div className="bg-bg-elevated/70 backdrop-blur-xl border border-white/5 p-6 rounded-2xl flex-1">
-              <div className="mb-4">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-fg-tertiary">{t("contributors.title")}</h3>
+            <div className="bg-bg-elevated/70 backdrop-blur-xl border border-white/5 p-4 rounded-2xl flex-1">
+              <div className="mb-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-fg-tertiary">{t("contributors.title")}</h3>
                 <p className="text-xs text-fg-tertiary/70">{t("contributors.subtitle")}</p>
               </div>
-              <div className="space-y-3">
-                {globalSorted.slice(0, 5).map(([name, count], idx) => {
+              <div className="space-y-2">
+                {globalSorted.slice(0, 3).map(([name, count], idx) => {
                   const maxVal = globalSorted[0]?.[1] ?? 1;
                   const barPercent = Math.round((count / maxVal) * 100);
                   const initials = name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
                   return (
-                    <div key={name} className="flex items-center gap-3 p-3 rounded-xl bg-accent-primary/5 border border-accent-primary/10">
+                    <div key={name} className="flex items-center gap-2 p-2 rounded-lg bg-accent-primary/5 border border-accent-primary/10">
                       <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] text-white font-bold flex-shrink-0"
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-[8px] text-white font-bold flex-shrink-0"
                         style={{ backgroundColor: colors.palette[idx % colors.palette.length] }}
                       >
                         {initials}
@@ -612,9 +612,9 @@ export function ProgressFeedClient() {
             </div>
 
             {/* Created vs Completed */}
-            <div className="bg-bg-elevated/70 backdrop-blur-xl border border-white/5 p-6 rounded-2xl flex-1">
-              <div className="mb-4">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-fg-tertiary">{t("createdVsCompleted.title")}</h3>
+            <div className="bg-bg-elevated/70 backdrop-blur-xl border border-white/5 p-4 rounded-2xl flex-1">
+              <div className="mb-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-fg-tertiary">{t("createdVsCompleted.title")}</h3>
               </div>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -637,80 +637,80 @@ export function ProgressFeedClient() {
         </div>
 
         {/* Row 2: Task Status Distribution + Upcoming Due Dates */}
-        <div className="grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-12 gap-4">
           {/* Task Status Distribution */}
-          <div className="col-span-12 lg:col-span-4 bg-bg-elevated/70 backdrop-blur-xl border border-white/5 p-6 rounded-2xl">
-            <h3 className="text-sm font-semibold text-fg-primary mb-6">Task Status Distribution</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 rounded-xl bg-green-500/5 border border-green-500/10">
-                <div className="flex items-center gap-3">
-                  <CheckCircle size={16} className="text-green-500" />
-                  <span className="text-sm font-medium text-fg-primary">Completed</span>
+          <div className="col-span-12 lg:col-span-4 bg-bg-elevated/70 backdrop-blur-xl border border-white/5 p-4 rounded-2xl">
+            <h3 className="text-xs font-semibold text-fg-primary mb-3">Task Status Distribution</h3>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between p-2 rounded-lg bg-green-500/5 border border-green-500/10">
+                <div className="flex items-center gap-2">
+                  <CheckCircle size={14} className="text-green-500" />
+                  <span className="text-xs font-medium text-fg-primary">Completed</span>
                 </div>
-                <span className="text-sm font-bold text-fg-primary">{statusCounts.completed}</span>
+                <span className="text-xs font-bold text-fg-primary">{statusCounts.completed}</span>
               </div>
-              <div className="flex items-center justify-between p-3 rounded-xl bg-orange-500/5 border border-orange-500/10">
-                <div className="flex items-center gap-3">
-                  <Clock size={16} className="text-orange-500" />
-                  <span className="text-sm font-medium text-fg-primary">Pending</span>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-orange-500/5 border border-orange-500/10">
+                <div className="flex items-center gap-2">
+                  <Clock size={14} className="text-orange-500" />
+                  <span className="text-xs font-medium text-fg-primary">Pending</span>
                 </div>
-                <span className="text-sm font-bold text-fg-primary">{statusCounts.pending}</span>
+                <span className="text-xs font-bold text-fg-primary">{statusCounts.pending}</span>
               </div>
               {statusCounts.in_progress > 0 && (
-                <div className="flex items-center justify-between p-3 rounded-xl bg-blue-500/5 border border-blue-500/10">
-                  <div className="flex items-center gap-3">
-                    <Clock size={16} className="text-blue-500" />
-                    <span className="text-sm font-medium text-fg-primary">In Progress</span>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-blue-500/5 border border-blue-500/10">
+                  <div className="flex items-center gap-2">
+                    <Clock size={14} className="text-blue-500" />
+                    <span className="text-xs font-medium text-fg-primary">In Progress</span>
                   </div>
-                  <span className="text-sm font-bold text-fg-primary">{statusCounts.in_progress}</span>
+                  <span className="text-xs font-bold text-fg-primary">{statusCounts.in_progress}</span>
                 </div>
               )}
               {statusCounts.blocked > 0 && (
-                <div className="flex items-center justify-between p-3 rounded-xl bg-red-500/5 border border-red-500/10">
-                  <div className="flex items-center gap-3">
-                    <AlertTriangle size={16} className="text-red-500" />
-                    <span className="text-sm font-medium text-fg-primary">Blocked</span>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-red-500/5 border border-red-500/10">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle size={14} className="text-red-500" />
+                    <span className="text-xs font-medium text-fg-primary">Blocked</span>
                   </div>
-                  <span className="text-sm font-bold text-fg-primary">{statusCounts.blocked}</span>
+                  <span className="text-xs font-bold text-fg-primary">{statusCounts.blocked}</span>
                 </div>
               )}
             </div>
           </div>
 
           {/* Upcoming Due Dates */}
-          <div className="col-span-12 lg:col-span-8 space-y-4">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-fg-tertiary">Upcoming Due Dates</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-6 rounded-2xl bg-red-500/10 border border-red-500/20 group hover:bg-red-500/15 transition-all">
-                <div className="flex items-center gap-2 text-red-500 mb-2">
-                  <AlertTriangle size={18} />
-                  <span className="text-xs font-bold uppercase tracking-wider">Overdue</span>
+          <div className="col-span-12 lg:col-span-8 space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-fg-tertiary">Upcoming Due Dates</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 group hover:bg-red-500/15 transition-all">
+                <div className="flex items-center gap-1.5 text-red-500 mb-1">
+                  <AlertTriangle size={14} />
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Overdue</span>
                 </div>
-                <p className="text-4xl font-bold text-red-500 mb-1">{overdueTasks}</p>
-                <p className="text-xs text-fg-tertiary">Tasks past due date</p>
+                <p className="text-2xl font-bold text-red-500">{overdueTasks}</p>
+                <p className="text-[10px] text-fg-tertiary">Tasks past due date</p>
               </div>
-              <div className="p-6 rounded-2xl bg-orange-500/10 border border-orange-500/20 group hover:bg-orange-500/15 transition-all">
-                <div className="flex items-center gap-2 text-orange-500 mb-2">
-                  <CalendarDays size={18} />
-                  <span className="text-xs font-bold uppercase tracking-wider">Due Today</span>
+              <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 group hover:bg-orange-500/15 transition-all">
+                <div className="flex items-center gap-1.5 text-orange-500 mb-1">
+                  <CalendarDays size={14} />
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Due Today</span>
                 </div>
-                <p className="text-4xl font-bold text-orange-500 mb-1">{dueTodayTasks}</p>
-                <p className="text-xs text-fg-tertiary">Tasks due today</p>
+                <p className="text-2xl font-bold text-orange-500">{dueTodayTasks}</p>
+                <p className="text-[10px] text-fg-tertiary">Tasks due today</p>
               </div>
-              <div className="p-6 rounded-2xl bg-blue-500/10 border border-blue-500/20 group hover:bg-blue-500/15 transition-all">
-                <div className="flex items-center gap-2 text-blue-400 mb-2">
-                  <Calendar size={18} />
-                  <span className="text-xs font-bold uppercase tracking-wider">This Week</span>
+              <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 group hover:bg-blue-500/15 transition-all">
+                <div className="flex items-center gap-1.5 text-blue-400 mb-1">
+                  <Calendar size={14} />
+                  <span className="text-[10px] font-bold uppercase tracking-wider">This Week</span>
                 </div>
-                <p className="text-4xl font-bold text-blue-400 mb-1">{dueThisWeekTasks}</p>
-                <p className="text-xs text-fg-tertiary">Tasks due within 7 days</p>
+                <p className="text-2xl font-bold text-blue-400">{dueThisWeekTasks}</p>
+                <p className="text-[10px] text-fg-tertiary">Tasks due within 7 days</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Row 3: Activity Trend + Per-project share */}
-        <div className="grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-12 gap-4">
           {/* Activity Trend */}
           <div className="col-span-12 lg:col-span-8">
             <ActivityBarChart
@@ -721,9 +721,9 @@ export function ProgressFeedClient() {
           </div>
 
           {/* Per-project share */}
-          <div className="col-span-12 lg:col-span-4 bg-bg-elevated/70 backdrop-blur-xl border border-white/5 p-6 rounded-2xl">
-            <h3 className="text-sm font-semibold text-fg-primary mb-4">{t("perProject.title")}</h3>
-            <div className="space-y-3">
+          <div className="col-span-12 lg:col-span-4 bg-bg-elevated/70 backdrop-blur-xl border border-white/5 p-4 rounded-2xl">
+            <h3 className="text-xs font-semibold text-fg-primary mb-3">{t("perProject.title")}</h3>
+            <div className="space-y-2">
               {projectsSorted.slice(0, 6).map((project, idx) => {
                 const title = getProjectDisplayName(project, t("project.untitled"));
                 const projectCompleted = (project.tasks ?? []).filter(tk => tk.status === "completed").length;

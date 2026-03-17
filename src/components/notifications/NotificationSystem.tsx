@@ -37,13 +37,13 @@ export function NotificationSystem() {
   const { data: storedNotifications, refetch } = api.notification.getAll.useQuery(undefined, {
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    refetchInterval: 30_000, // Fallback polling every 30s in case WebSocket misses events
+    refetchInterval: 15_000, // Fallback polling every 15s in case WebSocket misses events
   });
 
   // Separate unread count query for faster badge updates
   const { data: serverUnreadCount } = api.notification.getUnreadCount.useQuery(undefined, {
     refetchOnWindowFocus: true,
-    refetchInterval: 30_000,
+    refetchInterval: 15_000,
   });
 
   // Real-time notification push via Socket.IO — show floating popup + refetch

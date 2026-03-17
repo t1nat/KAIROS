@@ -51,6 +51,7 @@ export function OrgDashboardClient() {
       await utils.organization.getMyInvites.invalidate();
       await utils.organization.listMine.invalidate();
       await utils.organization.getActive.invalidate();
+      await utils.user.getProfile.invalidate();
       router.push("/projects");
     },
     onError: (error) => {

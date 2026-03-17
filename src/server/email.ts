@@ -293,8 +293,7 @@ export class EmailService {
 let cachedEmailService: EmailService | null = null;
 
 export function getEmailService(): EmailService {
-  if (cachedEmailService) return cachedEmailService;
-
+  // Always re-read env to pick up changes (no stale cached fromEmail)
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     console.error('[Email Service] RESEND_API_KEY is not set in environment variables');
@@ -308,8 +307,15 @@ export function getEmailService(): EmailService {
   }
 
   const rawFromEmail = process.env.RESEND_FROM_EMAIL?.trim() ?? 'Kairos <onboarding@resend.dev>';
-  // Normalize accidental surrounding quotes in env values, e.g. "Kairos <noreply@domain.com>"
   const fromEmail = rawFromEmail.replace(/^['"]|['"]$/g, '');
+
+  if (cachedEmailService) {
+    // Check if fromEmail changed (e.g. env reload) — if so, recreate
+    if ((cachedEmailService as unknown as { options: EmailServiceOptions }).options.fromEmail === fromEmail) {
+      return cachedEmailService;
+    }
+  }
+
   console.log('[Email Service] Initialized with:', { appUrl, fromEmail: fromEmail.replace(/<.*>/, '<***>') });
 
   cachedEmailService = new EmailService(new Resend(apiKey), {

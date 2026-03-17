@@ -7,6 +7,7 @@ import { useUploadThing } from "~/lib/uploadthing";
 import { useSession } from "next-auth/react";
 import { ImageUpload } from "~/components/ui/ImageUpload";
 import { useTranslations } from "next-intl";
+import { useDateFormat } from "~/lib/hooks/useDateFormat";
 
 type Translator = (key: string, values?: Record<string, unknown>) => string;
 
@@ -23,6 +24,7 @@ interface ProfileSettingsClientProps {
 export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
  const useT = useTranslations as unknown as (namespace: string) => Translator;
  const t = useT("settings");
+ const { formatDate: formatDatePref } = useDateFormat();
  const utils = api.useUtils();
  const { update: updateSession, status } = useSession();
  const enabled = status === "authenticated";
@@ -152,11 +154,7 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
  
  if (!createdAt) return null;
  
- return new Date(createdAt).toLocaleDateString("en-US", {
- year: "numeric",
- month: "long",
- day: "numeric",
- });
+ return formatDatePref(new Date(createdAt), "withYear");
  };
 
  const joinedDate = getJoinedDate();

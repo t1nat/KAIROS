@@ -6,10 +6,12 @@ import { Lock, Trash2, Eye, EyeOff, AlertCircle, RefreshCw, KeyRound, X } from "
 import { useTranslations } from "next-intl";
 import { useToast } from "~/components/providers/ToastProvider";
 import { cn } from "~/lib/utils";
+import { useDateFormat } from "~/lib/hooks/useDateFormat";
 
 export function NotesList() {
   const t = useTranslations("create");
   const toast = useToast();
+  const { formatDate: formatDatePref } = useDateFormat();
 
   const [selectedNoteId, setSelectedNoteId] = useState<number | null>(null);
   const [showPasswords, setShowPasswords] = useState<Record<number, boolean>>({});
@@ -276,7 +278,7 @@ export function NotesList() {
                       {isLocked ? t("notes.encryptedNote") : (firstLine || t("notes.encryptedNote"))}
                     </p>
                     <p className="absolute bottom-2 left-3 text-[10px] text-fg-tertiary">
-                      {new Date(note.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                      {formatDatePref(new Date(note.createdAt), "short")}
                     </p>
                   </button>
                 );
@@ -308,7 +310,7 @@ export function NotesList() {
             >
               <div className="flex items-center justify-between mb-4">
                 <span className="text-[13px] text-fg-tertiary">
-                  {new Date(note.createdAt).toLocaleDateString()}
+                  {formatDatePref(new Date(note.createdAt), "full")}
                 </span>
                 <button
                   onClick={closeExpandedNote}

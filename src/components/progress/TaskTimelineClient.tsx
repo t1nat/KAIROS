@@ -6,6 +6,7 @@ import { api } from "~/trpc/react";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { useRolePermissions } from "~/lib/useRolePermissions";
+import { useDateFormat } from "~/lib/hooks/useDateFormat";
 import {
   Plus,
   Sparkles,
@@ -250,11 +251,10 @@ function TimelineEntry({
   taskCurrentStatus: TaskStatus | undefined;
 }) {
   const entryRef = useRef<HTMLDivElement>(null);
+  const { formatDate: formatDatePref } = useDateFormat();
 
   const date = new Date(entry.createdAt);
-  const dateStr = date
-    .toLocaleDateString("en-US", { month: "short", day: "2-digit" })
-    .toUpperCase();
+  const dateStr = formatDatePref(date, "short").toUpperCase();
   // Use the REAL current task status from DB, not the historical activity entry value
   const isCompleted = taskCurrentStatus === "completed";
 
@@ -1168,9 +1168,10 @@ function BoardTaskCard({
   isDeleting: boolean;
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const { formatDate: formatDatePref } = useDateFormat();
   const priorityOption = PRIORITY_OPTIONS.find((p) => p.value === task.priority);
   const dueStr = task.dueDate
-    ? new Date(task.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    ? formatDatePref(new Date(task.dueDate), "short")
     : null;
   const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== "completed";
 

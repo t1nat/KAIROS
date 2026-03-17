@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { api } from "~/trpc/react";
 import type { RouterOutputs } from "~/trpc/react";
 import Image from "next/image";
-import { Send, Paperclip, Search, MoreVertical, X, Plus, MessageCircle, Users } from "lucide-react";
+import { Send, Paperclip, Search, MoreVertical, X, Plus, MessageCircle, Users, Trash2 } from "lucide-react";
 import { useToast } from "~/components/providers/ToastProvider";
 import { useUploadThing } from "~/lib/uploadthing";
 import { useSocket } from "~/components/providers/SocketProvider";
@@ -23,8 +23,11 @@ export function ChatClient({ userId }: { userId: string }) {
   const [isUploading, setIsUploading] = useState(false);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [newChatEmail, setNewChatEmail] = useState("");
+  const [showChatMenu, setShowChatMenu] = useState(false);
+  const [confirmDeleteChat, setConfirmDeleteChat] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const chatMenuRef = useRef<HTMLDivElement | null>(null);
 
   const utils = api.useUtils();
   const { startUpload } = useUploadThing("chatAttachment");
@@ -175,6 +178,39 @@ export function ChatClient({ userId }: { userId: string }) {
     }
   };
 
+  // Delete conversation
+  const deleteConversation = api.chat.deleteConversation.useMutation({
+    onSuccess: async () => {
+      setSelectedConversationId(null);
+      setSelectedUserId(null);
+      setShowChatMenu(false);
+      setConfirmDeleteChat(false);
+      await utils.chat.listAllConversations.invalidate();
+      toast.success("Chat deleted");
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const handleDeleteChat = () => {
+    if (!selectedConversationId) return;
+    deleteConversation.mutate({ conversationId: selectedConversationId });
+  };
+
+  // Close chat menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (chatMenuRef.current && !chatMenuRef.current.contains(e.target as Node)) {
+        setShowChatMenu(false);
+      }
+    };
+    if (showChatMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showChatMenu]);
+
   const handleSelectMember = (member: WorkspaceMember) => {
     createConversation.mutate({ otherUserId: member.id });
   };
@@ -280,38 +316,71 @@ export function ChatClient({ userId }: { userId: string }) {
     return name.includes(query) || email.includes(query);
   });
 
+  const doSend = () => {
+    if (!selectedConversationId || (!draft.trim() && attachments.length === 0) || sendMessage.isPending || isUploading) return;
+    const messageBody = draft.trim();
+    if (messageBody) {
+      sendMessage.mutate({ conversationId: selectedConversationId, body: messageBody });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedConversationId || (!draft.trim() && attachments.length === 0) || sendMessage.isPending || isUploading) return;
-
-    let messageBody = draft.trim();
 
     // Upload attachments if any
     if (attachments.length > 0) {
       setIsUploading(true);
       try {
+        let messageBody = draft.trim();
         const uploaded = await startUpload(attachments);
         if (uploaded) {
           const attachmentUrls = uploaded.map(f => f.url).join('\n');
           messageBody = messageBody ? `${messageBody}\n\n${attachmentUrls}` : attachmentUrls;
         }
         setAttachments([]);
+        setIsUploading(false);
+        if (messageBody) {
+          sendMessage.mutate({ conversationId: selectedConversationId, body: messageBody });
+        }
       } catch (err) {
         console.error("Upload failed:", err);
         toast.error("Failed to upload attachments");
         setIsUploading(false);
-        return;
       }
-      setIsUploading(false);
+      return;
     }
 
-    if (messageBody) {
-      sendMessage.mutate({ conversationId: selectedConversationId, body: messageBody });
-    }
+    doSend();
   };
 
   return (
 <div className="flex flex-col sm:flex-row h-full w-full bg-bg-primary">      
+      {/* Delete Chat Confirmation Dialog */}
+      {confirmDeleteChat && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-bg-secondary rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-in fade-in slide-in-from-bottom-4">
+            <h3 className="text-lg font-bold text-fg-primary mb-2">Delete Chat</h3>
+            <p className="text-sm text-fg-secondary mb-6">Are you sure you want to delete this chat? All messages will be permanently removed.</p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => setConfirmDeleteChat(false)}
+                className="px-4 py-2 text-sm font-medium text-fg-secondary hover:bg-bg-surface rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteChat}
+                disabled={deleteConversation.isPending}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {deleteConversation.isPending ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showNewChatModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-bg-secondary rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in fade-in slide-in-from-bottom-4 max-h-[90vh] overflow-y-auto">
@@ -559,9 +628,25 @@ export function ChatClient({ userId }: { userId: string }) {
                   </h2>
                 </div>
               </div>
-              <button className="p-1.5 sm:p-2 hover:bg-bg-surface rounded-lg transition-colors text-fg-secondary flex-shrink-0">
-                <MoreVertical size={18} className="sm:w-5 sm:h-5" />
-              </button>
+              <div className="relative flex-shrink-0" ref={chatMenuRef}>
+                <button
+                  onClick={() => setShowChatMenu(!showChatMenu)}
+                  className="p-1.5 sm:p-2 hover:bg-bg-surface rounded-lg transition-colors text-fg-secondary"
+                >
+                  <MoreVertical size={18} className="sm:w-5 sm:h-5" />
+                </button>
+                {showChatMenu && (
+                  <div className="absolute right-0 top-full mt-1 bg-bg-elevated border border-white/10 rounded-xl shadow-xl z-50 py-1 min-w-[160px]">
+                    <button
+                      onClick={() => { setShowChatMenu(false); setConfirmDeleteChat(true); }}
+                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                    >
+                      <Trash2 size={15} />
+                      Delete Chat
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Messages */}
@@ -705,6 +790,12 @@ export function ChatClient({ userId }: { userId: string }) {
                   type="text"
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      doSend();
+                    }
+                  }}
                   placeholder="Type a message..."
                   disabled={isUploading}
                   className="flex-1 text-sm bg-bg-surface shadow-sm rounded-full px-4 sm:px-5 py-2.5 sm:py-3 text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/30 disabled:opacity-50"

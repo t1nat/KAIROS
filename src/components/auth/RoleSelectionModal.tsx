@@ -20,7 +20,6 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
   const createOrganization = api.organization.create.useMutation({
     onSuccess: (data) => {
       setGeneratedCode(data.accessCode);
-      void utils.user.checkOnboardingStatus.invalidate();
     },
     onError: (error) => {
       toast.error(error.message);
@@ -188,7 +187,10 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
             </div>
 
             <button
-              onClick={onComplete}
+              onClick={() => {
+                void utils.user.checkOnboardingStatus.invalidate();
+                onComplete();
+              }}
               className="w-full px-6 py-4 bg-gradient-to-r from-accent-primary to-accent-hover text-white font-semibold rounded-xl hover:shadow-accent transition-all duration-200"
             >
               Continue to Dashboard

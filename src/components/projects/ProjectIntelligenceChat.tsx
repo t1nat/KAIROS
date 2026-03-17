@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { api } from "~/trpc/react";
 import { Sparkles, Copy, Check, CheckCircle2, Calendar, FileText, MapPin, Trash2, Pencil } from "lucide-react";
+import { useDateFormat } from "~/lib/hooks/useDateFormat";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                             */
@@ -257,6 +258,7 @@ function CopyButton({ text, tooltip }: { text: string; tooltip: string }) {
 /* ------------------------------------------------------------------ */
 
 function EventPreviewCard({ item, index }: { item: EventPreviewItem; index: number }) {
+  const { formatDate: formatDatePref } = useDateFormat();
   const icon = item.kind === "create" ? Calendar : item.kind === "update" ? Pencil : Trash2;
   const Icon = icon;
   const label = item.kind === "create" ? "New Event" : item.kind === "update" ? "Update Event" : "Delete Event";
@@ -270,13 +272,7 @@ function EventPreviewCard({ item, index }: { item: EventPreviewItem; index: numb
   let dateStr = "";
   if (item.eventDate) {
     try {
-      dateStr = new Date(item.eventDate).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+      dateStr = formatDatePref(new Date(item.eventDate), "long");
     } catch { /* invalid date */ }
   }
 
