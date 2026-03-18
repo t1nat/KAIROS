@@ -255,6 +255,9 @@ export function ChatClient({ userId }: { userId: string }) {
         { conversationId: data.conversationId, limit: 50 },
         (old) => {
           if (!old) return old!;
+          // Deduplicate: skip if message already exists (can happen if user is in both conversation room and user room)
+          const allMsgIds = new Set(old.pages.flatMap((p) => p.messages.map((m) => m.id)));
+          if (allMsgIds.has(data.messageId)) return old;
           const lastPageIdx = old.pages.length - 1;
           return {
             ...old,

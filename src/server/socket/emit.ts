@@ -29,8 +29,17 @@ export interface SocketNewMessage {
   createdAt: Date;
 }
 
-export function emitNewMessage(msg: SocketNewMessage) {
+export function emitNewMessage(msg: SocketNewMessage, participantUserIds?: string[]) {
+  // Always emit to conversation room (for clients with conversation open)
   publishConversationEvent(msg.conversationId, "message:new", msg);
+  
+  // Also emit to each participant's user room so they receive it even if
+  // they haven't selected/joined that specific conversation yet
+  if (participantUserIds) {
+    for (const uid of participantUserIds) {
+      publishUserEvent(uid, "message:new", msg);
+    }
+  }
 }
 
 export function emitConversationUpdated(

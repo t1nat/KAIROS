@@ -263,7 +263,7 @@ export const chatRouter = createTRPCRouter({
           senderName: sender?.name ?? null,
           senderImage: sender?.image ?? null,
           createdAt: message.createdAt,
-        });
+        }, [convo.userOneId, convo.userTwoId]);
         emitConversationUpdated(
           [convo.userOneId, convo.userTwoId],
           { conversationId: input.conversationId, lastMessageAt: new Date() },
