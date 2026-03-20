@@ -42,13 +42,17 @@ type ChatMsg =
       role: "agent";
       text: string;
       createdAt: Date;
+      msgId?: string; // unique ID for tracking edits
       actions?: Array<
         | { type: "notes_confirm"; draftId: string }
         | { type: "notes_apply"; draftId: string; confirmationToken: string }
+        | { type: "notes_direct_apply"; draftId: string } // Combined confirm+apply
         | { type: "events_confirm"; draftId: string }
         | { type: "events_apply"; draftId: string; confirmationToken: string }
+        | { type: "events_direct_apply"; draftId: string } // Combined confirm+apply
         | { type: "task_confirm"; draftId: string }
         | { type: "task_apply"; draftId: string; confirmationToken: string }
+        | { type: "task_direct_apply"; draftId: string } // Combined confirm+apply
       >;
       inlineTasks?: InlineTask[];
       eventPreviews?: EventPreviewItem[];
@@ -254,10 +258,18 @@ function CopyButton({ text, tooltip }: { text: string; tooltip: string }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Event Preview Card                                                */
+/*  Event Preview Card (Editable)                                     */
 /* ------------------------------------------------------------------ */
 
-function EventPreviewCard({ item, index }: { item: EventPreviewItem; index: number }) {
+function EventPreviewCard({ 
+  item, 
+  index,
+  onFieldChange,
+}: { 
+  item: EventPreviewItem; 
+  index: number;
+  onFieldChange?: (field: "title" | "description", value: string) => void;
+}) {
   const { formatDate: formatDatePref } = useDateFormat();
   const icon = item.kind === "create" ? Calendar : item.kind === "update" ? Pencil : Trash2;
   const Icon = icon;
@@ -276,6 +288,8 @@ function EventPreviewCard({ item, index }: { item: EventPreviewItem; index: numb
     } catch { /* invalid date */ }
   }
 
+  const isEditable = item.kind !== "delete" && onFieldChange;
+
   return (
     <div
       className="kairos-preview-card"
@@ -286,12 +300,34 @@ function EventPreviewCard({ item, index }: { item: EventPreviewItem; index: numb
         <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: accent }}>
           {label}
         </span>
+        {isEditable && (
+          <span className="text-[10px] text-fg-quaternary ml-auto">(click to edit)</span>
+        )}
       </div>
       {item.title && (
-        <p className="text-sm font-semibold text-fg-primary leading-snug">{item.title}</p>
+        isEditable ? (
+          <input
+            type="text"
+            className="w-full text-sm font-semibold text-fg-primary bg-bg-secondary/50 border border-border-secondary rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-accent-primary"
+            defaultValue={item.title}
+            onChange={(e) => onFieldChange("title", e.target.value)}
+            placeholder="Event title..."
+          />
+        ) : (
+          <p className="text-sm font-semibold text-fg-primary leading-snug">{item.title}</p>
+        )
       )}
       {item.description && (
-        <p className="text-xs text-fg-secondary mt-0.5 line-clamp-2">{item.description}</p>
+        isEditable ? (
+          <textarea
+            className="w-full text-xs text-fg-secondary bg-bg-secondary/50 border border-border-secondary rounded-md p-2 mt-1 resize-none focus:outline-none focus:ring-1 focus:ring-accent-primary min-h-[40px]"
+            defaultValue={item.description}
+            onChange={(e) => onFieldChange("description", e.target.value)}
+            placeholder="Event description..."
+          />
+        ) : (
+          <p className="text-xs text-fg-secondary mt-0.5 line-clamp-2">{item.description}</p>
+        )
       )}
       <div className="flex items-center gap-3 mt-1.5 flex-wrap">
         {dateStr && (
@@ -313,10 +349,18 @@ function EventPreviewCard({ item, index }: { item: EventPreviewItem; index: numb
 }
 
 /* ------------------------------------------------------------------ */
-/*  Note Preview Card                                                 */
+/*  Note Preview Card (Editable)                                      */
 /* ------------------------------------------------------------------ */
 
-function NotePreviewCard({ item, index }: { item: NotePreviewItem; index: number }) {
+function NotePreviewCard({ 
+  item, 
+  index,
+  onContentChange,
+}: { 
+  item: NotePreviewItem; 
+  index: number;
+  onContentChange?: (newContent: string) => void;
+}) {
   const icon = item.kind === "create" ? FileText : item.kind === "update" ? Pencil : Trash2;
   const Icon = icon;
   const label = item.kind === "create" ? "New Note" : item.kind === "update" ? "Update Note" : "Delete Note";
@@ -326,6 +370,8 @@ function NotePreviewCard({ item, index }: { item: NotePreviewItem; index: number
       : item.kind === "update"
         ? "rgb(234 179 8)"
         : "rgb(239 68 68)";
+
+  const isEditable = item.kind !== "delete" && onContentChange;
 
   return (
     <div
@@ -340,9 +386,21 @@ function NotePreviewCard({ item, index }: { item: NotePreviewItem; index: number
         {item.noteId && (
           <span className="text-[10px] text-fg-quaternary">#{item.noteId}</span>
         )}
+        {isEditable && (
+          <span className="text-[10px] text-fg-quaternary ml-auto">(click to edit)</span>
+        )}
       </div>
       {item.content && (
-        <p className="text-xs text-fg-secondary line-clamp-3 whitespace-pre-wrap">{item.content.slice(0, 200)}{item.content.length > 200 ? "…" : ""}</p>
+        isEditable ? (
+          <textarea
+            className="w-full text-xs text-fg-secondary bg-bg-secondary/50 border border-border-secondary rounded-md p-2 resize-none focus:outline-none focus:ring-1 focus:ring-accent-primary min-h-[60px]"
+            defaultValue={item.content}
+            onChange={(e) => onContentChange(e.target.value)}
+            placeholder="Edit note content..."
+          />
+        ) : (
+          <p className="text-xs text-fg-secondary line-clamp-3 whitespace-pre-wrap">{item.content.slice(0, 200)}{item.content.length > 200 ? "…" : ""}</p>
+        )
       )}
       {item.reason && (
         <p className="text-[10px] text-fg-quaternary mt-1 italic">{item.reason}</p>
@@ -364,6 +422,13 @@ export function ProjectIntelligenceChat(props: { projectId?: number; onAgentMess
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [showAssumptions, setShowAssumptions] = useState(false);
   const [rateLimitPopup, setRateLimitPopup] = useState<{ show: boolean; message: string }>({ show: false, message: "" });
+  
+  // Track edits to draft previews (keyed by msgId + index)
+  const [noteEdits, setNoteEdits] = useState<Record<string, Record<number, string>>>({});
+  const [eventEdits, setEventEdits] = useState<Record<string, Record<number, { title?: string; description?: string }>>>({});
+
+  // Generate unique message IDs
+  const generateMsgId = useCallback(() => `msg_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`, []);
 
   /* ---- Rate limit status query ---- */
   const rateLimitQuery = api.agent.rateLimitStatus.useQuery(undefined, {
@@ -496,7 +561,8 @@ export function ProjectIntelligenceChat(props: { projectId?: number; onAgentMess
               blocked.length > 0 ? t("blockedOps", { count: blocked.length }) : null,
             ].filter(Boolean).join(" \u00b7 ");
 
-            const agentText = [chatbotSummary, ops, operations.length > 0 ? t("clickConfirm") : ""].filter(Boolean).join("\n");
+            // Friendly message with edit hint
+            const agentText = [chatbotSummary, ops, operations.length > 0 ? "👇 You can edit the content below, then click **Apply** when ready!" : ""].filter(Boolean).join("\n");
 
             // Build note previews from operations
             const notePreviews: NotePreviewItem[] = operations.map((o) => {
@@ -509,11 +575,13 @@ export function ProjectIntelligenceChat(props: { projectId?: number; onAgentMess
               };
             });
 
+            const msgId = generateMsgId();
             setMessages((prev) =>
               replaceThinking(prev, {
                 text: agentText,
                 createdAt: new Date(),
-                actions: operations.length > 0 && draftId ? [{ type: "notes_confirm" as const, draftId }] : undefined,
+                msgId,
+                actions: operations.length > 0 && draftId ? [{ type: "notes_direct_apply" as const, draftId }] : undefined,
                 notePreviews: notePreviews.length > 0 ? notePreviews : undefined,
               }),
             );
@@ -562,7 +630,8 @@ export function ProjectIntelligenceChat(props: { projectId?: number; onAgentMess
                 updates > 0 ? t("updateOps", { count: updates }) : null,
                 deletes > 0 ? t("deleteOps", { count: deletes }) : null,
               ].filter(Boolean).join(" \u00b7 ");
-              agentText = [summaryLine, ops || t("noChanges"), creates + updates + deletes > 0 ? t("clickConfirm") : ""].filter(Boolean).join("\n");
+              // Friendly message with edit hint
+              agentText = [summaryLine, ops || t("noChanges"), creates + updates + deletes > 0 ? "👇 You can edit the details below, then click **Apply** when ready!" : ""].filter(Boolean).join("\n");
             }
 
             const hasOps = creates + updates + deletes > 0;
@@ -591,11 +660,13 @@ export function ProjectIntelligenceChat(props: { projectId?: number; onAgentMess
               })) : []),
             ];
 
+            const msgId = generateMsgId();
             setMessages((prev) =>
               replaceThinking(prev, {
                 text: agentText,
                 createdAt: new Date(),
-                actions: hasOps && draftId ? [{ type: "events_confirm" as const, draftId }] : undefined,
+                msgId,
+                actions: hasOps && draftId ? [{ type: "events_direct_apply" as const, draftId }] : undefined,
                 eventPreviews: eventPreviews.length > 0 ? eventPreviews : undefined,
               }),
             );
@@ -882,7 +953,7 @@ export function ProjectIntelligenceChat(props: { projectId?: number; onAgentMess
               agentText = [
                 summaryLine,
                 ops || t("noChanges"),
-                creates + updates + deletes > 0 ? t("clickConfirm") : "",
+                creates + updates + deletes > 0 ? "👇 You can edit the details below, then click **Apply** when ready!" : "",
               ]
                 .filter(Boolean)
                 .join("\n");
@@ -914,13 +985,15 @@ export function ProjectIntelligenceChat(props: { projectId?: number; onAgentMess
               })) : []),
             ];
 
+            const msgId = generateMsgId();
             setMessages((prev) =>
               replaceThinking(prev, {
                 text: agentText,
                 createdAt: new Date(),
+                msgId,
                 actions:
                   hasOps && draftId
-                    ? [{ type: "events_confirm", draftId }]
+                    ? [{ type: "events_direct_apply", draftId }]
                     : undefined,
                 eventPreviews: eventPreviews.length > 0 ? eventPreviews : undefined,
               }),
@@ -1009,7 +1082,7 @@ export function ProjectIntelligenceChat(props: { projectId?: number; onAgentMess
             const agentText = [
               chatbotSummary,
               ops,
-              operations.length > 0 ? t("clickConfirm") : "",
+              operations.length > 0 ? "👇 You can edit the content below, then click **Apply** when ready!" : "",
             ]
               .filter(Boolean)
               .join("\n");
@@ -1027,13 +1100,15 @@ export function ProjectIntelligenceChat(props: { projectId?: number; onAgentMess
               };
             });
 
+            const msgId = generateMsgId();
             setMessages((prev) =>
               replaceThinking(prev, {
                 text: agentText,
                 createdAt: new Date(),
+                msgId,
                 actions:
                   shouldShowConfirm && draftId
-                    ? [{ type: "notes_confirm", draftId }]
+                    ? [{ type: "notes_direct_apply", draftId }]
                     : undefined,
                 notePreviews: notePreviews.length > 0 ? notePreviews : undefined,
               }),
@@ -1389,15 +1464,30 @@ export function ProjectIntelligenceChat(props: { projectId?: number; onAgentMess
                     {hasEventPreviews && (
                       <div className="kairos-preview-list" data-testid="event-previews">
                         {(
-                          (m as { eventPreviews?: EventPreviewItem[] })
+                          (m as { eventPreviews?: EventPreviewItem[]; msgId?: string })
                             .eventPreviews ?? []
-                        ).map((ev, eIdx) => (
-                          <EventPreviewCard
-                            key={`ev-${eIdx}`}
-                            item={ev}
-                            index={eIdx}
-                          />
-                        ))}
+                        ).map((ev, eIdx) => {
+                          const msgId = (m as { msgId?: string }).msgId ?? "";
+                          const edits = eventEdits[msgId]?.[eIdx];
+                          const editedItem = edits ? { ...ev, title: edits.title ?? ev.title, description: edits.description ?? ev.description } : ev;
+                          return (
+                            <EventPreviewCard
+                              key={`ev-${eIdx}`}
+                              item={editedItem}
+                              index={eIdx}
+                              onFieldChange={(field, value) => {
+                                if (!msgId) return;
+                                setEventEdits((prev) => ({
+                                  ...prev,
+                                  [msgId]: {
+                                    ...prev[msgId],
+                                    [eIdx]: { ...prev[msgId]?.[eIdx], [field]: value },
+                                  },
+                                }));
+                              }}
+                            />
+                          );
+                        })}
                       </div>
                     )}
 
@@ -1405,15 +1495,27 @@ export function ProjectIntelligenceChat(props: { projectId?: number; onAgentMess
                     {hasNotePreviews && (
                       <div className="kairos-preview-list" data-testid="note-previews">
                         {(
-                          (m as { notePreviews?: NotePreviewItem[] })
+                          (m as { notePreviews?: NotePreviewItem[]; msgId?: string })
                             .notePreviews ?? []
-                        ).map((n, nIdx) => (
-                          <NotePreviewCard
-                            key={`note-${nIdx}`}
-                            item={n}
-                            index={nIdx}
-                          />
-                        ))}
+                        ).map((n, nIdx) => {
+                          const msgId = (m as { msgId?: string }).msgId ?? "";
+                          const editedContent = noteEdits[msgId]?.[nIdx];
+                          const editedItem = editedContent !== undefined ? { ...n, content: editedContent } : n;
+                          return (
+                            <NotePreviewCard
+                              key={`note-${nIdx}`}
+                              item={editedItem}
+                              index={nIdx}
+                              onContentChange={(newContent) => {
+                                if (!msgId) return;
+                                setNoteEdits((prev) => ({
+                                  ...prev,
+                                  [msgId]: { ...prev[msgId], [nIdx]: newContent },
+                                }));
+                              }}
+                            />
+                          );
+                        })}
                       </div>
                     )}
 
@@ -1421,7 +1523,163 @@ export function ProjectIntelligenceChat(props: { projectId?: number; onAgentMess
                     {m.role === "agent" && m.actions?.length ? (
                       <div className="mt-3 flex flex-wrap gap-2">
                         {m.actions.map((a, aIdx) => {
-                          /* ---- Notes Confirm ---- */
+                          /* ---- Notes Direct Apply (Combined Confirm + Apply) ---- */
+                          if (a.type === "notes_direct_apply") {
+                            const msgId = (m as { msgId?: string }).msgId ?? "";
+                            const isApplying = notesConfirmMutation.isPending || notesApplyMutation.isPending;
+                            return (
+                              <button
+                                key={`${a.type}-${a.draftId}-${aIdx}`}
+                                type="button"
+                                className="text-xs px-4 py-2 rounded-lg text-white font-medium transition-all hover:scale-[1.03] active:scale-95 flex items-center gap-2"
+                                style={{
+                                  backgroundColor: "rgb(var(--accent-primary))",
+                                }}
+                                disabled={isApplying}
+                                onClick={async () => {
+                                  try {
+                                    // Step 1: Confirm (hidden from user) — pass any user edits
+                                    const edits = noteEdits[msgId] 
+                                      ? Object.entries(noteEdits[msgId]).map(([idx, content]) => ({
+                                          index: parseInt(idx, 10),
+                                          content,
+                                        }))
+                                      : undefined;
+                                    const confirmRes = (await notesConfirmMutation.mutateAsync({
+                                      draftId: a.draftId,
+                                      edits,
+                                    })) as ConfirmResponse;
+                                    
+                                    // Step 2: Apply immediately
+                                    const applyRes = (await notesApplyMutation.mutateAsync({
+                                      draftId: a.draftId,
+                                      confirmationToken: confirmRes.confirmationToken,
+                                    })) as ApplyResponse;
+                                    
+                                    const results = applyRes.results;
+                                    setMessages((prev) => [
+                                      ...prev,
+                                      {
+                                        role: "agent",
+                                        text: `✅ Done! ${results ? `(${typeof results === "object" ? Object.keys(results as Record<string, unknown>).length : 1} operations applied)` : "Changes applied successfully."}`,
+                                        createdAt: new Date(),
+                                      },
+                                    ]);
+                                    // Clear edits for this message
+                                    setNoteEdits((prev) => {
+                                      const next = { ...prev };
+                                      delete next[msgId];
+                                      return next;
+                                    });
+                                    // Invalidate notes cache
+                                    void utils.note.invalidate();
+                                  } catch (err) {
+                                    const msg = err instanceof Error ? err.message : "Apply failed";
+                                    setMessages((prev) => [
+                                      ...prev,
+                                      {
+                                        role: "agent",
+                                        text: `❌ ${msg.includes("status=confirmed") ? "Already applied!" : `Something went wrong: ${msg}`}`,
+                                        createdAt: new Date(),
+                                      },
+                                    ]);
+                                  }
+                                }}
+                              >
+                                {isApplying ? (
+                                  <>
+                                    <span className="animate-spin">⏳</span>
+                                    Applying...
+                                  </>
+                                ) : (
+                                  <>
+                                    <CheckCircle2 size={14} />
+                                    Apply
+                                  </>
+                                )}
+                              </button>
+                            );
+                          }
+
+                          /* ---- Events Direct Apply (Combined Confirm + Apply) ---- */
+                          if (a.type === "events_direct_apply") {
+                            const msgId = (m as { msgId?: string }).msgId ?? "";
+                            const isApplying = eventsConfirmMutation.isPending || eventsApplyMutation.isPending;
+                            return (
+                              <button
+                                key={`${a.type}-${a.draftId}-${aIdx}`}
+                                type="button"
+                                className="text-xs px-4 py-2 rounded-lg text-white font-medium transition-all hover:scale-[1.03] active:scale-95 flex items-center gap-2"
+                                style={{
+                                  backgroundColor: "rgb(var(--accent-primary))",
+                                }}
+                                disabled={isApplying}
+                                onClick={async () => {
+                                  try {
+                                    // Step 1: Confirm (hidden from user) — pass any user edits
+                                    const edits = eventEdits[msgId]
+                                      ? Object.entries(eventEdits[msgId]).map(([idx, fields]) => ({
+                                          index: parseInt(idx, 10),
+                                          ...fields,
+                                        }))
+                                      : undefined;
+                                    const confirmRes = (await eventsConfirmMutation.mutateAsync({
+                                      draftId: a.draftId,
+                                      edits,
+                                    })) as ConfirmResponse;
+                                    
+                                    // Step 2: Apply immediately
+                                    const applyRes = (await eventsApplyMutation.mutateAsync({
+                                      draftId: a.draftId,
+                                      confirmationToken: confirmRes.confirmationToken,
+                                    })) as ApplyResponse;
+                                    
+                                    const results = applyRes.results;
+                                    setMessages((prev) => [
+                                      ...prev,
+                                      {
+                                        role: "agent",
+                                        text: `✅ Done! ${results ? `(${typeof results === "object" ? Object.keys(results as Record<string, unknown>).length : 1} operations applied)` : "Changes applied successfully."}`,
+                                        createdAt: new Date(),
+                                      },
+                                    ]);
+                                    // Clear edits for this message
+                                    setEventEdits((prev) => {
+                                      const next = { ...prev };
+                                      delete next[msgId];
+                                      return next;
+                                    });
+                                    // Invalidate events cache
+                                    void utils.event.invalidate();
+                                  } catch (err) {
+                                    const msg = err instanceof Error ? err.message : "Apply failed";
+                                    setMessages((prev) => [
+                                      ...prev,
+                                      {
+                                        role: "agent",
+                                        text: `❌ ${msg.includes("status=confirmed") ? "Already applied!" : `Something went wrong: ${msg}`}`,
+                                        createdAt: new Date(),
+                                      },
+                                    ]);
+                                  }
+                                }}
+                              >
+                                {isApplying ? (
+                                  <>
+                                    <span className="animate-spin">⏳</span>
+                                    Applying...
+                                  </>
+                                ) : (
+                                  <>
+                                    <CheckCircle2 size={14} />
+                                    Apply
+                                  </>
+                                )}
+                              </button>
+                            );
+                          }
+
+                          /* ---- Notes Confirm (legacy) ---- */
                           if (a.type === "notes_confirm") {
                             return (
                               <button

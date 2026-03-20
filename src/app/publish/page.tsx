@@ -222,12 +222,7 @@ function FeedRightSidebar() {
                     </div>
                 )}
 
-                <Link
-                    href="/progress"
-                    className="w-full mt-4 py-2 text-[10px] font-bold text-accent-primary dark:border-white/5 border border-slate-200 rounded-lg dark:hover:bg-white/5 hover:bg-accent-primary/5 transition-colors block text-center"
-                >
-                    {t("viewDashboard")}
-                </Link>
+
             </div>
         </aside>
     );

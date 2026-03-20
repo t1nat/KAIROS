@@ -128,6 +128,15 @@ const typedApi = api as unknown as {
         isLoading: boolean;
       };
     };
+    inviteMember: {
+      useMutation: (opts?: {
+        onSuccess?: () => void;
+        onError?: (err: { message: string }) => void;
+      }) => {
+        mutate: (input: { organizationId: number; email: string; role: string }) => void;
+        isPending: boolean;
+      };
+    };
   };
   project: {
     getMyProjects: {
@@ -227,7 +236,7 @@ const STATUS_OPTIONS: { value: TaskStatus; label: string; color: string }[] = [
   { value: "pending", label: "Pending", color: "bg-slate-500/15 text-slate-400 border-slate-500/20" },
   { value: "in_progress", label: "In Progress", color: "bg-blue-500/15 text-blue-400 border-blue-500/20" },
   { value: "completed", label: "Completed", color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20" },
-  { value: "blocked", label: "Blocked", color: "bg-red-500/15 text-red-400 border-red-500/20" },
+  { value: "cancelled", label: "Cancelled", color: "bg-red-500/15 text-red-400 border-red-500/20" },
 ];
 
 /* ─── Timeline Entry ─── */
@@ -497,12 +506,14 @@ function CreateNewEntryForm({
   members,
   selectedProjectId,
   onProjectChange,
+  organizationId,
 }: {
   projects: ProjectCard[];
   onCreated: () => void;
   members: OrgMember[];
   selectedProjectId: number | null;
   onProjectChange: (id: number | null) => void;
+  organizationId: number | null;
 }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -511,6 +522,9 @@ function CreateNewEntryForm({
   const [dueDate, setDueDate] = useState("");
   const [assignedToId, setAssignedToId] = useState<string>("");
   const [showAssignDropdown, setShowAssignDropdown] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteError, setInviteError] = useState("");
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const assignDropdownRef = useRef<HTMLDivElement>(null);
@@ -592,6 +606,27 @@ function CreateNewEntryForm({
       setError(err.message);
     },
   });
+
+  const inviteMember = typedApi.organization.inviteMember.useMutation({
+    onSuccess: () => {
+      setShowInviteModal(false);
+      setInviteEmail("");
+      setInviteError("");
+    },
+    onError: (err) => {
+      setInviteError(err.message);
+    },
+  });
+
+  const handleInvite = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail.trim() || !organizationId) return;
+    inviteMember.mutate({
+      organizationId,
+      email: inviteEmail.trim(),
+      role: "member",
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -844,7 +879,10 @@ function CreateNewEntryForm({
                     <button
                       type="button"
                       className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-accent-primary font-medium hover:bg-accent-primary/10 transition-colors"
-                      onClick={() => setShowAssignDropdown(false)}
+                      onClick={() => {
+                        setShowAssignDropdown(false);
+                        setShowInviteModal(true);
+                      }}
                     >
                       <UserPlus size={13} />
                       <span>Invite people</span>
@@ -997,6 +1035,85 @@ function CreateNewEntryForm({
           )}
         </button>
       </form>
+
+      {/* Invite Modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-[rgb(18,18,24)] rounded-xl border border-slate-200 dark:border-white/[0.08] shadow-xl p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-fg-primary flex items-center gap-2">
+                <UserPlus size={18} className="text-accent-primary" />
+                Invite People
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowInviteModal(false);
+                  setInviteEmail("");
+                  setInviteError("");
+                }}
+                className="p-1 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X size={18} className="text-fg-tertiary" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleInvite} className="space-y-4">
+              {inviteError && (
+                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center gap-2">
+                  <AlertTriangle size={14} />
+                  {inviteError}
+                </div>
+              )}
+              
+              <div>
+                <label className="block text-sm font-medium text-fg-secondary mb-2">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  placeholder="colleague@example.com"
+                  className="w-full rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-accent-primary/30 text-slate-900 dark:text-slate-100 focus:border-accent-primary focus:ring-1 focus:ring-accent-primary h-12 px-4 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all"
+                  autoFocus
+                />
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowInviteModal(false);
+                    setInviteEmail("");
+                    setInviteError("");
+                  }}
+                  className="flex-1 px-4 py-3 rounded-lg border border-slate-200 dark:border-white/[0.08] text-fg-secondary font-medium hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={inviteMember.isPending || !inviteEmail.trim() || !organizationId}
+                  className="flex-1 bg-accent-primary hover:bg-accent-hover text-white px-4 py-3 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {inviteMember.isPending ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus size={16} />
+                      Send Invite
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1037,7 +1154,7 @@ const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
   { value: "completed", label: "Done" },
   { value: "pending", label: "Pending" },
   { value: "in_progress", label: "In Progress" },
-  { value: "blocked", label: "Blocked" },
+  { value: "cancelled", label: "Cancelled" },
 ];
 
 /* ─── Task Status Visualization Card ─── */
@@ -1085,7 +1202,7 @@ const BOARD_COLUMNS: { status: TaskStatus; label: string; dotColor: string; head
   { status: "pending", label: "Pending", dotColor: "bg-slate-400", headerBg: "bg-slate-100 dark:bg-slate-500/10" },
   { status: "in_progress", label: "In Progress", dotColor: "bg-blue-400", headerBg: "bg-blue-50 dark:bg-blue-500/10" },
   { status: "completed", label: "Completed", dotColor: "bg-emerald-400", headerBg: "bg-emerald-50 dark:bg-emerald-500/10" },
-  { status: "blocked", label: "Blocked", dotColor: "bg-red-400", headerBg: "bg-red-50 dark:bg-red-500/10" },
+  { status: "cancelled", label: "Cancelled", dotColor: "bg-red-400", headerBg: "bg-red-50 dark:bg-red-500/10" },
 ];
 
 function TaskBoard({
@@ -1107,9 +1224,12 @@ function TaskBoard({
       in_progress: [],
       completed: [],
       blocked: [],
+      cancelled: [],
     };
     for (const t of tasks) {
-      map[t.status].push(t);
+      if (map[t.status]) {
+        map[t.status].push(t);
+      }
     }
     return map;
   }, [tasks]);
@@ -1125,18 +1245,18 @@ function TaskBoard({
               <span className="text-sm font-bold text-fg-primary">{col.label}</span>
             </div>
             <span className="text-xs font-semibold text-fg-quaternary bg-bg-tertiary/50 dark:bg-white/[0.06] px-2 py-0.5 rounded-full">
-              {grouped[col.status].length}
+              {(grouped[col.status] ?? []).length}
             </span>
           </div>
 
           {/* Cards */}
           <div className="flex flex-col gap-2 p-2 min-h-[120px]">
-            {grouped[col.status].length === 0 ? (
+            {(grouped[col.status] ?? []).length === 0 ? (
               <div className="flex items-center justify-center py-8 text-xs text-fg-quaternary">
                 No tasks
               </div>
             ) : (
-              grouped[col.status].map((task) => (
+              (grouped[col.status] ?? []).map((task) => (
                 <BoardTaskCard
                   key={task.id}
                   task={task}
@@ -1562,6 +1682,7 @@ export function TaskTimelineClient() {
                       members={orgMembers ?? []}
                       selectedProjectId={selectedProjectId ?? projects?.[0]?.id ?? null}
                       onProjectChange={setSelectedProjectId}
+                      organizationId={activeOrgId}
                     />
                   </motion.div>
                 </div>
@@ -1593,7 +1714,7 @@ export function TaskTimelineClient() {
                         color="bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-300"
                       />
                       <TaskStatusCard
-                        title="Blocked"
+                        title="Cancelled"
                         count={allTasksByStatus.blocked.length}
                         icon={AlertCircle}
                         color="bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-300"
@@ -1637,11 +1758,11 @@ export function TaskTimelineClient() {
                   {/* Status filters */}
                   <div className="flex items-center gap-2 flex-wrap">
                     {[
-                      { value: "all", label: "All Events" },
+                      { value: "all", label: "All Tasks" },
                       { value: "completed", label: "Completed" },
                       { value: "in_progress", label: "In Progress" },
                       { value: "pending", label: "Pending" },
-                      { value: "blocked", label: "Blocked" },
+                      { value: "cancelled", label: "Cancelled" },
                     ].map((filter) => (
                       <motion.button
                         key={filter.value}

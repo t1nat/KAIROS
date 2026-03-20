@@ -160,6 +160,7 @@ export const agentRouter = createTRPCRouter({
       return agentOrchestrator.notesVaultConfirm({
         ctx,
         draftId: input.draftId,
+        edits: input.edits,
       });
     }),
 
@@ -225,6 +226,7 @@ export const agentRouter = createTRPCRouter({
       return agentOrchestrator.eventsPublisherConfirm({
         ctx,
         draftId: input.draftId,
+        edits: input.edits,
       });
     }),
 

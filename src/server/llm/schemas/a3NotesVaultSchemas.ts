@@ -86,6 +86,11 @@ export type NotesVaultDraftOutput = z.infer<typeof NotesVaultDraftOutputSchema>;
 export const NotesVaultConfirmInputSchema = z
   .object({
     draftId: z.string().min(1),
+    /** Optional user edits to override draft content before confirming */
+    edits: z.array(z.object({
+      index: z.number().int().min(0),
+      content: z.string().min(1).max(20_000),
+    })).optional(),
   })
   .strict();
 

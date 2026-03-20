@@ -236,52 +236,78 @@ function ActivityBarChart(props: {
   const colors = useResolvedThemeColors();
 
   const data = useMemo(() => {
-    const now = new Date();
-    const buckets: { key: string; label: string; count: number; date: Date }[] = [];
-
-    // Last 7 days (including today) in local time.
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-      const label = d.toLocaleDateString(undefined, { weekday: "short" });
-      buckets.push({
-        key: d.toISOString().slice(0, 10),
-        label,
-        count: 0,
-        date: d,
-      });
-    }
-
-    const bucketByKey = new Map(buckets.map((b) => [b.key, b] as const));
-
+    // Group activity by contributor
+    const contributorCounts = new Map<string, { name: string; completed: number; created: number; updated: number }>();
+    
     for (const r of props.rows) {
-      const d = new Date(r.createdAt);
-      const key = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString().slice(0, 10);
-      const bucket = bucketByKey.get(key);
-      if (bucket) bucket.count += 1;
+      const name = r.user?.name ?? r.user?.email ?? "Unknown";
+      const existing = contributorCounts.get(name) ?? { name, completed: 0, created: 0, updated: 0 };
+      
+      if (r.action === "status_changed" && r.newValue === "completed") {
+        existing.completed += 1;
+      } else if (r.action === "created") {
+        existing.created += 1;
+      } else {
+        existing.updated += 1;
+      }
+      
+      contributorCounts.set(name, existing);
     }
-
+    
+    // Sort by total activity and take top 6 contributors
+    const sorted = Array.from(contributorCounts.values())
+      .sort((a, b) => (b.completed + b.created + b.updated) - (a.completed + a.created + a.updated))
+      .slice(0, 6);
+    
     return {
-      labels: buckets.map((b) => b.label),
+      labels: sorted.map((c) => c.name.split(' ')[0] ?? c.name), // First name only for display
       datasets: [
         {
-          label: props.title,
-          data: buckets.map((b) => b.count),
-          backgroundColor: colors.palette[0] ?? colors.info,
+          label: "Completed",
+          data: sorted.map((c) => c.completed),
+          backgroundColor: colors.success,
           borderColor: colors.border,
           borderWidth: 1,
-          borderRadius: 10,
-          maxBarThickness: 28,
+          borderRadius: 4,
+          maxBarThickness: 24,
+        },
+        {
+          label: "Created",
+          data: sorted.map((c) => c.created),
+          backgroundColor: colors.info,
+          borderColor: colors.border,
+          borderWidth: 1,
+          borderRadius: 4,
+          maxBarThickness: 24,
+        },
+        {
+          label: "Updated",
+          data: sorted.map((c) => c.updated),
+          backgroundColor: colors.warning,
+          borderColor: colors.border,
+          borderWidth: 1,
+          borderRadius: 4,
+          maxBarThickness: 24,
         },
       ],
     };
-  }, [props.rows, props.title, colors.palette, colors.info, colors.border]);
+  }, [props.rows, colors.success, colors.info, colors.warning, colors.border]);
 
   const options = useMemo(
     () => ({
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
+        legend: { 
+          display: true,
+          position: 'top' as const,
+          labels: {
+            color: colors.fgPrimary,
+            boxWidth: 12,
+            padding: 8,
+            font: { size: 10 },
+          },
+        },
         tooltip: {
           enabled: true,
           backgroundColor: colors.bgOverlay,
@@ -295,10 +321,12 @@ function ActivityBarChart(props: {
       },
       scales: {
         x: {
+          stacked: true,
           grid: { display: false },
-          ticks: { color: colors.fgPrimary },
+          ticks: { color: colors.fgPrimary, font: { size: 10 } },
         },
         y: {
+          stacked: true,
           beginAtZero: true,
           grid: { color: colors.border },
           ticks: { color: colors.fgPrimary, precision: 0 },
@@ -307,6 +335,17 @@ function ActivityBarChart(props: {
     }),
     [colors.bgOverlay, colors.fgPrimary, colors.border]
   );
+
+  // Calculate totals for the stats section
+  const stats = useMemo(() => {
+    let completed = 0, created = 0, updated = 0;
+    for (const r of props.rows) {
+      if (r.action === "status_changed" && r.newValue === "completed") completed++;
+      else if (r.action === "created") created++;
+      else updated++;
+    }
+    return { completed, created, updated, total: props.rows.length };
+  }, [props.rows]);
 
   return (
     <div className="flex flex-col p-6 rounded-2xl bg-bg-elevated/70 backdrop-blur-xl border border-white/5 shadow-lg min-h-[200px]">
@@ -555,14 +594,12 @@ export function ProgressFeedClient() {
 
             {/* Legend below ring */}
             <div className="flex justify-center gap-4 mt-4 flex-wrap">
-              {completedByProjectSegments.slice(0, 4).map((seg) => (
-                <div key={seg.key} className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: seg.strokeColor }} />
-                  <span className="text-sm text-fg-primary">
-                    {seg.label} <span className="text-fg-tertiary ml-1">{seg.value}</span>
-                  </span>
-                </div>
-              ))}
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: colors.palette[0] }} />
+                <span className="text-sm text-fg-primary">
+                  {t("labels.all")} <span className="text-fg-tertiary ml-1">{completedTasksAll}</span>
+                </span>
+              </div>
               {remainingAll > 0 && (
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-border-medium" />
@@ -669,7 +706,7 @@ export function ProgressFeedClient() {
                 <div className="flex items-center justify-between p-2 rounded-lg bg-red-500/5 border border-red-500/10">
                   <div className="flex items-center gap-2">
                     <AlertTriangle size={14} className="text-red-500" />
-                    <span className="text-xs font-medium text-fg-primary">Blocked</span>
+                    <span className="text-xs font-medium text-fg-primary">Cancelled</span>
                   </div>
                   <span className="text-xs font-bold text-fg-primary">{statusCounts.blocked}</span>
                 </div>

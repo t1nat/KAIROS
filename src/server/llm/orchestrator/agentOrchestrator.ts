@@ -234,6 +234,7 @@ export const agentOrchestrator = {
   async notesVaultConfirm(input: {
     ctx: TRPCContext;
     draftId: string;
+    edits?: Array<{ index: number; content: string }>;
   }): Promise<{ confirmationToken: string; summary: { creates: number; updates: number; deletes: number; blocked: number } }> {
     const userId = requireUserId(input.ctx);
 
@@ -277,7 +278,37 @@ export const agentOrchestrator = {
       });
     }
 
-    const plan = NotesVaultDraftSchema.parse(JSON.parse(draft.planJson) as unknown);
+    let plan = NotesVaultDraftSchema.parse(JSON.parse(draft.planJson) as unknown);
+
+    // Apply user edits if provided
+    if (input.edits && input.edits.length > 0) {
+      const updatedOperations = [...plan.operations];
+      for (const edit of input.edits) {
+        if (edit.index >= 0 && edit.index < updatedOperations.length) {
+          const op = updatedOperations[edit.index];
+          if (op && op.type === "create") {
+            updatedOperations[edit.index] = { ...op, content: edit.content };
+          } else if (op && op.type === "update") {
+            updatedOperations[edit.index] = { ...op, nextContent: edit.content };
+          }
+          // Don't allow editing delete operations
+        }
+      }
+      plan = { ...plan, operations: updatedOperations };
+      
+      // Recompute plan hash for edited plan
+      const newPlanHash = crypto.createHash("sha256").update(JSON.stringify(plan)).digest("hex").slice(0, 16);
+      
+      // Update the stored draft with edited plan
+      await input.ctx.db
+        .update(agentNotesVaultDrafts)
+        .set({
+          planJson: JSON.stringify(plan),
+          planHash: newPlanHash,
+          updatedAt: new Date(),
+        })
+        .where(eq(agentNotesVaultDrafts.id, draft.id));
+    }
 
     const confirmationToken =
       draft.confirmationToken ??
@@ -1291,6 +1322,7 @@ export const agentOrchestrator = {
   async eventsPublisherConfirm(input: {
     ctx: TRPCContext;
     draftId: string;
+    edits?: Array<{ index: number; title?: string; description?: string }>;
   }): Promise<{
     confirmationToken: string;
     summary: {
@@ -1309,7 +1341,49 @@ export const agentOrchestrator = {
       throw new TRPCError({ code: "NOT_FOUND", message: "Draft not found" });
     }
 
-    const plan = stored.plan;
+    let plan = stored.plan;
+
+    // Apply user edits if provided
+    if (input.edits && input.edits.length > 0) {
+      // Combine creates and updates into a single list for indexing
+      // (creates come first, then updates)
+      const editableItems = [...plan.creates, ...plan.updates];
+      const updatedCreates = [...plan.creates];
+      const updatedUpdates = [...plan.updates];
+      
+      for (const edit of input.edits) {
+        if (edit.index >= 0 && edit.index < plan.creates.length) {
+          // Edit a create item
+          const existing = updatedCreates[edit.index];
+          if (existing) {
+            updatedCreates[edit.index] = {
+              ...existing,
+              ...(edit.title && { title: edit.title }),
+              ...(edit.description && { description: edit.description }),
+            };
+          }
+        } else if (edit.index >= plan.creates.length && edit.index < editableItems.length) {
+          // Edit an update item
+          const updateIdx = edit.index - plan.creates.length;
+          const existing = updatedUpdates[updateIdx];
+          if (existing) {
+            updatedUpdates[updateIdx] = {
+              ...existing,
+              patch: {
+                ...existing.patch,
+                ...(edit.title && { title: edit.title }),
+                ...(edit.description && { description: edit.description }),
+              },
+            };
+          }
+        }
+      }
+      
+      plan = { ...plan, creates: updatedCreates, updates: updatedUpdates };
+      // Update stored plan
+      a4DraftStore.set(input.draftId, { ...stored, plan });
+    }
+
     const planHash = computePlanHash(plan);
     const token = mintConfirmationToken({
       userId,

@@ -470,6 +470,16 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
     deleteEvent.mutate({ eventId: event.id });
   };
 
+  const handleShare = async () => {
+    const eventUrl = `${window.location.origin}/publish?event=${event.id}`;
+    try {
+      await navigator.clipboard.writeText(eventUrl);
+      setInfoMessage({ message: "Link copied to clipboard!", type: "info" });
+    } catch {
+      setInfoMessage({ message: "Failed to copy link", type: "error" });
+    }
+  };
+
   const formatDate = (date: Date) => {
     return formatDatePref(date, "long");
   };
@@ -602,7 +612,10 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
             <MessageCircle size={20} />
             <span className="text-xs font-semibold">{event.commentCount}</span>
           </button>
-          <button className="flex items-center gap-1.5 text-accent-primary/50 hover:text-accent-primary transition-colors">
+          <button 
+            onClick={handleShare}
+            className="flex items-center gap-1.5 text-accent-primary/50 hover:text-accent-primary transition-colors"
+          >
             <Share2 size={20} />
           </button>
           <button

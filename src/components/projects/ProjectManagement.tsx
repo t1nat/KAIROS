@@ -35,6 +35,7 @@ interface ProjectFormProps {
  onRemoveCollaborator?: (userId: string) => Promise<void>;
  onUpdatePermission?: (userId: string, permission:"read" |"write") => Promise<void>;
  isOwner?: boolean;
+ hideHeader?: boolean;
 }
 
 export function CreateProjectForm({ 
@@ -47,7 +48,8 @@ export function CreateProjectForm({
  currentCollaborators = [],
  onRemoveCollaborator,
  onUpdatePermission,
- isOwner = true
+ isOwner = true,
+ hideHeader = false
 }: ProjectFormProps) {
  const useT = useTranslations as unknown as (namespace: string) => Translator;
  const t = useT("create");
@@ -155,7 +157,8 @@ export function CreateProjectForm({
  };
 
  return (
- <div className="rounded-2xl bg-bg-surface/70 overflow-hidden shadow-2xl shadow-black/10">
+ <div className={hideHeader ? "" : "rounded-2xl bg-bg-surface/70 overflow-hidden shadow-2xl shadow-black/10"}>
+ {!hideHeader && (
  <button
  type="button"
  onClick={onToggle}
@@ -170,9 +173,10 @@ export function CreateProjectForm({
  </div>
  {isExpanded ? <ChevronUp size={18} className="text-fg-tertiary" /> : <ChevronDown size={18} className="text-fg-tertiary" />}
  </button>
+ )}
 
- {isExpanded && (
- <div className="px-5 pb-5 pt-4">
+ {(isExpanded || hideHeader) && (
+ <div className={hideHeader ? "" : "px-5 pb-5 pt-4"}>
  <form onSubmit={handleSubmit} className="space-y-4">
  <div>
  <label className="block text-xs font-semibold text-fg-secondary mb-2 uppercase tracking-wide">

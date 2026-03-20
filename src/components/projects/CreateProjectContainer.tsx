@@ -351,6 +351,7 @@ export function CreateProjectContainer({ userId }: CreateProjectContainerProps) 
  currentUser={{ id: userId, name: null, email:"", image: null }}
  isExpanded={isCreateProjectExpanded}
  onToggle={() => setIsCreateProjectExpanded((s) => !s)}
+ hideHeader={true}
  />
  </div>
  </div>

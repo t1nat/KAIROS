@@ -142,7 +142,15 @@ export type EventsPublisherDraftInput = z.infer<typeof EventsPublisherDraftInput
 export type EventsPublisherDraftOutput = z.infer<typeof EventsPublisherDraftOutputSchema>;
 
 export const EventsPublisherConfirmInputSchema = z
-  .object({ draftId: z.string().min(1) })
+  .object({ 
+    draftId: z.string().min(1),
+    /** Optional user edits to override draft content before confirming */
+    edits: z.array(z.object({
+      index: z.number().int().min(0),
+      title: z.string().min(1).max(256).optional(),
+      description: z.string().min(1).max(5000).optional(),
+    })).optional(),
+  })
   .strict();
 
 export const EventsPublisherConfirmOutputSchema = z
