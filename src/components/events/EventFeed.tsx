@@ -23,11 +23,13 @@ import {
   Bell,
   Share2,
   MoreHorizontal,
+  Pencil,
 } from "lucide-react";
 import { api } from "~/trpc/react";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { CreateEventForm } from "~/components/events/CreateEventForm";
+import { EditEventForm } from "~/components/events/EditEventForm";
 import { useSocketEvent } from "~/lib/useSocketEvent";
 
 export const REGIONS = [
@@ -329,6 +331,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
   const [showAllComments, setShowAllComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [showDashboard, setShowDashboard] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
   const [deleteEventArmed, setDeleteEventArmed] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showReminderPicker, setShowReminderPicker] = useState(false);
@@ -535,22 +538,34 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                 <div className="fixed inset-0 z-40" onClick={() => setShowMoreMenu(false)} />
                 <div className="absolute right-0 top-full mt-1 z-50 dark:bg-[#16151A] bg-white rounded-xl dark:border-white/[0.06] border border-slate-200 shadow-xl min-w-[160px] py-1 animate-in fade-in slide-in-from-top-1 duration-150">
                   {event.isOwner && (
-                    <button
-                      onClick={() => {
-                        handleDeleteEvent();
-                        // Only close menu after confirming (second click), not when arming (first click)
-                        if (deleteEventArmed) setShowMoreMenu(false);
-                      }}
-                      disabled={deleteEvent.isPending}
-                      className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium transition-colors ${
-                        deleteEventArmed
-                          ? "text-error bg-error/5 hover:bg-error/10"
-                          : "dark:text-red-400 text-red-500 dark:hover:bg-red-500/10 hover:bg-red-50"
-                      }`}
-                    >
-                      <Trash2 size={15} />
-                      {deleteEventArmed ? "Confirm Delete" : "Delete Event"}
-                    </button>
+                    <>
+                      <button
+                        onClick={() => {
+                          setShowEditForm(true);
+                          setShowMoreMenu(false);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium dark:text-gray-300 text-slate-600 dark:hover:bg-white/5 hover:bg-slate-50 transition-colors"
+                      >
+                        <Pencil size={15} />
+                        Edit Event
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleDeleteEvent();
+                          // Only close menu after confirming (second click), not when arming (first click)
+                          if (deleteEventArmed) setShowMoreMenu(false);
+                        }}
+                        disabled={deleteEvent.isPending}
+                        className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium transition-colors ${
+                          deleteEventArmed
+                            ? "text-error bg-error/5 hover:bg-error/10"
+                            : "dark:text-red-400 text-red-500 dark:hover:bg-red-500/10 hover:bg-red-50"
+                        }`}
+                      >
+                        <Trash2 size={15} />
+                        {deleteEventArmed ? "Confirm Delete" : "Delete Event"}
+                      </button>
+                    </>
                   )}
                   {!event.isOwner && (
                     <p className="px-3 py-2.5 text-xs text-fg-tertiary">No actions available</p>
@@ -790,6 +805,27 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
 
       {showDashboard && event.isOwner && typeof document !== 'undefined' && createPortal(
         <RsvpDashboard event={event} onClose={() => setShowDashboard(false)} />,
+        document.body
+      )}
+
+      {showEditForm && event.isOwner && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="dark:bg-[#1A191E] bg-white rounded-[32px] w-full max-w-2xl dark:border-white/5 border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col shadow-2xl">
+            <EditEventForm
+              event={{
+                id: event.id,
+                title: event.title,
+                description: event.description,
+                eventDate: event.eventDate,
+                region: event.region,
+                imageUrl: event.imageUrl,
+                enableRsvp: event.enableRsvp,
+              }}
+              onSuccess={() => setShowEditForm(false)}
+              onClose={() => setShowEditForm(false)}
+            />
+          </div>
+        </div>,
         document.body
       )}
 

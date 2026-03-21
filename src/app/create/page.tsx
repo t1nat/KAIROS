@@ -87,7 +87,7 @@ export default async function CreatePage({
                   ) : shouldShowNoteForm ? (
                     <StickyNote className="text-white" size={22} />
                   ) : (
-                    <Image src="/workspace.png" alt="Workspace" width={22} height={22} className="invert dark:invert-0" />
+                    <Image src="/workspace.png" alt="Workspace" width={28} height={28} className="invert dark:invert-0" />
                   )}
                 </div>
                 <div>

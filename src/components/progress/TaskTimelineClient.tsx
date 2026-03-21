@@ -236,7 +236,7 @@ const STATUS_OPTIONS: { value: TaskStatus; label: string; color: string }[] = [
   { value: "pending", label: "Pending", color: "bg-slate-500/15 text-slate-400 border-slate-500/20" },
   { value: "in_progress", label: "In Progress", color: "bg-blue-500/15 text-blue-400 border-blue-500/20" },
   { value: "completed", label: "Completed", color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20" },
-  { value: "cancelled", label: "Cancelled", color: "bg-red-500/15 text-red-400 border-red-500/20" },
+  { value: "blocked", label: "Blocked", color: "bg-red-500/15 text-red-400 border-red-500/20" },
 ];
 
 /* ─── Timeline Entry ─── */
@@ -1154,7 +1154,7 @@ const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
   { value: "completed", label: "Done" },
   { value: "pending", label: "Pending" },
   { value: "in_progress", label: "In Progress" },
-  { value: "cancelled", label: "Cancelled" },
+  { value: "blocked", label: "Blocked" },
 ];
 
 /* ─── Task Status Visualization Card ─── */
@@ -1202,7 +1202,7 @@ const BOARD_COLUMNS: { status: TaskStatus; label: string; dotColor: string; head
   { status: "pending", label: "Pending", dotColor: "bg-slate-400", headerBg: "bg-slate-100 dark:bg-slate-500/10" },
   { status: "in_progress", label: "In Progress", dotColor: "bg-blue-400", headerBg: "bg-blue-50 dark:bg-blue-500/10" },
   { status: "completed", label: "Completed", dotColor: "bg-emerald-400", headerBg: "bg-emerald-50 dark:bg-emerald-500/10" },
-  { status: "cancelled", label: "Cancelled", dotColor: "bg-red-400", headerBg: "bg-red-50 dark:bg-red-500/10" },
+  { status: "blocked", label: "Blocked", dotColor: "bg-red-400", headerBg: "bg-red-50 dark:bg-red-500/10" },
 ];
 
 function TaskBoard({
@@ -1224,7 +1224,6 @@ function TaskBoard({
       in_progress: [],
       completed: [],
       blocked: [],
-      cancelled: [],
     };
     for (const t of tasks) {
       if (map[t.status]) {

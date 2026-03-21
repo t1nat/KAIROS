@@ -131,6 +131,7 @@ function PieChart(props: {
   const options = useMemo(
     () => ({
       cutout: "0%",
+      animation: false as const,
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -297,16 +298,10 @@ function ActivityBarChart(props: {
     () => ({
       responsive: true,
       maintainAspectRatio: false,
+      animation: false as const,
       plugins: {
-        legend: { 
-          display: true,
-          position: 'top' as const,
-          labels: {
-            color: colors.fgPrimary,
-            boxWidth: 12,
-            padding: 8,
-            font: { size: 10 },
-          },
+        legend: {
+          display: false,
         },
         tooltip: {
           enabled: true,
@@ -349,9 +344,25 @@ function ActivityBarChart(props: {
 
   return (
     <div className="flex flex-col p-6 rounded-2xl bg-bg-elevated/70 backdrop-blur-xl border border-white/5 shadow-lg min-h-[200px]">
-      <div className="mb-3">
-        <p className="text-sm font-semibold text-fg-primary">{props.title}</p>
-        {props.subtitle && <p className="text-xs text-fg-tertiary mt-0.5">{props.subtitle}</p>}
+      <div className="mb-3 flex items-start justify-between">
+        <div>
+          <p className="text-sm font-semibold text-fg-primary">{props.title}</p>
+          {props.subtitle && <p className="text-xs text-fg-tertiary mt-0.5">{props.subtitle}</p>}
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.success }} />
+            <span className="text-xs font-bold" style={{ color: colors.success }}>{stats.completed}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.info }} />
+            <span className="text-xs font-bold" style={{ color: colors.info }}>{stats.created}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.warning }} />
+            <span className="text-xs font-bold" style={{ color: colors.warning }}>{stats.updated}</span>
+          </div>
+        </div>
       </div>
       <div className="relative h-40 flex-1">
         <Bar data={data} options={options} aria-label={props.title} role="img" />

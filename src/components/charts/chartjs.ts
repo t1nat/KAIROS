@@ -8,10 +8,8 @@ class ChartJsRegistry {
 
     ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
-    ChartJS.defaults.animation = {
-      duration: 800,
-      easing: "easeInOutQuart",
-    };
+    // Disable animations to prevent potential callback errors
+    ChartJS.defaults.animation = false;
     ChartJS.defaults.responsive = true;
     ChartJS.defaults.maintainAspectRatio = true;
 

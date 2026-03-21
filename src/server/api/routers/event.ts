@@ -42,6 +42,20 @@ const deleteEventSchema = z.object({
   eventId: z.number(),
 });
 
+const updateEventSchema = z.object({
+  eventId: z.number(),
+  title: z.string().min(1, "Title is required").max(256).optional(),
+  description: z.string().min(1, "Description is required").max(5000).optional(),
+  eventDate: z.date().optional(),
+  region: z.enum([
+    "sofia", "plovdiv", "varna", "burgas", "ruse",
+    "stara_zagora", "pleven", "sliven", "dobrich", "shumen"
+  ]).optional(),
+  imageUrl: z.string().url().optional().nullable(),
+  enableRsvp: z.boolean().optional(),
+  sendReminders: z.boolean().optional(),
+});
+
 const sendRemindersSchema = z.void();
 
 export const eventRouter = createTRPCRouter({
@@ -378,6 +392,49 @@ export const eventRouter = createTRPCRouter({
 
       // Notify all connected clients about the deletion in real-time
       emitEventDeleted(input.eventId);
+
+      return { success: true };
+    }),
+
+  updateEvent: protectedProcedure
+    .input(updateEventSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { eventId, ...updates } = input;
+
+      const [event] = await ctx.db
+        .select({ id: events.id, createdById: events.createdById })
+        .from(events)
+        .where(eq(events.id, eventId))
+        .limit(1);
+
+      if (!event) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Event not found." });
+      }
+
+      if (event.createdById !== ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You don't own this event." });
+      }
+
+      // Build update object with only defined fields
+      const updateFields: Record<string, unknown> = {};
+      if (updates.title !== undefined) updateFields.title = updates.title;
+      if (updates.description !== undefined) updateFields.description = updates.description;
+      if (updates.eventDate !== undefined) updateFields.eventDate = updates.eventDate;
+      if (updates.region !== undefined) updateFields.region = updates.region;
+      if (updates.imageUrl !== undefined) updateFields.imageUrl = updates.imageUrl;
+      if (updates.enableRsvp !== undefined) updateFields.enableRsvp = updates.enableRsvp;
+      if (updates.sendReminders !== undefined) updateFields.sendReminders = updates.sendReminders;
+
+      if (Object.keys(updateFields).length === 0) {
+        return { success: true };
+      }
+
+      await ctx.db
+        .update(events)
+        .set(updateFields)
+        .where(eq(events.id, eventId));
+
+      emitEventUpdated(eventId);
 
       return { success: true };
     }),

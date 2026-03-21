@@ -94,7 +94,8 @@ export const TaskPlannerScopeSchema = z
 
 export const TaskPlanDraftSchema = z
   .object({
-    agentId: z.literal("task_planner"),
+    // Use .catch() to default to "task_planner" if the LLM omits or returns wrong value
+    agentId: z.literal("task_planner").catch("task_planner"),
     scope: TaskPlannerScopeSchema,
 
     creates: z.array(TaskCreateDraftSchema).max(30).default([]),
