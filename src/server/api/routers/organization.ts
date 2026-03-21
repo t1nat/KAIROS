@@ -314,21 +314,24 @@ export const organizationRouter = createTRPCRouter({
 
         for (const admin of orgAdmins) {
           if (admin.userId === ctx.session.user.id) continue;
-          await ctx.db.insert(notifications).values({
+          const [notif] = await ctx.db.insert(notifications).values({
             userId: admin.userId,
             type: "system",
             title: "New Member Joined",
             message: `${joinerName} joined "${organization.name}" via access code`,
             link: "/settings",
             read: false,
-          });
-          emitNotification(admin.userId, {
-            id: `org-join-${organization.id}-${Date.now()}`,
-            type: "system",
-            title: "New Member Joined",
-            message: `${joinerName} joined "${organization.name}" via access code`,
-            link: "/settings",
-          });
+          }).returning();
+
+          if (notif) {
+            emitNotification(admin.userId, {
+              id: notif.id,
+              type: "system",
+              title: "New Member Joined",
+              message: `${joinerName} joined "${organization.name}" via access code`,
+              link: "/settings",
+            });
+          }
         }
 
         return {
@@ -1045,21 +1048,24 @@ export const organizationRouter = createTRPCRouter({
         const inviterName = inviterUser?.name ?? "Someone";
         const orgName = org?.name ?? "a workspace";
 
-        await ctx.db.insert(notifications).values({
+        const [createdNotification] = await ctx.db.insert(notifications).values({
           userId: existingUser.id,
           type: "system",
           title: "Workspace Invitation",
           message: `${inviterName} invited you to join "${orgName}" as ${input.role}`,
           link: "/orgs",
           read: false,
-        });
-        emitNotification(existingUser.id, {
-          id: `org-invite-${invite?.id ?? Date.now()}`,
-          type: "system",
-          title: "Workspace Invitation",
-          message: `${inviterName} invited you to join "${orgName}" as ${input.role}`,
-          link: "/orgs",
-        });
+        }).returning();
+
+        if (createdNotification) {
+          emitNotification(existingUser.id, {
+            id: createdNotification.id,
+            type: "system",
+            title: "Workspace Invitation",
+            message: `${inviterName} invited you to join "${orgName}" as ${input.role}`,
+            link: "/orgs",
+          });
+        }
       }
 
       return invite;
@@ -1186,21 +1192,24 @@ export const organizationRouter = createTRPCRouter({
 
       // Notify the person who sent the invite
       if (invite.invitedById) {
-        await ctx.db.insert(notifications).values({
+        const [notif] = await ctx.db.insert(notifications).values({
           userId: invite.invitedById,
           type: "system",
           title: "Invite Accepted",
           message: `${acceptorName} accepted your invitation to join "${orgName}"`,
           link: "/settings",
           read: false,
-        });
-        emitNotification(invite.invitedById, {
-          id: `invite-accepted-${input.inviteId}`,
-          type: "system",
-          title: "Invite Accepted",
-          message: `${acceptorName} accepted your invitation to join "${orgName}"`,
-          link: "/settings",
-        });
+        }).returning();
+
+        if (notif) {
+          emitNotification(invite.invitedById, {
+            id: notif.id,
+            type: "system",
+            title: "Invite Accepted",
+            message: `${acceptorName} accepted your invitation to join "${orgName}"`,
+            link: "/settings",
+          });
+        }
       }
 
       return { success: true, organizationName: orgName };
@@ -1256,21 +1265,24 @@ export const organizationRouter = createTRPCRouter({
           .limit(1);
         const orgName = org?.name ?? "a workspace";
 
-        await ctx.db.insert(notifications).values({
+        const [notif] = await ctx.db.insert(notifications).values({
           userId: invite.invitedById,
           type: "system",
           title: "Invite Declined",
           message: `${declinerName} declined your invitation to join "${orgName}"`,
           link: "/settings",
           read: false,
-        });
-        emitNotification(invite.invitedById, {
-          id: `invite-declined-${input.inviteId}`,
-          type: "system",
-          title: "Invite Declined",
-          message: `${declinerName} declined your invitation to join "${orgName}"`,
-          link: "/settings",
-        });
+        }).returning();
+
+        if (notif) {
+          emitNotification(invite.invitedById, {
+            id: notif.id,
+            type: "system",
+            title: "Invite Declined",
+            message: `${declinerName} declined your invitation to join "${orgName}"`,
+            link: "/settings",
+          });
+        }
       }
 
       return { success: true };

@@ -6,6 +6,7 @@ import * as argon2 from "argon2";
 import { TRPCError } from "@trpc/server";
 import { sendWelcomeEmail, sendPasswordResetCode } from "~/server/email";
 import crypto from "node:crypto";
+import { consumeAuthRateLimit, createAuthRateLimitKey } from "~/server/authRateLimit";
 
 function generateResetCode(): string {
   const buf = crypto.randomBytes(4);
@@ -24,6 +25,9 @@ export const authRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { email, password, name } = input;
+
+      // Rate limit by email to prevent signup spam
+      consumeAuthRateLimit(createAuthRateLimitKey("signup", email));
 
       const existingUser = await ctx.db.query.users.findFirst({
         where: eq(users.email, email),
@@ -76,6 +80,9 @@ export const authRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { email } = input;
 
+      // Rate limit password reset requests to prevent email spam
+      consumeAuthRateLimit(createAuthRateLimitKey("reset_request", email));
+
       // Always return success to prevent email enumeration
       const user = await ctx.db.query.users.findFirst({
         where: eq(users.email, email),
@@ -124,6 +131,9 @@ export const authRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { email, code } = input;
 
+      // Rate limit code verification to prevent brute-force attacks
+      consumeAuthRateLimit(createAuthRateLimitKey("verify_code", email));
+
       const resetCode = await ctx.db.query.passwordResetCodes.findFirst({
         where: and(
           eq(passwordResetCodes.email, email),
@@ -153,6 +163,9 @@ export const authRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { email, code, newPassword } = input;
+
+      // Rate limit password resets
+      consumeAuthRateLimit(createAuthRateLimitKey("reset_password", email));
 
       // Verify the code again
       const resetCode = await ctx.db.query.passwordResetCodes.findFirst({

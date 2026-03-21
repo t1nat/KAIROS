@@ -159,6 +159,18 @@ export function WorkspaceSettingsClient() {
     { enabled: !!emailLookupDebouncedEmail, retry: false, refetchOnWindowFocus: false },
   );
 
+  // ---- Clean up pendingRoles once they're fetched from server ----
+  useEffect(() => {
+    if (roles && pendingRoles.length > 0) {
+      const allPendingExistInRoles = pendingRoles.every((pr) =>
+        roles.some((r) => r.id === pr.id)
+      );
+      if (allPendingExistInRoles) {
+        setPendingRoles([]);
+      }
+    }
+  }, [roles, pendingRoles]);
+
   // Real-time: refresh members and invites when notifications about invites/joins arrive
   const handleInviteNotification = useCallback(
     (data: { title?: string }) => {
@@ -198,13 +210,15 @@ export function WorkspaceSettingsClient() {
   });
 
   const setActiveOrg = api.organization.setActive.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
+      await Promise.all([
+        utils.organization.getActive.invalidate(),
+        utils.organization.getMembers.invalidate(),
+        utils.organization.getRoles.invalidate(),
+        utils.organization.getInvites.invalidate(),
+        utils.user.getProfile.invalidate(),
+      ]);
       toast.success("Switched organization");
-      void utils.organization.getActive.invalidate();
-      void utils.organization.getMembers.invalidate();
-      void utils.organization.getRoles.invalidate();
-      void utils.organization.getInvites.invalidate();
-      void utils.user.getProfile.invalidate();
     },
     onError: (e) => toast.error(e.message),
   });
@@ -805,14 +819,13 @@ export function WorkspaceSettingsClient() {
                           if (created) {
                             setPendingRoles((prev) => [...prev, created as { id: number; name: string } & Record<PermissionKey, boolean>]);
                           }
+                          await utils.organization.getRoles.invalidate();
                           toast.success("Role created");
                           setNewRoleName("");
                           setNewRolePerms(
                             Object.fromEntries(PERMISSION_KEYS.map((k) => [k, false])) as Record<PermissionKey, boolean>,
                           );
                           setShowCreateRole(false);
-                          await utils.organization.getRoles.invalidate();
-                          setPendingRoles([]);
                         } catch (e) {
                           toast.error(e instanceof Error ? e.message : "Failed to create role");
                         }

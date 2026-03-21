@@ -46,6 +46,19 @@ export const REGIONS = [
   { value: 'shumen', label: 'Shumen' },
 ] as const;
 
+// Allowed image hostnames for Next.js Image component
+const ALLOWED_IMAGE_HOSTS = ['utfs.io', 'lh3.googleusercontent.com'];
+
+function isValidImageUrl(url: string | null | undefined): url is string {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    return ALLOWED_IMAGE_HOSTS.some(host => parsed.hostname === host || parsed.hostname.endsWith('.' + host));
+  } catch {
+    return false;
+  }
+}
+
 interface Author {
   id?: string | null; 
   name: string | null;
@@ -579,7 +592,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
         {/* Body — description + image */}
         <div className="px-4 pb-3">
           <p className="text-sm leading-relaxed dark:text-gray-300 text-slate-700">{event.description}</p>
-          {event.imageUrl && (
+          {isValidImageUrl(event.imageUrl) && (
             <div className="mt-4 rounded-xl overflow-hidden aspect-video bg-bg-tertiary relative">
               <Image
                 src={event.imageUrl}

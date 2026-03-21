@@ -163,42 +163,34 @@ export function InteractiveTimeline({
  const newStatus: Task["status"] =
  task.status ==="completed" ?"pending" :"completed";
 
- setOptimisticTasks((prev) => {
- const updated = prev.map(t => 
- t.id === task.id 
+ // Call the mutation immediately for instant feedback
+ onTaskStatusChange(task.id, newStatus);
+
+ // Update optimistic state
+ setOptimisticTasks((prev) =>
+ prev.map(t =>
+ t.id === task.id
  ? { ...t, status: newStatus, completedAt: newStatus ==="completed" ? new Date() : null }
  : t
+ )
  );
- 
- // If marking as complete, scroll to the next incomplete task
+
+ // If marking as complete, highlight the next incomplete task (no scroll)
  if (newStatus ==="completed") {
- const sortedUpdated = [...updated].sort((a, b) => {
+ const sortedUpdated = [...optimisticTasks].sort((a, b) => {
  if (a.orderIndex !== b.orderIndex) return a.orderIndex - b.orderIndex;
  if (a.dueDate && b.dueDate) return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
  return 0;
  });
- 
+
  const currentIndex = sortedUpdated.findIndex(t => t.id === task.id);
  const nextIncomplete = sortedUpdated.find((t, idx) => idx > currentIndex && t.status !=="completed");
- 
+
  if (nextIncomplete) {
- // Highlight the next task briefly
  setHighlightedTaskId(nextIncomplete.id);
- setTimeout(() => setHighlightedTaskId(null), 2000);
- 
- setTimeout(() => {
- const nextElement = taskRefs.current.get(nextIncomplete.id);
- if (nextElement && scrollContainerRef.current) {
- nextElement.scrollIntoView({ behavior:"smooth", block:"nearest", inline:"center" });
- }
- }, 100);
+ setTimeout(() => setHighlightedTaskId(null), 1500);
  }
  }
- 
- return updated;
- });
- 
- onTaskStatusChange(task.id, newStatus);
  };
 
  if (!mounted) {

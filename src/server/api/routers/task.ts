@@ -610,6 +610,61 @@ export const taskRouter = createTRPCRouter({
   getActivityLog: protectedProcedure
     .input(z.object({ taskId: z.number() }))
     .query(async ({ ctx, input }) => {
+      // First, verify the user has access to this task's project
+      const [task] = await ctx.db
+        .select({ projectId: tasks.projectId })
+        .from(tasks)
+        .where(eq(tasks.id, input.taskId))
+        .limit(1);
+
+      if (!task) {
+        throw new Error("Task not found");
+      }
+
+      // Check project access (owner, org member, or collaborator)
+      const [project] = await ctx.db
+        .select()
+        .from(projects)
+        .where(eq(projects.id, task.projectId))
+        .limit(1);
+
+      if (!project) {
+        throw new Error("Project not found");
+      }
+
+      const isOwner = project.createdById === ctx.session.user.id;
+
+      let hasOrgAccess = false;
+      if (project.organizationId) {
+        const [membership] = await ctx.db
+          .select()
+          .from(organizationMembers)
+          .where(
+            and(
+              eq(organizationMembers.organizationId, project.organizationId),
+              eq(organizationMembers.userId, ctx.session.user.id)
+            )
+          )
+          .limit(1);
+        hasOrgAccess = !!membership;
+      }
+
+      const [collab] = await ctx.db
+        .select()
+        .from(projectCollaborators)
+        .where(
+          and(
+            eq(projectCollaborators.projectId, task.projectId),
+            eq(projectCollaborators.collaboratorId, ctx.session.user.id)
+          )
+        )
+        .limit(1);
+      const isCollaborator = !!collab;
+
+      if (!isOwner && !hasOrgAccess && !isCollaborator) {
+        throw new Error("You don't have access to this task");
+      }
+
       const activities = await ctx.db
         .select()
         .from(taskActivityLog)

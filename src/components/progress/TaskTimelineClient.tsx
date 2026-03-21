@@ -1444,11 +1444,10 @@ export function TaskTimelineClient() {
   /* Status toggle mutation */
   const [togglingId, setTogglingId] = useState<number | null>(null);
   const updateStatus = typedApi.task.updateStatus.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       setTogglingId(null);
-      void utils.project.getMyProjects.invalidate();
-      void utils.task.getOrgActivity.invalidate();
-      void utils.task.getByProject.invalidate();
+      // Invalidate only the activity feed - projects will update via socket or next interaction
+      await utils.task.getOrgActivity.invalidate();
     },
     onError: () => {
       setTogglingId(null);
@@ -1466,11 +1465,10 @@ export function TaskTimelineClient() {
   /* Delete mutation */
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const deleteTask = typedApi.task.delete.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       setDeletingId(null);
-      void utils.project.getMyProjects.invalidate();
-      void utils.task.getOrgActivity.invalidate();
-      void utils.task.getByProject.invalidate();
+      // Invalidate only the activity feed - projects will update via socket or next interaction
+      await utils.task.getOrgActivity.invalidate();
     },
     onError: (err) => {
       setDeletingId(null);
