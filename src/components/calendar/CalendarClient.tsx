@@ -12,6 +12,8 @@ import {
   Zap,
   FolderOpen,
   X,
+  StickyNote,
+  Filter,
 } from "lucide-react";
 import { cn } from "~/lib/utils";
 
@@ -36,14 +38,27 @@ type CalendarEvent = {
   description: string;
 };
 
+type CalendarNote = {
+  id: number;
+  title: string | null;
+  calendarDate: Date | string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  passwordHash: string | null;
+  notebookId: number | null;
+  createdById: string;
+};
+
 type CalendarData = {
   tasks: CalendarTask[];
   events: CalendarEvent[];
+  notes: CalendarNote[];
 };
 
 type CalendarItem =
   | { kind: "task"; id: number; title: string; status: string; priority: string; projectTitle: string | null; date: Date }
-  | { kind: "event"; id: number; title: string; description?: string; date: Date };
+  | { kind: "event"; id: number; title: string; description?: string; date: Date }
+  | { kind: "note"; id: number; title: string; locked: boolean; date: Date };
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
@@ -89,16 +104,36 @@ const statusIcons: Record<string, typeof CheckCircle2> = {
 /*  Component                                                         */
 /* ------------------------------------------------------------------ */
 
+type ViewMode = "month" | "week" | "day";
+
+type Filters = {
+  q: string;
+  view: ViewMode;
+  types: Set<CalendarItem["kind"]>;
+  taskStatuses: Set<string>;
+  priorities: Set<string>;
+};
+
+const DEFAULT_FILTERS: Filters = {
+  q: "",
+  view: "month",
+  types: new Set(["task", "event", "note"]),
+  taskStatuses: new Set(["pending", "in_progress", "blocked", "completed"]),
+  priorities: new Set(["urgent", "high", "medium", "low"]),
+};
+
 export function CalendarClient() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [expandedItem, setExpandedItem] = useState<{ kind: string; id: number } | null>(null);
+  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
+  const [showFilters, setShowFilters] = useState(false);
 
   const from = startOfMonth(currentMonth);
   const to = endOfMonth(currentMonth);
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-  const { data, isLoading } = (api as any).task.getForCalendar.useQuery(
+  const { data, isLoading } = (api as any).calendar.getForRange.useQuery(
     { from, to },
     { staleTime: 1000 * 30 }
   ) as { data: CalendarData | undefined; isLoading: boolean };
@@ -159,6 +194,14 @@ export function CalendarClient() {
       map.get(k)!.push({ kind: "event", id: e.id, title: e.title, description: e.description, date: d });
     }
 
+    for (const n of data?.notes ?? []) {
+      if (!n.calendarDate) continue;
+      const d = new Date(n.calendarDate);
+      const k = key(d);
+      if (!map.has(k)) map.set(k, []);
+      map.get(k)!.push({ kind: "note", id: n.id, title: n.title ?? "Untitled note", locked: !!n.passwordHash, date: d });
+    }
+
     return map;
   }, [data]);
 
@@ -178,12 +221,84 @@ export function CalendarClient() {
     for (const e of data?.events ?? []) {
       items.push({ kind: "event", id: e.id, title: e.title, description: e.description, date: new Date(e.eventDate) });
     }
+    for (const n of data?.notes ?? []) {
+      if (!n.calendarDate) continue;
+      items.push({ kind: "note", id: n.id, title: n.title ?? "Untitled note", locked: !!n.passwordHash, date: new Date(n.calendarDate) });
+    }
     items.sort((a, b) => a.date.getTime() - b.date.getTime());
     return items;
   }, [data]);
 
-  /* ------------ items to show in right panel ------------ */
-  const rightPanelItems = selectedDate ? getItems(selectedDate) : allMonthItems;
+  const filteredAllMonthItems = useMemo(() => {
+    const q = filters.q.trim().toLowerCase();
+    return allMonthItems.filter((item) => {
+      if (!filters.types.has(item.kind)) return false;
+
+      if (item.kind === "task") {
+        if (!filters.taskStatuses.has(item.status)) return false;
+        if (!filters.priorities.has(item.priority)) return false;
+      }
+
+      if (q.length > 0) {
+        const hay = (
+          item.kind === "task"
+            ? `${item.title} ${item.projectTitle ?? ""}`
+            : item.kind === "event"
+              ? `${item.title} ${item.description ?? ""}`
+              : `${item.title}`
+        ).toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+
+      return true;
+    });
+  }, [allMonthItems, filters]);
+
+  const filteredItemsByDate = useMemo(() => {
+    const map = new Map<string, CalendarItem[]>();
+    const key = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+
+    for (const item of filteredAllMonthItems) {
+      const k = key(item.date);
+      if (!map.has(k)) map.set(k, []);
+      map.get(k)!.push(item);
+    }
+
+    for (const [, v] of map) v.sort((a, b) => a.date.getTime() - b.date.getTime());
+    return map;
+  }, [filteredAllMonthItems]);
+
+  const getFilteredItems = useCallback(
+    (d: Date) => filteredItemsByDate.get(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`) ?? [],
+    [filteredItemsByDate],
+  );
+
+  function startOfWeek(d: Date) {
+    const x = new Date(d);
+    x.setHours(0, 0, 0, 0);
+    x.setDate(x.getDate() - x.getDay());
+    return x;
+  }
+  function endOfWeek(d: Date) {
+    const x = startOfWeek(d);
+    x.setDate(x.getDate() + 6);
+    x.setHours(23, 59, 59, 999);
+    return x;
+  }
+
+  const rightPanelItems = useMemo(() => {
+    if (!selectedDate) return filteredAllMonthItems;
+    if (filters.view === "day") return getFilteredItems(selectedDate);
+    if (filters.view === "week") {
+      const wStart = startOfWeek(selectedDate).getTime();
+      const wEnd = endOfWeek(selectedDate).getTime();
+      return filteredAllMonthItems.filter((it) => {
+        const t = it.date.getTime();
+        return t >= wStart && t <= wEnd;
+      });
+    }
+    return getFilteredItems(selectedDate);
+  }, [filters.view, filteredAllMonthItems, getFilteredItems, selectedDate]);
 
   /* ------------ navigation ------------ */
 
@@ -251,6 +366,142 @@ export function CalendarClient() {
         </div>
       </div>
 
+      {/* Filter bar */}
+      <div className="mb-5 rounded-2xl border border-white/[0.06] bg-bg-elevated shadow-xl p-3">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <input
+                value={filters.q}
+                onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
+                placeholder="Search"
+                className="w-[260px] max-w-[70vw] px-3 py-2 rounded-xl bg-bg-primary border border-white/[0.06] text-sm text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowFilters((v) => !v)}
+              className={cn(
+                "px-3 py-2 rounded-xl border border-white/[0.06] text-sm font-medium flex items-center gap-2",
+                showFilters ? "bg-accent-primary/10 text-accent-primary" : "text-fg-secondary hover:bg-bg-secondary",
+              )}
+            >
+              <Filter size={16} />
+              Filters
+            </button>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {(["task", "event", "note"] as const).map((k) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() =>
+                  setFilters((f) => {
+                    const next = new Set(f.types);
+                    next.has(k) ? next.delete(k) : next.add(k);
+                    return { ...f, types: next };
+                  })
+                }
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-semibold border border-white/[0.08]",
+                  filters.types.has(k)
+                    ? k === "task"
+                      ? "bg-accent-primary/10 text-accent-primary"
+                      : k === "event"
+                        ? "bg-warning/10 text-warning"
+                        : "bg-info/10 text-info"
+                    : "text-fg-tertiary hover:bg-bg-secondary/50",
+                )}
+                aria-pressed={filters.types.has(k)}
+              >
+                {k === "task" ? "Tasks" : k === "event" ? "Events" : "Notes"}
+              </button>
+            ))}
+
+            <div className="h-6 w-px bg-white/[0.06] mx-1" />
+
+            {(["day", "week", "month"] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setFilters((f) => ({ ...f, view: v }))}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-semibold border border-white/[0.08]",
+                  filters.view === v
+                    ? "bg-accent-primary/10 text-accent-primary"
+                    : "text-fg-tertiary hover:bg-bg-secondary/50",
+                )}
+                aria-pressed={filters.view === v}
+              >
+                {v === "day" ? "Day" : v === "week" ? "Week" : "Month"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {showFilters && (
+          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="rounded-xl border border-white/[0.06] bg-bg-primary p-3">
+              <div className="text-[11px] font-bold text-fg-secondary mb-2">Task status</div>
+              <div className="flex flex-wrap gap-2">
+                {(["pending", "in_progress", "blocked", "completed"] as const).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() =>
+                      setFilters((f) => {
+                        const next = new Set(f.taskStatuses);
+                        next.has(s) ? next.delete(s) : next.add(s);
+                        return { ...f, taskStatuses: next };
+                      })
+                    }
+                    className={cn(
+                      "px-3 py-1.5 rounded-full text-xs font-semibold border border-white/[0.08]",
+                      filters.taskStatuses.has(s)
+                        ? "bg-accent-primary/10 text-accent-primary"
+                        : "text-fg-tertiary hover:bg-bg-secondary/50",
+                    )}
+                    aria-pressed={filters.taskStatuses.has(s)}
+                  >
+                    {s.replace("_", " ")}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-white/[0.06] bg-bg-primary p-3">
+              <div className="text-[11px] font-bold text-fg-secondary mb-2">Priority</div>
+              <div className="flex flex-wrap gap-2">
+                {(["urgent", "high", "medium", "low"] as const).map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() =>
+                      setFilters((f) => {
+                        const next = new Set(f.priorities);
+                        next.has(p) ? next.delete(p) : next.add(p);
+                        return { ...f, priorities: next };
+                      })
+                    }
+                    className={cn(
+                      "px-3 py-1.5 rounded-full text-xs font-semibold border border-white/[0.08]",
+                      filters.priorities.has(p)
+                        ? "bg-accent-primary/10 text-accent-primary"
+                        : "text-fg-tertiary hover:bg-bg-secondary/50",
+                    )}
+                    aria-pressed={filters.priorities.has(p)}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Split layout */}
       <div className="flex gap-5 items-start">
         {/* LEFT — Calendar grid */}
@@ -274,7 +525,7 @@ export function CalendarClient() {
                 const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
                 const isToday = isSameDay(day, today);
                 const isSelected = selectedDate ? isSameDay(day, selectedDate) : false;
-                const dayItems = getItems(day);
+                const dayItems = getFilteredItems(day);
                 const hasItems = dayItems.length > 0;
 
                 return (
@@ -314,7 +565,9 @@ export function CalendarClient() {
                               "flex items-center gap-1 px-1 py-0.5 rounded text-[9px] leading-tight font-medium truncate",
                               item.kind === "task"
                                 ? "bg-accent-primary/10 text-accent-primary"
-                                : "bg-warning/10 text-warning",
+                                : item.kind === "event"
+                                  ? "bg-warning/10 text-warning"
+                                  : "bg-info/10 text-info",
                             )}
                           >
                             {item.kind === "task" ? (
@@ -324,8 +577,10 @@ export function CalendarClient() {
                                   priorityConfig[item.priority]?.dot ?? "bg-accent-primary",
                                 )}
                               />
-                            ) : (
+                            ) : item.kind === "event" ? (
                               <CalendarDays size={8} className="shrink-0" />
+                            ) : (
+                              <StickyNote size={8} className="shrink-0" />
                             )}
                             <span className="truncate">{item.title}</span>
                           </div>
@@ -351,7 +606,7 @@ export function CalendarClient() {
               <h3 className="text-[14px] font-bold text-fg-primary">
                 {selectedDate
                   ? fmtDate(selectedDate, { weekday: "short", month: "short", day: "numeric" })
-                  : "All Tasks & Events"}
+                  : "All items"}
               </h3>
               <span className="text-[11px] text-fg-tertiary font-medium">
                 {rightPanelItems.length} item{rightPanelItems.length !== 1 ? "s" : ""}
@@ -362,7 +617,7 @@ export function CalendarClient() {
               <div className="py-10 text-center text-fg-tertiary text-sm">Loading...</div>
             ) : rightPanelItems.length === 0 ? (
               <div className="py-10 text-center text-fg-tertiary text-sm">
-                {selectedDate ? "Nothing scheduled for this day." : "No tasks or events this month."}
+                {selectedDate ? "Nothing scheduled for this day." : "No items this month."}
               </div>
             ) : (
               <div className="space-y-2">
@@ -479,6 +734,75 @@ export function CalendarClient() {
                                   {fmtDate(item.date, { weekday: "short", month: "long", day: "numeric", year: "numeric" })}
                                 </span>
                               </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  if (item.kind === "note") {
+                    return (
+                      <div key={`note-${item.id}`}>
+                        <button
+                          type="button"
+                          onClick={() => toggleExpand("note", item.id)}
+                          className={cn(
+                            "w-full text-left rounded-xl border-l-[3px] border-l-info border border-white/[0.06] bg-info/8 transition-all duration-150",
+                            isExpanded
+                              ? "ring-1 ring-info/20 shadow-md"
+                              : "hover:shadow-md hover:scale-[1.01]",
+                          )}
+                        >
+                          <div className="flex items-center gap-3 px-3 py-2.5">
+                            <div className="w-7 h-7 rounded-lg bg-info/15 text-info flex items-center justify-center shrink-0">
+                              <StickyNote size={14} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[13px] font-semibold text-fg-primary leading-tight truncate">
+                                {item.title}
+                              </p>
+                              <span className="text-[10px] text-info font-medium">
+                                Note
+                                {item.locked && <span className="text-fg-tertiary ml-2">Locked</span>}
+                                {!selectedDate && (
+                                  <span className="text-fg-tertiary ml-2">
+                                    {fmtDate(item.date, { month: "short", day: "numeric" })}
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+                          </div>
+                        </button>
+
+                        {isExpanded && (
+                          <div className="mt-1 ml-3 rounded-xl border border-white/[0.06] bg-bg-surface p-4 animate-[popIn_200ms_cubic-bezier(0.34,1.56,0.64,1)]">
+                            <div className="flex items-center justify-between mb-3">
+                              <h4 className="text-[13px] font-bold text-fg-primary">{item.title}</h4>
+                              <button
+                                type="button"
+                                onClick={() => setExpandedItem(null)}
+                                className="p-1 rounded-lg text-fg-tertiary hover:text-fg-primary hover:bg-bg-secondary transition-colors"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 text-[12px]">
+                                <StickyNote size={13} className="text-info shrink-0" />
+                                <span className="text-fg-secondary">Type:</span>
+                                <span className="text-fg-primary font-medium">Note</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-[12px]">
+                                <CalendarDays size={13} className="text-fg-tertiary shrink-0" />
+                                <span className="text-fg-secondary">Date:</span>
+                                <span className="text-fg-primary font-medium">
+                                  {fmtDate(item.date, { weekday: "short", month: "long", day: "numeric", year: "numeric" })}
+                                </span>
+                              </div>
+                              {item.locked && (
+                                <div className="text-[12px] text-fg-tertiary">This note is password protected.</div>
+                              )}
                             </div>
                           </div>
                         )}

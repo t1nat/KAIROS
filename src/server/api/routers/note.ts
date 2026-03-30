@@ -22,6 +22,7 @@ export const noteRouter = createTRPCRouter({
       title: z.string().optional(),
       password: z.string().optional(),
       notebookId: z.number().optional(),
+      calendarDate: z.date().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       let passwordHash: string | null = null;
@@ -55,10 +56,11 @@ export const noteRouter = createTRPCRouter({
           title: input.title ?? null,
           createdById: ctx.session.user.id,
           notebookId: input.notebookId ?? null,
+          calendarDate: input.calendarDate ?? null,
           passwordHash: passwordHash,
           passwordSalt: passwordSalt,
           shareStatus: 'private',
-        }).returning(); 
+        }).returning();
 
         if (!newNote) {
           console.error("❌ Insertion failed, returned no note.");

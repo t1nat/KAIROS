@@ -14,6 +14,30 @@
     "calendar": "Календар",
     "organizations": "Организации"
   },
+  "calendar": {
+    "filters": {
+      "searchPlaceholder": "Търсене",
+      "filters": "Филтри",
+      "tasks": "Задачи",
+      "events": "Събития",
+      "notes": "Бележки",
+      "day": "Ден",
+      "week": "Седмица",
+      "month": "Месец",
+      "taskStatus": "Статус на задача",
+      "priority": "Приоритет",
+      "allItems": "Всички",
+      "noItemsMonth": "Няма елементи този месец.",
+      "noItemsDay": "Няма нищо планирано за този ден."
+    }
+  },
+  "notes": {
+    "calendar": {
+      "addToCalendar": "Добави в календара",
+      "addToCalendarDesc": "Покажи бележката на конкретна дата",
+      "calendarDate": "Дата"
+    }
+  },
   "progress": {
     "title": "Прогрес",
     "loading": "Зареждане на прогрес…",

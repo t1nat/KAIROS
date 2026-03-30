@@ -14,6 +14,30 @@
     "calendar": "Calendar",
     "organizations": "Organizations"
   },
+  "calendar": {
+    "filters": {
+      "searchPlaceholder": "Search",
+      "filters": "Filters",
+      "tasks": "Tasks",
+      "events": "Events",
+      "notes": "Notes",
+      "day": "Day",
+      "week": "Week",
+      "month": "Month",
+      "taskStatus": "Task status",
+      "priority": "Priority",
+      "allItems": "All items",
+      "noItemsMonth": "No items this month.",
+      "noItemsDay": "Nothing scheduled for this day."
+    }
+  },
+  "notes": {
+    "calendar": {
+      "addToCalendar": "Add to calendar",
+      "addToCalendarDesc": "Show this note on a specific date",
+      "calendarDate": "Calendar date"
+    }
+  },
   "progress": {
     "title": "Progress",
     "loading": "Loading progress…",

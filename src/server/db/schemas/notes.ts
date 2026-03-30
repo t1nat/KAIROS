@@ -36,6 +36,11 @@ export const stickyNotes = createTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     notebookId: integer("notebook_id").references(() => notebooks.id, { onDelete: "set null" }),
+    /**
+     * When set, the note should appear on the calendar at this date/time.
+     * Null means it's a regular note (not scheduled for calendar).
+     */
+    calendarDate: timestamp("calendar_date"),
     createdAt: timestamp("created_at")
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -49,6 +54,7 @@ export const stickyNotes = createTable(
   (t) => [
     index("note_created_by_idx").on(t.createdById),
     index("note_notebook_idx").on(t.notebookId),
+    index("note_calendar_date_idx").on(t.calendarDate),
   ]
 );
 

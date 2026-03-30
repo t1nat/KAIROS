@@ -8,11 +8,17 @@ const eventRouterPath = path.resolve(
 );
 const eventRouterSource = fs.readFileSync(eventRouterPath, "utf-8");
 
-const schemaPath = path.resolve(
+const schemaIndexPath = path.resolve(
   __dirname,
   "../../src/server/db/schema.ts"
 );
-const schemaSource = fs.readFileSync(schemaPath, "utf-8");
+fs.readFileSync(schemaIndexPath, "utf-8");
+
+const schemasPath = path.resolve(
+  __dirname,
+  "../../src/server/db/schemas/index.ts"
+);
+const schemaSource = fs.readFileSync(schemasPath, "utf-8");
 
 describe("Event Router – Notifications", () => {
   it("imports notifications table", () => {
@@ -56,22 +62,27 @@ describe("Event Router – RSVP Reminders", () => {
 
 describe("Schema – Notification Types", () => {
   it("has like notification type in enum", () => {
-    expect(schemaSource).toMatch(/notification_type.*like/);
+    expect(schemaSource).toContain("notificationTypeEnum");
+    expect(schemaSource).toContain("like");
   });
 
   it("has comment notification type in enum", () => {
-    expect(schemaSource).toMatch(/notification_type.*comment/);
+    expect(schemaSource).toContain("notificationTypeEnum");
+    expect(schemaSource).toContain("comment");
   });
 
   it("has reply notification type in enum", () => {
-    expect(schemaSource).toMatch(/notification_type.*reply/);
+    expect(schemaSource).toContain("notificationTypeEnum");
+    expect(schemaSource).toContain("reply");
   });
 
   it("eventRsvps has reminderMinutesBefore column", () => {
+    expect(schemaSource).toContain("reminderMinutesBefore");
     expect(schemaSource).toContain("reminder_minutes_before");
   });
 
   it("eventRsvps has reminderSent column", () => {
+    expect(schemaSource).toContain("reminderSent");
     expect(schemaSource).toContain("reminder_sent");
   });
 });

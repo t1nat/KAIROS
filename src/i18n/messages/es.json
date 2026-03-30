@@ -13,6 +13,30 @@
     "newProject": "Nuevo proyecto",
     "calendar": "Calendario"
   },
+  "calendar": {
+    "filters": {
+      "searchPlaceholder": "Buscar",
+      "filters": "Filtros",
+      "tasks": "Tareas",
+      "events": "Eventos",
+      "notes": "Notas",
+      "day": "Día",
+      "week": "Semana",
+      "month": "Mes",
+      "taskStatus": "Estado de la tarea",
+      "priority": "Prioridad",
+      "allItems": "Todos",
+      "noItemsMonth": "No hay elementos este mes.",
+      "noItemsDay": "No hay nada programado para este día."
+    }
+  },
+  "notes": {
+    "calendar": {
+      "addToCalendar": "Añadir al calendario",
+      "addToCalendarDesc": "Mostrar esta nota en una fecha específica",
+      "calendarDate": "Fecha del calendario"
+    }
+  },
   "progress": {
     "title": "Progreso",
     "loading": "Cargando progreso…",

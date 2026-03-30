@@ -54,6 +54,8 @@ export function NotesDashboard() {
   const [newContent, setNewContent] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newNotebookId, setNewNotebookId] = useState<number | null>(null);
+  const [addToCalendar, setAddToCalendar] = useState(false);
+  const [newCalendarDate, setNewCalendarDate] = useState<Date | null>(null);
 
   // ---- Password state ----
   const [passwordInputs, setPasswordInputs] = useState<Record<number, string>>({});
@@ -897,6 +899,56 @@ export function NotesDashboard() {
                   </div>
                 )}
               </div>
+
+              <div className="mt-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                <label className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-xs font-bold text-fg-primary">Add to calendar</div>
+                    <div className="text-[11px] text-fg-tertiary">Show this note on a specific date</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAddToCalendar((v) => {
+                        const next = !v;
+                        if (!next) setNewCalendarDate(null);
+                        return next;
+                      });
+                    }}
+                    className={cn(
+                      "h-6 w-11 rounded-full transition relative border border-white/[0.10]",
+                      addToCalendar ? "bg-accent-primary/60" : "bg-white/[0.06]",
+                    )}
+                    aria-pressed={addToCalendar}
+                    aria-label="Add to calendar"
+                  >
+                    <span
+                      className={cn(
+                        "absolute top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-white transition",
+                        addToCalendar ? "right-0.5" : "left-0.5",
+                      )}
+                    />
+                  </button>
+                </label>
+
+                {addToCalendar && (
+                  <div className="mt-3">
+                    <label className="block text-[10px] uppercase tracking-wider text-fg-tertiary font-bold mb-1.5">Calendar date</label>
+                    <input
+                      type="date"
+                      value={newCalendarDate ? newCalendarDate.toISOString().slice(0, 10) : ""}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (!v) { setNewCalendarDate(null); return; }
+                        // Create a local date (midday) to avoid timezone shifting.
+                        const [y, m, d] = v.split("-").map(Number);
+                        setNewCalendarDate(new Date(y!, (m! - 1), d!, 12, 0, 0));
+                      }}
+                      className="w-full px-3 py-2 bg-bg-primary rounded-lg text-sm text-fg-primary border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex gap-3 mt-5">
@@ -908,6 +960,7 @@ export function NotesDashboard() {
                     title: newTitle || undefined,
                     password: newPassword || undefined,
                     notebookId: newNotebookId ?? undefined,
+                    calendarDate: addToCalendar ? (newCalendarDate ?? undefined) : undefined,
                   });
                 }}
                 disabled={!newContent.trim() || createNote.isPending}

@@ -120,6 +120,13 @@
       "when": 1773440618414,
       "tag": "0018_supreme_valkyrie",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1774856550689,
+      "tag": "0019_add_calendar_date_to_sticky_notes",
+      "breakpoints": true
     }
   ]
 }
