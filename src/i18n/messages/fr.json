@@ -8,6 +8,7 @@
     "notes": "Notes",
     "progress": "Progrès",
     "events": "Événements",
+    "chat": "Chat",
     "quickActions": "Actions rapides",
     "newProject": "Nouveau projet",
     "calendar": "Calendrier"
@@ -449,6 +450,7 @@
     "search": "Rechercher",
     "copy": "Copier",
     "copied": "Copié",
+    "menu": "Menu",
     "lightMode": "Passer en mode clair",
     "darkMode": "Passer en mode sombre"
   },

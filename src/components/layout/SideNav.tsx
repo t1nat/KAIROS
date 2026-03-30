@@ -50,7 +50,7 @@ export function SideNav() {
     { href: "/notes", icon: BookText, label: t("notes") },
     { href: "/progress", icon: TrendingUp, label: t("progress") },
     { href: "/calendar", icon: CalendarCheck, label: t("calendar") },
-    { href: "/chat", icon: MessageCircle, label: "Chat" },
+    { href: "/chat", icon: MessageCircle, label: t("chat") },
     { href: "/publish", icon: CalendarDays, label: t("events") },
   ];
 
@@ -101,10 +101,10 @@ export function SideNav() {
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="p-2 hover:bg-bg-secondary/60 rounded-lg transition-colors"
-          aria-label={isMobileMenuOpen ? tCommon("close") : "Menu"}
+          aria-label={isMobileMenuOpen ? tCommon("close") : tCommon("menu")}
           aria-expanded={isMobileMenuOpen}
           aria-controls={mobileNavId}
-          title={isMobileMenuOpen ? tCommon("close") : "Menu"}
+          title={isMobileMenuOpen ? tCommon("close") : tCommon("menu")}
         >
           {isMobileMenuOpen ? (
             <X size={24} className="text-fg-primary" />
