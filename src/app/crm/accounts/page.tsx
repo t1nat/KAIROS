@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
 import { SideNav } from "~/components/layout/SideNav";
@@ -8,7 +8,7 @@ import { NotificationSystem } from "~/components/notifications/NotificationSyste
 import { WorkspaceIndicator } from "~/components/orgs/WorkspaceIndicator";
 import { auth } from "~/server/auth";
 
-export default async function CrmHomePage() {
+export default async function CrmAccountsPage() {
   const session = await auth();
   if (!session?.user) {
     redirect("/api/auth/signin");
@@ -23,9 +23,15 @@ export default async function CrmHomePage() {
         <header className="sticky top-16 lg:top-0 z-30 topbar-solid">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-3 sm:py-4 flex flex-wrap justify-between items-center gap-3">
             <div className="flex items-center gap-3">
-              <h1 className="text-xl font-bold text-fg-primary tracking-tight">{tNav("crm")}</h1>
+              <h1 className="text-xl font-bold text-fg-primary tracking-tight">{tNav("crm")}: Accounts</h1>
             </div>
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
+              <Link
+                href="/crm"
+                className="text-sm text-fg-secondary hover:text-fg-primary underline underline-offset-4"
+              >
+                Back
+              </Link>
               <WorkspaceIndicator compact />
               <div className="hidden sm:block h-6 w-px bg-border-medium mx-1"></div>
               <NotificationSystem />
@@ -37,24 +43,9 @@ export default async function CrmHomePage() {
         <main id="main-content" className="flex-1 w-full overflow-auto">
           <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 pt-6">
             <div className="rounded-xl border border-border-medium bg-bg-secondary p-6">
-              <h2 className="text-lg font-semibold text-fg-primary">CRM MVP</h2>
-              <p className="mt-2 text-sm text-fg-secondary">
-                Start here:
+              <p className="text-sm text-fg-secondary">
+                Accounts UI will be wired to tRPC next (list + create/update).
               </p>
-              <div className="mt-4 flex flex-wrap gap-3">
-                <Link
-                  href="/crm/accounts"
-                  className="px-3 py-2 rounded-lg bg-bg-elevated border border-border-medium text-sm text-fg-primary hover:bg-bg-secondary transition-colors"
-                >
-                  Accounts
-                </Link>
-                <Link
-                  href="/crm/deals"
-                  className="px-3 py-2 rounded-lg bg-bg-elevated border border-border-medium text-sm text-fg-primary hover:bg-bg-secondary transition-colors"
-                >
-                  Deals
-                </Link>
-              </div>
             </div>
           </div>
         </main>
