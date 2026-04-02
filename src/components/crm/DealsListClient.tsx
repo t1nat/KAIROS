@@ -70,7 +70,7 @@ export function DealsListClient() {
                 <div>
                   <div className="text-sm font-semibold text-fg-primary">{d.name}</div>
                   <div className="text-xs text-fg-secondary">
-                    Amount: {d.amountCents != null ? (d.amountCents / 100).toFixed(2) : "—"} · Close: {d.closeDate ?? "—"}
+                    Amount: {d.amount ?? "—"} · Close: {d.closeDate ?? "—"}
                   </div>
                 </div>
                 <Link
