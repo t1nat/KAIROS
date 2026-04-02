@@ -6,6 +6,7 @@ import { SideNav } from "~/components/layout/SideNav";
 import { UserDisplay } from "~/components/layout/UserDisplay";
 import { NotificationSystem } from "~/components/notifications/NotificationSystem";
 import { WorkspaceIndicator } from "~/components/orgs/WorkspaceIndicator";
+import { DealsListClient } from "~/components/crm/DealsListClient";
 import { auth } from "~/server/auth";
 
 export default async function CrmDealsPage() {
@@ -42,11 +43,7 @@ export default async function CrmDealsPage() {
 
         <main id="main-content" className="flex-1 w-full overflow-auto">
           <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 pt-6">
-            <div className="rounded-xl border border-border-medium bg-bg-secondary p-6">
-              <p className="text-sm text-fg-secondary">
-                Deals UI will be wired to tRPC next (list + create/update + pipeline/stage).
-              </p>
-            </div>
+            <DealsListClient />
           </div>
         </main>
       </div>
