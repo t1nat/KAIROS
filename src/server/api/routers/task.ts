@@ -1,8 +1,9 @@
 
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { tasks, projects, projectCollaborators, taskActivityLog, organizationMembers, users, organizations } from "~/server/db/schema";
-import { eq, and, desc, sql, isNull } from "drizzle-orm";
+import { tasks, projects, projectCollaborators, taskActivityLog, organizationMembers, users, organizations, events } from "~/server/db/schema";
+import { eq, and, desc, sql, isNull, gte, lte, isNotNull, or } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 export const taskRouter = createTRPCRouter({
  
@@ -14,7 +15,9 @@ export const taskRouter = createTRPCRouter({
         description: z.string().optional(),
         assignedToId: z.string().optional(),
         priority: z.enum(["low", "medium", "high", "urgent"]),
+        status: z.enum(["pending", "in_progress", "completed", "blocked"]).default("pending"),
         dueDate: z.date().optional(),
+        clientRequestId: z.string().max(128).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -86,6 +89,22 @@ export const taskRouter = createTRPCRouter({
 
       const nextOrderIndex = (maxRow?.max ?? 0) + 1;
 
+      // Deduplication: if clientRequestId is provided, check for existing task
+      if (input.clientRequestId) {
+        const [existing] = await ctx.db
+          .select()
+          .from(tasks)
+          .where(
+            and(
+              eq(tasks.projectId, input.projectId),
+              eq(tasks.clientRequestId, input.clientRequestId)
+            )
+          );
+        if (existing) {
+          return existing;
+        }
+      }
+
       const [task] = await ctx.db
         .insert(tasks)
         .values({
@@ -95,9 +114,10 @@ export const taskRouter = createTRPCRouter({
           assignedToId: input.assignedToId,
           priority: input.priority,
           dueDate: input.dueDate,
-          status: "pending",
+          status: input.status,
           createdById: ctx.session.user.id,
           orderIndex: nextOrderIndex,
+          clientRequestId: input.clientRequestId,
         })
         .returning();
 
@@ -120,6 +140,8 @@ export const taskRouter = createTRPCRouter({
       z.object({
         taskId: z.number(),
         status: z.enum(["pending", "in_progress", "completed", "blocked"]),
+        /** Optional short summary/note when completing. */
+        completionNote: z.string().max(2000).optional().nullable(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -185,6 +207,7 @@ export const taskRouter = createTRPCRouter({
         updatedAt: Date;
         completedAt?: Date | null;
         completedById?: string | null;
+        completionNote?: string | null;
         lastEditedById: string;
         lastEditedAt: Date;
       } = {
@@ -198,11 +221,16 @@ export const taskRouter = createTRPCRouter({
       if (input.status === "completed" && oldStatus !== "completed") {
         updateData.completedAt = new Date();
         updateData.completedById = ctx.session.user.id;
+        if (input.completionNote !== undefined) {
+          updateData.completionNote = input.completionNote;
+        }
       }
       
       else if (input.status !== "completed" && oldStatus === "completed") {
         updateData.completedAt = null;
         updateData.completedById = null;
+        // Clearing completion resets the note unless caller explicitly wants to keep it.
+        updateData.completionNote = null;
       }
 
       await ctx.db
@@ -389,10 +417,254 @@ export const taskRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  
+  /**
+   * Hard-remove a task even after it exists on the timeline.
+   * Intended for admins/org owners / project owners.
+   */
+  adminDiscard: protectedProcedure
+    .input(z.object({ taskId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const [task] = await ctx.db.select().from(tasks).where(eq(tasks.id, input.taskId));
+      if (!task) throw new Error("Task not found");
+
+      const [project] = await ctx.db
+        .select()
+        .from(projects)
+        .where(eq(projects.id, task.projectId));
+
+      if (!project) throw new Error("Project not found");
+
+      const isProjectOwner = project.createdById === ctx.session.user.id;
+
+      // Org admins/owner can discard tasks.
+      let isOrgOwnerOrAdmin = false;
+      if (project.organizationId) {
+        const [org] = await ctx.db
+          .select()
+          .from(organizations)
+          .where(eq(organizations.id, project.organizationId));
+
+        const [membership] = await ctx.db
+          .select()
+          .from(organizationMembers)
+          .where(
+            and(
+              eq(organizationMembers.organizationId, project.organizationId),
+              eq(organizationMembers.userId, ctx.session.user.id),
+            ),
+          );
+
+        const isOrgOwner = org?.createdById === ctx.session.user.id;
+        const isOrgAdmin = membership?.role === "admin";
+        isOrgOwnerOrAdmin = !!isOrgOwner || !!isOrgAdmin;
+      }
+
+      if (!isProjectOwner && !isOrgOwnerOrAdmin) {
+        throw new Error("Only project owner or org admin/owner can discard tasks");
+      }
+
+      await ctx.db.delete(tasks).where(eq(tasks.id, input.taskId));
+      return { success: true };
+    }),
+
+  /**
+   * Set/update the completion note.
+   * Allowed for: the completer, project owner, org owner/admin.
+   */
+  setCompletionNote: protectedProcedure
+    .input(z.object({ taskId: z.number(), completionNote: z.string().max(2000).nullable() }))
+    .mutation(async ({ ctx, input }) => {
+      const [task] = await ctx.db.select().from(tasks).where(eq(tasks.id, input.taskId));
+      if (!task) throw new Error("Task not found");
+
+      const [project] = await ctx.db
+        .select()
+        .from(projects)
+        .where(eq(projects.id, task.projectId));
+
+      if (!project) throw new Error("Project not found");
+
+      const isProjectOwner = project.createdById === ctx.session.user.id;
+      const isCompleter = task.completedById === ctx.session.user.id;
+
+      let isOrgOwnerOrAdmin = false;
+      if (project.organizationId) {
+        const [org] = await ctx.db
+          .select()
+          .from(organizations)
+          .where(eq(organizations.id, project.organizationId));
+
+        const [membership] = await ctx.db
+          .select()
+          .from(organizationMembers)
+          .where(
+            and(
+              eq(organizationMembers.organizationId, project.organizationId),
+              eq(organizationMembers.userId, ctx.session.user.id),
+            ),
+          );
+
+        const isOrgOwner = org?.createdById === ctx.session.user.id;
+        const isOrgAdmin = membership?.role === "admin";
+        isOrgOwnerOrAdmin = !!isOrgOwner || !!isOrgAdmin;
+      }
+
+      if (!isCompleter && !isProjectOwner && !isOrgOwnerOrAdmin) {
+        throw new Error("Not allowed to edit completion note");
+      }
+
+      await ctx.db
+        .update(tasks)
+        .set({
+          completionNote: input.completionNote,
+          updatedAt: new Date(),
+          lastEditedById: ctx.session.user.id,
+          lastEditedAt: new Date(),
+        })
+        .where(eq(tasks.id, input.taskId));
+
+      await ctx.db.insert(taskActivityLog).values({
+        taskId: input.taskId,
+        userId: ctx.session.user.id,
+        action: "completion_note_set",
+        newValue: input.completionNote ?? "",
+      });
+
+      return { success: true };
+    }),
+
+  getByProject: protectedProcedure
+    .input(z.object({ projectId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const [project] = await ctx.db
+        .select()
+        .from(projects)
+        .where(eq(projects.id, input.projectId));
+
+      if (!project) throw new Error("Project not found");
+
+      const isOwner = project.createdById === ctx.session.user.id;
+
+      let hasOrgAccess = false;
+      if (project.organizationId) {
+        const [membership] = await ctx.db
+          .select()
+          .from(organizationMembers)
+          .where(
+            and(
+              eq(organizationMembers.organizationId, project.organizationId),
+              eq(organizationMembers.userId, ctx.session.user.id)
+            )
+          )
+          .limit(1);
+        hasOrgAccess = !!membership;
+      }
+
+      if (!isOwner && !hasOrgAccess) {
+        const [collaboration] = await ctx.db
+          .select()
+          .from(projectCollaborators)
+          .where(
+            and(
+              eq(projectCollaborators.projectId, input.projectId),
+              eq(projectCollaborators.collaboratorId, ctx.session.user.id)
+            )
+          )
+          .limit(1);
+        if (!collaboration) throw new Error("Access denied");
+      }
+
+      const creatorUsers = alias(users, "creator_users");
+      const assigneeUsers = alias(users, "assignee_users");
+
+      const rows = await ctx.db
+        .select({
+          id: tasks.id,
+          title: tasks.title,
+          description: tasks.description,
+          status: tasks.status,
+          priority: tasks.priority,
+          dueDate: tasks.dueDate,
+          orderIndex: tasks.orderIndex,
+          createdAt: tasks.createdAt,
+          creator: {
+            id: creatorUsers.id,
+            name: creatorUsers.name,
+            image: creatorUsers.image,
+          },
+          assignee: {
+            id: assigneeUsers.id,
+            name: assigneeUsers.name,
+            image: assigneeUsers.image,
+          },
+        })
+        .from(tasks)
+        .leftJoin(creatorUsers, eq(tasks.createdById, creatorUsers.id))
+        .leftJoin(assigneeUsers, eq(tasks.assignedToId, assigneeUsers.id))
+        .where(eq(tasks.projectId, input.projectId))
+        .orderBy(tasks.orderIndex);
+
+      return rows;
+    }),
+
   getActivityLog: protectedProcedure
     .input(z.object({ taskId: z.number() }))
     .query(async ({ ctx, input }) => {
+      // First, verify the user has access to this task's project
+      const [task] = await ctx.db
+        .select({ projectId: tasks.projectId })
+        .from(tasks)
+        .where(eq(tasks.id, input.taskId))
+        .limit(1);
+
+      if (!task) {
+        throw new Error("Task not found");
+      }
+
+      // Check project access (owner, org member, or collaborator)
+      const [project] = await ctx.db
+        .select()
+        .from(projects)
+        .where(eq(projects.id, task.projectId))
+        .limit(1);
+
+      if (!project) {
+        throw new Error("Project not found");
+      }
+
+      const isOwner = project.createdById === ctx.session.user.id;
+
+      let hasOrgAccess = false;
+      if (project.organizationId) {
+        const [membership] = await ctx.db
+          .select()
+          .from(organizationMembers)
+          .where(
+            and(
+              eq(organizationMembers.organizationId, project.organizationId),
+              eq(organizationMembers.userId, ctx.session.user.id)
+            )
+          )
+          .limit(1);
+        hasOrgAccess = !!membership;
+      }
+
+      const [collab] = await ctx.db
+        .select()
+        .from(projectCollaborators)
+        .where(
+          and(
+            eq(projectCollaborators.projectId, task.projectId),
+            eq(projectCollaborators.collaboratorId, ctx.session.user.id)
+          )
+        )
+        .limit(1);
+      const isCollaborator = !!collab;
+
+      if (!isOwner && !hasOrgAccess && !isCollaborator) {
+        throw new Error("You don't have access to this task");
+      }
+
       const activities = await ctx.db
         .select()
         .from(taskActivityLog)
@@ -546,6 +818,7 @@ export const taskRouter = createTRPCRouter({
         returnScope = "personal";
       }
 
+      const assigneeUsers = alias(users, "assignee_users");
       const rows = await ctx.db
         .select({
           id: taskActivityLog.id,
@@ -563,15 +836,94 @@ export const taskRouter = createTRPCRouter({
             email: users.email,
             image: users.image,
           },
+          assignee: {
+            id: assigneeUsers.id,
+            name: assigneeUsers.name,
+            image: assigneeUsers.image,
+          },
         })
         .from(taskActivityLog)
         .innerJoin(tasks, eq(taskActivityLog.taskId, tasks.id))
         .innerJoin(projects, eq(tasks.projectId, projects.id))
         .leftJoin(users, eq(taskActivityLog.userId, users.id))
+        .leftJoin(assigneeUsers, eq(tasks.assignedToId, assigneeUsers.id))
         .where(whereCondition)
         .orderBy(desc(taskActivityLog.createdAt))
         .limit(limit);
 
       return { scope: returnScope, rows };
+    }),
+
+  /**
+   * Calendar endpoint — returns tasks with due dates and events within a date range.
+   */
+  getForCalendar: protectedProcedure
+    .input(
+      z.object({
+        from: z.date(),
+        to: z.date(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      // Get organisations the user belongs to
+      const memberships = await ctx.db
+        .select({ organizationId: organizationMembers.organizationId })
+        .from(organizationMembers)
+        .where(eq(organizationMembers.userId, ctx.session.user.id));
+      const orgIds = memberships.map((m) => m.organizationId);
+
+      // Tasks with a due date in the range that the user can see
+      const taskRows = await ctx.db
+        .select({
+          id: tasks.id,
+          title: tasks.title,
+          status: tasks.status,
+          priority: tasks.priority,
+          dueDate: tasks.dueDate,
+          projectId: tasks.projectId,
+          projectTitle: projects.title,
+        })
+        .from(tasks)
+        .innerJoin(projects, eq(tasks.projectId, projects.id))
+        .where(
+          and(
+            isNotNull(tasks.dueDate),
+            gte(tasks.dueDate, input.from),
+            lte(tasks.dueDate, input.to),
+            orgIds.length
+              ? or(
+                  sql`${projects.organizationId} IN ${orgIds}`,
+                  and(
+                    eq(projects.createdById, ctx.session.user.id),
+                    isNull(projects.organizationId)
+                  )
+                )
+              : and(
+                  eq(projects.createdById, ctx.session.user.id),
+                  isNull(projects.organizationId)
+                )
+          )
+        )
+        .orderBy(tasks.dueDate);
+
+      // Events created by the user within the range
+      const eventRows = await ctx.db
+        .select({
+          id: events.id,
+          title: events.title,
+          eventDate: events.eventDate,
+          description: events.description,
+        })
+        .from(events)
+        .where(
+          and(
+            eq(events.createdById, ctx.session.user.id),
+            gte(events.eventDate, input.from),
+            lte(events.eventDate, input.to)
+          )
+        )
+        .orderBy(events.eventDate);
+
+      return { tasks: taskRows, events: eventRows };
     }),
 });

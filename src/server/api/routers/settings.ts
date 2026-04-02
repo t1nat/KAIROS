@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { users } from "~/server/db/schema";
+import { users, accounts, sessions } from "~/server/db/schema";
 import { eq } from "drizzle-orm";
 import * as argon2 from "argon2";
 
@@ -147,7 +147,12 @@ export const settingsRouter = createTRPCRouter({
       const rawHint = input.hint ?? "";
       const sanitizedHint = rawHint.trim() === "" ? null : rawHint.trim();
 
-      const hash = await argon2.hash(input.pin);
+      const hash = await argon2.hash(input.pin, {
+        type: argon2.argon2id,
+        memoryCost: 65536,
+        timeCost: 3,
+        parallelism: 4,
+      });
 
       await ctx.db
         .update(users)
@@ -215,8 +220,13 @@ export const settingsRouter = createTRPCRouter({
  
   deleteAllData: protectedProcedure
     .mutation(async ({ ctx }) => {
-      await ctx.db.delete(users)
-        .where(eq(users.id, ctx.session.user.id));
+      const userId = ctx.session.user.id;
+
+      // Explicitly delete sessions and accounts first to avoid FK issues
+      // even with cascade (e.g. if migration hasn't run yet on old DBs)
+      await ctx.db.delete(sessions).where(eq(sessions.userId, userId));
+      await ctx.db.delete(accounts).where(eq(accounts.userId, userId));
+      await ctx.db.delete(users).where(eq(users.id, userId));
 
       return { success: true };
     }),

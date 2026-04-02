@@ -7,7 +7,10 @@ import { CreateProjectContainer } from "~/components/projects/CreateProjectConta
 import { NotesList } from "~/components/notes/NotesList";
 import { NotificationSystem } from "~/components/notifications/NotificationSystem";
 import { WorkspaceIndicator } from "~/components/orgs/WorkspaceIndicator";
-import { LogIn, ArrowRight, FolderKanban } from "lucide-react";
+import { OnboardingGate } from "~/components/auth/OnboardingGate";
+import { TaskTimelineClient } from "~/components/progress/TaskTimelineClient";
+import { LogIn, ArrowRight, FolderKanban, StickyNote } from "lucide-react";
+import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 
 export default async function CreatePage({ 
@@ -60,13 +63,11 @@ export default async function CreatePage({
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary relative">
-      {/* Fixed background circles - independent of content */}
-      <div className="fixed inset-0 pointer-events-none z-0 bg-[radial-gradient(900px_circle_at_10%_10%,rgb(var(--accent-primary)/0.22),transparent_55%),radial-gradient(700px_circle_at_90%_15%,rgb(var(--accent-primary)/0.16),transparent_55%),radial-gradient(900px_circle_at_50%_85%,rgb(var(--accent-primary)/0.14),transparent_60%)]" />
-      
+    <OnboardingGate>
+    <div className="min-h-screen bg-bg-primary relative timeline-page">
       <SideNav />
 
-      <div className="lg:ml-16 min-h-screen flex flex-col pt-16 lg:pt-0 relative z-10">
+      <div className="lg:ml-16 min-h-screen flex flex-col pt-16 lg:pt-0 relative z-10 kairos-page-enter">
         <header className="sticky top-16 lg:top-0 z-30 topbar-solid shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-3 sm:py-4 flex flex-wrap justify-between items-center gap-3">
             <div className="flex items-center gap-4">
@@ -83,7 +84,11 @@ export default async function CreatePage({
                 >
                   {shouldShowProjectManagement ? (
                     <FolderKanban className="text-white" size={22} />
-                  ) : null}
+                  ) : shouldShowNoteForm ? (
+                    <StickyNote className="text-white" size={22} />
+                  ) : (
+                    <Image src="/workspace.png" alt="Workspace" width={28} height={28} className="invert dark:invert-0" />
+                  )}
                 </div>
                 <div>
                   <h1 className="text-xl font-semibold text-fg-primary tracking-[-0.02em] font-display">
@@ -96,11 +101,10 @@ export default async function CreatePage({
                 </div>
               </div>
               
-              {/* Organization Code - positioned on the left */}
-              <div className="hidden sm:block h-6 w-px bg-border-medium mx-2"></div>
-              <WorkspaceIndicator compact />
             </div>
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
+              <WorkspaceIndicator compact />
+              <div className="hidden sm:block h-6 w-px bg-border-medium mx-2"></div>
               <NotificationSystem />
               <UserDisplay />
             </div>
@@ -115,21 +119,20 @@ export default async function CreatePage({
               </div>
             ) : shouldShowNoteForm ? (
               <div className="flex flex-col lg:flex-row gap-4 w-full h-[calc(100vh-200px)] mt-4">
-                <div className="w-full lg:w-[400px] lg:flex-shrink-0 flex flex-col p-5 rounded-3xl bg-bg-elevated shadow-xl shadow-accent-primary/10">
+                <div className="w-full lg:w-[400px] lg:flex-shrink-0 flex flex-col p-5 rounded-xl bg-bg-elevated shadow-xl shadow-accent-primary/10">
                   <CreateNoteForm />
                 </div>
-                <div className="flex-1 p-5 overflow-hidden rounded-3xl bg-bg-elevated shadow-xl shadow-accent-primary/10">
+                <div className="flex-1 p-5 overflow-hidden rounded-xl bg-bg-elevated shadow-xl shadow-accent-primary/10">
                   <NotesList />
                 </div>
               </div>
             ) : (
-              <div className="relative max-w-7xl mx-auto pt-6">
-                <CreateProjectContainer userId={session.user.id} />
-              </div>
+              <TaskTimelineClient />
             )}
           </div>
         </main>
       </div>
     </div>
+    </OnboardingGate>
   );
 }

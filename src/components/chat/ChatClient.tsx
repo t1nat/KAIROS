@@ -1,14 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { api } from "~/trpc/react";
 import type { RouterOutputs } from "~/trpc/react";
 import Image from "next/image";
-import { Send, Paperclip, Search, MoreVertical, X, Plus, MessageCircle } from "lucide-react";
+import { Send, Paperclip, Search, MoreVertical, X, Plus, MessageCircle, Users, Trash2 } from "lucide-react";
 import { useToast } from "~/components/providers/ToastProvider";
 import { useUploadThing } from "~/lib/uploadthing";
+import { useSocket } from "~/components/providers/SocketProvider";
+import { useSocketEvent } from "~/lib/useSocketEvent";
 
-type ChatMessage = RouterOutputs["chat"]["listMessages"][number];
+type ChatMessage = RouterOutputs["chat"]["listMessages"]["messages"][number];
+type WorkspaceMember = RouterOutputs["organization"]["getMembers"][number];
 
 export function ChatClient({ userId }: { userId: string }) {
   const toast = useToast();
@@ -20,38 +23,53 @@ export function ChatClient({ userId }: { userId: string }) {
   const [isUploading, setIsUploading] = useState(false);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [newChatEmail, setNewChatEmail] = useState("");
+  const [showChatMenu, setShowChatMenu] = useState(false);
+  const [confirmDeleteChat, setConfirmDeleteChat] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const chatMenuRef = useRef<HTMLDivElement | null>(null);
 
   const utils = api.useUtils();
   const { startUpload } = useUploadThing("chatAttachment");
 
-  // Get all conversations
-  const conversationsQuery = api.chat.listAllConversations.useQuery(undefined, {
-    refetchInterval: 5000,
-  });
+  // Get user profile to find active organization
+  const profileQuery = api.user.getProfile.useQuery();
+  const activeOrgId = profileQuery.data?.activeOrganizationId;
+
+  // Get workspace members from active organization
+  const workspaceMembersQuery = api.organization.getMembers.useQuery(
+    { organizationId: activeOrgId ?? -1 },
+    { enabled: !!activeOrgId }
+  );
+  const workspaceMembers = workspaceMembersQuery.data ?? [];
+
+  // Get all conversations (real-time updates via Socket.IO)
+  const conversationsQuery = api.chat.listAllConversations.useQuery(undefined);
 
   const conversations = conversationsQuery.data ?? [];
 
-  // Get messages for selected conversation
-  const messagesQuery = api.chat.listMessages.useQuery(
-    { conversationId: selectedConversationId ?? -1 },
+  // Get messages for selected conversation (cursor-based pagination)
+  const messagesQuery = api.chat.listMessages.useInfiniteQuery(
+    { conversationId: selectedConversationId ?? -1, limit: 50 },
     {
       enabled: selectedConversationId !== null,
-      refetchInterval: 2000,
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
     }
   );
 
-  const messages = messagesQuery.data ?? [];
+  const messages = useMemo(
+    () => messagesQuery.data?.pages.flatMap((p) => p.messages) ?? [],
+    [messagesQuery.data],
+  );
 
   // Send message
   const sendMessage = api.chat.sendMessage.useMutation({
     onMutate: async (variables) => {
       if (!selectedConversationId) return;
 
-      await utils.chat.listMessages.cancel({ conversationId: selectedConversationId });
+      await utils.chat.listMessages.cancel({ conversationId: selectedConversationId, limit: 50 });
 
-      const previous = utils.chat.listMessages.getData({ conversationId: selectedConversationId });
+      const previous = utils.chat.listMessages.getInfiniteData({ conversationId: selectedConversationId, limit: 50 });
 
       const optimistic: ChatMessage = {
         id: -Date.now(),
@@ -62,31 +80,64 @@ export function ChatClient({ userId }: { userId: string }) {
         senderImage: null,
       };
 
-      utils.chat.listMessages.setData({ conversationId: selectedConversationId }, 
-        previous ? [...previous, optimistic] : [optimistic]
+      utils.chat.listMessages.setInfiniteData(
+        { conversationId: selectedConversationId, limit: 50 },
+        (old) => {
+          if (!old) return { pages: [{ messages: [optimistic], nextCursor: undefined }], pageParams: [null] as (number | null)[] };
+          const lastPageIdx = old.pages.length - 1;
+          return {
+            ...old,
+            pages: old.pages.map((page, i) =>
+              i === lastPageIdx
+                ? { ...page, messages: [...page.messages, optimistic] }
+                : page,
+            ),
+          };
+        },
       );
 
       setDraft("");
       return { previous };
     },
     onError: (_err, _variables, context) => {
+      console.error("[ChatClient] sendMessage error:", _err);
       if (!selectedConversationId || !context?.previous) return;
-      utils.chat.listMessages.setData({ conversationId: selectedConversationId }, context.previous);
+      utils.chat.listMessages.setInfiniteData(
+        { conversationId: selectedConversationId, limit: 50 },
+        context.previous,
+      );
       toast.error("Failed to send message");
     },
-    onSuccess: async (message) => {
+    onSuccess: async (msg) => {
       if (selectedConversationId === null) return;
-      
-      const previous = utils.chat.listMessages.getData({ conversationId: selectedConversationId });
-      if (previous) {
-        const cleaned = previous.filter((m) => m.id > 0);
-        utils.chat.listMessages.setData({ conversationId: selectedConversationId }, [...cleaned, message] as typeof previous);
-      }
+
+      const realMsg: ChatMessage = {
+        id: msg.id ?? -1,
+        body: msg.body ?? "",
+        createdAt: msg.createdAt ?? new Date(),
+        senderId: msg.senderId ?? userId,
+        senderName: msg.senderName ?? null,
+        senderImage: msg.senderImage ?? null,
+      };
+
+      // Replace optimistic message with real one
+      utils.chat.listMessages.setInfiniteData(
+        { conversationId: selectedConversationId, limit: 50 },
+        (old) => {
+          if (!old) return old!;
+          const lastPageIdx = old.pages.length - 1;
+          return {
+            ...old,
+            pages: old.pages.map((page, i) =>
+              i === lastPageIdx
+                ? { ...page, messages: [...page.messages.filter((m) => m.id > 0), realMsg] }
+                : page,
+            ),
+          };
+        },
+      );
 
       await utils.chat.listAllConversations.invalidate();
-      
-      // Show notification for new message
-      toast.success("Message sent");
     },
   });
 
@@ -95,6 +146,17 @@ export function ChatClient({ userId }: { userId: string }) {
     { email: newChatEmail.trim() },
     { enabled: newChatEmail.trim().length > 3 && newChatEmail.includes("@"), retry: false }
   );
+
+  // Filter workspace members based on search input
+  const filteredMemberSuggestions = useMemo(() => {
+    if (!newChatEmail.trim()) return workspaceMembers;
+
+    const query = newChatEmail.toLowerCase().trim();
+    return workspaceMembers.filter(member =>
+      (member.name?.toLowerCase() ?? "").includes(query) ||
+      (member.email?.toLowerCase() ?? "").includes(query)
+    ).filter(member => member.id !== userId); // Exclude self
+  }, [workspaceMembers, newChatEmail, userId]);
 
   // Create new conversation
   const createConversation = api.chat.getOrCreateDirectConversation.useMutation({
@@ -116,12 +178,133 @@ export function ChatClient({ userId }: { userId: string }) {
     }
   };
 
-  // Auto-scroll to bottom when messages change
+  // Delete conversation
+  const deleteConversation = api.chat.deleteConversation.useMutation({
+    onSuccess: async () => {
+      setSelectedConversationId(null);
+      setSelectedUserId(null);
+      setShowChatMenu(false);
+      setConfirmDeleteChat(false);
+      await utils.chat.listAllConversations.invalidate();
+      toast.success("Chat deleted");
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const handleDeleteChat = () => {
+    if (!selectedConversationId) return;
+    deleteConversation.mutate({ conversationId: selectedConversationId });
+  };
+
+  // Close chat menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (chatMenuRef.current && !chatMenuRef.current.contains(e.target as Node)) {
+        setShowChatMenu(false);
+      }
+    };
+    if (showChatMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showChatMenu]);
+
+  const handleSelectMember = (member: WorkspaceMember) => {
+    createConversation.mutate({ otherUserId: member.id });
+  };
+
+  // -----------------------------------------------------------------------
+  // Socket.IO: room management + real-time event listeners
+  // -----------------------------------------------------------------------
+  const socket = useSocket();
+
+  // Join / leave conversation rooms when the selected conversation changes.
+  useEffect(() => {
+    if (!socket || selectedConversationId === null) return;
+    socket.emit("join:conversation", selectedConversationId);
+    return () => {
+      socket.emit("leave:conversation", selectedConversationId);
+    };
+  }, [socket, selectedConversationId]);
+
+  // On new message pushed via socket → append to the local cache.
+  const handleNewMessage = useCallback(
+    (data: {
+      messageId: number;
+      conversationId: number;
+      senderId: string;
+      body: string;
+      senderName: string | null;
+      senderImage: string | null;
+      createdAt: string | Date;
+    }) => {
+      if (data.conversationId !== selectedConversationId) return;
+      // Don't duplicate our own messages (already handled via optimistic update).
+      if (data.senderId === userId) return;
+      const newMsg: ChatMessage = {
+        id: data.messageId,
+        body: data.body,
+        createdAt: new Date(data.createdAt),
+        senderId: data.senderId,
+        senderName: data.senderName,
+        senderImage: data.senderImage,
+      };
+      utils.chat.listMessages.setInfiniteData(
+        { conversationId: data.conversationId, limit: 50 },
+        (old) => {
+          if (!old) return old!;
+          // Deduplicate: skip if message already exists (can happen if user is in both conversation room and user room)
+          const allMsgIds = new Set(old.pages.flatMap((p) => p.messages.map((m) => m.id)));
+          if (allMsgIds.has(data.messageId)) return old;
+          const lastPageIdx = old.pages.length - 1;
+          return {
+            ...old,
+            pages: old.pages.map((page, i) =>
+              i === lastPageIdx
+                ? { ...page, messages: [...page.messages, newMsg] }
+                : page,
+            ),
+          };
+        },
+      );
+    },
+    [selectedConversationId, userId, utils.chat.listMessages],
+  );
+  useSocketEvent("message:new", handleNewMessage);
+
+  // On conversation updated → invalidate conversations list to refresh ordering.
+  const handleConversationUpdated = useCallback(() => {
+    void utils.chat.listAllConversations.invalidate();
+  }, [utils.chat.listAllConversations]);
+  useSocketEvent("conversation:updated", handleConversationUpdated);
+
+  // Auto-scroll to bottom when new messages arrive (not when loading older)
+  const prevMsgCount = useRef(0);
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    el.scrollTop = el.scrollHeight;
+    // Only auto-scroll if messages were appended (new ones), not prepended (older ones)
+    if (messages.length > prevMsgCount.current) {
+      el.scrollTop = el.scrollHeight;
+    }
+    prevMsgCount.current = messages.length;
   }, [messages.length]);
+
+  // Load older messages when scrolled to the top
+  const handleMessagesScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    if (el.scrollTop < 80 && messagesQuery.hasNextPage && !messagesQuery.isFetchingNextPage) {
+      const prevHeight = el.scrollHeight;
+      void messagesQuery.fetchNextPage().then(() => {
+        requestAnimationFrame(() => {
+          el.scrollTop = el.scrollHeight - prevHeight;
+        });
+      });
+    }
+  }, [messagesQuery]);
 
   const selectedUser = conversations
     .flatMap((c) => [c.userOne, c.userTwo])
@@ -136,43 +319,75 @@ export function ChatClient({ userId }: { userId: string }) {
     return name.includes(query) || email.includes(query);
   });
 
+  const doSend = () => {
+    if (!selectedConversationId || (!draft.trim() && attachments.length === 0) || sendMessage.isPending || isUploading) return;
+    const messageBody = draft.trim();
+    if (messageBody) {
+      sendMessage.mutate({ conversationId: selectedConversationId, body: messageBody });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedConversationId || (!draft.trim() && attachments.length === 0) || sendMessage.isPending || isUploading) return;
-
-    let messageBody = draft.trim();
 
     // Upload attachments if any
     if (attachments.length > 0) {
       setIsUploading(true);
       try {
+        let messageBody = draft.trim();
         const uploaded = await startUpload(attachments);
         if (uploaded) {
           const attachmentUrls = uploaded.map(f => f.url).join('\n');
           messageBody = messageBody ? `${messageBody}\n\n${attachmentUrls}` : attachmentUrls;
         }
         setAttachments([]);
+        setIsUploading(false);
+        if (messageBody) {
+          sendMessage.mutate({ conversationId: selectedConversationId, body: messageBody });
+        }
       } catch (err) {
         console.error("Upload failed:", err);
         toast.error("Failed to upload attachments");
         setIsUploading(false);
-        return;
       }
-      setIsUploading(false);
+      return;
     }
 
-    if (messageBody) {
-      sendMessage.mutate({ conversationId: selectedConversationId, body: messageBody });
-    }
+    doSend();
   };
 
   return (
-    <div className="flex flex-col sm:flex-row h-full w-full">
-      {/* New Chat Modal */}
+<div className="flex flex-col sm:flex-row h-full w-full bg-bg-primary">      
+      {/* Delete Chat Confirmation Dialog */}
+      {confirmDeleteChat && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-bg-secondary rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-in fade-in slide-in-from-bottom-4">
+            <h3 className="text-lg font-bold text-fg-primary mb-2">Delete Chat</h3>
+            <p className="text-sm text-fg-secondary mb-6">Are you sure you want to delete this chat? All messages will be permanently removed.</p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => setConfirmDeleteChat(false)}
+                className="px-4 py-2 text-sm font-medium text-fg-secondary hover:bg-bg-surface rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteChat}
+                disabled={deleteConversation.isPending}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {deleteConversation.isPending ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showNewChatModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-bg-secondary rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in fade-in slide-in-from-bottom-4">
-            <div className="flex items-center justify-between mb-4">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-bg-secondary rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in fade-in slide-in-from-bottom-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4 sticky top-0 bg-bg-secondary pb-2">
               <h3 className="text-lg font-bold text-fg-primary">Start New Chat</h3>
               <button
                 onClick={() => { setShowNewChatModal(false); setNewChatEmail(""); }}
@@ -183,56 +398,108 @@ export function ChatClient({ userId }: { userId: string }) {
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-fg-secondary mb-2">Enter email address</label>
+                <label className="block text-sm font-medium text-fg-secondary mb-2">Search or enter email</label>
                 <input
-                  type="email"
+                  type="text"
                   value={newChatEmail}
                   onChange={(e) => setNewChatEmail(e.target.value)}
-                  placeholder="user@example.com"
+                  placeholder="Search by name or email..."
                   className="w-full px-4 py-3 bg-bg-surface rounded-xl text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
                 />
               </div>
-              {searchUserQuery.data && (
-                <div className="flex items-center gap-3 p-3 bg-success/10 rounded-xl">
-                  {searchUserQuery.data.image ? (
-                    <Image
-                      src={searchUserQuery.data.image}
-                      alt={searchUserQuery.data.name ?? "User"}
-                      width={40}
-                      height={40}
-                      className="rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center text-white font-bold">
-                      {searchUserQuery.data.name?.[0]?.toUpperCase() ?? "?"}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-fg-primary truncate">{searchUserQuery.data.name ?? "User"}</p>
-                    <p className="text-xs text-fg-tertiary truncate">{searchUserQuery.data.email}</p>
+
+              {/* Workspace Members Section */}
+              {activeOrgId && filteredMemberSuggestions.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 px-3 py-2">
+                    <Users size={16} className="text-fg-tertiary" />
+                    <p className="text-xs font-semibold text-fg-tertiary uppercase">Workspace Members</p>
+                  </div>
+                  <div className="space-y-1 max-h-48 overflow-y-auto">
+                    {filteredMemberSuggestions.map((member) => (
+                      <button
+                        key={member.id}
+                        onClick={() => handleSelectMember(member)}
+                        disabled={createConversation.isPending}
+                        className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-bg-elevated transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-left"
+                      >
+                        {member.image ? (
+                          <Image
+                            src={member.image}
+                            alt={member.name ?? "User"}
+                            width={40}
+                            height={40}
+                            className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                            {member.name?.[0]?.toUpperCase() ?? "?"}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-fg-primary truncate">{member.name ?? "User"}</p>
+                          <p className="text-xs text-fg-tertiary truncate">{member.email}</p>
+                        </div>
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
-              {searchUserQuery.isLoading && newChatEmail.includes("@") && (
-                <p className="text-sm text-fg-tertiary text-center">Searching...</p>
+
+              {/* Email Search Section */}
+              {newChatEmail.trim().includes("@") && (
+                <div className="border-t border-bg-elevated pt-4 space-y-2">
+                  <p className="text-xs font-semibold text-fg-tertiary uppercase px-3">Search Results</p>
+                  {searchUserQuery.data && (
+                    <button
+                      onClick={handleStartNewChat}
+                      disabled={createConversation.isPending}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-bg-elevated transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-left"
+                    >
+                      {searchUserQuery.data.image ? (
+                        <Image
+                          src={searchUserQuery.data.image}
+                          alt={searchUserQuery.data.name ?? "User"}
+                          width={40}
+                          height={40}
+                          className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                          {searchUserQuery.data.name?.[0]?.toUpperCase() ?? "?"}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-fg-primary truncate">{searchUserQuery.data.name ?? "User"}</p>
+                        <p className="text-xs text-fg-tertiary truncate">{searchUserQuery.data.email}</p>
+                      </div>
+                    </button>
+                  )}
+                  {searchUserQuery.isLoading && (
+                    <p className="text-sm text-fg-tertiary text-center py-2">Searching...</p>
+                  )}
+                  {searchUserQuery.isError && (
+                    <p className="text-sm text-error text-center py-2">User not found</p>
+                  )}
+                </div>
               )}
-              {searchUserQuery.isError && (
-                <p className="text-sm text-error text-center">User not found</p>
+
+              {/* No Results Message */}
+              {newChatEmail.trim() && filteredMemberSuggestions.length === 0 && !newChatEmail.includes("@") && (
+                <p className="text-sm text-fg-tertiary text-center py-4">No workspace members match your search</p>
               )}
-              <button
-                onClick={handleStartNewChat}
-                disabled={!searchUserQuery.data || createConversation.isPending}
-                className="w-full py-3 bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-all"
-              >
-                {createConversation.isPending ? "Starting chat..." : "Start Chat"}
-              </button>
+
+              {/* Empty State */}
+              {!newChatEmail.trim() && filteredMemberSuggestions.length === 0 && activeOrgId && (
+                <p className="text-sm text-fg-tertiary text-center py-4">No workspace members available</p>
+              )}
             </div>
           </div>
         </div>
       )}
 
       {/* Conversations Sidebar */}
-      <div className={`${selectedConversationId ? 'hidden sm:flex' : 'flex'} w-full sm:w-72 lg:w-80 xl:w-96 shadow-lg flex-col bg-bg-surface/40`}>
+      <div className={`${selectedConversationId ? 'hidden sm:flex' : 'flex'} w-full sm:w-72 lg:w-80 xl:w-96 shadow-lg flex-col bg-bg-surface`}>
         <div className="p-3 sm:p-4 shadow-sm">
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
@@ -329,7 +596,7 @@ export function ChatClient({ userId }: { userId: string }) {
       </div>
 
       {/* Main Chat Area */}
-      <div className={`${selectedConversationId ? 'flex' : 'hidden sm:flex'} flex-1 flex-col bg-gradient-to-b from-bg-surface/20 to-bg-primary`}>
+      <div className={`${selectedConversationId ? 'flex' : 'hidden sm:flex'} flex-1 flex-col bg-bg-primary`}>
         {selectedConversationId && selectedUser ? (
           <>
             {/* Chat Header */}
@@ -362,19 +629,31 @@ export function ChatClient({ userId }: { userId: string }) {
                   <h2 className="text-sm sm:text-base font-bold text-fg-primary truncate">
                     {selectedUser.name ?? selectedUser.email}
                   </h2>
-                  <p className="text-xs text-success flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></span>
-                    Active
-                  </p>
                 </div>
               </div>
-              <button className="p-1.5 sm:p-2 hover:bg-bg-surface rounded-lg transition-colors text-fg-secondary flex-shrink-0">
-                <MoreVertical size={18} className="sm:w-5 sm:h-5" />
-              </button>
+              <div className="relative flex-shrink-0" ref={chatMenuRef}>
+                <button
+                  onClick={() => setShowChatMenu(!showChatMenu)}
+                  className="p-1.5 sm:p-2 hover:bg-bg-surface rounded-lg transition-colors text-fg-secondary"
+                >
+                  <MoreVertical size={18} className="sm:w-5 sm:h-5" />
+                </button>
+                {showChatMenu && (
+                  <div className="absolute right-0 top-full mt-1 bg-bg-elevated border border-white/10 rounded-xl shadow-xl z-50 py-1 min-w-[160px]">
+                    <button
+                      onClick={() => { setShowChatMenu(false); setConfirmDeleteChat(true); }}
+                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                    >
+                      <Trash2 size={15} />
+                      Delete Chat
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Messages */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4">
+            <div ref={scrollRef} onScroll={handleMessagesScroll} className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4">
               {messages.length === 0 ? (
                 <div className="h-full flex items-center justify-center">
                   <div className="text-center">
@@ -470,9 +749,9 @@ export function ChatClient({ userId }: { userId: string }) {
             </div>
 
             {/* Message Input */}
-            <form onSubmit={handleSubmit} className="p-3 sm:p-4 shadow-sm bg-bg-elevated/50">
+            <form onSubmit={handleSubmit} className="p-3 sm:p-4 shadow-sm bg-bg-elevated">
               {attachments.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-3 p-2 bg-bg-surface/50 rounded-lg">
+                <div className="flex flex-wrap gap-2 mb-3 p-2 bg-bg-surface rounded-lg">
                   {attachments.map((file, idx) => (
                     <div key={idx} className="relative group">
                       <div className="flex items-center gap-2 px-3 py-1.5 bg-bg-elevated rounded-lg shadow-sm">
@@ -514,6 +793,12 @@ export function ChatClient({ userId }: { userId: string }) {
                   type="text"
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      doSend();
+                    }
+                  }}
                   placeholder="Type a message..."
                   disabled={isUploading}
                   className="flex-1 text-sm bg-bg-surface shadow-sm rounded-full px-4 sm:px-5 py-2.5 sm:py-3 text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/30 disabled:opacity-50"

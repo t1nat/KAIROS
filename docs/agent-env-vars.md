@@ -49,6 +49,7 @@ Notes:
 - You *may* append `:cheapest` to bias to cheaper providers (still depends on availability).
   - Source (suffix policy): https://huggingface.co/docs/inference-providers/en/index
 
+
 ### `LLM_ALTERNATE_MODEL`
 
 - **Purpose:** Third-tier alternate model, tried when both primary and fallback fail with retriable errors.

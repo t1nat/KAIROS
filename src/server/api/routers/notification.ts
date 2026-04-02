@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { notifications } from "~/server/db/schema";
 import { eq, and, desc } from "drizzle-orm";
+import { emitNotification } from "~/server/socket/emit";
 
 export const notificationRouter = createTRPCRouter({
   getAll: protectedProcedure.query(async ({ ctx }) => {
@@ -36,8 +37,10 @@ export const notificationRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const idParts = input.notificationId.split("-");
-      const actualId = idParts.length > 1 ? parseInt(idParts[1]!) : parseInt(input.notificationId);
+      // Parse ID consistently: strip any prefix before a dash, take the numeric part
+      const raw = input.notificationId;
+      const numericPart = raw.includes("-") ? raw.split("-").pop()! : raw;
+      const actualId = parseInt(numericPart, 10);
 
       if (isNaN(actualId)) {
         return { success: true, message: "Client-side notification marked as read" };
@@ -88,7 +91,9 @@ export const notificationRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const id = parseInt(input.notificationId);
+      const raw = input.notificationId;
+      const numericPart = raw.includes("-") ? raw.split("-").pop()! : raw;
+      const id = parseInt(numericPart, 10);
       
       if (isNaN(id)) {
         return { success: true, message: "Client-side notification removed" };
@@ -117,7 +122,7 @@ export const notificationRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
       z.object({
-        type: z.enum(["event", "task", "project", "system"]),
+        type: z.enum(["event", "task", "project", "system", "like", "comment", "reply"]),
         title: z.string(),
         message: z.string(),
         link: z.string().optional(),
@@ -135,6 +140,16 @@ export const notificationRouter = createTRPCRouter({
           read: false,
         })
         .returning();
+
+      if (notification) {
+        emitNotification(ctx.session.user.id, {
+          id: notification.id,
+          type: notification.type,
+          title: notification.title,
+          message: notification.message,
+          link: notification.link,
+        });
+      }
 
       return notification;
     }),

@@ -1,7 +1,9 @@
  import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { projects, tasks, projectCollaborators, users, organizationMembers, notifications } from "~/server/db/schema";
 import { eq, and, desc, inArray, isNull, sql, ne, or } from "drizzle-orm";
+import { emitNotification } from "~/server/socket/emit";
 
 export const projectRouter = createTRPCRouter({
   
@@ -128,13 +130,26 @@ export const projectRouter = createTRPCRouter({
       }
     } else {
 
+      // Personal mode: owned projects + projects where user is a collaborator
+      const collabProjectIds = await ctx.db
+        .select({ projectId: projectCollaborators.projectId })
+        .from(projectCollaborators)
+        .where(eq(projectCollaborators.collaboratorId, ctx.session.user.id));
+
+      const collabIds = collabProjectIds.map((c) => c.projectId);
+
       projectsList = await ctx.db
         .select()
         .from(projects)
         .where(
           and(
-            eq(projects.createdById, ctx.session.user.id),
-            isNull(projects.organizationId),
+            or(
+              and(
+                eq(projects.createdById, ctx.session.user.id),
+                isNull(projects.organizationId),
+              ),
+              ...(collabIds.length ? [inArray(projects.id, collabIds)] : []),
+            ),
             ne(projects.status, "archived")
           )
         )
@@ -160,24 +175,56 @@ export const projectRouter = createTRPCRouter({
       : [];
     const createdByUserMap = new Map(createdByUsers.map((u) => [u.id, u] as const));
 
-    const projectsWithTasks = await Promise.all(
-      projectsList.map(async (project) => {
-        const projectTasks = await ctx.db
+    // Batch-fetch all tasks for visible projects (avoid N+1 queries)
+    const projectIds = projectsList.map((p) => p.id);
+    const allTasks = projectIds.length
+      ? await ctx.db
           .select({
             id: tasks.id,
             status: tasks.status,
             dueDate: tasks.dueDate,
+            projectId: tasks.projectId,
           })
           .from(tasks)
-          .where(eq(tasks.projectId, project.id));
+          .where(inArray(tasks.projectId, projectIds))
+      : [];
 
-        return {
-          ...project,
-          createdByUser: createdByUserMap.get(project.createdById) ?? null,
-          tasks: projectTasks,
-        };
-      })
-    );
+    const tasksByProjectId = allTasks.reduce((acc, t) => {
+      (acc[t.projectId] ??= []).push({ id: t.id, status: t.status, dueDate: t.dueDate });
+      return acc;
+    }, {} as Record<number, { id: number; status: string; dueDate: Date | null }[]>);
+
+    // Batch-fetch all collaborators for visible projects
+    const allCollaborators = projectIds.length
+      ? await ctx.db
+          .select({
+            projectId: projectCollaborators.projectId,
+            collaboratorId: projectCollaborators.collaboratorId,
+            permission: projectCollaborators.permission,
+            name: users.name,
+            image: users.image,
+          })
+          .from(projectCollaborators)
+          .innerJoin(users, eq(projectCollaborators.collaboratorId, users.id))
+          .where(inArray(projectCollaborators.projectId, projectIds))
+      : [];
+
+    const collaboratorsByProjectId = allCollaborators.reduce((acc, c) => {
+      (acc[c.projectId] ??= []).push({
+        id: c.collaboratorId,
+        name: c.name,
+        image: c.image,
+        permission: c.permission,
+      });
+      return acc;
+    }, {} as Record<number, { id: string; name: string | null; image: string | null; permission: string }[]>);
+
+    const projectsWithTasks = projectsList.map((project) => ({
+      ...project,
+      createdByUser: createdByUserMap.get(project.createdById) ?? null,
+      tasks: tasksByProjectId[project.id] ?? [],
+      collaborators: collaboratorsByProjectId[project.id] ?? [],
+    }));
 
 
     if (process.env.NODE_ENV !== "production") {
@@ -281,7 +328,7 @@ export const projectRouter = createTRPCRouter({
         .where(eq(projects.id, input.id));
 
       if (!project) {
-        throw new Error("Project not found");
+        throw new TRPCError({ code: "NOT_FOUND", message: "Project not found" });
       }
 
       if (process.env.NODE_ENV !== "production") {
@@ -332,7 +379,7 @@ export const projectRouter = createTRPCRouter({
       }
 
       if (!isOwner && !collaboration && !hasOrgAccess) {
-        throw new Error("Access denied - You don't have permission to view this project");
+        throw new TRPCError({ code: "FORBIDDEN", message: "Access denied - You don't have permission to view this project" });
       }
 
       
@@ -373,6 +420,7 @@ export const projectRouter = createTRPCRouter({
           priority: tasks.priority,
           dueDate: tasks.dueDate,
           completedAt: tasks.completedAt,
+          completionNote: tasks.completionNote,
           orderIndex: tasks.orderIndex,
           createdAt: tasks.createdAt,
           lastEditedAt: tasks.lastEditedAt,
@@ -410,6 +458,7 @@ export const projectRouter = createTRPCRouter({
         priority: task.priority,
         dueDate: task.dueDate,
         completedAt: task.completedAt,
+        completionNote: task.completionNote,
         orderIndex: task.orderIndex,
         createdAt: task.createdAt,
         lastEditedAt: task.lastEditedAt,
@@ -469,22 +518,19 @@ export const projectRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      try {
-      
         const [project] = await ctx.db
           .select()
           .from(projects)
           .where(eq(projects.id, input.projectId));
 
         if (!project) {
-          throw new Error("Project not found. Please refresh and try again.");
+          throw new TRPCError({ code: "NOT_FOUND", message: "Project not found. Please refresh and try again." });
         }
 
         if (project.createdById !== ctx.session.user.id) {
-          throw new Error("Only the project owner can add collaborators.");
+          throw new TRPCError({ code: "FORBIDDEN", message: "Only the project owner can add collaborators." });
         }
 
-        
         const [owner] = await ctx.db
           .select({
             name: users.name,
@@ -494,22 +540,19 @@ export const projectRouter = createTRPCRouter({
           .where(eq(users.id, ctx.session.user.id))
           .limit(1);
 
-       
         const [userToAdd] = await ctx.db
           .select()
           .from(users)
           .where(eq(users.email, input.email));
 
         if (!userToAdd) {
-          throw new Error(`No user found with email: ${input.email}. They must sign up first!`);
+          throw new TRPCError({ code: "NOT_FOUND", message: `No user found with email: ${input.email}. They must sign up first!` });
         }
 
-        
         if (userToAdd.id === ctx.session.user.id) {
-          throw new Error("You can't add yourself as a collaborator - you're already the owner!");
+          throw new TRPCError({ code: "BAD_REQUEST", message: "You can't add yourself as a collaborator - you're already the owner!" });
         }
 
-        
         const [existing] = await ctx.db
           .select()
           .from(projectCollaborators)
@@ -521,38 +564,41 @@ export const projectRouter = createTRPCRouter({
           );
 
         if (existing) {
-          throw new Error(`${input.email} is already a collaborator on this project.`);
+          throw new TRPCError({ code: "CONFLICT", message: `${input.email} is already a collaborator on this project.` });
         }
 
-        
         await ctx.db.insert(projectCollaborators).values({
           projectId: input.projectId,
           collaboratorId: userToAdd.id,
           permission: input.permission,
         });
 
-        
         const ownerName = owner?.name ?? owner?.email ?? "Someone";
         const permissionText = input.permission === "write" ? "edit" : "view";
-        
-        if (process.env.NODE_ENV !== "production") {
-          console.log("Creating notification for user:", userToAdd.id);
-        }
-        
-        
-        const projectLink = `/create?action=new_project&projectId=${input.projectId}`;
-        
-        const [notification] = await ctx.db.insert(notifications).values({
-          userId: userToAdd.id,
-          type: "project",
-          title: "New Project Invitation",
-          message: `${ownerName} invited you to ${permissionText} "${project.title}"`,
-          link: projectLink,
-          read: false,
-        }).returning();
 
-        if (process.env.NODE_ENV !== "production") {
-          console.log("Notification created:", notification);
+        // Create notification (best-effort — don't fail the mutation if notification fails)
+        const projectLink = `/projects`;
+        try {
+          const [notification] = await ctx.db.insert(notifications).values({
+            userId: userToAdd.id,
+            type: "project",
+            title: "New Project Invitation",
+            message: `${ownerName} invited you to ${permissionText} "${project.title}"`,
+            link: projectLink,
+            read: false,
+          }).returning();
+
+          if (notification) {
+            emitNotification(userToAdd.id, {
+              id: notification.id,
+              type: "project",
+              title: "New Project Invitation",
+              message: `${ownerName} invited you to ${permissionText} "${project.title}"`,
+              link: projectLink,
+            });
+          }
+        } catch (notifError) {
+          console.error("Failed to create notification (collaborator was still added):", notifError);
         }
 
         return { 
@@ -565,14 +611,6 @@ export const projectRouter = createTRPCRouter({
             image: userToAdd.image,
           }
         };
-      } catch (error) {
-        console.error("Error adding collaborator:", error);
-        
-        if (error instanceof Error) {
-          throw new Error(error.message);
-        }
-        throw new Error("Failed to add collaborator. Please try again.");
-      }
     }),
 
   
@@ -591,7 +629,7 @@ export const projectRouter = createTRPCRouter({
         .where(eq(projects.id, input.projectId));
 
       if (project?.createdById !== ctx.session.user.id) {
-        throw new Error("Only project owner can remove collaborators");
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only project owner can remove collaborators" });
       }
 
       await ctx.db
@@ -623,7 +661,7 @@ export const projectRouter = createTRPCRouter({
         .where(eq(projects.id, input.projectId));
 
       if (project?.createdById !== ctx.session.user.id) {
-        throw new Error("Only project owner can update permissions");
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only project owner can update permissions" });
       }
 
       await ctx.db
@@ -648,11 +686,11 @@ export const projectRouter = createTRPCRouter({
         .where(eq(projects.id, input.id));
 
       if (!project) {
-        throw new Error("Project not found");
+        throw new TRPCError({ code: "NOT_FOUND", message: "Project not found" });
       }
 
       if (project.createdById !== ctx.session.user.id) {
-        throw new Error("Only the project owner can delete this project");
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only the project owner can delete this project" });
       }
 
       await ctx.db.delete(projects).where(eq(projects.id, input.id));
@@ -669,11 +707,11 @@ export const projectRouter = createTRPCRouter({
         .where(eq(projects.id, input.projectId));
 
       if (!project) {
-        throw new Error("Project not found");
+        throw new TRPCError({ code: "NOT_FOUND", message: "Project not found" });
       }
 
       if (project.createdById !== ctx.session.user.id) {
-        throw new Error("Only the project owner can archive this project");
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only the project owner can archive this project" });
       }
 
       await ctx.db
@@ -693,11 +731,11 @@ export const projectRouter = createTRPCRouter({
         .where(eq(projects.id, input.projectId));
 
       if (!project) {
-        throw new Error("Project not found");
+        throw new TRPCError({ code: "NOT_FOUND", message: "Project not found" });
       }
 
       if (project.createdById !== ctx.session.user.id) {
-        throw new Error("Only the project owner can reopen this project");
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only the project owner can reopen this project" });
       }
 
       await ctx.db

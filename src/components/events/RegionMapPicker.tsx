@@ -53,7 +53,7 @@ export function RegionMapPicker({
 
   return (
     <div className={className ?? ""}>
-      <div className="ios-card rounded-xl p-3 sm:p-4">
+      <div className="bg-bg-secondary border border-white/[0.06] rounded-xl p-3 sm:p-4">
         <div className="flex items-center gap-2 sm:gap-3 mb-3">
           <MapPin className="text-accent-primary" size={18} />
           <div className="flex-1 flex items-center gap-2 bg-bg-secondary shadow-sm rounded-lg px-3 py-2">
@@ -80,7 +80,7 @@ export function RegionMapPicker({
           )}
         </div>
 
-        <div className="rounded-xl overflow-hidden ios-card">
+        <div className="rounded-xl overflow-hidden border border-white/[0.06]">
           <LoadScript googleMapsApiKey={apiKey} onError={() => setMapsLoadFailed(true)}>
             <GoogleMap
               mapContainerStyle={{ width: "100%", height: "220px" }}

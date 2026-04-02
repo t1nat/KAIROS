@@ -784,10 +784,10 @@ const MagicBento: React.FC<BentoProps> = ({
             }`;
 
             const cardStyle = {
-              backgroundImage: 'linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%)',
-              borderColor: 'var(--border-color)',
+              backgroundColor: '#0a0a0e',
+              borderColor: 'rgba(255, 255, 255, 0.08)',
               color: 'var(--text)',
-              backdropFilter: 'blur(8px)',
+              boxShadow: '0 8px 32px -8px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06) inset',
               '--glow-x': '50%',
               '--glow-y': '50%',
               '--glow-intensity': '0',

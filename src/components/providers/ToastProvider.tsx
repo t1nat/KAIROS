@@ -98,17 +98,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={api}>
       {children}
-      <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2">
-        {toasts.map((t) => (
-          <div
-            key={t.id}
-            className={`max-w-sm rounded-xl border px-4 py-3 shadow-lg backdrop-blur-sm ${toastClasses(t.kind)}`}
-            onClick={() => remove(t.id)}
-          >
-            <p className="text-sm font-medium text-fg-primary">{t.message}</p>
-          </div>
-        ))}
-      </div>
     </ToastContext.Provider>
   );
 }

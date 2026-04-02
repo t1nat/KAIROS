@@ -1,0 +1,22 @@
+import { auth } from "~/server/auth";
+import { redirect } from "next/navigation";
+
+import { SideNav } from "~/components/layout/SideNav";
+import { AIChatPageClient } from "~/components/chat/AIChatPageClient";
+
+export default async function KairosAIPage() {
+  const session = await auth();
+  if (!session?.user) {
+    redirect("/api/auth/signin");
+  }
+
+  return (
+    <div className="h-[100dvh] bg-bg-primary overflow-hidden">
+      <SideNav />
+
+      <main id="main-content" className="lg:ml-16 h-[100dvh] overflow-hidden kairos-page-enter pt-16 lg:pt-0">
+        <AIChatPageClient />
+      </main>
+    </div>
+  );
+}

@@ -1,13 +1,14 @@
 import { z } from "zod";
 import { protectedProcedure, publicProcedure, createTRPCRouter } from "../trpc";
-import { events, eventComments, eventLikes, eventRsvps, users } from "~/server/db/schema";
+import { events, eventComments, eventLikes, eventRsvps, users, notifications } from "~/server/db/schema";
 import { eq, desc, and, sql, inArray } from "drizzle-orm";
 import { type NewEvent } from "~/server/db/schema";
 import { TRPCError } from "@trpc/server";
+import { emitNotification, emitEventDeleted, emitEventUpdated } from "~/server/socket/emit";
 
 const createEventSchema = z.object({
   title: z.string().min(1, "Title is required").max(256),
-  description: z.string().min(1, "Description is required"),
+  description: z.string().min(1, "Description is required").max(5000),
   eventDate: z.date(),
   region: z.enum([
     "sofia", "plovdiv", "varna", "burgas", "ruse", 
@@ -34,10 +35,25 @@ const toggleLikeSchema = z.object({
 const updateRsvpSchema = z.object({
   eventId: z.number(),
   status: z.enum(["going", "maybe", "not_going"]),
+  reminderMinutesBefore: z.number().int().min(0).nullable().optional(),
 });
 
 const deleteEventSchema = z.object({
   eventId: z.number(),
+});
+
+const updateEventSchema = z.object({
+  eventId: z.number(),
+  title: z.string().min(1, "Title is required").max(256).optional(),
+  description: z.string().min(1, "Description is required").max(5000).optional(),
+  eventDate: z.date().optional(),
+  region: z.enum([
+    "sofia", "plovdiv", "varna", "burgas", "ruse",
+    "stara_zagora", "pleven", "sliven", "dobrich", "shumen"
+  ]).optional(),
+  imageUrl: z.string().url().optional().nullable(),
+  enableRsvp: z.boolean().optional(),
+  sendReminders: z.boolean().optional(),
 });
 
 const sendRemindersSchema = z.void();
@@ -188,12 +204,49 @@ export const eventRouter = createTRPCRouter({
   addComment: protectedProcedure
     .input(addCommentSchema)
     .mutation(async ({ ctx, input }) => {
+      const currentUserId = ctx.session.user.id;
+
       await ctx.db.insert(eventComments).values({
         eventId: input.eventId,
         text: input.text,
         imageUrl: input.imageUrl,
-        createdById: ctx.session.user.id,
+        createdById: currentUserId,
       });
+
+      // Notify event owner about the comment (unless they're the commenter)
+      const [eventRow] = await ctx.db
+        .select({ createdById: events.createdById, title: events.title })
+        .from(events)
+        .where(eq(events.id, input.eventId))
+        .limit(1);
+
+      if (eventRow && eventRow.createdById !== currentUserId) {
+        const commenter = await ctx.db.query.users.findFirst({
+          where: eq(users.id, currentUserId),
+          columns: { name: true },
+        });
+        const commenterName = commenter?.name ?? "Someone";
+
+        await ctx.db.insert(notifications).values({
+          userId: eventRow.createdById,
+          type: "comment",
+          title: "New comment on your event",
+          message: `${commenterName} commented on "${eventRow.title}"`,
+          link: `/publish#event-${input.eventId}`,
+          read: false,
+        });
+        emitNotification(eventRow.createdById, {
+          id: `comment-${input.eventId}-${Date.now()}`,
+          type: "comment",
+          title: "New comment on your event",
+          message: `${commenterName} commented on "${eventRow.title}"`,
+          link: `/publish#event-${input.eventId}`,
+        });
+      }
+
+      // Real-time update for all clients viewing the event feed
+      emitEventUpdated(input.eventId);
+
       return { success: true };
     }),
 
@@ -223,12 +276,46 @@ export const eventRouter = createTRPCRouter({
               eq(eventLikes.createdById, currentUserId)
             )
           );
+        emitEventUpdated(input.eventId);
         return { action: 'unliked', hasLiked: false };
       } else {
         await ctx.db.insert(eventLikes).values({
           eventId: input.eventId,
           createdById: currentUserId,
         });
+
+        // Notify event owner about the like (unless they liked their own post)
+        const [eventRow] = await ctx.db
+          .select({ createdById: events.createdById, title: events.title })
+          .from(events)
+          .where(eq(events.id, input.eventId))
+          .limit(1);
+
+        if (eventRow && eventRow.createdById !== currentUserId) {
+          const liker = await ctx.db.query.users.findFirst({
+            where: eq(users.id, currentUserId),
+            columns: { name: true },
+          });
+          const likerName = liker?.name ?? "Someone";
+
+          await ctx.db.insert(notifications).values({
+            userId: eventRow.createdById,
+            type: "like",
+            title: "New like on your event",
+            message: `${likerName} liked your event "${eventRow.title}"`,
+            link: `/publish#event-${input.eventId}`,
+            read: false,
+          });
+          emitNotification(eventRow.createdById, {
+            id: `like-${input.eventId}-${Date.now()}`,
+            type: "like",
+            title: "New like on your event",
+            message: `${likerName} liked your event "${eventRow.title}"`,
+            link: `/publish#event-${input.eventId}`,
+          });
+        }
+
+        emitEventUpdated(input.eventId);
         return { action: 'liked', hasLiked: true };
       }
     }),
@@ -256,6 +343,12 @@ export const eventRouter = createTRPCRouter({
           .set({ 
             status: input.status,
             updatedAt: new Date(),
+            ...(input.reminderMinutesBefore !== undefined
+              ? {
+                  reminderMinutesBefore: input.reminderMinutesBefore,
+                  reminderSent: false,
+                }
+              : {}),
           })
           .where(
             and(
@@ -268,10 +361,13 @@ export const eventRouter = createTRPCRouter({
           eventId: input.eventId,
           userId: currentUserId,
           status: input.status,
+          reminderMinutesBefore: input.reminderMinutesBefore ?? null,
+          reminderSent: false,
           updatedAt: new Date(),
         });
       }
 
+      emitEventUpdated(input.eventId);
       return { success: true, status: input.status };
     }),
 
@@ -293,6 +389,52 @@ export const eventRouter = createTRPCRouter({
       }
 
       await ctx.db.delete(events).where(eq(events.id, input.eventId));
+
+      // Notify all connected clients about the deletion in real-time
+      emitEventDeleted(input.eventId);
+
+      return { success: true };
+    }),
+
+  updateEvent: protectedProcedure
+    .input(updateEventSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { eventId, ...updates } = input;
+
+      const [event] = await ctx.db
+        .select({ id: events.id, createdById: events.createdById })
+        .from(events)
+        .where(eq(events.id, eventId))
+        .limit(1);
+
+      if (!event) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Event not found." });
+      }
+
+      if (event.createdById !== ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You don't own this event." });
+      }
+
+      // Build update object with only defined fields
+      const updateFields: Record<string, unknown> = {};
+      if (updates.title !== undefined) updateFields.title = updates.title;
+      if (updates.description !== undefined) updateFields.description = updates.description;
+      if (updates.eventDate !== undefined) updateFields.eventDate = updates.eventDate;
+      if (updates.region !== undefined) updateFields.region = updates.region;
+      if (updates.imageUrl !== undefined) updateFields.imageUrl = updates.imageUrl;
+      if (updates.enableRsvp !== undefined) updateFields.enableRsvp = updates.enableRsvp;
+      if (updates.sendReminders !== undefined) updateFields.sendReminders = updates.sendReminders;
+
+      if (Object.keys(updateFields).length === 0) {
+        return { success: true };
+      }
+
+      await ctx.db
+        .update(events)
+        .set(updateFields)
+        .where(eq(events.id, eventId));
+
+      emitEventUpdated(eventId);
 
       return { success: true };
     }),

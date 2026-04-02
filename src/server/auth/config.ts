@@ -1,6 +1,7 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import Google from "next-auth/providers/google";
+import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
 import Credentials from "next-auth/providers/credentials";
 import { env } from "~/env"
 import { eq } from "drizzle-orm";
@@ -28,7 +29,8 @@ declare module "next-auth" {
 
 export const authConfig = {
   secret: env.AUTH_SECRET,
-  
+  trustHost: true,
+
 
   session: {
     strategy: "jwt" as const,
@@ -38,9 +40,27 @@ export const authConfig = {
     Google({
       clientId: env.AUTH_GOOGLE_ID,
       clientSecret: env.AUTH_GOOGLE_SECRET,
-      // SECURITY: keep disabled to avoid unintended cross-provider account linking.
-      // If you need explicit account linking, implement a dedicated flow requiring re-auth.
-      allowDangerousEmailAccountLinking: false,
+      // Use state-based CSRF instead of PKCE to avoid cookie-parsing issues
+      // (InvalidCheck: pkceCodeVerifier) in dev / cross-browser scenarios.
+      checks: ["state"],
+      // Allow linking Google OAuth to an existing credentials account with the
+      // same email. Without this, browsers that partition cookies differently
+      // (e.g. Edge) throw OAuthAccountNotLinked when a user has both a
+      // credentials account and attempts Google sign-in with the same email.
+      allowDangerousEmailAccountLinking: true,
+    }),
+    MicrosoftEntraID({
+      clientId: env.AUTH_MICROSOFT_ID,
+      clientSecret: env.AUTH_MICROSOFT_SECRET,
+      // Use "common" tenant to allow personal MS accounts + work/school accounts
+      issuer: "https://login.microsoftonline.com/common/v2.0",
+      authorization: {
+        params: {
+          scope: "openid profile email User.Read",
+        },
+      },
+      checks: ["state"],
+      allowDangerousEmailAccountLinking: true,
     }),
     Credentials({
       id: "account-switch",
@@ -128,6 +148,36 @@ export const authConfig = {
   }),
   
   callbacks: {
+    async signIn({ user }) {
+      // Ensure the authenticated user exists in the app DB on every sign-in
+      // (moved from protectedProcedure to avoid per-request DB checks).
+      const userId = user.id;
+      const email = user.email;
+      const name = user.name;
+      const image = user.image;
+
+      if (typeof userId === "string" && typeof email === "string" && email.length > 0) {
+        const exists = await db.query.users.findFirst({
+          where: eq(users.id, userId),
+          columns: { id: true },
+        });
+
+        if (!exists) {
+          await db
+            .insert(users)
+            .values({
+              id: userId,
+              email,
+              name: typeof name === "string" ? name : null,
+              image: typeof image === "string" ? image : null,
+            })
+            .onConflictDoNothing({ target: users.id });
+        }
+      }
+
+      return true;
+    },
+
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;

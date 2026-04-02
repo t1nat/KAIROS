@@ -14,10 +14,12 @@ const databaseUrl =
   env.DATABASE_URL ?? "postgres://postgres:postgres@localhost:5432/kairos";
 
 const conn = globalForDb.conn ?? postgres(databaseUrl, {
-  max: 30,
-  prepare: env.NODE_ENV === "production",
+  max: 3,
+  idle_timeout: 20,
+  max_lifetime: 60 * 30,
+  prepare: false,
 });
 
-if (env.NODE_ENV !== "production") globalForDb.conn = conn;
+globalForDb.conn = conn;
 
 export const db = drizzle(conn, { schema });

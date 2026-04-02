@@ -1,0 +1,1 @@
+DO $$ BEGIN ALTER TABLE "tasks" ADD COLUMN "completion_note" text; EXCEPTION WHEN duplicate_column THEN NULL; END $$;

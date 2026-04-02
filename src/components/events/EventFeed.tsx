@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
+import { useDateFormat } from "~/lib/hooks/useDateFormat";
 import {
   Heart,
   MessageCircle,
   X,
   Calendar,
   User,
-  Send,
   Check,
   AlertCircle,
   Loader2,
@@ -19,15 +20,19 @@ import {
   Users,
   TrendingUp,
   Trash2,
-  Plus,
+  Bell,
+  Share2,
+  MoreHorizontal,
+  Pencil,
 } from "lucide-react";
 import { api } from "~/trpc/react";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { CreateEventForm } from "~/components/events/CreateEventForm";
-import { RegionMapPicker, type RegionOption } from "~/components/events/RegionMapPicker";
+import { EditEventForm } from "~/components/events/EditEventForm";
+import { useSocketEvent } from "~/lib/useSocketEvent";
 
-const REGIONS = [
+export const REGIONS = [
   { value: '', label: 'All Regions' },
   { value: 'sofia', label: 'Sofia' },
   { value: 'plovdiv', label: 'Plovdiv' },
@@ -41,18 +46,18 @@ const REGIONS = [
   { value: 'shumen', label: 'Shumen' },
 ] as const;
 
-const REGION_MAP: RegionOption[] = [
-  { value: "sofia", label: "Sofia", lat: 42.6977, lng: 23.3219 },
-  { value: "plovdiv", label: "Plovdiv", lat: 42.1354, lng: 24.7453 },
-  { value: "varna", label: "Varna", lat: 43.2141, lng: 27.9147 },
-  { value: "burgas", label: "Burgas", lat: 42.5048, lng: 27.4626 },
-  { value: "ruse", label: "Ruse", lat: 43.8356, lng: 25.9657 },
-  { value: "stara_zagora", label: "Stara Zagora", lat: 42.4258, lng: 25.6345 },
-  { value: "pleven", label: "Pleven", lat: 43.4170, lng: 24.6067 },
-  { value: "sliven", label: "Sliven", lat: 42.6810, lng: 26.3220 },
-  { value: "dobrich", label: "Dobrich", lat: 43.5726, lng: 27.8273 },
-  { value: "shumen", label: "Shumen", lat: 43.2706, lng: 26.9229 },
-];
+// Allowed image hostnames for Next.js Image component
+const ALLOWED_IMAGE_HOSTS = ['utfs.io', 'lh3.googleusercontent.com'];
+
+function isValidImageUrl(url: string | null | undefined): url is string {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    return ALLOWED_IMAGE_HOSTS.some(host => parsed.hostname === host || parsed.hostname.endsWith('.' + host));
+  } catch {
+    return false;
+  }
+}
 
 interface Author {
   id?: string | null; 
@@ -79,6 +84,7 @@ interface EventWithDetails {
   title: string;
   description: string;
   eventDate: Date;
+  createdAt?: Date;
   imageUrl: string | null;
   region: string;
   enableRsvp: boolean;
@@ -89,7 +95,7 @@ interface EventWithDetails {
   rsvpCounts: RsvpCounts;
   author: Author;
   comments: Comment[];
-  createdById: string; 
+  createdById: string;
   isOwner: boolean;
 }
 
@@ -199,8 +205,8 @@ const InfoMessageToast: React.FC<{
 
   const color =
     type === "error"
-      ? "bg-red-500/10 border-red-500/30 text-red-300"
-      : "bg-blue-500/10 border-blue-500/30 text-blue-300";
+      ? "dark:bg-red-500/10 bg-red-50 dark:border-red-500/30 border-red-200 dark:text-red-300 text-red-700"
+      : "dark:bg-blue-500/10 bg-blue-50 dark:border-blue-500/30 border-blue-200 dark:text-blue-300 text-blue-700";
 
   const Icon = type === "error" ? AlertCircle : Check;
 
@@ -223,30 +229,20 @@ const InfoMessageToast: React.FC<{
 };
 
 const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> = ({ event, onClose }) => {
+  const { formatDate: formatDatePref } = useDateFormat();
   const totalRsvps = event.rsvpCounts.going + event.rsvpCounts.maybe + event.rsvpCounts.notGoing;
   const goingPercentage = totalRsvps > 0 ? (event.rsvpCounts.going / totalRsvps) * 100 : 0;
   const maybePercentage = totalRsvps > 0 ? (event.rsvpCounts.maybe / totalRsvps) * 100 : 0;
   const notGoingPercentage = totalRsvps > 0 ? (event.rsvpCounts.notGoing / totalRsvps) * 100 : 0;
 
   const formatEventDateTime = (date: Date) => {
-    const eventDate = new Date(date);
-    const dateStr = eventDate.toLocaleDateString('en-US', { 
-      year: 'numeric',
-      month: 'long', 
-      day: 'numeric' 
-    });
-    const timeStr = eventDate.toLocaleTimeString('en-US', { 
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-    return `${dateStr} at ${timeStr}`;
+    return formatDatePref(date, "long");
   };
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="surface-card rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="p-4 sm:p-6 flex items-center justify-between sticky top-0 bg-bg-primary/95 backdrop-blur-sm z-10">
+      <div className="dark:bg-[#16151A] bg-white rounded-2xl dark:border-white/5 border border-slate-200 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="p-4 sm:p-6 flex items-center justify-between sticky top-0 dark:bg-[#16151A]/95 bg-white/95 backdrop-blur-sm z-10 rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-accent-primary/20 rounded-lg flex items-center justify-center">
               <BarChart3 size={18} className="sm:w-5 sm:h-5 text-accent-primary" />
@@ -255,13 +251,13 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-fg-secondary hover:text-fg-primary hover:bg-bg-secondary rounded-lg transition-colors">
+            className="p-2 text-accent-primary/60 hover:text-accent-primary hover:bg-accent-primary/5 rounded-lg transition-colors">
             <X size={20} />
           </button>
         </div>
 
         <div className="p-4 sm:p-6 space-y-6">
-          <div className="bg-bg-secondary rounded-xl p-4 sm:p-5 ios-card">
+          <div className="dark:bg-bg-secondary bg-slate-50 rounded-xl p-4 sm:p-5 border dark:border-white/[0.06] border-slate-200">
             <div className="flex items-center gap-3 mb-2">
               <Users className="text-accent-primary" size={20} />
               <h3 className="text-base sm:text-lg font-semibold text-fg-primary">Total Responses</h3>
@@ -270,68 +266,68 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-fg-secondary flex items-center gap-2">
-              <TrendingUp size={16} />
+            <h3 className="text-sm font-semibold text-accent-primary flex items-center gap-2">
+              <TrendingUp size={16} className="text-accent-primary" />
               Response Breakdown
             </h3>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 size={16} className="text-success" />
+                  <CheckCircle2 size={16} className="text-accent-primary" />
                   <span className="text-fg-secondary font-medium">Going</span>
                 </div>
                 <span className="text-fg-primary font-semibold">{event.rsvpCounts.going}</span>
               </div>
-              <div className="h-2 bg-bg-surface/60 rounded-full overflow-hidden">
+              <div className="h-2 dark:bg-white/5 bg-slate-100 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-success transition-all duration-500"
+                  className="h-full bg-accent-primary transition-all duration-500"
                   style={{ width: `${goingPercentage}%` }}
                 />
               </div>
-              <p className="text-xs text-fg-tertiary text-right">{goingPercentage.toFixed(1)}%</p>
+              <p className="text-xs text-accent-primary text-right">{goingPercentage.toFixed(1)}%</p>
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
-                  <HelpCircle size={16} className="text-warning" />
+                  <HelpCircle size={16} className="text-accent-primary/70" />
                   <span className="text-fg-secondary font-medium">Maybe</span>
                 </div>
                 <span className="text-fg-primary font-semibold">{event.rsvpCounts.maybe}</span>
               </div>
-              <div className="h-2 bg-bg-surface/60 rounded-full overflow-hidden">
+              <div className="h-2 dark:bg-white/5 bg-slate-100 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-warning transition-all duration-500"
+                  className="h-full bg-accent-primary/70 transition-all duration-500"
                   style={{ width: `${maybePercentage}%` }}
                 />
               </div>
-              <p className="text-xs text-fg-tertiary text-right">{maybePercentage.toFixed(1)}%</p>
+              <p className="text-xs text-accent-primary/70 text-right">{maybePercentage.toFixed(1)}%</p>
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
-                  <XCircle size={16} className="text-event-critical" />
+                  <XCircle size={16} className="text-accent-primary/50" />
                   <span className="text-fg-secondary font-medium">Can&apos;t Go</span>
                 </div>
                 <span className="text-fg-primary font-semibold">{event.rsvpCounts.notGoing}</span>
               </div>
-              <div className="h-2 bg-bg-secondary rounded-full overflow-hidden">
+              <div className="h-2 dark:bg-white/5 bg-slate-100 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-event-critical transition-all duration-500"
+                  className="h-full bg-accent-primary/50 transition-all duration-500"
                   style={{ width: `${notGoingPercentage}%` }}
                 />
               </div>
-              <p className="text-xs text-fg-tertiary text-right">{notGoingPercentage.toFixed(1)}%</p>
+              <p className="text-xs text-accent-primary/50 text-right">{notGoingPercentage.toFixed(1)}%</p>
             </div>
           </div>
 
-          <div className="bg-bg-secondary rounded-xl p-4 ios-card">
-            <h4 className="text-sm font-semibold text-fg-secondary mb-2">Event Details</h4>
+          <div className="dark:bg-bg-secondary bg-slate-50 rounded-xl p-4 border dark:border-white/[0.06] border-slate-200">
+            <h4 className="text-sm font-semibold text-accent-primary mb-2">Event Details</h4>
             <p className="text-fg-primary font-medium mb-1">{event.title}</p>
-            <div className="flex items-center gap-2 text-xs text-fg-tertiary">
-              <Calendar size={14} />
+            <div className="flex items-center gap-2 text-xs text-accent-primary/60">
+              <Calendar size={14} className="text-accent-primary" />
               <span>{formatEventDateTime(event.eventDate)}</span>
             </div>
           </div>
@@ -343,11 +339,16 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
 
 const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
   const { data: session } = useSession();
+  const { formatDate: formatDatePref } = useDateFormat();
   const utils = api.useUtils();
   const [showAllComments, setShowAllComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [showDashboard, setShowDashboard] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
   const [deleteEventArmed, setDeleteEventArmed] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showReminderPicker, setShowReminderPicker] = useState(false);
+  const [lastRsvpStatus, setLastRsvpStatus] = useState<"going" | "maybe" | "not_going" | null>(null);
   const [infoMessage, setInfoMessage] = useState<{
     message: string;
     type: "error" | "info";
@@ -409,12 +410,49 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
     toggleLike.mutate({ eventId: event.id });
   };
 
+  const handleBellClick = () => {
+    if (!session) {
+      setInfoMessage({ message: "Please sign in to manage event notifications", type: "error" });
+      return;
+    }
+
+    if (!event.enableRsvp) {
+      setInfoMessage({
+        message: "Like and comment notifications are sent to the event author automatically.",
+        type: "info",
+      });
+      return;
+    }
+
+    setShowReminderPicker((prev) => !prev);
+  };
+
   const handleRsvpClick = (status: "going" | "maybe" | "not_going") => {
     if (!session) {
       setInfoMessage({ message: "Please sign in to RSVP", type: "error" });
       return;
     }
     updateRsvp.mutate({ eventId: event.id, status });
+    // Show reminder picker for going/maybe, hide for not_going
+    setLastRsvpStatus(status);
+    if (status === "going" || status === "maybe") {
+      // Use a short delay so the optimistic update settles first
+      setTimeout(() => setShowReminderPicker(true), 50);
+    } else {
+      setShowReminderPicker(false);
+    }
+  };
+
+  const handleSetReminder = (minutes: number | null) => {
+    updateRsvp.mutate({
+      eventId: event.id,
+      status: lastRsvpStatus ?? event.userRsvpStatus ?? "going",
+      reminderMinutesBefore: minutes,
+    });
+    setShowReminderPicker(false);
+    if (minutes !== null) {
+      setInfoMessage({ message: `Reminder set for ${minutes >= 1440 ? `${minutes / 1440} day(s)` : minutes >= 60 ? `${minutes / 60} hour(s)` : `${minutes} min`} before`, type: "info" });
+    }
   };
 
   const handleAddComment = (e: React.FormEvent) => {
@@ -448,19 +486,18 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
     deleteEvent.mutate({ eventId: event.id });
   };
 
+  const handleShare = async () => {
+    const eventUrl = `${window.location.origin}/publish?event=${event.id}`;
+    try {
+      await navigator.clipboard.writeText(eventUrl);
+      setInfoMessage({ message: "Link copied to clipboard!", type: "info" });
+    } catch {
+      setInfoMessage({ message: "Failed to copy link", type: "error" });
+    }
+  };
+
   const formatDate = (date: Date) => {
-    const eventDate = new Date(date);
-    const dateStr = eventDate.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-    const timeStr = eventDate.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-    return `${dateStr} at ${timeStr}`;
+    return formatDatePref(date, "long");
   };
 
   const getRegionLabel = (value: string) => {
@@ -477,299 +514,376 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
 
   return (
     <>
-      <div className="bg-bg-primary border border-border-light rounded-lg shadow-sm mb-6 p-4 last:mb-0">
-        <InfoMessageToast
-          message={infoMessage?.message ?? null}
-          type={infoMessage?.type ?? null}
-          onClose={() => setInfoMessage(null)}
-        />
+      <article className="dark:bg-[#16151A] bg-white rounded-2xl dark:border-white/5 border border-slate-200 overflow-hidden card-shadow" data-testid="event-card">
 
-        <div className="mb-4">
-          <div className="flex items-start gap-3 sm:gap-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-bg-secondary overflow-hidden flex-shrink-0">
+        {/* Header — event icon + title + author/time + actions */}
+        <div className="p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-accent-primary/20 flex items-center justify-center shrink-0 overflow-hidden">
               {event.author.image ? (
                 <Image
                   src={event.author.image}
                   alt={event.author.name ?? "User"}
-                  width={48}
-                  height={48}
-                  className="w-full h-full object-cover"
+                  width={40}
+                  height={40}
+                  className="w-full h-full rounded-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <User size={20} className="text-fg-secondary" />
-                </div>
+                <User size={18} className="text-accent-primary" />
               )}
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-3">
-                <h2 className="text-lg sm:text-xl font-bold text-fg-primary mb-2 break-words flex-1 min-w-0">
-                  {event.title}
-                </h2>
-                {event.isOwner && (
-                  <button
-                    onClick={handleDeleteEvent}
-                    disabled={deleteEvent.isPending}
-                    className={`p-2 rounded-lg transition-all ${
-                      deleteEventArmed
-                        ? "bg-error/10 text-error"
-                        : "text-fg-secondary hover:text-error hover:bg-bg-secondary"
-                    }`}
-                    aria-label={deleteEventArmed ? "Confirm delete event" : "Delete event"}
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                )}
-              </div>
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-fg-secondary">
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <User size={14} className="sm:w-4 sm:h-4" />
-                  <span className="font-medium">{event.author.name}</span>
-                </div>
-
-                <span className="text-fg-tertiary hidden sm:inline">•</span>
-
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <MapPin size={14} className="sm:w-4 sm:h-4" />
-                  <span>{getRegionLabel(event.region)}</span>
-                </div>
-
-                <span className="text-fg-tertiary hidden sm:inline">•</span>
-
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <Calendar size={14} className="sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">{formatDate(event.eventDate)}</span>
-                  <span className="sm:hidden">{new Date(event.eventDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                </div>
-
-                {isPastEvent && (
-                  <>
-                    <span className="text-fg-tertiary hidden sm:inline">•</span>
-                    <span className="px-2 py-0.5 bg-event-inactive/20 rounded text-xs text-event-inactive">
-                      Past Event
-                    </span>
-                  </>
-                )}
-              </div>
+            <div>
+              <h3 className="font-bold text-sm dark:text-white text-slate-900">{event.title}</h3>
+              <p className="text-xs text-fg-tertiary">
+                {event.author.name}{event.createdAt ? ` · ${formatDatePref(new Date(event.createdAt), "withYear")}` : ""}
+              </p>
             </div>
+          </div>
+          <div className="relative">
+            <button
+              onClick={() => setShowMoreMenu(!showMoreMenu)}
+              className="p-1.5 rounded-lg text-accent-primary/40 hover:text-accent-primary hover:bg-accent-primary/5 transition-all"
+            >
+              <MoreHorizontal size={20} />
+            </button>
+            {showMoreMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowMoreMenu(false)} />
+                <div className="absolute right-0 top-full mt-1 z-50 dark:bg-[#16151A] bg-white rounded-xl dark:border-white/[0.06] border border-slate-200 shadow-xl min-w-[160px] py-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                  {event.isOwner && (
+                    <>
+                      <button
+                        onClick={() => {
+                          setShowEditForm(true);
+                          setShowMoreMenu(false);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium dark:text-gray-300 text-slate-600 dark:hover:bg-white/5 hover:bg-slate-50 transition-colors"
+                      >
+                        <Pencil size={15} />
+                        Edit Event
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleDeleteEvent();
+                          // Only close menu after confirming (second click), not when arming (first click)
+                          if (deleteEventArmed) setShowMoreMenu(false);
+                        }}
+                        disabled={deleteEvent.isPending}
+                        className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium transition-colors ${
+                          deleteEventArmed
+                            ? "text-error bg-error/5 hover:bg-error/10"
+                            : "dark:text-red-400 text-red-500 dark:hover:bg-red-500/10 hover:bg-red-50"
+                        }`}
+                      >
+                        <Trash2 size={15} />
+                        {deleteEventArmed ? "Confirm Delete" : "Delete Event"}
+                      </button>
+                    </>
+                  )}
+                  {!event.isOwner && (
+                    <p className="px-3 py-2.5 text-xs text-fg-tertiary">No actions available</p>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
 
-        {event.imageUrl && (
-          <div className="relative aspect-video bg-bg-secondary my-4 rounded-lg sm:rounded-xl overflow-hidden">
-            <Image
-              src={event.imageUrl}
-              alt={event.title}
-              fill
-              className="object-cover"
-            />
-          </div>
-        )}
-
-        <div className="mb-4">
-          <p className="text-xs sm:text-sm text-fg-secondary whitespace-pre-wrap leading-relaxed">
-            {event.description}
-          </p>
+        {/* Body — description + image */}
+        <div className="px-4 pb-3">
+          <p className="text-sm leading-relaxed dark:text-gray-300 text-slate-700">{event.description}</p>
+          {isValidImageUrl(event.imageUrl) && (
+            <div className="mt-4 rounded-xl overflow-hidden aspect-video bg-bg-tertiary relative">
+              <Image
+                src={event.imageUrl}
+                alt={event.title}
+                fill
+                className="object-cover"
+              />
+            </div>
+          )}
         </div>
 
-        {event.enableRsvp && (
-          <div className="mb-4">
-            <div className="p-3 sm:p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs sm:text-sm font-semibold text-fg-secondary">
-                  Will you come?
-                </h3>
-                {event.isOwner && (
-                  <button
-                    onClick={() => setShowDashboard(true)}
-                    className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-accent-primary/20 hover:bg-accent-primary/30 text-accent-primary rounded-lg transition-colors text-xs sm:text-sm font-medium">
-                    <BarChart3 size={14} className="sm:w-4 sm:h-4" />
-                    <span className="hidden sm:inline">View Stats</span>
-                    <span className="sm:hidden">Stats</span>
-                  </button>
-                )}
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <button
-                  onClick={() => handleRsvpClick("going")}
-                  disabled={updateRsvp.isPending}
-                  className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg transition-all ${
-                    event.userRsvpStatus === "going"
-                      ? "bg-event-positive/20 text-event-positive"
-                      : "bg-bg-surface/50 text-fg-secondary hover:bg-bg-secondary"
-                  }`}
-                >
-                  <CheckCircle2 size={14} className="sm:w-4 sm:h-4" />
-                  <span className="text-xs sm:text-sm font-medium">Going ({event.rsvpCounts.going})</span>
-                </button>
-                <button
-                  onClick={() => handleRsvpClick("maybe")}
-                  disabled={updateRsvp.isPending}
-                  className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg transition-all ${
-                    event.userRsvpStatus === "maybe"
-                      ? "bg-event-pending/20 text-event-pending"
-                      : "bg-bg-surface/50 text-fg-secondary hover:bg-bg-secondary"
-                  }`}
-                >
-                  <HelpCircle size={14} className="sm:w-4 sm:h-4" />
-                  <span className="text-xs sm:text-sm font-medium">Maybe ({event.rsvpCounts.maybe})</span>
-                </button>
-                <button
-                  onClick={() => handleRsvpClick("not_going")}
-                  disabled={updateRsvp.isPending}
-                  className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg transition-all ${
-                    event.userRsvpStatus === "not_going"
-                      ? "bg-event-critical/20 text-event-critical"
-                      : "bg-bg-surface/50 text-fg-secondary hover:bg-bg-secondary"
-                  }`}
-                >
-                  <XCircle size={14} className="sm:w-4 sm:h-4" />
-                  <span className="text-xs sm:text-sm font-medium">Can&apos;t Go ({event.rsvpCounts.notGoing})</span>
-                </button>
-              </div>
-            </div>
+        {/* Date + Region bar */}
+        <div className="px-4 pb-2 flex items-center gap-3 text-xs text-fg-tertiary">
+          <div className="flex items-center gap-1.5">
+            <Calendar size={12} className="text-accent-primary" />
+            <span>{formatDate(event.eventDate)}</span>
           </div>
-        )}
+          <div className="flex items-center gap-1.5">
+            <MapPin size={12} className="text-accent-primary" />
+            <span>{getRegionLabel(event.region)}</span>
+          </div>
+          {isPastEvent && (
+            <span className="px-1.5 py-0.5 bg-fg-tertiary/10 rounded text-[10px] text-fg-tertiary">Past</span>
+          )}
+        </div>
 
-        <div className="py-3 flex items-center gap-2 sm:gap-3">
+        {/* Action footer — like / comment / share */}
+        <div className="px-4 py-3 border-t dark:border-white/5 border-slate-100 flex items-center gap-5 sm:gap-6 flex-wrap">
           <button
             onClick={handleLike}
             disabled={toggleLike.isPending}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full transition-all hover:bg-bg-secondary ${
+            className={`flex items-center gap-1.5 transition-colors ${
               event.hasLiked
-                ? "text-event-critical"
-                : "text-fg-secondary hover:text-event-critical"
+                ? "text-accent-primary"
+                : "text-accent-primary/50 hover:text-accent-primary"
             }`}
           >
             <Heart
-              size={16}
-              className={`sm:w-[18px] sm:h-[18px] ${event.hasLiked ? "fill-current" : ""}`}
+              size={20}
+              className={event.hasLiked ? "fill-current" : ""}
             />
-            <span className="text-xs sm:text-sm font-medium">{event.likeCount}</span>
+            <span className="text-xs font-semibold">{event.likeCount}</span>
           </button>
-
-          <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-fg-secondary hover:text-accent-primary hover:bg-bg-secondary transition-colors">
-            <MessageCircle size={16} className="sm:w-[18px] sm:h-[18px]" />
-            <span className="text-xs sm:text-sm font-medium">{event.commentCount}</span>
+          <button className="flex items-center gap-1.5 text-accent-primary/50 hover:text-accent-primary transition-colors">
+            <MessageCircle size={20} />
+            <span className="text-xs font-semibold">{event.commentCount}</span>
+          </button>
+          <button 
+            onClick={handleShare}
+            className="flex items-center gap-1.5 text-accent-primary/50 hover:text-accent-primary transition-colors"
+          >
+            <Share2 size={20} />
+          </button>
+          <button
+            onClick={handleBellClick}
+            className={`flex items-center gap-1.5 transition-colors ${
+              showReminderPicker
+                ? "text-accent-primary"
+                : "text-accent-primary/50 hover:text-accent-primary"
+            }`}
+            aria-label="Event notifications"
+            title="Event notifications"
+          >
+            <Bell size={20} className={showReminderPicker ? "fill-current" : ""} />
           </button>
         </div>
 
-        <div className="mt-2">
+        {/* RSVP section */}
+        {event.enableRsvp && (
+          <div className="px-4 pb-2">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-accent-primary uppercase tracking-wider">RSVP</span>
+              {event.isOwner && (
+                <button
+                  onClick={() => setShowDashboard(true)}
+                  className="flex items-center gap-1 text-xs text-accent-primary font-medium">
+                  <BarChart3 size={12} />
+                  Stats
+                </button>
+              )}
+            </div>
+            <div className="flex gap-1.5">
+              <button
+                onClick={() => handleRsvpClick("going")}
+                disabled={updateRsvp.isPending}
+                className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  event.userRsvpStatus === "going"
+                    ? "bg-accent-primary/20 text-accent-primary"
+                    : "dark:bg-white/5 bg-slate-100 text-accent-primary/60 hover:bg-accent-primary/10 hover:text-accent-primary"
+                }`}
+              >
+                <CheckCircle2 size={12} />
+                Going ({event.rsvpCounts.going})
+              </button>
+              <button
+                onClick={() => handleRsvpClick("maybe")}
+                disabled={updateRsvp.isPending}
+                className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  event.userRsvpStatus === "maybe"
+                    ? "bg-accent-primary/20 text-accent-primary"
+                    : "dark:bg-white/5 bg-slate-100 text-accent-primary/60 hover:bg-accent-primary/10 hover:text-accent-primary"
+                }`}
+              >
+                <HelpCircle size={12} />
+                Maybe ({event.rsvpCounts.maybe})
+              </button>
+              <button
+                onClick={() => handleRsvpClick("not_going")}
+                disabled={updateRsvp.isPending}
+                className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  event.userRsvpStatus === "not_going"
+                    ? "bg-accent-primary/20 text-accent-primary"
+                    : "dark:bg-white/5 bg-slate-100 text-accent-primary/60 hover:bg-accent-primary/10 hover:text-accent-primary"
+                }`}
+              >
+                <XCircle size={12} />
+                Can&apos;t ({event.rsvpCounts.notGoing})
+              </button>
+            </div>
+
+            {/* Reminder preference picker */}
+            {showReminderPicker && (lastRsvpStatus === "going" || lastRsvpStatus === "maybe" || event.userRsvpStatus === "going" || event.userRsvpStatus === "maybe") && (
+              <div className="mt-2 p-2.5 rounded-lg bg-bg-secondary dark:border-white/5 border border-slate-200">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-accent-primary flex items-center gap-1">
+                    <Bell size={12} className="text-accent-primary" />
+                    Get notified before event?
+                  </span>
+                  <button
+                    onClick={() => setShowReminderPicker(false)}
+                    className="text-fg-tertiary hover:text-fg-primary p-0.5"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { label: "30 min", value: 30 },
+                    { label: "1 hour", value: 60 },
+                    { label: "3 hours", value: 180 },
+                    { label: "1 day", value: 1440 },
+                    { label: "3 days", value: 4320 },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => handleSetReminder(opt.value)}
+                      className="px-2.5 py-1 rounded-md text-xs font-medium bg-accent-primary/10 text-accent-primary hover:bg-accent-primary/20 transition-colors"
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => handleSetReminder(null)}
+                    className="px-2.5 py-1 rounded-md text-xs font-medium bg-accent-primary/5 text-accent-primary/60 hover:bg-accent-primary/10 hover:text-accent-primary transition-colors"
+                  >
+                    No thanks
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Comments */}
+        <div className="px-4 pb-3">
+          {sortedComments.length > 3 && !showAllComments && (
+            <button
+              onClick={() => setShowAllComments(true)}
+              className="text-xs text-accent-primary mb-2 block">
+              View all {sortedComments.length} comments
+            </button>
+          )}
+
           {displayedComments.length > 0 && (
-            <div className="py-4 sm:py-6 space-y-4">
+            <div className="space-y-1.5">
               {displayedComments.map((comment) => (
-                <div key={comment.id} className="flex gap-2 sm:gap-3">
-                  <div className="w-8 h-8 rounded-full bg-bg-secondary flex-shrink-0 overflow-hidden">
-                    {comment.author.image ? (
-                      <Image
-                        src={comment.author.image}
-                        alt={comment.author.name ?? "User"}
-                        width={32}
-                        height={32}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <User size={14} className="text-fg-secondary" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="bg-bg-secondary rounded-lg p-2.5 sm:p-3">
-                      <p className="text-xs sm:text-sm font-semibold text-fg-primary mb-1">
-                        {comment.author.name}
-                      </p>
-                      <p className="text-xs sm:text-sm text-fg-secondary">{comment.text}</p>
-                    </div>
-                    <p className="text-xs text-fg-tertiary mt-1 ml-2 sm:ml-3">
-                      {new Date(comment.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
+                <div key={comment.id} className="text-sm">
+                  <span className="font-semibold text-fg-primary mr-1.5">{comment.author.name}</span>
+                  <span className="text-fg-secondary">{comment.text}</span>
                 </div>
               ))}
-
-              {sortedComments.length > 3 && (
+              {showAllComments && sortedComments.length > 3 && (
                 <button
-                  onClick={() => setShowAllComments(!showAllComments)}
-                  className="text-xs sm:text-sm text-accent-primary hover:text-accent-secondary font-medium transition-colors">
-                  {showAllComments
-                    ? "Show less"
-                    : `View ${sortedComments.length - 3} more comments`}
+                  onClick={() => setShowAllComments(false)}
+                  className="text-xs text-accent-primary">
+                  Show less
                 </button>
               )}
             </div>
           )}
 
+          {/* Comment input */}
           {session && (
-            <div className="py-4 sm:py-6 border-t border-border-light">
-              <div className="flex gap-2 sm:gap-3">
-                <div className="w-8 h-8 rounded-full bg-bg-secondary flex-shrink-0 overflow-hidden">
-                  {session.user.image ? (
-                    <Image
-                      src={session.user.image}
-                      alt={session.user.name ?? "You"}
-                      width={32}
-                      height={32}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <User size={14} className="text-fg-secondary" />
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 flex gap-2">
-                  <input
-                    type="text"
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleAddComment(e);
-                      }
-                    }}
-                    placeholder="Write a comment..."
-                    className="flex-1 px-3 sm:px-4 py-2 bg-bg-secondary border border-border-light rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all text-sm sm:text-base text-fg-primary placeholder:text-fg-tertiary"
-                    disabled={addComment.isPending}
-                  />
-                  <button
-                    onClick={handleAddComment}
-                    disabled={addComment.isPending || !commentText.trim()}
-                    className="w-9 h-9 sm:w-10 sm:h-10 inline-flex items-center justify-center bg-accent-primary text-white rounded-full hover:bg-accent-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                    {addComment.isPending ? (
-                      <Loader2 className="animate-spin" size={18} />
-                    ) : (
-                      <Send size={18} />
-                    )}
-                  </button>
-                </div>
-              </div>
+            <div className="flex items-center gap-2 mt-2 pt-2 border-t dark:border-white/5 border-slate-100">
+              <input
+                type="text"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAddComment(e);
+                  }
+                }}
+                placeholder="Add a comment..."
+                className="flex-1 bg-transparent text-sm dark:text-white text-slate-800 dark:placeholder:text-fg-tertiary placeholder:text-slate-400 focus:outline-none py-1"
+                disabled={addComment.isPending}
+              />
+              <button
+                onClick={handleAddComment}
+                disabled={addComment.isPending || !commentText.trim()}
+                className="text-accent-primary text-sm font-semibold disabled:opacity-30 transition-opacity">
+                {addComment.isPending ? (
+                  <Loader2 className="animate-spin" size={14} />
+                ) : (
+                  "Post"
+                )}
+              </button>
             </div>
           )}
         </div>
-      </div>
+      </article>
 
-      {showDashboard && event.isOwner && (
-        <RsvpDashboard event={event} onClose={() => setShowDashboard(false)} />
+      {showDashboard && event.isOwner && typeof document !== 'undefined' && createPortal(
+        <RsvpDashboard event={event} onClose={() => setShowDashboard(false)} />,
+        document.body
       )}
+
+      {showEditForm && event.isOwner && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="dark:bg-[#1A191E] bg-white rounded-[32px] w-full max-w-2xl dark:border-white/5 border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col shadow-2xl">
+            <EditEventForm
+              event={{
+                id: event.id,
+                title: event.title,
+                description: event.description,
+                eventDate: event.eventDate,
+                region: event.region,
+                imageUrl: event.imageUrl,
+                enableRsvp: event.enableRsvp,
+              }}
+              onSuccess={() => setShowEditForm(false)}
+              onClose={() => setShowEditForm(false)}
+            />
+          </div>
+        </div>,
+        document.body
+      )}
+
+      <InfoMessageToast
+        message={infoMessage?.message ?? null}
+        type={infoMessage?.type ?? null}
+        onClose={() => setInfoMessage(null)}
+      />
     </>
   );
 };
 
 interface EventFeedProps {
   showCreateForm?: boolean;
+  externalRegion?: string;
+  hideRegionFilter?: boolean;
 }
 
-export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false }) => {
+export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false, externalRegion, hideRegionFilter = false }) => {
   const { data: session } = useSession();
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [showForm, setShowForm] = useState(false);
   
+  const activeRegion = externalRegion ?? selectedRegion;
+
+  const utils = api.useUtils();
 
   const { data: eventsData, isLoading, error } = api.event.getPublicEvents.useQuery(undefined, {
     enabled: true,
   });
+
+  // Real-time: remove deleted events instantly
+  const handleEventDeleted = useCallback((data: { eventId: number }) => {
+    utils.event.getPublicEvents.setData(undefined, (old) => {
+      if (!old) return old;
+      return old.filter((e) => e.id !== data.eventId);
+    });
+  }, [utils.event.getPublicEvents]);
+  useSocketEvent("event:deleted", handleEventDeleted);
+
+  // Real-time: refresh when events are updated (comments, likes, RSVPs)
+  const handleEventUpdated = useCallback(() => {
+    void utils.event.getPublicEvents.invalidate();
+  }, [utils.event.getPublicEvents]);
+  useSocketEvent("event:updated", handleEventUpdated);
 
   if (isLoading) {
     return (
@@ -783,8 +897,8 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false }) 
   if (error) {
     return (
       <div className="text-center py-20">
-        <div className="w-16 h-16 bg-event-critical/20 rounded-full flex items-center justify-center mx-auto mb-4">
-          <AlertCircle size={32} className="text-event-critical" />
+        <div className="w-16 h-16 bg-accent-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <AlertCircle size={32} className="text-accent-primary" />
         </div>
         <h3 className="text-xl font-semibold text-fg-primary mb-2">
           Error Loading Events
@@ -795,75 +909,105 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false }) 
   }
   
   const filteredEvents = eventsData?.filter(event =>
-    selectedRegion === '' || event.region === selectedRegion
+    activeRegion === '' || event.region === activeRegion
   ) ?? [];
 
   return (
     <div className="space-y-6">
       {showCreateForm && session && (
-        <div>
-          {showForm ? (
-            <div className="ios-card-elevated p-4 sm:p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-fg-primary">Create Event</h3>
-                <button
-                  onClick={() => setShowForm(false)}
-                  className="p-2 hover:bg-bg-secondary rounded-lg transition-colors"
-                >
-                  <X size={20} className="text-fg-secondary" />
-                </button>
+        <>
+          {/* Post Composer — matches events.html design */}
+          <div className="dark:bg-[#16151A] bg-white rounded-2xl dark:border-white/5 border border-slate-200 p-5">
+            <div className="flex gap-3">
+              <div className="w-10 h-10 rounded-full bg-accent-primary/10 shrink-0 overflow-hidden">
+                {session.user?.image ? (
+                  <Image
+                    src={session.user.image}
+                    alt="Profile"
+                    width={40}
+                    height={40}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-accent-primary/20">
+                    <span className="text-accent-primary font-bold text-xs">
+                      {session.user?.name?.charAt(0)?.toUpperCase() ?? "U"}
+                    </span>
+                  </div>
+                )}
               </div>
-              <CreateEventForm onSuccess={() => setShowForm(false)} />
+              <div className="flex-1">
+                <textarea
+                  className="w-full bg-transparent border-none focus:ring-0 text-base resize-none placeholder:text-fg-tertiary text-fg-primary"
+                  placeholder="What are you planning today?"
+                  rows={2}
+                  onFocus={() => setShowForm(true)}
+                />
+              </div>
             </div>
-          ) : (
-            <button
-              onClick={() => setShowForm(true)}
-              className="w-full ios-card p-4 flex items-center gap-3 text-fg-secondary hover:text-accent-primary hover:bg-accent-primary/5 transition-colors group"
-            >
-              <div className="w-10 h-10 rounded-full bg-accent-primary/10 flex items-center justify-center group-hover:bg-accent-primary/20 transition-colors">
-                <Plus size={20} className="text-accent-primary" />
+            <div className="mt-3 pt-3 border-t dark:border-white/5 border-slate-100 flex items-center justify-end">
+              <button
+                onClick={() => setShowForm(true)}
+                type="button"
+                className="text-accent-primary font-semibold text-sm hover:text-accent-hover transition-colors underline underline-offset-2 decoration-accent-primary/40 hover:decoration-accent-primary"
+              >
+                Post Event
+              </button>
+            </div>
+          </div>
+
+          {/* Full create form — modal overlay matching create-event.html */}
+          {showForm && typeof document !== 'undefined' && createPortal(
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+              <div className="dark:bg-[#1A191E] bg-white rounded-[32px] w-full max-w-2xl dark:border-white/5 border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col shadow-2xl">
+                <CreateEventForm onSuccess={() => setShowForm(false)} onClose={() => setShowForm(false)} />
               </div>
-              <span className="font-medium">Create new event</span>
-            </button>
+            </div>,
+            document.body
           )}
-        </div>
+        </>
       )}
 
-      <div>
-        <RegionMapPicker
-          value={selectedRegion}
-          onChange={setSelectedRegion}
-          regions={REGION_MAP}
-          allowAll
-          allLabel="All"
-          fallback={
-            <div className="ios-card p-3 sm:p-4">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <MapPin className="text-accent-primary" size={18} />
-                <select
-                  value={selectedRegion}
-                  onChange={(e) => setSelectedRegion(e.target.value)}
-                  className="flex-1 px-3 sm:px-4 py-2 bg-bg-secondary shadow-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent transition-all text-sm sm:text-base text-fg-primary appearance-none cursor-pointer [&>option]:text-fg-primary [&>option]:bg-bg-secondary [color-scheme:dark]"
-                >
-                  {REGIONS.map((region) => (
-                    <option key={region.value} value={region.value}>
-                      {region.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          }
-        />
+      {/* Region filter — horizontal scroll */}
+      {!hideRegionFilter && (
+      <div className="overflow-x-auto scrollbar-hide border-b sm:border-none dark:border-white/5 border-slate-200">
+        <div className="flex items-center gap-2 px-3 py-2 sm:py-3 min-w-max">
+          <button
+            type="button"
+            onClick={() => setSelectedRegion('')}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+              selectedRegion === ''
+                ? 'bg-accent-primary text-white'
+                : 'bg-bg-secondary text-fg-secondary hover:bg-accent-primary/10 hover:text-accent-primary dark:border-white/5 border border-slate-200'
+            }`}
+          >
+            All
+          </button>
+          {REGIONS.filter(r => r.value !== '').map((region) => (
+            <button
+              key={region.value}
+              type="button"
+              onClick={() => setSelectedRegion(region.value)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                selectedRegion === region.value
+                  ? 'bg-accent-primary text-white'
+                  : 'bg-bg-secondary text-fg-secondary hover:bg-accent-primary/10 hover:text-accent-primary dark:border-white/5 border border-slate-200'
+              }`}
+            >
+              {region.label}
+            </button>
+          ))}
+        </div>
       </div>
+      )}
 
       {!filteredEvents || filteredEvents.length === 0 ? (
-        <div className="text-center py-20">
-          <div className="w-16 h-16 bg-accent-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="text-center py-20 px-4">
+          <div className="w-16 h-16 bg-accent-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <Calendar size={32} className="text-accent-primary" />
           </div>
           <h3 className="text-xl font-semibold text-fg-primary mb-2">No Events Found</h3>
-          <p className="text-fg-secondary">
+          <p className="text-fg-secondary text-sm">
             {selectedRegion
               ? `No events currently listed for ${REGIONS.find((r) => r.value === selectedRegion)?.label}.`
               : `Create your first event to get started!`}

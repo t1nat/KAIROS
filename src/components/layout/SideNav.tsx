@@ -4,18 +4,20 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { 
-  Home, 
-  FolderKanban, 
-  FileEdit, 
-  BarChart3,
-  Users,
+import {
+  Briefcase,
+  BookText,
+  TrendingUp,
+  Building2,
   Settings,
   Menu,
   X,
+  SquarePen,
+  MessageCircle,
+  Sparkles,
+  CalendarDays,
+  CalendarCheck,
   Plus,
-  //MessageCircle,
-  Calendar
 } from "lucide-react";
 
 export function SideNav() {
@@ -43,23 +45,20 @@ export function SideNav() {
   const action = searchParams?.get("action");
 
   const mainNavItems = [
-    { href: "/", icon: Home, label: t("home") },
-    { href: "/create", icon: Plus, label: t("create") },
-    { href: "/projects", icon: FolderKanban, label: t("projects") },
-    { href: "/create?action=new_note", icon: FileEdit, label: t("notes") },
-    { href: "/progress", icon: BarChart3, label: t("progress") },
-   // { href: "/chat", icon: MessageCircle, label: "Chat" },
-    { href: "/publish", icon: Calendar, label: t("events") },
+    { href: "/create", icon: SquarePen, label: t("create") },
+    { href: "/projects", icon: Briefcase, label: t("projects") },
+    { href: "/notes", icon: BookText, label: t("notes") },
+    { href: "/progress", icon: TrendingUp, label: t("progress") },
+    { href: "/calendar", icon: CalendarCheck, label: t("calendar") },
+    { href: "/chat", icon: MessageCircle, label: t("chat") },
+    { href: "/publish", icon: CalendarDays, label: t("events") },
   ];
 
-  const profileItem = { href: "/orgs", icon: Users, label: tOrg("yourOrgs") };
+  const profileItem = { href: "/orgs", icon: Building2, label: tOrg("yourOrgs") };
 
   const settingsItem = { href: "/settings?section=profile", icon: Settings, label: t("settings") };
 
   const isItemActive = (href: string): boolean => {
-    if (href === "/") {
-      return pathname === "/";
-    }
     if (href === "/create") {
       return pathname === "/create" && !action;
     }
@@ -72,6 +71,9 @@ export function SideNav() {
     if (href === "/publish") {
       return pathname === "/publish";
     }
+    if (href === "/calendar") {
+      return pathname === "/calendar";
+    }
     if (href === "/projects") {
       return pathname === "/projects";
     }
@@ -81,8 +83,8 @@ export function SideNav() {
     if (href === "/create?action=new_project") {
       return pathname === "/create" && action === "new_project";
     }
-    if (href === "/create?action=new_note") {
-      return pathname === "/create" && action === "new_note";
+    if (href === "/notes") {
+      return pathname === "/notes";
     }
     return false;
   };
@@ -99,10 +101,10 @@ export function SideNav() {
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="p-2 hover:bg-bg-secondary/60 rounded-lg transition-colors"
-          aria-label={isMobileMenuOpen ? tCommon("close") : "Menu"}
+          aria-label={isMobileMenuOpen ? tCommon("close") : tCommon("menu")}
           aria-expanded={isMobileMenuOpen}
           aria-controls={mobileNavId}
-          title={isMobileMenuOpen ? tCommon("close") : "Menu"}
+          title={isMobileMenuOpen ? tCommon("close") : tCommon("menu")}
         >
           {isMobileMenuOpen ? (
             <X size={24} className="text-fg-primary" />
@@ -132,10 +134,12 @@ export function SideNav() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                    }}
                     className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-colors font-medium ${
                       isActive
-                        ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 dark:bg-fg-primary dark:text-bg-primary dark:ring-0 shadow-sm"
+                        ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 shadow-sm font-semibold"
                         : "text-fg-secondary hover:bg-bg-secondary/60 hover:text-fg-primary"
                     }`}
                   >
@@ -144,6 +148,18 @@ export function SideNav() {
                   </Link>
                 );
               })}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  window.dispatchEvent(new CustomEvent("kairos:openAI"));
+                }}
+                className="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-colors font-medium text-fg-secondary hover:bg-bg-secondary/60 hover:text-fg-primary w-full"
+              >
+                <Sparkles size={20} />
+                <span>Kairos AI</span>
+              </button>
 
               <Link
                 href={profileItem.href}
@@ -160,7 +176,7 @@ export function SideNav() {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-colors font-medium ${
                   pathname === "/settings"
-                    ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 dark:bg-fg-primary dark:text-bg-primary dark:ring-0 shadow-sm"
+                    ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 shadow-sm font-semibold"
                     : "text-fg-secondary hover:bg-bg-secondary/60 hover:text-fg-primary"
                 }`}
                 title={settingsItem.label}
@@ -192,6 +208,7 @@ export function SideNav() {
         <div className="flex flex-col items-center gap-6">
           {mainNavItems.map((item) => {
             const isActive = isItemActive(item.href);
+
             return (
               <Link
                 key={item.href}
@@ -199,34 +216,63 @@ export function SideNav() {
                 aria-label={item.label}
                 className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors group relative ${
                   isActive
-                    ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 dark:bg-fg-primary dark:text-bg-primary dark:ring-0 shadow-sm"
+                    ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 shadow-sm"
                     : "text-fg-secondary hover:bg-bg-secondary/60 hover:text-fg-primary"
                 }`}
                 title={item.label}
               >
                 <item.icon size={20} />
-                
-                <span className="absolute left-full ml-4 px-3 py-1.5 ios-card text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
+
+                <span className="absolute left-full ml-4 px-3 py-1.5 bg-bg-elevated border border-slate-200 dark:border-white/[0.06] text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
                   {item.label}
                 </span>
               </Link>
             );
           })}
+
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent("kairos:openAI"))}
+            aria-label="Kairos AI"
+            title="Kairos AI"
+            className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors group relative text-fg-secondary hover:bg-bg-secondary/60 hover:text-fg-primary"
+          >
+            <Sparkles size={20} />
+            <span className="absolute left-full ml-4 px-3 py-1.5 bg-bg-elevated border border-slate-200 dark:border-white/[0.06] text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
+              Kairos AI
+            </span>
+          </button>
         </div>
 
-        <div className="mt-auto">
+        <div className="mt-auto flex flex-col items-center gap-4">
+          <Link
+            href={profileItem.href}
+            aria-label={profileItem.label}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors group relative ${
+              pathname === "/orgs"
+                ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 shadow-sm"
+                : "text-fg-secondary hover:bg-bg-secondary/60 hover:text-fg-primary"
+            }`}
+            title={profileItem.label}
+          >
+            <profileItem.icon size={20} />
+            <span className="absolute left-full ml-4 px-3 py-1.5 bg-bg-elevated border border-slate-200 dark:border-white/[0.06] text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
+              {profileItem.label}
+            </span>
+          </Link>
+
           <Link
             href={settingsItem.href}
             aria-label={settingsItem.label}
             className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors group relative ${
               pathname === "/settings"
-                ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 dark:bg-fg-primary dark:text-bg-primary dark:ring-0 shadow-sm"
+                ? "bg-accent-primary/10 text-accent-primary ring-1 ring-accent-primary/25 shadow-sm"
                 : "text-fg-secondary hover:bg-bg-secondary/60 hover:text-fg-primary"
             }`}
             title={settingsItem.label}
           >
             <settingsItem.icon size={20} />
-            <span className="absolute left-full ml-4 px-3 py-1.5 ios-card text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
+            <span className="absolute left-full ml-4 px-3 py-1.5 bg-bg-elevated border border-slate-200 dark:border-white/[0.06] text-fg-primary text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
               {settingsItem.label}
             </span>
           </Link>

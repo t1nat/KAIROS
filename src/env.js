@@ -9,7 +9,16 @@ export const env = createEnv({
     AUTH_DISCORD_SECRET: z.string().optional(),
     AUTH_GOOGLE_ID: z.string().optional(),
     AUTH_GOOGLE_SECRET: z.string().optional(),
+    AUTH_MICROSOFT_ID: z.string().optional(),
+    AUTH_MICROSOFT_SECRET: z.string().optional(),
     DATABASE_URL: z.string().optional(),
+
+    // LLM Agent System (OpenAI-compatible — can point to HuggingFace, OpenAI, etc.)
+    LLM_BASE_URL: z.string().url().optional(),
+    LLM_API_KEY: z.string().optional(),
+    LLM_DEFAULT_MODEL: z.string().optional(),
+    LLM_FALLBACK_MODEL: z.string().optional(),
+    LLM_ALTERNATE_MODEL: z.string().optional(),
 
     // Email (Resend)
     RESEND_API_KEY: z.string().optional(),
@@ -18,6 +27,10 @@ export const env = createEnv({
     // Used for building absolute URLs in emails
     NEXT_PUBLIC_APP_URL: z.string().optional(),
 
+    // WebSocket (standalone WS server)
+    WS_SECRET: z.string().optional(),
+    WS_INTERNAL_URL: z.string().optional(),
+
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -25,6 +38,7 @@ export const env = createEnv({
 
   client: {
     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: z.string().optional(),
+    NEXT_PUBLIC_WS_URL: z.string().optional(),
   },
 
 
@@ -34,7 +48,15 @@ export const env = createEnv({
     AUTH_DISCORD_SECRET: process.env.AUTH_DISCORD_SECRET,
     AUTH_GOOGLE_ID: process.env.AUTH_GOOGLE_ID,
     AUTH_GOOGLE_SECRET: process.env.AUTH_GOOGLE_SECRET,
+    AUTH_MICROSOFT_ID: process.env.AUTH_MICROSOFT_ID,
+    AUTH_MICROSOFT_SECRET: process.env.AUTH_MICROSOFT_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
+
+    LLM_BASE_URL: process.env.LLM_BASE_URL,
+    LLM_API_KEY: process.env.LLM_API_KEY,
+    LLM_DEFAULT_MODEL: process.env.LLM_DEFAULT_MODEL,
+    LLM_FALLBACK_MODEL: process.env.LLM_FALLBACK_MODEL,
+    LLM_ALTERNATE_MODEL: process.env.LLM_ALTERNATE_MODEL,
 
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
@@ -42,6 +64,9 @@ export const env = createEnv({
 
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+    NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL,
+    WS_SECRET: process.env.WS_SECRET,
+    WS_INTERNAL_URL: process.env.WS_INTERNAL_URL,
   },
 
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,

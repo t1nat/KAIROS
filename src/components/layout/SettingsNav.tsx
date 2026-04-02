@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { User, Bell, Shield, Globe, Palette } from "lucide-react";
+import { User, Bell, Shield, Globe, Palette, Building2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 type Translator = (key: string, values?: Record<string, unknown>) => string;
@@ -17,6 +17,7 @@ export function SettingsNav({ activeSection, variant = "card" }: SettingsNavProp
   
   const sections = [
     { id: "profile", label: t("profile"), icon: User },
+    { id: "workspace", label: "Workspace", icon: Building2 },
     { id: "notifications", label: t("notifications"), icon: Bell },
     { id: "security", label: t("security"), icon: Shield },
     { id: "language", label: t("language"), icon: Globe },
@@ -25,30 +26,39 @@ export function SettingsNav({ activeSection, variant = "card" }: SettingsNavProp
 
   return (
     <nav className="h-full bg-transparent" aria-label="Settings">
-      <div className="flex flex-col h-full">
-        {sections.map((section) => {
+      <div className="flex flex-col h-full py-1">
+        {sections.map((section, index) => {
           const Icon = section.icon;
           const isActive = activeSection === section.id;
           
           return (
-            <Link
-              key={section.id}
-              href={`/settings?section=${section.id}`}
-              aria-current={isActive ? "page" : undefined}
-              className={`group flex items-center gap-4 px-8 py-6 transition-all duration-200 ${
-                isActive
-                  ? "bg-gray-100/50 dark:bg-white/5 text-gray-900 dark:text-white border-l-2 border-gray-400 dark:border-gray-600"
-                  : "text-gray-500 dark:text-gray-400 hover:bg-gray-50/50 dark:hover:bg-white/[0.02] hover:text-gray-900 dark:hover:text-white"
-              }`}
-            >
-              <Icon 
-                size={20} 
-                className={`transition-colors ${
-                  isActive ? "text-gray-900 dark:text-white" : "text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300"
-                }`} 
-              />
-              <span className="font-medium text-base tracking-[-0.01em]">{section.label}</span>
-            </Link>
+            <div key={section.id}>
+              <Link
+                href={`/settings?section=${section.id}`}
+                aria-current={isActive ? "page" : undefined}
+                className={`group flex items-center gap-3 mx-3 px-3 py-3 rounded-xl transition-all duration-200 relative ${
+                  isActive
+                    ? "bg-bg-tertiary text-fg-primary"
+                    : "text-fg-secondary hover:bg-bg-tertiary/50 hover:text-fg-primary"
+                }`}
+                data-active={isActive}
+              >
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                  isActive 
+                    ? "bg-accent-primary/15 text-accent-primary" 
+                    : "bg-bg-secondary text-fg-tertiary group-hover:text-fg-secondary"
+                }`}>
+                  <Icon size={16} />
+                </div>
+                <span className="font-medium text-sm tracking-[-0.01em]">{section.label}</span>
+                {isActive && (
+                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-accent-primary" />
+                )}
+              </Link>
+              {index < sections.length - 1 && (
+                <div className="mx-6 border-b border-slate-100 dark:border-white/[0.04]" />
+              )}
+            </div>
           );
         })}
       </div>

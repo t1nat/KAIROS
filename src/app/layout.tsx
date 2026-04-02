@@ -2,7 +2,7 @@ import "~/styles/globals.css";
 import "react-chat-elements/dist/main.css";
 
 import { type Metadata } from "next";
-import { Cinzel, Newsreader, Uncial_Antiqua, Faustina, Space_Grotesk } from "next/font/google";
+import { Nunito_Sans } from "next/font/google";
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 
@@ -12,6 +12,9 @@ import NextAuthSessionProvider from "~/components/providers/SessionProvider";
 import { ThemeProvider } from "~/components/providers/ThemeProvider";
 import { ToastProvider } from "~/components/providers/ToastProvider";
 import { UserPreferencesProvider } from "~/components/providers/UserPreferencesProvider";
+import { SocketProvider } from "~/components/providers/SocketProvider";
+import WebSocketInitializer from "~/components/layout/WebSocketInitializer";
+import { GlobalAIWidget } from "~/components/layout/GlobalAIWidget";
 
 export const metadata: Metadata = {
   title: "KAIROS",
@@ -19,43 +22,18 @@ export const metadata: Metadata = {
   icons: [{ rel: "icon", url: "/logo_white.png" }],
 };
 
-const sans = Space_Grotesk({
-  subsets: ["latin"],
+const sans = Nunito_Sans({
+  subsets: ["latin", "cyrillic"],
+  weight: ["200", "300", "400", "600", "700", "800", "900"],
   variable: "--font-geist-sans",
   display: "swap",
 });
 
-const display = Cinzel({
-  subsets: ["latin"],
-  weight: ["400", "700"],
+const display = Nunito_Sans({
+  subsets: ["latin", "cyrillic"],
+  weight: ["700", "800", "900"],
   variable: "--font-display",
   display: "swap",
-});
-
-const arsenica = Cinzel({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: '--font-arsenica',
-  display: 'swap',
-});
-
-const newsreader = Newsreader({
-  subsets: ["latin"],
-  variable: "--font-newsreader",
-  display: 'swap',
-});
-
-const uncialAntiqua = Uncial_Antiqua({
-  subsets: ["latin"],
-  weight: ["400"],
-  variable: '--font-uncial-antiqua',
-  display: 'swap',
-});
-
-const faustina = Faustina({
-  subsets: ["latin"],
-  variable: "--font-faustina",
-  display: 'swap',
 });
 
 export default async function RootLayout({
@@ -66,19 +44,46 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className={`${sans.variable} ${display.variable} ${arsenica.variable} ${newsreader.variable} ${uncialAntiqua.variable} ${faustina.variable}`} suppressHydrationWarning>
-      <body className="min-h-dvh bg-bg-primary text-fg-primary font-sans antialiased">
+    <html lang={locale} className={`${sans.variable} ${display.variable}`} suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+(function() {
+  try {
+    // Prevent theme flash - sync with next-themes
+    var theme = localStorage.getItem('theme') || 'dark';
+    var classList = document.documentElement.classList;
+    classList.remove('light', 'dark');
+    classList.add(theme);
+    
+    // Prevent accent color flash  
+    var accent = sessionStorage.getItem('user-accent') || 'purple';
+    document.documentElement.dataset.accent = accent;
+  } catch (e) {}
+})();
+            `,
+          }}
+        />
+      </head>
+      <body className="min-h-dvh bg-bg-primary text-fg-primary font-sans antialiased" suppressHydrationWarning>
         <a href="#main-content" className="skip-link">
           Skip to content
         </a>
         <NextIntlClientProvider messages={messages} locale={locale}>
           <TRPCReactProvider>
             <NextAuthSessionProvider session={session}>
-              <ThemeProvider>
-                <ToastProvider>
-                  <UserPreferencesProvider>{children}</UserPreferencesProvider>
-                </ToastProvider>
-              </ThemeProvider>
+              <SocketProvider>
+                <WebSocketInitializer />
+                <ThemeProvider>
+                  <ToastProvider>
+                    <UserPreferencesProvider>
+                      {children}
+                      <GlobalAIWidget />
+                    </UserPreferencesProvider>
+                  </ToastProvider>
+                </ThemeProvider>
+              </SocketProvider>
             </NextAuthSessionProvider>
           </TRPCReactProvider>
         </NextIntlClientProvider>

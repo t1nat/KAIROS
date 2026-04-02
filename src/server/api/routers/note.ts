@@ -1,16 +1,28 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
+import crypto from "node:crypto";
 import { protectedProcedure, createTRPCRouter } from "~/server/api/trpc";
-import { stickyNotes, users } from "~/server/db/schema";
-import bcrypt from "bcryptjs";
-import { eq } from "drizzle-orm";
+import { stickyNotes, users, notebooks, noteShares, notifications } from "~/server/db/schema";
+import { eq, and, or } from "drizzle-orm";
+import { emitNotification } from "~/server/socket/emit";
 import * as argon2 from "argon2";
+import { encryptContent, decryptContent } from "~/server/encryption";
+
+const ARGON2_OPTS = {
+  type: argon2.argon2id,
+  memoryCost: 65536,
+  timeCost: 3,
+  parallelism: 4,
+} as const;
 
 export const noteRouter = createTRPCRouter({
   create: protectedProcedure
     .input(z.object({
       content: z.string().min(1),
+      title: z.string().optional(),
       password: z.string().optional(),
+      notebookId: z.number().optional(),
+      calendarDate: z.date().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       let passwordHash: string | null = null;
@@ -18,10 +30,9 @@ export const noteRouter = createTRPCRouter({
 
       if (input.password && input.password.length > 0) {
         try { 
-          const saltRounds = 10;
-          const salt = await bcrypt.genSalt(saltRounds);
-          passwordSalt = salt;
-          passwordHash = await bcrypt.hash(input.password, salt);
+          // Generate a random salt for AES-256-GCM encryption (Argon2 embeds its own salt)
+          passwordSalt = crypto.randomBytes(32).toString("hex");
+          passwordHash = await argon2.hash(input.password, ARGON2_OPTS);
           if (process.env.NODE_ENV !== "production") {
             console.log("Password Hashed Successfully.");
           }
@@ -35,13 +46,21 @@ export const noteRouter = createTRPCRouter({
       }
       
       try {
+        // Encrypt content if password-protected (AES-256-GCM)
+        const storedContent = (passwordSalt && input.password)
+          ? encryptContent(input.content, input.password, passwordSalt)
+          : input.content;
+
         const [newNote] = await ctx.db.insert(stickyNotes).values({
-          content: input.content,
+          content: storedContent,
+          title: input.title ?? null,
           createdById: ctx.session.user.id,
-          passwordHash: passwordHash, 
+          notebookId: input.notebookId ?? null,
+          calendarDate: input.calendarDate ?? null,
+          passwordHash: passwordHash,
           passwordSalt: passwordSalt,
-          shareStatus: 'private', 
-        }).returning(); 
+          shareStatus: 'private',
+        }).returning();
 
         if (!newNote) {
           console.error("❌ Insertion failed, returned no note.");
@@ -70,24 +89,299 @@ export const noteRouter = createTRPCRouter({
       const notes = await ctx.db.query.stickyNotes.findMany({
         where: eq(stickyNotes.createdById, ctx.session.user.id),
         orderBy: (notes, { desc }) => [desc(notes.createdAt)],
+        with: {
+          shares: {
+            with: {
+              sharedWith: {
+                columns: { id: true, name: true, email: true, image: true },
+              },
+            },
+          },
+        },
       });
 
       // IMPORTANT: never ship plaintext content for password-protected notes.
       // The client must unlock via password before fetching content.
       return notes.map((n) => {
+        const sharedWith = n.shares?.map((s) => ({
+          id: s.sharedWith.id,
+          name: s.sharedWith.name,
+          email: s.sharedWith.email,
+          image: s.sharedWith.image,
+          permission: s.permission,
+        })) ?? [];
+
         if (n.passwordHash) {
           return {
             id: n.id,
+            title: n.title,
             createdAt: n.createdAt,
+            updatedAt: n.updatedAt,
+            notebookId: n.notebookId,
             passwordHash: n.passwordHash,
             shareStatus: n.shareStatus,
+            sharedWith,
             // content intentionally omitted
             content: null,
           };
         }
 
-        return n;
+        return { ...n, sharedWith };
       });
+    }),
+
+  getSharedWithMe: protectedProcedure
+    .query(async ({ ctx }) => {
+      const shares = await ctx.db
+        .select({
+          id: stickyNotes.id,
+          title: stickyNotes.title,
+          content: stickyNotes.content,
+          createdAt: stickyNotes.createdAt,
+          updatedAt: stickyNotes.updatedAt,
+          shareStatus: stickyNotes.shareStatus,
+          passwordHash: stickyNotes.passwordHash,
+          notebookId: stickyNotes.notebookId,
+          permission: noteShares.permission,
+          sharedById: noteShares.sharedById,
+          ownerName: users.name,
+          ownerEmail: users.email,
+        })
+        .from(noteShares)
+        .innerJoin(stickyNotes, eq(noteShares.noteId, stickyNotes.id))
+        .innerJoin(users, eq(stickyNotes.createdById, users.id))
+        .where(eq(noteShares.sharedWithId, ctx.session.user.id));
+
+      return shares.map((s) => ({
+        ...s,
+        content: s.passwordHash ? null : s.content,
+      }));
+    }),
+
+  shareNote: protectedProcedure
+    .input(z.object({
+      noteId: z.number(),
+      email: z.string().email(),
+      permission: z.enum(["read", "write"]).default("read"),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const note = await ctx.db.query.stickyNotes.findFirst({
+        where: eq(stickyNotes.id, input.noteId),
+      });
+
+      if (!note || note.createdById !== ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You don't own this note." });
+      }
+
+      const [targetUser] = await ctx.db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.email, input.email))
+        .limit(1);
+
+      if (!targetUser) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "User not found with that email." });
+      }
+
+      if (targetUser.id === ctx.session.user.id) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot share with yourself." });
+      }
+
+      // Check if already shared
+      const [existing] = await ctx.db
+        .select()
+        .from(noteShares)
+        .where(and(
+          eq(noteShares.noteId, input.noteId),
+          eq(noteShares.sharedWithId, targetUser.id),
+        ))
+        .limit(1);
+
+      if (existing) {
+        // Update permission
+        await ctx.db
+          .update(noteShares)
+          .set({ permission: input.permission })
+          .where(eq(noteShares.id, existing.id));
+        return { success: true, updated: true };
+      }
+
+      await ctx.db.insert(noteShares).values({
+        noteId: input.noteId,
+        sharedWithId: targetUser.id,
+        sharedById: ctx.session.user.id,
+        permission: input.permission,
+      });
+
+      // Create notification for the target user
+      const sharerName = ctx.session.user.name ?? ctx.session.user.email ?? "Someone";
+      const noteTitle = note.title ?? "Untitled note";
+      await ctx.db.insert(notifications).values({
+        userId: targetUser.id,
+        type: "system",
+        title: "Note shared with you",
+        message: `${sharerName} shared "${noteTitle}" with you (${input.permission === "write" ? "can edit" : "view only"}).`,
+        link: `/notes?noteId=${input.noteId}&tab=shared`,
+        read: false,
+      });
+      emitNotification(targetUser.id, {
+        id: `note-share-${input.noteId}-${Date.now()}`,
+        type: "system",
+        title: "Note shared with you",
+        message: `${sharerName} shared "${noteTitle}" with you (${input.permission === "write" ? "can edit" : "view only"}).`,
+        link: `/notes?noteId=${input.noteId}&tab=shared`,
+      });
+
+      // Update note share status
+      await ctx.db
+        .update(stickyNotes)
+        .set({ shareStatus: input.permission === "write" ? "shared_write" : "shared_read" })
+        .where(eq(stickyNotes.id, input.noteId));
+
+      return { success: true, updated: false };
+    }),
+
+  unshareNote: protectedProcedure
+    .input(z.object({
+      noteId: z.number(),
+      userId: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const note = await ctx.db.query.stickyNotes.findFirst({
+        where: eq(stickyNotes.id, input.noteId),
+      });
+
+      if (!note || note.createdById !== ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You don't own this note." });
+      }
+
+      await ctx.db
+        .delete(noteShares)
+        .where(and(
+          eq(noteShares.noteId, input.noteId),
+          eq(noteShares.sharedWithId, input.userId),
+        ));
+
+      // Check if any shares remain
+      const remaining = await ctx.db
+        .select()
+        .from(noteShares)
+        .where(eq(noteShares.noteId, input.noteId))
+        .limit(1);
+
+      if (remaining.length === 0) {
+        await ctx.db
+          .update(stickyNotes)
+          .set({ shareStatus: "private" })
+          .where(eq(stickyNotes.id, input.noteId));
+      }
+
+      return { success: true };
+    }),
+
+  getNoteShares: protectedProcedure
+    .input(z.object({ noteId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const note = await ctx.db.query.stickyNotes.findFirst({
+        where: eq(stickyNotes.id, input.noteId),
+      });
+
+      if (!note || note.createdById !== ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You don't own this note." });
+      }
+
+      return ctx.db
+        .select({
+          id: noteShares.id,
+          userId: noteShares.sharedWithId,
+          permission: noteShares.permission,
+          userName: users.name,
+          userEmail: users.email,
+          userImage: users.image,
+          createdAt: noteShares.createdAt,
+        })
+        .from(noteShares)
+        .innerJoin(users, eq(noteShares.sharedWithId, users.id))
+        .where(eq(noteShares.noteId, input.noteId));
+    }),
+
+  // ---- Notebooks ----
+  getNotebooks: protectedProcedure
+    .query(async ({ ctx }) => {
+      return ctx.db.query.notebooks.findMany({
+        where: eq(notebooks.createdById, ctx.session.user.id),
+        orderBy: (nb, { desc }) => [desc(nb.updatedAt)],
+      });
+    }),
+
+  createNotebook: protectedProcedure
+    .input(z.object({
+      name: z.string().min(1).max(256),
+      description: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const [nb] = await ctx.db.insert(notebooks).values({
+        name: input.name,
+        description: input.description ?? null,
+        createdById: ctx.session.user.id,
+      }).returning();
+      return nb;
+    }),
+
+  updateNotebook: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      name: z.string().min(1).max(256).optional(),
+      description: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const nb = await ctx.db.query.notebooks.findFirst({
+        where: eq(notebooks.id, input.id),
+      });
+      if (!nb || nb.createdById !== ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Not your notebook." });
+      }
+      await ctx.db.update(notebooks).set({
+        ...(input.name ? { name: input.name } : {}),
+        ...(input.description !== undefined ? { description: input.description } : {}),
+        updatedAt: new Date(),
+      }).where(eq(notebooks.id, input.id));
+      return { success: true };
+    }),
+
+  deleteNotebook: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const nb = await ctx.db.query.notebooks.findFirst({
+        where: eq(notebooks.id, input.id),
+      });
+      if (!nb || nb.createdById !== ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Not your notebook." });
+      }
+      // Unlink notes from notebook (don't delete them)
+      await ctx.db.update(stickyNotes)
+        .set({ notebookId: null })
+        .where(eq(stickyNotes.notebookId, input.id));
+      await ctx.db.delete(notebooks).where(eq(notebooks.id, input.id));
+      return { success: true };
+    }),
+
+  moveToNotebook: protectedProcedure
+    .input(z.object({
+      noteId: z.number(),
+      notebookId: z.number().nullable(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const note = await ctx.db.query.stickyNotes.findFirst({
+        where: eq(stickyNotes.id, input.noteId),
+      });
+      if (!note || note.createdById !== ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Not your note." });
+      }
+      await ctx.db.update(stickyNotes)
+        .set({ notebookId: input.notebookId, updatedAt: new Date() })
+        .where(eq(stickyNotes.id, input.noteId));
+      return { success: true };
     }),
     
   getOne: protectedProcedure 
@@ -117,9 +411,9 @@ export const noteRouter = createTRPCRouter({
           };
         }
 
-        const isMatch = await bcrypt.compare(
-          input.attemptedPassword, 
-          note.passwordHash
+        const isMatch = await argon2.verify(
+          note.passwordHash,
+          input.attemptedPassword
         );
 
         if (!isMatch) {
@@ -127,9 +421,22 @@ export const noteRouter = createTRPCRouter({
         }
       }
 
+      // Decrypt content if it was encrypted (password-protected note after successful auth)
+      let content = note.content;
+      if (note.passwordHash && note.passwordSalt && input.attemptedPassword) {
+        try {
+          content = decryptContent(note.content, input.attemptedPassword, note.passwordSalt);
+        } catch {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to decrypt note content. The note may need to be re-saved.",
+          });
+        }
+      }
+
       return {
         id: note.id,
-        content: note.content,
+        content,
         isPasswordProtected: false, 
       };
     }),
@@ -138,6 +445,8 @@ export const noteRouter = createTRPCRouter({
     .input(z.object({
       id: z.number(),
       content: z.string().min(1),
+      title: z.string().optional(),
+      password: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const note = await ctx.db.query.stickyNotes.findFirst({
@@ -149,11 +458,38 @@ export const noteRouter = createTRPCRouter({
       }
 
       if (note.createdById !== ctx.session.user.id) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "You don't own this note." });
+        // Check if user has write permission via share
+        const [share] = await ctx.db
+          .select()
+          .from(noteShares)
+          .where(and(
+            eq(noteShares.noteId, input.id),
+            eq(noteShares.sharedWithId, ctx.session.user.id),
+            eq(noteShares.permission, "write"),
+          ))
+          .limit(1);
+        if (!share) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "You don't have write access to this note." });
+        }
+      }
+
+      // Re-encrypt if the note is password-protected and password is provided
+      let storedContent = input.content;
+      if (note.passwordHash && note.passwordSalt && input.password) {
+        // Verify password matches before re-encrypting
+        const isMatch = await argon2.verify(note.passwordHash, input.password);
+        if (!isMatch) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Incorrect note password." });
+        }
+        storedContent = encryptContent(input.content, input.password, note.passwordSalt);
       }
 
       await ctx.db.update(stickyNotes)
-        .set({ content: input.content })
+        .set({
+          content: storedContent,
+          updatedAt: new Date(),
+          ...(input.title !== undefined ? { title: input.title || null } : {}),
+        })
         .where(eq(stickyNotes.id, input.id));
 
       return { success: true, message: "Note updated successfully" };
@@ -206,15 +542,28 @@ export const noteRouter = createTRPCRouter({
         });
       }
 
-      const isMatch = await bcrypt.compare(input.password, note.passwordHash);
+      const isMatch = await argon2.verify(note.passwordHash, input.password);
 
       if (!isMatch) {
         return { valid: false };
       }
 
+      // Decrypt content if encrypted
+      let content = note.content;
+      if (note.passwordSalt) {
+        try {
+          content = decryptContent(note.content, input.password, note.passwordSalt);
+        } catch {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to decrypt note content. The note may need to be re-saved.",
+          });
+        }
+      }
+
       return {
         valid: true,
-        content: note.content
+        content
       };
     }),
 
@@ -301,15 +650,24 @@ export const noteRouter = createTRPCRouter({
         throw new TRPCError({ code: "FORBIDDEN", message: "You don't own this note." });
       }
 
-      const saltRounds = 10;
-      const salt = await bcrypt.genSalt(saltRounds);
-      const newPasswordHash = await bcrypt.hash(input.newPassword, salt);
+      const salt = crypto.randomBytes(32).toString("hex");
+      const newPasswordHash = await argon2.hash(input.newPassword, ARGON2_OPTS);
+
+      // When resetting via PIN we don't have the old password, so we cannot
+      // decrypt the existing content. Store it as plain encrypted blob and
+      // re-encrypt with the new password+salt. The user will need to re-save
+      // content after resetting. We strip encryption so the note content
+      // becomes the raw (possibly garbled) ciphertext — the user should
+      // re-enter or paste content after a PIN reset.
+      // Best-effort: mark content as needing re-entry.
+      const resetPlaceholder = "[Content reset — please re-enter your note content]";
 
       await ctx.db
         .update(stickyNotes)
         .set({
           passwordHash: newPasswordHash,
           passwordSalt: salt,
+          content: encryptContent(resetPlaceholder, input.newPassword, salt),
         })
         .where(eq(stickyNotes.id, input.noteId));
 
