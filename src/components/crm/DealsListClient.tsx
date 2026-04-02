@@ -46,18 +46,33 @@ export function DealsListClient() {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <div className="text-sm text-fg-secondary">Showing {items.length} deals</div>
-        <button
-          type="button"
-          className="text-xs px-3 py-2 rounded-lg bg-bg-elevated border border-border-medium text-fg-primary hover:bg-bg-secondary transition-colors"
-          onClick={async () => {
-            await utils.crm.deals.list.invalidate({ organizationId, limit: 50 });
-          }}
-        >
-          Refresh
-        </button>
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="text-sm text-fg-secondary">Showing {items.length} deals</div>
+          <div className="mt-1 text-xs text-fg-secondary">
+            Next: create/update + stage UI (pipeline).
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Link
+            href="/crm/deals/new"
+            className="text-xs px-3 py-2 rounded-lg bg-bg-elevated border border-border-medium text-fg-primary hover:bg-bg-secondary transition-colors"
+          >
+            New deal
+          </Link>
+
+          <button
+            type="button"
+            className="text-xs px-3 py-2 rounded-lg bg-bg-elevated border border-border-medium text-fg-primary hover:bg-bg-secondary transition-colors"
+            onClick={async () => {
+              await utils.crm.deals.list.invalidate({ organizationId, limit: 50 });
+            }}
+          >
+            Refresh
+          </button>
+        </div>
       </div>
 
       <div className="rounded-xl border border-border-medium bg-bg-secondary overflow-hidden">

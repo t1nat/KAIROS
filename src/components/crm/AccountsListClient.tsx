@@ -45,18 +45,31 @@ export function AccountsListClient() {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <div className="text-sm text-fg-secondary">Showing {items.length} accounts</div>
-        <button
-          type="button"
-          className="text-xs px-3 py-2 rounded-lg bg-bg-elevated border border-border-medium text-fg-primary hover:bg-bg-secondary transition-colors"
-          onClick={async () => {
-            await utils.crm.accounts.list.invalidate({ organizationId, limit: 50 });
-          }}
-        >
-          Refresh
-        </button>
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="text-sm text-fg-secondary">Showing {items.length} accounts</div>
+          <div className="mt-1 text-xs text-fg-secondary">Create/update comes next (MVP CRUD).</div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Link
+            href="/crm/accounts/new"
+            className="text-xs px-3 py-2 rounded-lg bg-bg-elevated border border-border-medium text-fg-primary hover:bg-bg-secondary transition-colors"
+          >
+            New account
+          </Link>
+
+          <button
+            type="button"
+            className="text-xs px-3 py-2 rounded-lg bg-bg-elevated border border-border-medium text-fg-primary hover:bg-bg-secondary transition-colors"
+            onClick={async () => {
+              await utils.crm.accounts.list.invalidate({ organizationId, limit: 50 });
+            }}
+          >
+            Refresh
+          </button>
+        </div>
       </div>
 
       <div className="rounded-xl border border-border-medium bg-bg-secondary overflow-hidden">

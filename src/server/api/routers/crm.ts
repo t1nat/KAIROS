@@ -293,11 +293,13 @@ export const crmRouter = createTRPCRouter({
         z.object({
           organizationId: z.number().int().positive(),
           accountId: z.number().int().positive(),
-          pipelineId: z.number().int().positive(),
-          stageId: z.number().int().positive(),
+          // MVP: if not provided, use org default pipeline + first stage
+          pipelineId: z.number().int().positive().optional(),
+          stageId: z.number().int().positive().optional(),
           name: z.string().min(1).max(256),
-          amount: z.string().optional(),
+          amount: z.number().optional(),
           currency: z.string().length(3).optional(),
+          // MVP: accept ISO date string (YYYY-MM-DD)
           closeDate: z.string().optional(),
         }),
       )
@@ -309,17 +311,53 @@ export const crmRouter = createTRPCRouter({
           throw new TRPCError({ code: "FORBIDDEN" });
         }
 
+        let pipelineId = input.pipelineId;
+        let stageId = input.stageId;
+
+        if (!pipelineId || !stageId) {
+          const pipeline = await ctx.db.query.crmPipelines.findFirst({
+            where: and(
+              eq(crmPipelines.organizationId, input.organizationId),
+              eq(crmPipelines.isDefault, true),
+            ),
+          });
+
+          if (!pipeline) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "CRM pipeline is not initialized for this organization.",
+            });
+          }
+
+          const firstStage = await ctx.db.query.crmStages.findFirst({
+            where: eq(crmStages.pipelineId, pipeline.id),
+            orderBy: (t, { asc }) => [asc(t.order)],
+          });
+
+          if (!firstStage) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "CRM stages are not initialized for this organization.",
+            });
+          }
+
+          pipelineId = pipeline.id;
+          stageId = firstStage.id;
+        }
+
         const [created] = await ctx.db
           .insert(crmDeals)
           .values({
             organizationId: input.organizationId,
             accountId: input.accountId,
-            pipelineId: input.pipelineId,
-            stageId: input.stageId,
+            pipelineId,
+            stageId,
             name: input.name,
-            amount: input.amount ?? "0",
+            amount: input.amount !== undefined ? String(input.amount) : "0",
             currency: input.currency ?? "USD",
-            closeDate: input.closeDate ? new Date(input.closeDate).toISOString().split("T")[0] as string : null,
+            closeDate: input.closeDate
+              ? (new Date(input.closeDate).toISOString().split("T")[0] as string)
+              : null,
             ownerUserId: user.id,
           })
           .returning();
