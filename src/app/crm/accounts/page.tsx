@@ -6,6 +6,7 @@ import { SideNav } from "~/components/layout/SideNav";
 import { UserDisplay } from "~/components/layout/UserDisplay";
 import { NotificationSystem } from "~/components/notifications/NotificationSystem";
 import { WorkspaceIndicator } from "~/components/orgs/WorkspaceIndicator";
+import { AccountsListClient } from "~/components/crm/AccountsListClient";
 import { auth } from "~/server/auth";
 
 export default async function CrmAccountsPage() {
@@ -42,11 +43,7 @@ export default async function CrmAccountsPage() {
 
         <main id="main-content" className="flex-1 w-full overflow-auto">
           <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 pt-6">
-            <div className="rounded-xl border border-border-medium bg-bg-secondary p-6">
-              <p className="text-sm text-fg-secondary">
-                Accounts UI will be wired to tRPC next (list + create/update).
-              </p>
-            </div>
+            <AccountsListClient />
           </div>
         </main>
       </div>
