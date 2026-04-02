@@ -904,6 +904,34 @@ Use relative sizing: S / M / L / XL.
 
 1. Foundations (schemas + tRPC skeleton + nav) — **L**
 2. Accounts/contacts/leads/deals CRUD + lists/search — **L**
+
+   **Checkpoint (Implemented in repo as of 2026-04-02)**
+
+   Data model + API:
+   - ✅ CRM tables exist in [`src/server/db/schemas/crm.ts`](src/server/db/schemas/crm.ts:1).
+   - ✅ tRPC router exists in [`src/server/api/routers/crm.ts`](src/server/api/routers/crm.ts:1) and is wired under `crm.*`.
+   - ✅ Accounts: list/getById/create/update implemented.
+   - ✅ Deals: list/getById/create/update implemented.
+   - ✅ Pipelines: `getDefault` implemented (used by Deal create + stage UI wiring).
+   - 🚧 Deals stage change: `crm.deals.changeStage` mutation exists server-side, but UI + timeline are not finished.
+
+   UI:
+   - ✅ CRM nav entry exists.
+   - ✅ Routes exist for:
+     - Accounts list/detail/create
+     - Deals list/detail/create
+   - ✅ Minimal forms exist:
+     - [`src/components/crm/AccountCreateClient.tsx`](src/components/crm/AccountCreateClient.tsx)
+     - [`src/components/crm/DealCreateClient.tsx`](src/components/crm/DealCreateClient.tsx)
+   - ✅ Inline edit forms exist:
+     - [`src/components/crm/AccountDetailClient.tsx`](src/components/crm/AccountDetailClient.tsx)
+     - [`src/components/crm/DealDetailClient.tsx`](src/components/crm/DealDetailClient.tsx)
+   - 🚧 Deal stage selector UI is partially wired in [`src/components/crm/DealDetailClient.tsx`](src/components/crm/DealDetailClient.tsx) (pipeline stages query + local `stageId` state), but not rendered/calling the mutation yet.
+
+   Known gaps to finish “2) CRUD + lists/search” in full:
+   - Contacts + Leads screens + CRUD not implemented yet.
+   - Search endpoints beyond basic list query not implemented yet.
+
 3. CRM activities + timeline (CRM-only) — **M**
 4. Link timeline to tasks/events/notes (unified feed) — **M**
 5. Pipeline board (kanban) + optimistic stage changes — **M**
