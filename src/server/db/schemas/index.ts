@@ -8,4 +8,5 @@ export * from "./events";
 export * from "./chat";
 export * from "./notifications";
 export * from "./agents";
+export * from "./crm";
 export * from "./relations";

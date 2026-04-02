@@ -18,6 +18,7 @@ import {
   CalendarDays,
   CalendarCheck,
   Plus,
+  Handshake,
 } from "lucide-react";
 
 export function SideNav() {
@@ -50,6 +51,7 @@ export function SideNav() {
     { href: "/notes", icon: BookText, label: t("notes") },
     { href: "/progress", icon: TrendingUp, label: t("progress") },
     { href: "/calendar", icon: CalendarCheck, label: t("calendar") },
+    { href: "/crm", icon: Handshake, label: t("crm") },
     { href: "/chat", icon: MessageCircle, label: t("chat") },
     { href: "/publish", icon: CalendarDays, label: t("events") },
   ];
@@ -76,6 +78,9 @@ export function SideNav() {
     }
     if (href === "/projects") {
       return pathname === "/projects";
+    }
+    if (href === "/crm") {
+      return pathname === "/crm" || pathname.startsWith("/crm/");
     }
     if (href.startsWith("/settings")) {
       return pathname === "/settings";
