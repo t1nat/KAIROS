@@ -59,7 +59,8 @@ describe("SideNav", () => {
     const user = userEvent.setup();
     render(<SideNav />);
 
-    const menuBtn = screen.getByLabelText("Menu");
+    // useTranslations mock returns the key itself, so aria-label uses "menu"
+    const menuBtn = screen.getByLabelText("menu");
     await user.click(menuBtn);
 
     const dialog = screen.getByRole("dialog", { name: "Navigation" });
@@ -70,7 +71,7 @@ describe("SideNav", () => {
     const user = userEvent.setup();
     render(<SideNav />);
 
-    const menuBtn = screen.getByLabelText("Menu");
+    const menuBtn = screen.getByLabelText("menu");
     await user.click(menuBtn);
     expect(screen.getByRole("dialog")).toBeInTheDocument();
 
@@ -78,16 +79,20 @@ describe("SideNav", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("chat button opens A1 widget", async () => {
+  it("chat button navigates to /chat", async () => {
     const user = userEvent.setup();
     render(<SideNav />);
 
-    // Find the Chat button in desktop sidebar
-    const chatBtns = screen.getAllByLabelText("Chat");
+    // aria-label uses translated key "chat" under the test's i18n mock
+    const chatBtns = screen.getAllByLabelText("chat");
     expect(chatBtns.length).toBeGreaterThanOrEqual(1);
 
+    // It's a <Link>, so clicking triggers navigation (jsdom logs "Not implemented").
+    // Assert the correct href is present instead.
+    expect(chatBtns[0]).toHaveAttribute("href", "/chat");
+
+    // still click to ensure no crash
     await user.click(chatBtns[0]!);
-    expect(screen.getByTestId("a1-widget")).toBeInTheDocument();
   });
 
   it("uses elegant icon set (no legacy icon names in DOM)", () => {
