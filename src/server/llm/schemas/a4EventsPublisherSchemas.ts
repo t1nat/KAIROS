@@ -30,7 +30,7 @@ export const EventCreateSchema = z
     ),
     clientRequestId: z.string().min(1).max(64),
   })
-  .strip();
+  .strict();
 
 export const EventUpdateSchema = z
   .object({
@@ -43,11 +43,15 @@ export const EventUpdateSchema = z
         region: RegionEnum.optional(),
         enableRsvp: z.boolean().optional(),
         sendReminders: z.boolean().optional(),
+        imageUrl: z.preprocess(
+          (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+          z.string().url().nullable().optional(),
+        ),
       })
-      .strip(),
+      .strict(),
     reason: z.string().max(500).optional(),
   })
-  .strip();
+  .strict();
 
 export const EventDeleteSchema = z
   .object({

@@ -64,18 +64,41 @@ type CalendarItem =
 /*  Helpers                                                           */
 /* ------------------------------------------------------------------ */
 
+function startOfDayLocal(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+}
+function endOfDayLocal(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+}
+
 function startOfMonth(d: Date) {
-  return new Date(d.getFullYear(), d.getMonth(), 1);
+  return new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0);
 }
 function endOfMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
 }
+
 function isSameDay(a: Date, b: Date) {
   return (
     a.getFullYear() === b.getFullYear() &&
     a.getMonth() === b.getMonth() &&
     a.getDate() === b.getDate()
   );
+}
+
+// Monday-start week in local time.
+function startOfWeekMondayLocal(d: Date) {
+  const x = startOfDayLocal(d);
+  // JS: Sun=0..Sat=6. Convert to Monday=0..Sunday=6.
+  const mondayIndex = (x.getDay() + 6) % 7;
+  x.setDate(x.getDate() - mondayIndex);
+  return x;
+}
+function endOfWeekMondayLocal(d: Date) {
+  const x = startOfWeekMondayLocal(d);
+  x.setDate(x.getDate() + 6);
+  x.setHours(23, 59, 59, 999);
+  return x;
 }
 
 // Use a fixed locale to prevent SSR/client hydration mismatch
@@ -106,12 +129,22 @@ const statusIcons: Record<string, typeof CheckCircle2> = {
 
 type ViewMode = "month" | "week" | "day";
 
+type DatePreset = "month" | "today" | "yesterday" | "tomorrow" | "this_week" | "last_week" | "custom";
+
+type DateRange = {
+  from: Date;
+  to: Date;
+};
+
 type Filters = {
   q: string;
   view: ViewMode;
   types: Set<CalendarItem["kind"]>;
   taskStatuses: Set<string>;
   priorities: Set<string>;
+  datePreset: DatePreset;
+  customFrom: string; // YYYY-MM-DD
+  customTo: string; // YYYY-MM-DD
 };
 
 const DEFAULT_FILTERS: Filters = {
@@ -120,6 +153,9 @@ const DEFAULT_FILTERS: Filters = {
   types: new Set(["task", "event", "note"]),
   taskStatuses: new Set(["pending", "in_progress", "blocked", "completed"]),
   priorities: new Set(["urgent", "high", "medium", "low"]),
+  datePreset: "month",
+  customFrom: "",
+  customTo: "",
 };
 
 export function CalendarClient() {
@@ -129,8 +165,55 @@ export function CalendarClient() {
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [showFilters, setShowFilters] = useState(false);
 
-  const from = startOfMonth(currentMonth);
-  const to = endOfMonth(currentMonth);
+  const presetRange = useMemo<DateRange>(() => {
+    const now = new Date();
+
+    switch (filters.datePreset) {
+      case "today": {
+        return { from: startOfDayLocal(now), to: endOfDayLocal(now) };
+      }
+      case "yesterday": {
+        const d = new Date(now);
+        d.setDate(d.getDate() - 1);
+        return { from: startOfDayLocal(d), to: endOfDayLocal(d) };
+      }
+      case "tomorrow": {
+        const d = new Date(now);
+        d.setDate(d.getDate() + 1);
+        return { from: startOfDayLocal(d), to: endOfDayLocal(d) };
+      }
+      case "this_week": {
+        return { from: startOfWeekMondayLocal(now), to: endOfWeekMondayLocal(now) };
+      }
+      case "last_week": {
+        const d = new Date(now);
+        d.setDate(d.getDate() - 7);
+        return { from: startOfWeekMondayLocal(d), to: endOfWeekMondayLocal(d) };
+      }
+      case "custom": {
+        // Interpret as local dates. Missing bounds fall back to month.
+        const fallback = { from: startOfMonth(currentMonth), to: endOfMonth(currentMonth) };
+        if (!filters.customFrom || !filters.customTo) return fallback;
+
+        const [fy, fm, fd] = filters.customFrom.split("-").map((x) => Number(x));
+        const [ty, tm, td] = filters.customTo.split("-").map((x) => Number(x));
+        if (!fy || !fm || !fd || !ty || !tm || !td) return fallback;
+
+        const f = new Date(fy, fm - 1, fd, 0, 0, 0, 0);
+        const t = new Date(ty, tm - 1, td, 23, 59, 59, 999);
+        if (Number.isNaN(f.getTime()) || Number.isNaN(t.getTime())) return fallback;
+
+        return f.getTime() <= t.getTime() ? { from: f, to: t } : { from: t, to: f };
+      }
+      case "month":
+      default: {
+        return { from: startOfMonth(currentMonth), to: endOfMonth(currentMonth) };
+      }
+    }
+  }, [currentMonth, filters.customFrom, filters.customTo, filters.datePreset]);
+
+  const from = presetRange.from;
+  const to = presetRange.to;
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
   const { data, isLoading } = (api as any).calendar.getForRange.useQuery(
@@ -273,18 +356,9 @@ export function CalendarClient() {
     [filteredItemsByDate],
   );
 
-  function startOfWeek(d: Date) {
-    const x = new Date(d);
-    x.setHours(0, 0, 0, 0);
-    x.setDate(x.getDate() - x.getDay());
-    return x;
-  }
-  function endOfWeek(d: Date) {
-    const x = startOfWeek(d);
-    x.setDate(x.getDate() + 6);
-    x.setHours(23, 59, 59, 999);
-    return x;
-  }
+  // Right-panel week view uses Monday-start week as well.
+  const startOfWeek = startOfWeekMondayLocal;
+  const endOfWeek = endOfWeekMondayLocal;
 
   const rightPanelItems = useMemo(() => {
     if (!selectedDate) return filteredAllMonthItems;
@@ -306,16 +380,19 @@ export function CalendarClient() {
     setCurrentMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1));
     setSelectedDate(null);
     setExpandedItem(null);
+    setFilters((f) => ({ ...f, datePreset: "month" }));
   };
   const goToNext = () => {
     setCurrentMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1));
     setSelectedDate(null);
     setExpandedItem(null);
+    setFilters((f) => ({ ...f, datePreset: "month" }));
   };
   const goToToday = () => {
     setCurrentMonth(new Date());
     setSelectedDate(new Date());
     setExpandedItem(null);
+    setFilters((f) => ({ ...f, datePreset: "today" }));
   };
 
   const today = new Date();
@@ -368,32 +445,33 @@ export function CalendarClient() {
 
       {/* Filter bar */}
       <div className="mb-5 rounded-2xl border border-white/[0.06] bg-bg-elevated shadow-xl p-3">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <input
-                value={filters.q}
-                onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
-                placeholder="Search"
-                className="w-[260px] max-w-[70vw] px-3 py-2 rounded-xl bg-bg-primary border border-white/[0.06] text-sm text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
-              />
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="relative">
+                <input
+                  value={filters.q}
+                  onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
+                  placeholder="Search"
+                  className="w-[260px] max-w-[70vw] px-3 py-2 rounded-xl bg-bg-primary border border-white/[0.06] text-sm text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowFilters((v) => !v)}
+                className={cn(
+                  "px-3 py-2 rounded-xl border border-white/[0.06] text-sm font-medium flex items-center gap-2",
+                  showFilters ? "bg-accent-primary/10 text-accent-primary" : "text-fg-secondary hover:bg-bg-secondary",
+                )}
+              >
+                <Filter size={16} />
+                Filters
+              </button>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setShowFilters((v) => !v)}
-              className={cn(
-                "px-3 py-2 rounded-xl border border-white/[0.06] text-sm font-medium flex items-center gap-2",
-                showFilters ? "bg-accent-primary/10 text-accent-primary" : "text-fg-secondary hover:bg-bg-secondary",
-              )}
-            >
-              <Filter size={16} />
-              Filters
-            </button>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {(["task", "event", "note"] as const).map((k) => (
+            <div className="flex flex-wrap items-center gap-2">
+              {(["task", "event", "note"] as const).map((k) => (
               <button
                 key={k}
                 type="button"
@@ -438,6 +516,84 @@ export function CalendarClient() {
                 {v === "day" ? "Day" : v === "week" ? "Week" : "Month"}
               </button>
             ))}
+            </div>
+          </div>
+
+          {/* Quick date presets + custom range (local timezone; week starts Monday) */}
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              {([
+                ["today", "Today"],
+                ["yesterday", "Yesterday"],
+                ["tomorrow", "Tomorrow"],
+                ["this_week", "This week"],
+                ["last_week", "Last week"],
+              ] as const).map(([preset, label]) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() =>
+                    setFilters((f) => ({
+                      ...f,
+                      datePreset: preset,
+                    }))
+                  }
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-xs font-semibold border border-white/[0.08]",
+                    filters.datePreset === preset
+                      ? "bg-accent-primary/10 text-accent-primary"
+                      : "text-fg-tertiary hover:bg-bg-secondary/50",
+                  )}
+                  aria-pressed={filters.datePreset === preset}
+                >
+                  {label}
+                </button>
+              ))}
+
+              <div className="h-6 w-px bg-white/[0.06] mx-1" />
+
+              <button
+                type="button"
+                onClick={() => setFilters((f) => ({ ...f, datePreset: "custom" }))}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-semibold border border-white/[0.08]",
+                  filters.datePreset === "custom"
+                    ? "bg-accent-primary/10 text-accent-primary"
+                    : "text-fg-tertiary hover:bg-bg-secondary/50",
+                )}
+                aria-pressed={filters.datePreset === "custom"}
+              >
+                Custom
+              </button>
+            </div>
+
+            {filters.datePreset === "custom" && (
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <label className="text-[11px] font-bold text-fg-secondary">From</label>
+                  <input
+                    type="date"
+                    value={filters.customFrom}
+                    onChange={(e) => setFilters((f) => ({ ...f, customFrom: e.target.value }))}
+                    className="px-3 py-2 rounded-xl bg-bg-primary border border-white/[0.06] text-sm text-fg-primary focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-[11px] font-bold text-fg-secondary">To</label>
+                  <input
+                    type="date"
+                    value={filters.customTo}
+                    onChange={(e) => setFilters((f) => ({ ...f, customTo: e.target.value }))}
+                    className="px-3 py-2 rounded-xl bg-bg-primary border border-white/[0.06] text-sm text-fg-primary focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="text-[11px] text-fg-tertiary">
+              Showing items from <span className="text-fg-secondary font-medium">{fmtDate(from, { month: "short", day: "numeric", year: "numeric" })}</span> to{" "}
+              <span className="text-fg-secondary font-medium">{fmtDate(to, { month: "short", day: "numeric", year: "numeric" })}</span> (local timezone)
+            </div>
           </div>
         </div>
 

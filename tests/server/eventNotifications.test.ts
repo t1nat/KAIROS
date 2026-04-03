@@ -18,7 +18,19 @@ const schemasPath = path.resolve(
   __dirname,
   "../../src/server/db/schemas/index.ts"
 );
-const schemaSource = fs.readFileSync(schemasPath, "utf-8");
+const schemasIndexSource = fs.readFileSync(schemasPath, "utf-8");
+
+const enumsPath = path.resolve(
+  __dirname,
+  "../../src/server/db/schemas/enums.ts"
+);
+const enumsSource = fs.readFileSync(enumsPath, "utf-8");
+
+const eventsSchemaPath = path.resolve(
+  __dirname,
+  "../../src/server/db/schemas/events.ts"
+);
+const eventsSchemaSource = fs.readFileSync(eventsSchemaPath, "utf-8");
 
 describe("Event Router – Notifications", () => {
   it("imports notifications table", () => {
@@ -61,28 +73,32 @@ describe("Event Router – RSVP Reminders", () => {
 });
 
 describe("Schema – Notification Types", () => {
+  it("exports enums from schemas index", () => {
+    expect(schemasIndexSource).toContain("export * from \"./enums\"");
+  });
+
   it("has like notification type in enum", () => {
-    expect(schemaSource).toContain("notificationTypeEnum");
-    expect(schemaSource).toContain("like");
+    expect(enumsSource).toContain("notificationTypeEnum");
+    expect(enumsSource).toContain("like");
   });
 
   it("has comment notification type in enum", () => {
-    expect(schemaSource).toContain("notificationTypeEnum");
-    expect(schemaSource).toContain("comment");
+    expect(enumsSource).toContain("notificationTypeEnum");
+    expect(enumsSource).toContain("comment");
   });
 
   it("has reply notification type in enum", () => {
-    expect(schemaSource).toContain("notificationTypeEnum");
-    expect(schemaSource).toContain("reply");
+    expect(enumsSource).toContain("notificationTypeEnum");
+    expect(enumsSource).toContain("reply");
   });
 
   it("eventRsvps has reminderMinutesBefore column", () => {
-    expect(schemaSource).toContain("reminderMinutesBefore");
-    expect(schemaSource).toContain("reminder_minutes_before");
+    expect(eventsSchemaSource).toContain("reminderMinutesBefore");
+    expect(eventsSchemaSource).toContain("reminder_minutes_before");
   });
 
   it("eventRsvps has reminderSent column", () => {
-    expect(schemaSource).toContain("reminderSent");
-    expect(schemaSource).toContain("reminder_sent");
+    expect(eventsSchemaSource).toContain("reminderSent");
+    expect(eventsSchemaSource).toContain("reminder_sent");
   });
 });

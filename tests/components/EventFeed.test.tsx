@@ -139,6 +139,11 @@ describe("CreateEventForm – Design Tokens", () => {
     expect(createFormSource).toContain("<ImagePlus");
   });
 
+  it("enforces 4MB event image limit in UI", () => {
+    expect(createFormSource).toContain("MAX_EVENT_IMAGE_BYTES");
+    expect(createFormSource).toContain("4 * 1024 * 1024");
+  });
+
   it("uses space-y-5 or space-y-3 form layout", () => {
     expect(createFormSource).toMatch(/space-y-[345]/);
   });

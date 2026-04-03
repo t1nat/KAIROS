@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useDateFormat } from "~/lib/hooks/useDateFormat";
 import {
@@ -105,33 +105,36 @@ function useOptimisticLike(eventId: number) {
   const toggleLike = api.event.toggleLike.useMutation({
     onMutate: async () => {
       await utils.event.getPublicEvents.cancel();
-      const previousEvents = utils.event.getPublicEvents.getData();
+      const previous = utils.event.getPublicEvents.getInfiniteData({ limit: 10 });
 
-      utils.event.getPublicEvents.setData(undefined, (old) => {
+      utils.event.getPublicEvents.setInfiniteData({ limit: 10 }, (old) => {
         if (!old) return old;
-        
-        return old.map((event) => {
-          if (event.id === eventId) {
-            const wasLiked = event.hasLiked;
-            return {
-              ...event,
-              hasLiked: !wasLiked,
-              likeCount: wasLiked ? event.likeCount - 1 : event.likeCount + 1,
-            };
-          }
-          return event;
-        });
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            items: page.items.map((event) => {
+              if (event.id !== eventId) return event;
+              const wasLiked = event.hasLiked;
+              return {
+                ...event,
+                hasLiked: !wasLiked,
+                likeCount: wasLiked ? event.likeCount - 1 : event.likeCount + 1,
+              };
+            }),
+          })),
+        };
       });
 
-      return { previousEvents };
+      return { previous };
     },
-    
+
     onError: (_err, _variables, context) => {
-      if (context?.previousEvents) {
-        utils.event.getPublicEvents.setData(undefined, context.previousEvents);
+      if (context?.previous) {
+        utils.event.getPublicEvents.setInfiniteData({ limit: 10 }, context.previous);
       }
     },
-    
+
     onSettled: () => {
       void utils.event.getPublicEvents.invalidate();
     },
@@ -145,43 +148,48 @@ function useOptimisticRsvp(eventId: number) {
   const updateRsvp = api.event.updateRsvp.useMutation({
     onMutate: async ({ status }) => {
       await utils.event.getPublicEvents.cancel();
-      const previousEvents = utils.event.getPublicEvents.getData();
+      const previous = utils.event.getPublicEvents.getInfiniteData({ limit: 10 });
 
-      utils.event.getPublicEvents.setData(undefined, (old) => {
+      utils.event.getPublicEvents.setInfiniteData({ limit: 10 }, (old) => {
         if (!old) return old;
-        
-        return old.map((event) => {
-          if (event.id === eventId) {
-            const oldStatus = event.userRsvpStatus;
-            const newCounts = { ...event.rsvpCounts };
-            
-            if (oldStatus === "going") newCounts.going--;
-            else if (oldStatus === "maybe") newCounts.maybe--;
-            else if (oldStatus === "not_going") newCounts.notGoing--;
-            
-            if (status === "going") newCounts.going++;
-            else if (status === "maybe") newCounts.maybe++;
-            else if (status === "not_going") newCounts.notGoing++;
-            
-            return {
-              ...event,
-              userRsvpStatus: status,
-              rsvpCounts: newCounts,
-            };
-          }
-          return event;
-        });
+
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            items: page.items.map((event) => {
+              if (event.id !== eventId) return event;
+
+              const oldStatus = event.userRsvpStatus;
+              const newCounts = { ...event.rsvpCounts };
+
+              if (oldStatus === "going") newCounts.going--;
+              else if (oldStatus === "maybe") newCounts.maybe--;
+              else if (oldStatus === "not_going") newCounts.notGoing--;
+
+              if (status === "going") newCounts.going++;
+              else if (status === "maybe") newCounts.maybe++;
+              else if (status === "not_going") newCounts.notGoing++;
+
+              return {
+                ...event,
+                userRsvpStatus: status,
+                rsvpCounts: newCounts,
+              };
+            }),
+          })),
+        };
       });
 
-      return { previousEvents };
+      return { previous };
     },
-    
+
     onError: (_err, _variables, context) => {
-      if (context?.previousEvents) {
-        utils.event.getPublicEvents.setData(undefined, context.previousEvents);
+      if (context?.previous) {
+        utils.event.getPublicEvents.setInfiniteData({ limit: 10 }, context.previous);
       }
     },
-    
+
     onSettled: () => {
       void utils.event.getPublicEvents.invalidate();
     },
@@ -371,18 +379,24 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
   const deleteEvent = api.event.deleteEvent.useMutation({
     onMutate: async () => {
       await utils.event.getPublicEvents.cancel();
-      const previousEvents = utils.event.getPublicEvents.getData();
+      const previous = utils.event.getPublicEvents.getInfiniteData({ limit: 10 });
 
-      utils.event.getPublicEvents.setData(undefined, (old) => {
+      utils.event.getPublicEvents.setInfiniteData({ limit: 10 }, (old) => {
         if (!old) return old;
-        return old.filter((e) => e.id !== event.id);
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            items: page.items.filter((e) => e.id !== event.id),
+          })),
+        };
       });
 
-      return { previousEvents };
+      return { previous };
     },
     onError: (error, _variables, context) => {
-      if (context?.previousEvents) {
-        utils.event.getPublicEvents.setData(undefined, context.previousEvents);
+      if (context?.previous) {
+        utils.event.getPublicEvents.setInfiniteData({ limit: 10 }, context.previous);
       }
       setInfoMessage({ message: error.message, type: "error" });
     },
@@ -866,17 +880,67 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false, ex
 
   const utils = api.useUtils();
 
-  const { data: eventsData, isLoading, error } = api.event.getPublicEvents.useQuery(undefined, {
-    enabled: true,
-  });
+  const {
+    data: eventsPages,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = api.event.getPublicEvents.useInfiniteQuery(
+    { limit: 10 },
+    {
+      enabled: true,
+      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    }
+  );
+
+  const eventsData = useMemo(
+    () => eventsPages?.pages.flatMap((p) => p.items) ?? [],
+    [eventsPages?.pages]
+  );
+
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const [sentinelVisible, setSentinelVisible] = useState(false);
+
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        setSentinelVisible(entries.some((e) => e.isIntersecting));
+      },
+      { root: null, rootMargin: "600px 0px", threshold: 0 }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!sentinelVisible) return;
+    if (!hasNextPage) return;
+    if (isFetchingNextPage) return;
+    void fetchNextPage();
+  }, [sentinelVisible, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // Real-time: remove deleted events instantly
-  const handleEventDeleted = useCallback((data: { eventId: number }) => {
-    utils.event.getPublicEvents.setData(undefined, (old) => {
-      if (!old) return old;
-      return old.filter((e) => e.id !== data.eventId);
-    });
-  }, [utils.event.getPublicEvents]);
+  const handleEventDeleted = useCallback(
+    (data: { eventId: number }) => {
+      utils.event.getPublicEvents.setInfiniteData({ limit: 10 }, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            items: page.items.filter((e) => e.id !== data.eventId),
+          })),
+        };
+      });
+    },
+    [utils.event.getPublicEvents]
+  );
   useSocketEvent("event:deleted", handleEventDeleted);
 
   // Real-time: refresh when events are updated (comments, likes, RSVPs)
@@ -908,9 +972,7 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false, ex
     );
   }
   
-  const filteredEvents = eventsData?.filter(event =>
-    activeRegion === '' || event.region === activeRegion
-  ) ?? [];
+  const filteredEvents = eventsData.filter((event) => activeRegion === "" || event.region === activeRegion);
 
   return (
     <div className="space-y-6">
@@ -1025,6 +1087,22 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false, ex
               }}
             />
           ))}
+
+          {/* Infinite scroll sentinel */}
+          <div ref={sentinelRef} className="h-6" />
+
+          {isFetchingNextPage && (
+            <div className="text-center py-8">
+              <Loader2 className="animate-spin w-8 h-8 text-accent-primary mx-auto mb-2" />
+              <p className="text-fg-secondary text-sm">Loading more events...</p>
+            </div>
+          )}
+
+          {!hasNextPage && filteredEvents.length > 0 && (
+            <div className="text-center py-6">
+              <p className="text-fg-tertiary text-sm">You're all caught up.</p>
+            </div>
+          )}
         </div>
       )}
     </div>

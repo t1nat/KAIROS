@@ -88,8 +88,30 @@ export const eventRouter = createTRPCRouter({
     }),
 
   getPublicEvents: publicProcedure
-    .query(async ({ ctx }) => {
+    .input(
+      z
+        .object({
+          limit: z.number().int().min(1).max(50).optional(),
+          cursor: z
+            .object({
+              createdAt: z.date(),
+              id: z.number().int(),
+            })
+            .optional(),
+        })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
       const currentUserId = ctx.session?.user?.id ?? null;
+      const limit = input?.limit ?? 10;
+
+      // Cursor-based pagination with stable ordering: (createdAt desc, id desc)
+      const cursorFilter = input?.cursor
+        ? sql`(
+            ${events.createdAt} < ${input.cursor.createdAt}
+            OR (${events.createdAt} = ${input.cursor.createdAt} AND ${events.id} < ${input.cursor.id})
+          )`
+        : undefined;
 
       const rows = await ctx.db
         .select({
@@ -102,48 +124,69 @@ export const eventRouter = createTRPCRouter({
           createdAt: events.createdAt,
           createdById: events.createdById,
           enableRsvp: events.enableRsvp,
-          
+
           authorId: users.id,
           authorName: users.name,
           authorImage: users.image,
 
-          commentCount: sql<number>`(SELECT count(*) FROM ${eventComments} WHERE ${eventComments.eventId} = ${events.id})`.mapWith(Number),
-          likeCount: sql<number>`(SELECT count(*) FROM ${eventLikes} WHERE ${eventLikes.eventId} = ${events.id})`.mapWith(Number),
-          
-          hasLiked: currentUserId 
+          commentCount:
+            sql<number>`(SELECT count(*) FROM ${eventComments} WHERE ${eventComments.eventId} = ${events.id})`.mapWith(
+              Number
+            ),
+          likeCount: sql<number>`(SELECT count(*) FROM ${eventLikes} WHERE ${eventLikes.eventId} = ${events.id})`.mapWith(
+            Number
+          ),
+
+          hasLiked: currentUserId
             ? sql<boolean>`EXISTS(SELECT 1 FROM ${eventLikes} WHERE ${eventLikes.eventId} = ${events.id} AND ${eventLikes.createdById} = ${currentUserId})`
             : sql<boolean>`false`,
           userRsvpStatus: currentUserId
             ? sql<string>`(SELECT status FROM ${eventRsvps} WHERE ${eventRsvps.eventId} = ${events.id} AND ${eventRsvps.userId} = ${currentUserId})`
             : sql<null>`null`,
 
-          rsvpGoing: sql<number>`(SELECT count(*) FROM ${eventRsvps} WHERE ${eventRsvps.eventId} = ${events.id} AND status = 'going')`.mapWith(Number),
-          rsvpMaybe: sql<number>`(SELECT count(*) FROM ${eventRsvps} WHERE ${eventRsvps.eventId} = ${events.id} AND status = 'maybe')`.mapWith(Number),
-          rsvpNotGoing: sql<number>`(SELECT count(*) FROM ${eventRsvps} WHERE ${eventRsvps.eventId} = ${events.id} AND status = 'not_going')`.mapWith(Number),
+          rsvpGoing:
+            sql<number>`(SELECT count(*) FROM ${eventRsvps} WHERE ${eventRsvps.eventId} = ${events.id} AND status = 'going')`.mapWith(
+              Number
+            ),
+          rsvpMaybe:
+            sql<number>`(SELECT count(*) FROM ${eventRsvps} WHERE ${eventRsvps.eventId} = ${events.id} AND status = 'maybe')`.mapWith(
+              Number
+            ),
+          rsvpNotGoing:
+            sql<number>`(SELECT count(*) FROM ${eventRsvps} WHERE ${eventRsvps.eventId} = ${events.id} AND status = 'not_going')`.mapWith(
+              Number
+            ),
         })
         .from(events)
         .leftJoin(users, eq(events.createdById, users.id))
-        .orderBy(desc(events.createdAt))
-        .limit(50); 
+        .where(cursorFilter ? and(cursorFilter) : undefined)
+        .orderBy(desc(events.createdAt), desc(events.id))
+        .limit(limit + 1);
 
-      const eventIds = rows.map(r => r.id);
-      const allComments = eventIds.length > 0 
-        ? await ctx.db
-            .select({
-              id: eventComments.id,
-              eventId: eventComments.eventId,
-              text: eventComments.text,
-              imageUrl: eventComments.imageUrl,
-              createdAt: eventComments.createdAt,
-              authorId: users.id,
-              authorName: users.name,
-              authorImage: users.image,
-            })
-            .from(eventComments)
-            .leftJoin(users, eq(eventComments.createdById, users.id))
-            .where(inArray(eventComments.eventId, eventIds))
-            .orderBy(desc(eventComments.createdAt))
-        : [];
+      const pageRows = rows.slice(0, limit);
+      const nextCursor = rows.length > limit
+        ? { createdAt: pageRows[pageRows.length - 1]!.createdAt, id: pageRows[pageRows.length - 1]!.id }
+        : null;
+
+      const eventIds = pageRows.map((r) => r.id);
+      const allComments =
+        eventIds.length > 0
+          ? await ctx.db
+              .select({
+                id: eventComments.id,
+                eventId: eventComments.eventId,
+                text: eventComments.text,
+                imageUrl: eventComments.imageUrl,
+                createdAt: eventComments.createdAt,
+                authorId: users.id,
+                authorName: users.name,
+                authorImage: users.image,
+              })
+              .from(eventComments)
+              .leftJoin(users, eq(eventComments.createdById, users.id))
+              .where(inArray(eventComments.eventId, eventIds))
+              .orderBy(desc(eventComments.createdAt))
+          : [];
 
       interface CommentWithAuthor {
         id: number;
@@ -156,7 +199,7 @@ export const eventRouter = createTRPCRouter({
           image: string | null;
         };
       }
-      
+
       const commentsByEvent = allComments.reduce((acc, comment) => {
         acc[comment.eventId] = acc[comment.eventId] ?? [];
         acc[comment.eventId]!.push({
@@ -173,7 +216,7 @@ export const eventRouter = createTRPCRouter({
         return acc;
       }, {} as Record<number, CommentWithAuthor[]>);
 
-      return rows.map((row) => ({
+      const items = pageRows.map((row) => ({
         id: row.id,
         title: row.title,
         description: row.description,
@@ -197,8 +240,10 @@ export const eventRouter = createTRPCRouter({
           going: row.rsvpGoing,
           maybe: row.rsvpMaybe,
           notGoing: row.rsvpNotGoing,
-        }
+        },
       }));
+
+      return { items, nextCursor };
     }),
 
   addComment: protectedProcedure

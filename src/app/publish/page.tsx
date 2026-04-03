@@ -72,20 +72,22 @@ function FeedLeftSidebar({
 /* ─── Right Sidebar ─── */
 function FeedRightSidebar() {
     const t = useTranslations("publish");
-    const { data: eventsData } = api.event.getPublicEvents.useQuery();
+    const { data: eventsData } = api.event.getPublicEvents.useQuery({ limit: 50 });
+
+    const events = eventsData?.items ?? [];
 
     /* Compute engagement stats from the events data */
     const engagementStats = useMemo(() => {
-        if (!eventsData || eventsData.length === 0) return null;
+        if (events.length === 0) return null;
 
-        const totalLikes = eventsData.reduce((sum, e) => sum + e.likeCount, 0);
-        const totalComments = eventsData.reduce((sum, e) => sum + e.commentCount, 0);
-        const totalRsvps = eventsData.reduce(
+        const totalLikes = events.reduce((sum, e) => sum + e.likeCount, 0);
+        const totalComments = events.reduce((sum, e) => sum + e.commentCount, 0);
+        const totalRsvps = events.reduce(
             (sum, e) => sum + e.rsvpCounts.going + e.rsvpCounts.maybe,
             0
         );
         const maxEngagement = Math.max(
-            ...eventsData.map((e) => e.likeCount + e.commentCount),
+            ...events.map((e) => e.likeCount + e.commentCount),
             1
         );
 
@@ -93,13 +95,13 @@ function FeedRightSidebar() {
             totalLikes,
             totalComments,
             totalRsvps,
-            totalEvents: eventsData.length,
+            totalEvents: events.length,
             maxEngagement,
-            topEvents: [...eventsData]
+            topEvents: [...events]
                 .sort((a, b) => b.likeCount + b.commentCount - (a.likeCount + a.commentCount))
                 .slice(0, 3),
         };
-    }, [eventsData]);
+    }, [events]);
 
     return (
         <aside className="hidden md:block md:col-span-12 lg:col-span-3 space-y-4">

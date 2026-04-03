@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '~/trpc/react';
 import { useSession } from 'next-auth/react';
 import { useUploadThing } from '~/lib/uploadthing';
 import Image from 'next/image';
 import { X, ImagePlus, Loader2, MapPin, Calendar, Clock, ChevronDown } from 'lucide-react';
 import { useToast } from "~/components/providers/ToastProvider";
+
+const MAX_EVENT_IMAGE_BYTES = 4 * 1024 * 1024;
 
 const REGIONS = [
   { value: 'sofia', label: 'Sofia' },
@@ -80,23 +82,43 @@ export const EditEventForm: React.FC<EditEventFormProps> = ({ event, onSuccess, 
     },
   });
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      setRemoveCurrentImage(false);
-      const reader = new FileReader();
-      reader.onload = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // reset input so selecting the same file again triggers onChange
+    e.target.value = "";
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
     }
+
+    if (file.size > MAX_EVENT_IMAGE_BYTES) {
+      toast.error("Image must be 4MB or less");
+      return;
+    }
+
+    setImageFile(file);
+    setRemoveCurrentImage(false);
+
+    // Local preview only (do NOT store base64 in DB)
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const removeImage = () => {
     setImageFile(null);
     setImagePreview(null);
     setRemoveCurrentImage(true);
+
+    // also reset file input so user can re-select same file immediately
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -121,6 +143,11 @@ export const EditEventForm: React.FC<EditEventFormProps> = ({ event, onSuccess, 
       if (imageFile) {
         const uploadResult = await startUpload([imageFile]);
         imageUrl = uploadResult?.[0]?.url;
+
+        if (!imageUrl) {
+          toast.error("Image upload failed");
+          return;
+        }
       } else if (removeCurrentImage) {
         imageUrl = null;
       }
@@ -301,19 +328,18 @@ export const EditEventForm: React.FC<EditEventFormProps> = ({ event, onSuccess, 
       {/* Modal Footer */}
       <div className="px-6 py-4 dark:bg-white/[0.02] bg-accent-primary/[0.02] border-t dark:border-white/5 border-slate-200 flex items-center justify-between shrink-0">
         <div className="flex gap-2">
-          {!imagePreview && (
-            <label className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-accent-primary dark:hover:bg-white/5 hover:bg-accent-primary/5 transition-all cursor-pointer group">
-              <ImagePlus size={16} className="text-accent-primary" />
-              <span className="text-xs font-semibold">Media</span>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="hidden"
-                disabled={updateEvent.isPending || isUploading}
-              />
-            </label>
-          )}
+          <label className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-accent-primary dark:hover:bg-white/5 hover:bg-accent-primary/5 transition-all cursor-pointer group">
+            <ImagePlus size={16} className="text-accent-primary" />
+            <span className="text-xs font-semibold">{imagePreview ? "Replace" : "Media"}</span>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="hidden"
+              disabled={updateEvent.isPending || isUploading}
+            />
+          </label>
         </div>
         <div className="flex gap-2">
           <button

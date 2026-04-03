@@ -8,6 +8,8 @@ import Image from 'next/image';
 import { X, ImagePlus, Loader2, MapPin, Calendar, Clock, Plus, ChevronDown } from 'lucide-react';
 import { useToast } from "~/components/providers/ToastProvider";
 
+const MAX_EVENT_IMAGE_BYTES = 4 * 1024 * 1024;
+
 const REGIONS = [
   { value: 'sofia', label: 'Sofia' },
   { value: 'plovdiv', label: 'Plovdiv' },
@@ -111,14 +113,29 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess, onC
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onload = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // reset input so selecting the same file again triggers onChange
+    e.target.value = "";
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
     }
+
+    if (file.size > MAX_EVENT_IMAGE_BYTES) {
+      toast.error("Image must be 4MB or less");
+      return;
+    }
+
+    setImageFile(file);
+
+    // Local preview only (do NOT store base64 in DB)
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const removeImage = () => {
@@ -148,6 +165,11 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess, onC
       if (imageFile) {
         const uploadResult = await startUpload([imageFile]);
         imageUrl = uploadResult?.[0]?.url;
+
+        if (!imageUrl) {
+          toast.error("Image upload failed");
+          return;
+        }
       }
 
       createEvent.mutate({
