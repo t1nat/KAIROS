@@ -16,12 +16,16 @@ export function CreateNoteForm() {
   const [showForm, setShowForm] = useState(false);
   const [content, setContent] = useState("");
   const [password, setPassword] = useState("");
+  const [addToCalendar, setAddToCalendar] = useState(false);
+  const [calendarDate, setCalendarDate] = useState<Date | null>(null);
 
   const createNote = api.note.create.useMutation({
     onSuccess: async () => {
       await utils.note.getAll.invalidate();
       setContent("");
       setPassword("");
+      setAddToCalendar(false);
+      setCalendarDate(null);
       setShowForm(false);
       toast.success(t("notes.success.created"));
     },
@@ -40,6 +44,7 @@ export function CreateNoteForm() {
     createNote.mutate({
       content: content.trim(),
       password: password.trim() ? password : undefined,
+      calendarDate: addToCalendar ? (calendarDate ?? undefined) : undefined,
     });
   };
 
@@ -75,6 +80,58 @@ export function CreateNoteForm() {
               placeholder={t("notes.placeholders.password")}
               className="w-full px-4 py-3 bg-bg-secondary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary placeholder:text-fg-tertiary transition-all"
             />
+          </div>
+
+          <div className="rounded-xl border border-border-light/20 bg-bg-secondary/40 p-3">
+            <label className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-xs font-semibold text-fg-primary">Add to calendar</div>
+                <div className="text-[11px] text-fg-tertiary">Show this note on a specific date</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setAddToCalendar((v) => {
+                    const next = !v;
+                    if (!next) setCalendarDate(null);
+                    return next;
+                  });
+                }}
+                className={`h-6 w-11 rounded-full transition relative border border-border-light/20 ${
+                  addToCalendar ? "bg-accent-primary/60" : "bg-bg-secondary"
+                }`}
+                aria-pressed={addToCalendar}
+                aria-label="Add to calendar"
+              >
+                <span
+                  className={`absolute top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-white transition ${
+                    addToCalendar ? "right-0.5" : "left-0.5"
+                  }`}
+                />
+              </button>
+            </label>
+
+            {addToCalendar && (
+              <div className="mt-3">
+                <label className="block text-xs font-semibold text-fg-secondary mb-2 uppercase tracking-wide">
+                  Calendar date
+                </label>
+                <input
+                  type="date"
+                  value={calendarDate ? calendarDate.toISOString().slice(0, 10) : ""}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (!v) {
+                      setCalendarDate(null);
+                      return;
+                    }
+                    const [y, m, d] = v.split("-").map(Number);
+                    setCalendarDate(new Date(y!, (m! - 1), d!, 12, 0, 0));
+                  }}
+                  className="w-full px-4 py-3 bg-bg-secondary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary placeholder:text-fg-tertiary transition-all"
+                />
+              </div>
+            )}
           </div>
 
           <div className="flex gap-2">

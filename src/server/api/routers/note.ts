@@ -447,6 +447,7 @@ export const noteRouter = createTRPCRouter({
       content: z.string().min(1),
       title: z.string().optional(),
       password: z.string().optional(),
+      calendarDate: z.date().nullable().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const note = await ctx.db.query.stickyNotes.findFirst({
@@ -489,6 +490,7 @@ export const noteRouter = createTRPCRouter({
           content: storedContent,
           updatedAt: new Date(),
           ...(input.title !== undefined ? { title: input.title || null } : {}),
+          ...(input.calendarDate !== undefined ? { calendarDate: input.calendarDate ?? null } : {}),
         })
         .where(eq(stickyNotes.id, input.id));
 

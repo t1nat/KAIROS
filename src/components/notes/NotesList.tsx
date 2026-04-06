@@ -32,6 +32,8 @@ export function NotesList() {
   const pendingDeleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [editingContent, setEditingContent] = useState<Record<number, string>>({});
+  const [editAddToCalendar, setEditAddToCalendar] = useState(false);
+  const [editCalendarDate, setEditCalendarDate] = useState<Date | null>(null);
 
   const { data: notes, refetch } = api.note.getAll.useQuery();
 
@@ -258,7 +260,17 @@ export function NotesList() {
                   <button
                     key={note.id}
                     type="button"
-                    onClick={() => setSelectedNoteId(note.id)}
+                    onClick={() => {
+                      setSelectedNoteId(note.id);
+                      const existingDate = (note as { calendarDate?: Date | string | null }).calendarDate;
+                      if (existingDate) {
+                        setEditAddToCalendar(true);
+                        setEditCalendarDate(new Date(existingDate));
+                      } else {
+                        setEditAddToCalendar(false);
+                        setEditCalendarDate(null);
+                      }
+                    }}
                     className="group relative aspect-square rounded-xl p-3 text-left transition-all duration-200 hover:scale-[1.04] hover:shadow-lg active:scale-[0.98] cursor-pointer border"
                     style={{
                       backgroundColor: color.bg,
@@ -340,9 +352,23 @@ export function NotesList() {
                 <UnlockedNoteContent
                   value={editingContent[note.id] ?? (unlockedState?.content ?? note.content ?? "")}
                   onChange={(value) => setEditingContent((prev) => ({ ...prev, [note.id]: value }))}
+                  addToCalendar={editAddToCalendar}
+                  calendarDate={editCalendarDate}
+                  onToggleAddToCalendar={() => {
+                    setEditAddToCalendar((v) => {
+                      const next = !v;
+                      if (!next) setEditCalendarDate(null);
+                      return next;
+                    });
+                  }}
+                  onCalendarDateChange={(v) => setEditCalendarDate(v)}
                   onSave={() => {
                     const content = editingContent[note.id] ?? (unlockedState?.content ?? note.content ?? "");
-                    updateNote.mutate({ id: note.id, content });
+                    updateNote.mutate({
+                      id: note.id,
+                      content,
+                      calendarDate: editAddToCalendar ? (editCalendarDate ?? null) : null,
+                    });
                   }}
                   onRefresh={() => void refetch()}
                   isSaving={updateNote.isPending}
@@ -615,6 +641,10 @@ function LockedNoteContent(props: LockedNoteContentProps) {
 type UnlockedNoteContentProps = {
   value: string;
   onChange: (value: string) => void;
+  addToCalendar: boolean;
+  calendarDate: Date | null;
+  onToggleAddToCalendar: () => void;
+  onCalendarDateChange: (value: Date | null) => void;
   onSave: () => void;
   onRefresh: () => void;
   isSaving: boolean;
@@ -623,7 +653,19 @@ type UnlockedNoteContentProps = {
 };
 
 function UnlockedNoteContent(props: UnlockedNoteContentProps) {
-  const { value, onChange, onSave, onRefresh, isSaving, onDelete, isPendingDelete } = props;
+  const {
+    value,
+    onChange,
+    addToCalendar,
+    calendarDate,
+    onToggleAddToCalendar,
+    onCalendarDateChange,
+    onSave,
+    onRefresh,
+    isSaving,
+    onDelete,
+    isPendingDelete,
+  } = props;
   const t = useTranslations("create");
 
   return (
@@ -662,7 +704,53 @@ function UnlockedNoteContent(props: UnlockedNoteContentProps) {
         className="w-full min-h-[200px] bg-bg-surface/40 text-fg-primary rounded-xl p-4 text-[15px] leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-accent-primary/30 border border-white/[0.06]"
         placeholder={t("notes.placeholders.content")}
       />
-      
+
+      <div className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+        <label className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-xs font-bold text-fg-primary">Add to calendar</div>
+            <div className="text-[11px] text-fg-tertiary">Show this note on a specific date</div>
+          </div>
+          <button
+            type="button"
+            onClick={onToggleAddToCalendar}
+            className={cn(
+              "h-6 w-11 rounded-full transition relative border border-white/[0.10]",
+              addToCalendar ? "bg-accent-primary/60" : "bg-white/[0.06]",
+            )}
+            aria-pressed={addToCalendar}
+            aria-label="Add to calendar"
+          >
+            <span
+              className={cn(
+                "absolute top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-white transition",
+                addToCalendar ? "right-0.5" : "left-0.5",
+              )}
+            />
+          </button>
+        </label>
+
+        {addToCalendar && (
+          <div className="mt-3">
+            <label className="block text-[10px] uppercase tracking-wider text-fg-tertiary font-bold mb-1.5">Calendar date</label>
+            <input
+              type="date"
+              value={calendarDate ? calendarDate.toISOString().slice(0, 10) : ""}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (!v) {
+                  onCalendarDateChange(null);
+                  return;
+                }
+                const [y, m, d] = v.split("-").map(Number);
+                onCalendarDateChange(new Date(y!, (m! - 1), d!, 12, 0, 0));
+              }}
+              className="w-full px-3 py-2 bg-bg-primary rounded-lg text-sm text-fg-primary border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
+            />
+          </div>
+        )}
+      </div>
+
       <div className="flex gap-2 mt-4">
         <button
           onClick={onSave}
