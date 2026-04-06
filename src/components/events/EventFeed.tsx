@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { api } from "~/trpc/react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { CreateEventForm } from "~/components/events/CreateEventForm";
 import { EditEventForm } from "~/components/events/EditEventForm";
@@ -346,6 +347,7 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
 };
 
 const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
+  const router = useRouter();
   const { data: session } = useSession();
   const { formatDate: formatDatePref } = useDateFormat();
   const utils = api.useUtils();
@@ -373,6 +375,15 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
     },
     onError: (error) => {
       setInfoMessage({ message: error.message, type: "error" });
+    },
+  });
+
+  const startDirectChat = api.chat.getOrCreateDirectConversation.useMutation({
+    onError: (error) => {
+      setInfoMessage({ message: error.message, type: "error" });
+    },
+    onSuccess: (data) => {
+      router.push(`/chat?conversationId=${data.conversationId}`);
     },
   });
 
@@ -650,16 +661,40 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
             />
             <span className="text-xs font-semibold">{event.likeCount}</span>
           </button>
+
           <button className="flex items-center gap-1.5 text-accent-primary/50 hover:text-accent-primary transition-colors">
             <MessageCircle size={20} />
             <span className="text-xs font-semibold">{event.commentCount}</span>
           </button>
-          <button 
+
+          {!event.isOwner && (
+            <button
+              onClick={() => {
+                if (!session) {
+                  setInfoMessage({ message: "Please sign in to message event creators", type: "error" });
+                  return;
+                }
+                startDirectChat.mutate({ otherUserId: event.createdById });
+              }}
+              disabled={startDirectChat.isPending}
+              className="flex items-center gap-1.5 text-accent-primary/50 hover:text-accent-primary transition-colors"
+              aria-label="Message creator"
+              title="Message creator"
+            >
+              <MessageCircle size={20} />
+              <span className="text-xs font-semibold">
+                {startDirectChat.isPending ? "Opening..." : "Message"}
+              </span>
+            </button>
+          )}
+
+          <button
             onClick={handleShare}
             className="flex items-center gap-1.5 text-accent-primary/50 hover:text-accent-primary transition-colors"
           >
             <Share2 size={20} />
           </button>
+
           <button
             onClick={handleBellClick}
             className={`flex items-center gap-1.5 transition-colors ${

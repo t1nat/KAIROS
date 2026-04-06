@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { api } from "~/trpc/react";
 import type { RouterOutputs } from "~/trpc/react";
 import Image from "next/image";
@@ -30,6 +31,7 @@ export function ChatClient({ userId }: { userId: string }) {
   const chatMenuRef = useRef<HTMLDivElement | null>(null);
 
   const utils = api.useUtils();
+  const searchParams = useSearchParams();
   const { startUpload } = useUploadThing("chatAttachment");
 
   // Get user profile to find active organization
@@ -47,6 +49,26 @@ export function ChatClient({ userId }: { userId: string }) {
   const conversationsQuery = api.chat.listAllConversations.useQuery(undefined);
 
   const conversations = conversationsQuery.data ?? [];
+
+  // Allow deep-linking into a conversation via URL: /chat?conversationId=123
+  useEffect(() => {
+    const raw = searchParams.get("conversationId");
+    if (!raw) return;
+
+    const cid = Number(raw);
+    if (!cid || Number.isNaN(cid)) return;
+
+    // Only set if it differs, to avoid infinite loops.
+    if (selectedConversationId === cid) return;
+
+    // Ensure the user actually has access to this conversation.
+    const convo = conversations.find((c) => c.id === cid);
+    if (!convo) return;
+
+    const otherUser = convo.userOne.id === userId ? convo.userTwo : convo.userOne;
+    setSelectedConversationId(cid);
+    setSelectedUserId(otherUser.id);
+  }, [conversations, searchParams, selectedConversationId, userId]);
 
   // Get messages for selected conversation (cursor-based pagination)
   const messagesQuery = api.chat.listMessages.useInfiniteQuery(
