@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 /* ─── Types ─── */
 type ModalView = "signIn" | "signUp" | "forgotPassword" | "resetCode" | "newPassword";
@@ -19,6 +20,7 @@ export function SignInModal({
   onClose: () => void;
   initialEmail?: string;
 }) {
+  const t = useTranslations("auth.modal");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -109,7 +111,7 @@ export function SignInModal({
     e.preventDefault();
     setIsLoading(true);
     setError("");
-    setLoadingMessage("Verifying credentials...");
+    setLoadingMessage(t("signIn.verifyingCredentials"));
 
     try {
       const result = await signIn("credentials", {
@@ -119,7 +121,7 @@ export function SignInModal({
       });
 
       if (result?.error) {
-        setError("Invalid email or password");
+        setError(t("signIn.invalidCredentials"));
       } else {
         onClose();
         router.push("/");
@@ -127,7 +129,7 @@ export function SignInModal({
       }
     } catch (error) {
       console.error("Sign in error:", error);
-      setError("An error occurred during sign in");
+      setError(t("signIn.error"));
     } finally {
       setIsLoading(false);
       setLoadingMessage("");
@@ -153,7 +155,7 @@ export function SignInModal({
       });
 
       if (result?.error) {
-        setError("Account created but sign in failed. Please try signing in.");
+        setError(t("signUp.createdButSignInFailed"));
       } else {
         setTimeout(() => {
           onClose();
@@ -166,7 +168,7 @@ export function SignInModal({
       if (error instanceof Error) {
         setError(error.message);
       } else {
-        setError("An error occurred during sign up");
+        setError(t("signUp.error"));
       }
     } finally {
       setIsLoading(false);
@@ -206,12 +208,12 @@ export function SignInModal({
   const handleSendResetCode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      setError("Please enter your email address");
+      setError(t("forgotPassword.emailRequired"));
       return;
     }
     setIsLoading(true);
     setError("");
-    setLoadingMessage("Sending reset code...");
+    setLoadingMessage(t("forgotPassword.sendingCode"));
 
     try {
       await requestResetMutation.mutateAsync({ email });
@@ -224,7 +226,7 @@ export function SignInModal({
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError("Failed to send reset code. Please try again.");
+        setError(t("forgotPassword.sendFailed"));
       }
     }
   };
@@ -240,7 +242,7 @@ export function SignInModal({
       setView("newPassword");
     } catch {
       setIsLoading(false);
-      setError("Invalid or expired reset code. Please try again.");
+      setError(t("resetCode.invalid"));
     }
   };
 
@@ -249,16 +251,16 @@ export function SignInModal({
     setError("");
 
     if (newPassword.length < 8) {
-      setError("Password must be at least 8 characters");
+      setError(t("newPassword.minLength"));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("newPassword.mismatch"));
       return;
     }
 
     setIsLoading(true);
-    setLoadingMessage("Resetting password...");
+    setLoadingMessage(t("newPassword.resetting"));
 
     try {
       await resetPasswordMutation.mutateAsync({
@@ -282,7 +284,7 @@ export function SignInModal({
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError("Failed to reset password. Please try again.");
+        setError(t("newPassword.failed"));
       }
     }
   };
@@ -326,25 +328,25 @@ export function SignInModal({
   /* ─── Sign In View ─── */
   const renderSignIn = () => (
     <>
-      {renderHeader("Welcome Back", "Enter your details to access your workspace")}
+      {renderHeader(t("signIn.title"), t("signIn.subtitle"))}
       <div className="relative px-5 sm:px-8 pb-6 sm:pb-8 space-y-5">
         {renderError()}
         {renderLoading()}
 
         <form onSubmit={handleEmailSignIn} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="email" className={labelClass}>Email Address</label>
+            <label htmlFor="email" className={labelClass}>{t("signIn.emailLabel")}</label>
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={18} />
-              <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@company.com" required disabled={isLoading} className={inputClass} />
+              <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("signIn.emailPlaceholder")} required disabled={isLoading} className={inputClass} />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="password" className={labelClass}>Password</label>
+            <label htmlFor="password" className={labelClass}>{t("signIn.passwordLabel")}</label>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={18} />
-              <input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required disabled={isLoading} className={inputPasswordClass} />
+              <input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t("signIn.passwordPlaceholder")} required disabled={isLoading} className={inputPasswordClass} />
               <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors" tabIndex={-1}>
                 {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
               </button>
@@ -356,18 +358,18 @@ export function SignInModal({
               <div onClick={() => setRememberMe(!rememberMe)} className={`w-4 h-4 rounded-full border-2 transition-all duration-200 flex items-center justify-center ${rememberMe ? "border-accent-primary bg-accent-primary" : "border-white/20 hover:border-white/40"}`}>
                 {rememberMe && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
               </div>
-              <span className="text-white/50 group-hover:text-white/70 transition-colors">Remember me</span>
+              <span className="text-white/50 group-hover:text-white/70 transition-colors">{t("signIn.rememberMe")}</span>
             </label>
             <button type="button" onClick={handleForgotPassword} className="text-white/50 hover:text-white/70 transition-colors">
-              Forgot password?
+              {t("signIn.forgotPassword")}
             </button>
           </div>
 
           <button type="submit" disabled={isLoading} className="w-full px-6 py-4 kairos-neon-btn rounded-2xl font-semibold text-white transition-all duration-300 shadow-lg shadow-accent-primary/25 hover:shadow-xl hover:shadow-accent-primary/35 hover:scale-[1.01] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 mt-2">
             {isLoading ? (
-              <><Loader2 className="animate-spin" size={20} />Signing in...</>
+              <><Loader2 className="animate-spin" size={20} />{t("signIn.signingIn")}</>
             ) : (
-              <>Sign In<ArrowRight size={18} /></>
+              <>{t("signIn.submit")}<ArrowRight size={18} /></>
             )}
           </button>
         </form>
@@ -375,7 +377,7 @@ export function SignInModal({
         {/* OR CONTINUE WITH */}
         <div className="flex items-center gap-4">
           <div className="flex-1 border-t border-white/[0.08]" />
-          <span className="text-[10px] font-bold text-white/30 uppercase tracking-[0.15em]">Or continue with</span>
+          <span className="text-[10px] font-bold text-white/30 uppercase tracking-[0.15em]">{t("orContinueWith")}</span>
           <div className="flex-1 border-t border-white/[0.08]" />
         </div>
 
@@ -387,13 +389,13 @@ export function SignInModal({
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
             </svg>
-            Google
+            {t("google")}
           </button>
         </div>
 
         <div className="text-center pt-1">
           <button onClick={toggleMode} disabled={isLoading} className="text-sm text-white/50 hover:text-white/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-            Don&#39;t have an account? <span className="font-semibold text-accent-primary">Create account</span>
+            {t("signIn.noAccount")} <span className="font-semibold text-accent-primary">{t("signIn.createAccount")}</span>
           </button>
         </div>
       </div>
@@ -403,33 +405,33 @@ export function SignInModal({
   /* ─── Sign Up View ─── */
   const renderSignUp = () => (
     <>
-      {renderHeader("Create your account", "Join the Kairos workspace today.")}
+      {renderHeader(t("signUp.title"), t("signUp.subtitle"))}
       <div className="relative px-5 sm:px-8 pb-6 sm:pb-8 space-y-5">
         {renderError()}
         {renderLoading()}
 
         <form onSubmit={handleSignUp} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="name" className={labelClass}>Full Name</label>
+            <label htmlFor="name" className={labelClass}>{t("signUp.fullNameLabel")}</label>
             <div className="relative">
               <User className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={18} />
-              <input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter your full name" disabled={isLoading} className={inputClass} />
+              <input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("signUp.fullNamePlaceholder")} disabled={isLoading} className={inputClass} />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="signup-email" className={labelClass}>Email Address</label>
+            <label htmlFor="signup-email" className={labelClass}>{t("signIn.emailLabel")}</label>
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={18} />
-              <input id="signup-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@company.com" required disabled={isLoading} className={inputClass} />
+              <input id="signup-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("signIn.emailPlaceholder")} required disabled={isLoading} className={inputClass} />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="signup-password" className={labelClass}>Password</label>
+            <label htmlFor="signup-password" className={labelClass}>{t("signIn.passwordLabel")}</label>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={18} />
-              <input id="signup-password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={8} disabled={isLoading} className={inputPasswordClass} />
+              <input id="signup-password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t("signIn.passwordPlaceholder")} required minLength={8} disabled={isLoading} className={inputPasswordClass} />
               <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors" tabIndex={-1}>
                 {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
               </button>
@@ -445,22 +447,22 @@ export function SignInModal({
               )}
             </div>
             <span className="text-white/50 leading-relaxed">
-              I agree to the <span className="text-accent-primary underline underline-offset-2 cursor-pointer hover:text-accent-primary/80">Terms of Service</span> and <span className="text-accent-primary underline underline-offset-2 cursor-pointer hover:text-accent-primary/80">Privacy Policy</span>.
+              {t("signUp.agreeTerms")} <span className="text-accent-primary underline underline-offset-2 cursor-pointer hover:text-accent-primary/80">{t("signUp.termsOfService")}</span> {t("signUp.and")} <span className="text-accent-primary underline underline-offset-2 cursor-pointer hover:text-accent-primary/80">{t("signUp.privacyPolicy")}</span>.
             </span>
           </label>
 
           <button type="submit" disabled={isLoading || !agreeTerms} className="w-full px-6 py-4 kairos-neon-btn rounded-2xl font-semibold text-white transition-all duration-300 shadow-lg shadow-accent-primary/25 hover:shadow-xl hover:shadow-accent-primary/35 hover:scale-[1.01] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 mt-2">
             {isLoading ? (
-              <><Loader2 className="animate-spin" size={20} />Creating Account...</>
+              <><Loader2 className="animate-spin" size={20} />{t("signUp.creatingAccount")}</>
             ) : (
-              "Create Account"
+              t("signUp.submit")
             )}
           </button>
         </form>
 
         <div className="text-center pt-1">
           <button onClick={toggleMode} disabled={isLoading} className="text-sm text-white/50 hover:text-white/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-            Already have an account? <span className="font-semibold text-white">Log In</span>
+            {t("signUp.hasAccount")} <span className="font-semibold text-white">{t("signUp.logIn")}</span>
           </button>
         </div>
       </div>
@@ -470,25 +472,25 @@ export function SignInModal({
   /* ─── Forgot Password View ─── */
   const renderForgotPassword = () => (
     <>
-      {renderHeader("Forgot Password?", "Enter your email and we'll send you a reset code")}
+      {renderHeader(t("forgotPassword.title"), t("forgotPassword.subtitle"))}
       <div className="relative px-5 sm:px-8 pb-6 sm:pb-8 space-y-5">
         {renderError()}
         {renderLoading()}
 
         <form onSubmit={handleSendResetCode} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="reset-email" className={labelClass}>Email Address</label>
+            <label htmlFor="reset-email" className={labelClass}>{t("signIn.emailLabel")}</label>
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={18} />
-              <input id="reset-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@company.com" required disabled={isLoading} className={inputClass} />
+              <input id="reset-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("signIn.emailPlaceholder")} required disabled={isLoading} className={inputClass} />
             </div>
           </div>
 
           <button type="submit" disabled={isLoading} className="w-full px-6 py-4 kairos-neon-btn rounded-2xl font-semibold text-white transition-all duration-300 shadow-lg shadow-accent-primary/25 hover:shadow-xl hover:shadow-accent-primary/35 hover:scale-[1.01] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 mt-2">
             {isLoading ? (
-              <><Loader2 className="animate-spin" size={20} />Sending code...</>
+              <><Loader2 className="animate-spin" size={20} />{t("forgotPassword.sendingCode")}</>
             ) : (
-              <>Send Reset Code<ArrowRight size={18} /></>
+              <>{t("forgotPassword.submit")}<ArrowRight size={18} /></>
             )}
           </button>
         </form>
@@ -496,7 +498,7 @@ export function SignInModal({
         <div className="text-center pt-1">
           <button onClick={handleBackToSignIn} className="text-sm text-white/50 hover:text-white/80 transition-colors flex items-center gap-1.5 mx-auto">
             <ArrowLeft size={14} />
-            Back to Sign In
+            {t("backToSignIn")}
           </button>
         </div>
       </div>
@@ -506,13 +508,13 @@ export function SignInModal({
   /* ─── Reset Code Verification View ─── */
   const renderResetCode = () => (
     <>
-      {renderHeader("Enter Reset Code", `We sent an 8-digit code to ${email}`)}
+      {renderHeader(t("resetCode.title"), t("resetCode.subtitle", { email }))}
       <div className="relative px-5 sm:px-8 pb-6 sm:pb-8 space-y-5">
         {renderError()}
 
         <form onSubmit={handleVerifyCode} className="space-y-4">
           <div className="space-y-2">
-            <label className={labelClass}>Reset Code</label>
+            <label className={labelClass}>{t("resetCode.label")}</label>
             <div className="flex gap-1.5 justify-center" onPaste={handleCodePaste}>
               {Array.from({ length: 8 }).map((_, i) => (
                 <input
@@ -528,11 +530,11 @@ export function SignInModal({
                 />
               ))}
             </div>
-            <p className="text-[11px] text-white/30 text-center mt-2">Check your email for the code</p>
+            <p className="text-[11px] text-white/30 text-center mt-2">{t("resetCode.helperText")}</p>
           </div>
 
           <button type="submit" disabled={enteredCode.length < 8} className="w-full px-6 py-4 kairos-neon-btn rounded-2xl font-semibold text-white transition-all duration-300 shadow-lg shadow-accent-primary/25 hover:shadow-xl hover:shadow-accent-primary/35 hover:scale-[1.01] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 mt-2">
-            Verify Code
+            {t("resetCode.submit")}
             <KeyRound size={18} />
           </button>
         </form>
@@ -540,7 +542,7 @@ export function SignInModal({
         <div className="text-center pt-1">
           <button onClick={handleBackToSignIn} className="text-sm text-white/50 hover:text-white/80 transition-colors flex items-center gap-1.5 mx-auto">
             <ArrowLeft size={14} />
-            Back to Sign In
+            {t("backToSignIn")}
           </button>
         </div>
       </div>
@@ -550,22 +552,22 @@ export function SignInModal({
   /* ─── New Password View ─── */
   const renderNewPassword = () => (
     <>
-      {renderHeader(resetSuccess ? "Password Reset!" : "Set New Password", resetSuccess ? "Your password has been updated successfully" : "Choose a strong password for your account")}
+      {renderHeader(resetSuccess ? t("newPassword.successTitle") : t("newPassword.title"), resetSuccess ? t("newPassword.successSubtitle") : t("newPassword.subtitle"))}
       <div className="relative px-5 sm:px-8 pb-6 sm:pb-8 space-y-5">
         {resetSuccess ? (
           <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-green-300 text-sm text-center flex items-center justify-center gap-2">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8L7 11L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            Redirecting to sign in...
+            {t("newPassword.redirecting")}
           </div>
         ) : (
           <>
             {renderError()}
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="new-password" className={labelClass}>New Password</label>
+                <label htmlFor="new-password" className={labelClass}>{t("newPassword.newPasswordLabel")}</label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={18} />
-                  <input id="new-password" type={showNewPassword ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" required minLength={8} disabled={isLoading} className={inputPasswordClass} />
+                  <input id="new-password" type={showNewPassword ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder={t("signIn.passwordPlaceholder")} required minLength={8} disabled={isLoading} className={inputPasswordClass} />
                   <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors" tabIndex={-1}>
                     {showNewPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                   </button>
@@ -573,10 +575,10 @@ export function SignInModal({
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="confirm-password" className={labelClass}>Confirm Password</label>
+                <label htmlFor="confirm-password" className={labelClass}>{t("newPassword.confirmPasswordLabel")}</label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={18} />
-                  <input id="confirm-password" type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" required minLength={8} disabled={isLoading} className={inputPasswordClass} />
+                  <input id="confirm-password" type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder={t("signIn.passwordPlaceholder")} required minLength={8} disabled={isLoading} className={inputPasswordClass} />
                   <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors" tabIndex={-1}>
                     {showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                   </button>
@@ -585,9 +587,9 @@ export function SignInModal({
 
               <button type="submit" disabled={isLoading} className="w-full px-6 py-4 kairos-neon-btn rounded-2xl font-semibold text-white transition-all duration-300 shadow-lg shadow-accent-primary/25 hover:shadow-xl hover:shadow-accent-primary/35 hover:scale-[1.01] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 mt-2">
                 {isLoading ? (
-                  <><Loader2 className="animate-spin" size={20} />Resetting...</>
+                  <><Loader2 className="animate-spin" size={20} />{t("newPassword.resetting")}</>
                 ) : (
-                  <>Reset Password<ArrowRight size={18} /></>
+                  <>{t("newPassword.submit")}<ArrowRight size={18} /></>
                 )}
               </button>
             </form>
@@ -598,7 +600,7 @@ export function SignInModal({
           <div className="text-center pt-1">
             <button onClick={handleBackToSignIn} className="text-sm text-white/50 hover:text-white/80 transition-colors flex items-center gap-1.5 mx-auto">
               <ArrowLeft size={14} />
-              Back to Sign In
+              {t("backToSignIn")}
             </button>
           </div>
         )}

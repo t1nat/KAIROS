@@ -36,7 +36,68 @@
       "addToCalendar": "Add to calendar",
       "addToCalendarDesc": "Show this note on a specific date",
       "calendarDate": "Calendar date"
-    }
+    },
+    "tabs": {
+      "allNotes": "All Notes",
+      "notebooks": "Notebooks",
+      "shared": "Shared"
+    },
+    "search": "Search notes...",
+    "recentNotes": "Recent Notes",
+    "notebook": "Notebook",
+    "untitled": "Untitled",
+    "noContent": "No content",
+    "encryptedNote": "Encrypted Note",
+    "passwordProtected": "This note is password protected",
+    "justNow": "Just now",
+    "share": "Share",
+    "manageSharing": "Manage Sharing",
+    "create": {
+      "titlePlaceholder": "Title (optional)",
+      "contentPlaceholder": "Write your note...",
+      "passwordPlaceholder": "Encrypt with password"
+    },
+    "actions": {
+      "delete": "Delete",
+      "deleting": "Deleting...",
+      "save": "Save",
+      "saving": "Saving...",
+      "unlock": "Unlock",
+      "unlocking": "Unlocking...",
+      "create": "Create"
+    },
+    "messages": {
+      "created": "Note created",
+      "updated": "Note updated",
+      "deleted": "Note deleted",
+      "shared": "Note shared",
+      "accessRemoved": "Access removed",
+      "contentRequired": "Content is required",
+      "incorrectPassword": "Incorrect password"
+    },
+    "password": {
+      "enterPassword": "Enter password",
+      "resetPassword": "Reset Password",
+      "resetting": "Resetting...",
+      "resetSuccess": "Password reset successfully",
+      "enterPin": "Enter your PIN",
+      "passwordRequired": "Password is required",
+      "passwordsMismatch": "Passwords don't match"
+    },
+    "sharing": {
+      "title": "Manage sharing",
+      "emailPlaceholder": "Email address",
+      "canEdit": "Can Edit",
+      "viewOnly": "View Only",
+      "noName": "No name"
+    },
+    "notebooks": {
+      "namePlaceholder": "Notebook name",
+      "created": "Notebook created",
+      "deleted": "Notebook deleted",
+      "noteMoved": "Note moved"
+    },
+    "saveChanges": "Save changes"
   },
   "progress": {
     "title": "Progress",
@@ -472,7 +533,27 @@
     "dateTime": "Date & Time",
     "region": "Region",
     "eventManager": "Event Manager",
-    "techLead": "Tech Lead"
+    "techLead": "Tech Lead",
+    "searchCity": "Search a city in Bulgaria…",
+    "allRegions": "All Regions",
+    "validation": {
+      "imageType": "Please upload an image file",
+      "imageSize": "Image must be 4MB or less",
+      "notLoggedIn": "You must be logged in to create an event",
+      "requiredFields": "Please fill in all required fields",
+      "uploadFailed": "Image upload failed",
+      "uploadError": "Failed to upload image"
+    },
+    "preview": "Preview",
+    "edit": {
+      "title": "Edit Event",
+      "toEdit": "to edit events",
+      "success": "Event updated successfully",
+      "replace": "Replace",
+      "cancel": "Cancel",
+      "saving": "Saving...",
+      "saveChanges": "Save Changes"
+    }
   },
   "auth": {
     "signIn": "Sign In",
@@ -480,7 +561,75 @@
     "signInWith": "Sign in with {provider}",
     "orContinueWith": "Or continue with",
     "welcome": "Welcome to KAIROS",
-    "welcomeDesc": "Sign in to start organizing your projects"
+    "welcomeDesc": "Sign in to start organizing your projects",
+    "modal": {
+      "signIn": {
+        "title": "Welcome Back",
+        "subtitle": "Enter your details to access your workspace",
+        "emailLabel": "Email Address",
+        "emailPlaceholder": "name@company.com",
+        "passwordLabel": "Password",
+        "passwordPlaceholder": "••••••••",
+        "rememberMe": "Remember me",
+        "forgotPassword": "Forgot password?",
+        "submit": "Sign In",
+        "signingIn": "Signing in...",
+        "verifyingCredentials": "Verifying credentials...",
+        "noAccount": "Don't have an account?",
+        "createAccount": "Create account",
+        "invalidCredentials": "Invalid email or password",
+        "error": "An error occurred during sign in"
+      },
+      "signUp": {
+        "title": "Create your account",
+        "subtitle": "Join the Kairos workspace today.",
+        "fullNameLabel": "Full Name",
+        "fullNamePlaceholder": "Enter your full name",
+        "submit": "Create Account",
+        "creatingAccount": "Creating Account...",
+        "hasAccount": "Already have an account?",
+        "logIn": "Log In",
+        "agreeTerms": "I agree to the",
+        "termsOfService": "Terms of Service",
+        "and": "and",
+        "privacyPolicy": "Privacy Policy",
+        "createdButSignInFailed": "Account created but sign in failed. Please try signing in.",
+        "error": "An error occurred during sign up"
+      },
+      "forgotPassword": {
+        "title": "Forgot Password?",
+        "subtitle": "Enter your email and we'll send you a reset code",
+        "submit": "Send Reset Code",
+        "sendingCode": "Sending code...",
+        "emailRequired": "Please enter your email address",
+        "sendFailed": "Failed to send reset code. Please try again."
+      },
+      "resetCode": {
+        "title": "Enter Reset Code",
+        "subtitle": "We sent an 8-digit code to {email}",
+        "label": "Reset Code",
+        "helperText": "Check your email for the code",
+        "submit": "Verify Code",
+        "invalid": "Invalid or expired reset code. Please try again."
+      },
+      "newPassword": {
+        "title": "Set New Password",
+        "subtitle": "Choose a strong password for your account",
+        "successTitle": "Password Reset!",
+        "successSubtitle": "Your password has been updated successfully",
+        "newPasswordLabel": "New Password",
+        "confirmPasswordLabel": "Confirm Password",
+        "submit": "Reset Password",
+        "resetting": "Resetting...",
+        "redirecting": "Redirecting to sign in...",
+        "minLength": "Password must be at least 8 characters",
+        "mismatch": "Passwords do not match",
+        "failed": "Failed to reset password. Please try again."
+      },
+      "backToSignIn": "Back to Sign In",
+      "google": "Google",
+      "orContinueWith": "Or continue with"
+    }
   },
   "common": {
     "save": "Save",
@@ -609,5 +758,39 @@
     "noteUpdate": "I\u2019ll update your note.",
     "noteDelete": "I\u2019ll remove that note.",
     "noNoteChanges": "No changes needed based on your request."
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "Welcome to Kairos",
+      "subtitle": "Choose how you'd like to get started"
+    },
+    "createOrg": {
+      "label": "Create Organization",
+      "description": "Set up a workspace and invite your team",
+      "formTitle": "Create Your Organization",
+      "formSubtitle": "Give your workspace a name",
+      "nameLabel": "Organization Name",
+      "namePlaceholder": "e.g., Acme Corporation",
+      "submit": "Create Organization",
+      "loading": "Creating...",
+      "successTitle": "Organization Created!",
+      "sharePrompt": "Share this code with your team",
+      "codeLabel": "Access Code",
+      "copyButton": "Copy Code"
+    },
+    "personalMode": {
+      "label": "Maybe Later",
+      "description": "Continue with a personal profile"
+    },
+    "common": {
+      "backButton": "Back",
+      "continueButton": "Continue to Dashboard"
+    },
+    "validation": {
+      "nameRequired": "Please enter an organization name"
+    },
+    "notification": {
+      "codeCopied": "Access code copied"
+    }
   }
 }

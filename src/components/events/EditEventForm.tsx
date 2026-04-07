@@ -7,6 +7,7 @@ import { useUploadThing } from '~/lib/uploadthing';
 import Image from 'next/image';
 import { X, ImagePlus, Loader2, MapPin, Calendar, Clock, ChevronDown } from 'lucide-react';
 import { useToast } from "~/components/providers/ToastProvider";
+import { useTranslations } from "next-intl";
 
 const MAX_EVENT_IMAGE_BYTES = 4 * 1024 * 1024;
 
@@ -43,6 +44,8 @@ export const EditEventForm: React.FC<EditEventFormProps> = ({ event, onSuccess, 
   const { data: session } = useSession();
   const utils = api.useUtils();
   const toast = useToast();
+  const t = useTranslations("publish");
+  const tAuth = useTranslations("auth");
 
   // Parse event date into date and time strings
   const eventDateTime = new Date(event.eventDate);
@@ -73,7 +76,7 @@ export const EditEventForm: React.FC<EditEventFormProps> = ({ event, onSuccess, 
   const updateEvent = api.event.updateEvent.useMutation({
     onSuccess: () => {
       void utils.event.getPublicEvents.invalidate();
-      toast.success('Event updated successfully');
+      toast.success(t('edit.success'));
       onSuccess?.();
     },
     onError: (error) => {
@@ -92,12 +95,12 @@ export const EditEventForm: React.FC<EditEventFormProps> = ({ event, onSuccess, 
     e.target.value = "";
 
     if (!file.type.startsWith("image/")) {
-      toast.error("Please upload an image file");
+      toast.error(t("validation.imageType"));
       return;
     }
 
     if (file.size > MAX_EVENT_IMAGE_BYTES) {
-      toast.error("Image must be 4MB or less");
+      toast.error(t("validation.imageSize"));
       return;
     }
 
@@ -125,14 +128,14 @@ export const EditEventForm: React.FC<EditEventFormProps> = ({ event, onSuccess, 
     e.preventDefault();
 
     if (!session) {
-      toast.error('You must be logged in to update an event');
+      toast.error(t("validation.notLoggedIn"));
       return;
     }
 
     const combinedDateTime = eventDate && eventTime ? `${eventDate}T${eventTime}` : eventDate;
 
     if (!title.trim() || !description.trim() || !combinedDateTime || !region) {
-      toast.info('Please fill in all required fields');
+      toast.info(t("validation.requiredFields"));
       return;
     }
 
@@ -145,7 +148,7 @@ export const EditEventForm: React.FC<EditEventFormProps> = ({ event, onSuccess, 
         imageUrl = uploadResult?.[0]?.url;
 
         if (!imageUrl) {
-          toast.error("Image upload failed");
+          toast.error(t("validation.uploadFailed"));
           return;
         }
       } else if (removeCurrentImage) {
@@ -163,7 +166,7 @@ export const EditEventForm: React.FC<EditEventFormProps> = ({ event, onSuccess, 
         sendReminders: enableRsvp ? sendReminders : false,
       });
     } catch (error) {
-      toast.error('Failed to upload image');
+      toast.error(t("validation.uploadError"));
       console.error(error);
     } finally {
       setIsUploading(false);
@@ -173,7 +176,7 @@ export const EditEventForm: React.FC<EditEventFormProps> = ({ event, onSuccess, 
   if (!session) {
     return (
       <div className="p-6 text-center">
-        <p className="text-sm text-fg-secondary">Sign in to edit events</p>
+        <p className="text-sm text-fg-secondary">{tAuth("signIn")} {t("edit.toEdit")}</p>
       </div>
     );
   }
@@ -182,7 +185,7 @@ export const EditEventForm: React.FC<EditEventFormProps> = ({ event, onSuccess, 
     <form onSubmit={handleSubmit} className="flex flex-col max-h-[90vh]">
       {/* Modal Header */}
       <div className="px-6 py-4 border-b dark:border-white/5 border-slate-200 flex items-center justify-between shrink-0">
-        <h2 className="text-lg font-display font-bold dark:text-white text-slate-900 tracking-tight">Edit Event</h2>
+        <h2 className="text-lg font-display font-bold dark:text-white text-slate-900 tracking-tight">{t("edit.title")}</h2>
         {onClose && (
           <button
             type="button"
@@ -201,7 +204,7 @@ export const EditEventForm: React.FC<EditEventFormProps> = ({ event, onSuccess, 
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Event Title"
+          placeholder={t("titlePlaceholder")}
           maxLength={256}
           className="w-full text-xl sm:text-2xl font-bold font-display dark:text-white text-slate-900 dark:placeholder-gray-600 placeholder-slate-300 border-none focus:ring-0 px-0 bg-transparent"
           disabled={updateEvent.isPending || isUploading}
@@ -214,7 +217,7 @@ export const EditEventForm: React.FC<EditEventFormProps> = ({ event, onSuccess, 
           <div>
             <label className="block text-[10px] font-bold dark:text-gray-500 text-slate-500 uppercase tracking-[0.15em] mb-1.5">
               <MapPin className="inline mr-1 text-accent-primary" size={10} />
-              Region
+              {t("region")}
             </label>
             <div className="relative">
               <MapPin
@@ -271,7 +274,7 @@ export const EditEventForm: React.FC<EditEventFormProps> = ({ event, onSuccess, 
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Tell everyone about your event..."
+              placeholder={t("descriptionPlaceholder")}
               rows={3}
               className="w-full bg-transparent border-none focus:ring-0 text-sm resize-none dark:placeholder-gray-500 placeholder-slate-400 dark:text-gray-200 text-slate-800 leading-relaxed"
               disabled={updateEvent.isPending || isUploading}
@@ -309,7 +312,7 @@ export const EditEventForm: React.FC<EditEventFormProps> = ({ event, onSuccess, 
               onChange={(e) => setEnableRsvp(e.target.checked)}
               className="w-3.5 h-3.5 rounded dark:bg-white/5 bg-slate-100 text-accent-primary focus:ring-accent-primary/30 cursor-pointer border-accent-primary/20"
             />
-            <span className="text-xs dark:text-gray-400 text-slate-600">Enable RSVP</span>
+            <span className="text-xs dark:text-gray-400 text-slate-600">{t("enableRsvp")}</span>
           </label>
           {enableRsvp && (
             <label className="flex items-center gap-2 cursor-pointer">
@@ -319,7 +322,7 @@ export const EditEventForm: React.FC<EditEventFormProps> = ({ event, onSuccess, 
                 onChange={(e) => setSendReminders(e.target.checked)}
                 className="w-3.5 h-3.5 rounded dark:bg-white/5 bg-slate-100 text-accent-primary focus:ring-accent-primary/30 cursor-pointer border-accent-primary/20"
               />
-              <span className="text-xs dark:text-gray-400 text-slate-600">Send reminders</span>
+              <span className="text-xs dark:text-gray-400 text-slate-600">{t("sendReminders")}</span>
             </label>
           )}
         </div>
@@ -330,7 +333,7 @@ export const EditEventForm: React.FC<EditEventFormProps> = ({ event, onSuccess, 
         <div className="flex gap-2">
           <label className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-accent-primary dark:hover:bg-white/5 hover:bg-accent-primary/5 transition-all cursor-pointer group">
             <ImagePlus size={16} className="text-accent-primary" />
-            <span className="text-xs font-semibold">{imagePreview ? "Replace" : "Media"}</span>
+            <span className="text-xs font-semibold">{imagePreview ? t("edit.replace") : t("media")}</span>
             <input
               ref={fileInputRef}
               type="file"
@@ -347,7 +350,7 @@ export const EditEventForm: React.FC<EditEventFormProps> = ({ event, onSuccess, 
             onClick={onClose}
             className="px-5 py-2.5 rounded-xl font-semibold text-sm text-fg-secondary hover:text-fg-primary hover:bg-bg-secondary transition-all"
           >
-            Cancel
+            {t("edit.cancel")}
           </button>
           <button
             type="submit"
@@ -357,10 +360,10 @@ export const EditEventForm: React.FC<EditEventFormProps> = ({ event, onSuccess, 
             {isUploading || updateEvent.isPending ? (
               <>
                 <Loader2 className="animate-spin" size={14} />
-                {isUploading ? 'Uploading...' : 'Saving...'}
+                {isUploading ? t("uploading") : t("edit.saving")}
               </>
             ) : (
-              'Save Changes'
+              t("edit.saveChanges")
             )}
           </button>
         </div>

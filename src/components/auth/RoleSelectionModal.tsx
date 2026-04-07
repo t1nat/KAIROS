@@ -4,6 +4,7 @@ import { useState } from "react";
 import { api } from "~/trpc/react";
 import { ChevronRight } from "lucide-react";
 import { useToast } from "~/components/providers/ToastProvider";
+import { useTranslations } from "next-intl";
 
 interface RoleSelectionModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface RoleSelectionModalProps {
 }
 
 export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalProps) {
+  const t = useTranslations("onboarding");
   const toast = useToast();
   const utils = api.useUtils();
   const [step, setStep] = useState<"choose" | "admin-setup">("choose");
@@ -38,7 +40,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
 
   const handleCreateOrganization = () => {
     if (!organizationName.trim()) {
-      toast.info("Please enter an organization name");
+      toast.info(t("validation.nameRequired"));
       return;
     }
     createOrganization.mutate({ name: organizationName });
@@ -47,7 +49,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
   const handleCopyCode = async () => {
     try {
       await navigator.clipboard.writeText(generatedCode);
-      toast.success("Access code copied");
+      toast.success(t("notification.codeCopied"));
     } catch {
       const textArea = document.createElement("textarea");
       textArea.value = generatedCode;
@@ -55,7 +57,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
       textArea.select();
       document.execCommand("copy");
       document.body.removeChild(textArea);
-      toast.success("Access code copied");
+      toast.success(t("notification.codeCopied"));
     }
   };
 
@@ -82,10 +84,10 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
                   <span className="text-3xl font-bold text-white">K</span>
                 </div>
                 <h3 className="text-3xl font-bold text-fg-primary mb-2">
-                  Welcome to Kairos
+                  {t("welcome.title")}
                 </h3>
                 <p className="text-fg-secondary">
-                  Choose how you'd like to get started
+                  {t("welcome.subtitle")}
                 </p>
               </div>
 
@@ -96,8 +98,8 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <span className="text-lg font-semibold text-fg-primary block mb-1">Create Organization</span>
-                      <span className="text-fg-tertiary text-sm">Set up a workspace and invite your team</span>
+                      <span className="text-lg font-semibold text-fg-primary block mb-1">{t("createOrg.label")}</span>
+                      <span className="text-fg-tertiary text-sm">{t("createOrg.description")}</span>
                     </div>
                     <ChevronRight className="text-accent-primary group-hover:translate-x-1 transition-transform flex-shrink-0 mt-1" size={24} />
                   </div>
@@ -110,8 +112,8 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <span className="text-lg font-semibold text-fg-primary block mb-1">Maybe Later</span>
-                      <span className="text-fg-tertiary text-sm">Continue with a personal profile</span>
+                      <span className="text-lg font-semibold text-fg-primary block mb-1">{t("personalMode.label")}</span>
+                      <span className="text-fg-tertiary text-sm">{t("personalMode.description")}</span>
                     </div>
                     <ChevronRight className="text-fg-tertiary group-hover:text-accent-primary group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" size={24} />
                   </div>
@@ -126,25 +128,25 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
               onClick={() => setStep("choose")}
               className="text-fg-secondary hover:text-accent-primary mb-6 flex items-center gap-2 transition-colors text-sm font-medium"
             >
-              &larr; Back
+              &larr; {t("common.backButton")}
             </button>
 
             <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-fg-primary mb-2">Create Your Organization</h3>
-              <p className="text-fg-secondary text-sm">Give your workspace a name</p>
+              <h3 className="text-2xl font-bold text-fg-primary mb-2">{t("createOrg.formTitle")}</h3>
+              <p className="text-fg-secondary text-sm">{t("createOrg.formSubtitle")}</p>
             </div>
 
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-fg-secondary mb-2">
-                  Organization Name
+                  {t("createOrg.nameLabel")}
                 </label>
                 <input
                   type="text"
                   value={organizationName}
                   onChange={(e) => setOrganizationName(e.target.value)}
                   onKeyDown={handleOrgNameKeyDown}
-                  placeholder="e.g., Acme Corporation"
+                  placeholder={t("createOrg.namePlaceholder")}
                   className="w-full px-4 py-3 bg-bg-surface shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-primary/50 focus:border-accent-primary text-fg-primary placeholder:text-fg-tertiary border-2 border-border-medium transition-all"
                   autoFocus
                 />
@@ -155,7 +157,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
                 disabled={createOrganization.isPending}
                 className="w-full px-6 py-4 bg-gradient-to-r from-accent-primary to-accent-hover text-white font-semibold rounded-xl hover:shadow-accent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
               >
-                {createOrganization.isPending ? "Creating..." : "Create Organization"}
+                {createOrganization.isPending ? t("createOrg.loading") : t("createOrg.submit")}
               </button>
             </div>
           </>
@@ -169,12 +171,12 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold text-fg-primary mb-2">Organization Created!</h3>
-              <p className="text-fg-secondary">Share this code with your team</p>
+              <h3 className="text-2xl font-bold text-fg-primary mb-2">{t("createOrg.successTitle")}</h3>
+              <p className="text-fg-secondary">{t("createOrg.sharePrompt")}</p>
             </div>
 
             <div className="bg-gradient-to-br from-accent-primary/10 to-accent-secondary/10 rounded-2xl p-6 text-center mb-6 border-2 border-accent-primary/30">
-              <p className="text-xs text-fg-tertiary uppercase tracking-wider mb-3 font-semibold">Access Code</p>
+              <p className="text-xs text-fg-tertiary uppercase tracking-wider mb-3 font-semibold">{t("createOrg.codeLabel")}</p>
               <p className="text-4xl font-bold text-accent-primary tracking-[0.3em] font-mono mb-4">
                 {generatedCode}
               </p>
@@ -182,7 +184,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
                 onClick={handleCopyCode}
                 className="px-6 py-2 bg-accent-primary text-white rounded-lg hover:bg-accent-hover transition-colors text-sm font-semibold shadow-md hover:shadow-accent"
               >
-                Copy Code
+                {t("createOrg.copyButton")}
               </button>
             </div>
 
@@ -193,7 +195,7 @@ export function RoleSelectionModal({ isOpen, onComplete }: RoleSelectionModalPro
               }}
               className="w-full px-6 py-4 bg-gradient-to-r from-accent-primary to-accent-hover text-white font-semibold rounded-xl hover:shadow-accent transition-all duration-200"
             >
-              Continue to Dashboard
+              {t("common.continueButton")}
             </button>
           </>
         )}

@@ -36,7 +36,68 @@
       "addToCalendar": "Добави в календара",
       "addToCalendarDesc": "Покажи бележката на конкретна дата",
       "calendarDate": "Дата"
-    }
+    },
+    "tabs": {
+      "allNotes": "Всички бележки",
+      "notebooks": "Тетрадки",
+      "shared": "Споделени"
+    },
+    "search": "Търси бележки...",
+    "recentNotes": "Скорошни бележки",
+    "notebook": "Тетрадка",
+    "untitled": "Без заглавие",
+    "noContent": "Няма съдържание",
+    "encryptedNote": "Криптирана бележка",
+    "passwordProtected": "Тази бележка е защитена с парола",
+    "justNow": "Току що",
+    "share": "Сподели",
+    "manageSharing": "Управление на споделянето",
+    "create": {
+      "titlePlaceholder": "Заглавие (по избор)",
+      "contentPlaceholder": "Напишете бележка...",
+      "passwordPlaceholder": "Криптирай с парола"
+    },
+    "actions": {
+      "delete": "Изтрий",
+      "deleting": "Изтриване...",
+      "save": "Запази",
+      "saving": "Запазване...",
+      "unlock": "Отключи",
+      "unlocking": "Отключване...",
+      "create": "Създай"
+    },
+    "messages": {
+      "created": "Бележката е създадена",
+      "updated": "Бележката е обновена",
+      "deleted": "Бележката е изтрита",
+      "shared": "Бележката е споделена",
+      "accessRemoved": "Достъпът е премахнат",
+      "contentRequired": "Съдържанието е задължително",
+      "incorrectPassword": "Грешна парола"
+    },
+    "password": {
+      "enterPassword": "Въведете парола",
+      "resetPassword": "Нулирай парола",
+      "resetting": "Нулиране...",
+      "resetSuccess": "Паролата е нулирана успешно",
+      "enterPin": "Въведете вашия ПИН",
+      "passwordRequired": "Паролата е задължителна",
+      "passwordsMismatch": "Паролите не съвпадат"
+    },
+    "sharing": {
+      "title": "Управление на споделянето",
+      "emailPlaceholder": "Имейл адрес",
+      "canEdit": "Може да редактира",
+      "viewOnly": "Само преглед",
+      "noName": "Без име"
+    },
+    "notebooks": {
+      "namePlaceholder": "Име на тетрадката",
+      "created": "Тетрадката е създадена",
+      "deleted": "Тетрадката е изтрита",
+      "noteMoved": "Бележката е преместена"
+    },
+    "saveChanges": "Запази промените"
   },
   "progress": {
     "title": "Прогрес",
@@ -477,7 +538,27 @@
     "dateTime": "Дата и час",
     "region": "Регион",
     "eventManager": "Мениджър събития",
-    "techLead": "Технически ръководител"
+    "techLead": "Технически ръководител",
+    "searchCity": "Търсете град в България…",
+    "allRegions": "Всички региони",
+    "validation": {
+      "imageType": "Моля, качете файл с изображение",
+      "imageSize": "Изображението трябва да е до 4MB",
+      "notLoggedIn": "Трябва да сте влезли, за да създадете събитие",
+      "requiredFields": "Моля, попълнете всички задължителни полета",
+      "uploadFailed": "Неуспешно качване на изображение",
+      "uploadError": "Неуспешно качване на изображение"
+    },
+    "preview": "Преглед",
+    "edit": {
+      "title": "Редактиране на събитие",
+      "toEdit": "за редактиране на събития",
+      "success": "Събитието е обновено успешно",
+      "replace": "Замени",
+      "cancel": "Отказ",
+      "saving": "Запазване...",
+      "saveChanges": "Запази промените"
+    }
   },
   "auth": {
     "signIn": "Вход",
@@ -485,7 +566,75 @@
     "signInWith": "Влезте с {provider}",
     "orContinueWith": "Или продължете с",
     "welcome": "Добре дошли в KAIROS",
-    "welcomeDesc": "Влезте, за да започнете да организирате проектите си"
+    "welcomeDesc": "Влезте, за да започнете да организирате проектите си",
+    "modal": {
+      "signIn": {
+        "title": "Добре дошли отново",
+        "subtitle": "Въведете данните си, за да достъпите работното си пространство",
+        "emailLabel": "Имейл адрес",
+        "emailPlaceholder": "име@firma.com",
+        "passwordLabel": "Парола",
+        "passwordPlaceholder": "••••••••",
+        "rememberMe": "Запомни ме",
+        "forgotPassword": "Забравена парола?",
+        "submit": "Вход",
+        "signingIn": "Влизане...",
+        "verifyingCredentials": "Проверка на данните...",
+        "noAccount": "Нямате акаунт?",
+        "createAccount": "Създай акаунт",
+        "invalidCredentials": "Невалиден имейл или парола",
+        "error": "Възникна грешка при влизане"
+      },
+      "signUp": {
+        "title": "Създайте своя акаунт",
+        "subtitle": "Присъединете се към Kairos днес.",
+        "fullNameLabel": "Пълно име",
+        "fullNamePlaceholder": "Въведете пълното си име",
+        "submit": "Създай акаунт",
+        "creatingAccount": "Създаване на акаунт...",
+        "hasAccount": "Вече имате акаунт?",
+        "logIn": "Вход",
+        "agreeTerms": "Съгласявам се с",
+        "termsOfService": "Условията за ползване",
+        "and": "и",
+        "privacyPolicy": "Политиката за поверителност",
+        "createdButSignInFailed": "Акаунтът е създаден, но влизането не успя. Моля, опитайте да влезете.",
+        "error": "Възникна грешка при регистрация"
+      },
+      "forgotPassword": {
+        "title": "Забравена парола?",
+        "subtitle": "Въведете имейла си и ще ви изпратим код за нулиране",
+        "submit": "Изпрати код за нулиране",
+        "sendingCode": "Изпращане на код...",
+        "emailRequired": "Моля, въведете имейл адреса си",
+        "sendFailed": "Неуспешно изпращане на код за нулиране. Моля, опитайте отново."
+      },
+      "resetCode": {
+        "title": "Въведете код за нулиране",
+        "subtitle": "Изпратихме 8-цифрен код на {email}",
+        "label": "Код за нулиране",
+        "helperText": "Проверете имейла си за кода",
+        "submit": "Потвърди код",
+        "invalid": "Невалиден или изтекъл код за нулиране. Моля, опитайте отново."
+      },
+      "newPassword": {
+        "title": "Задайте нова парола",
+        "subtitle": "Изберете силна парола за акаунта си",
+        "successTitle": "Паролата е нулирана!",
+        "successSubtitle": "Паролата ви беше обновена успешно",
+        "newPasswordLabel": "Нова парола",
+        "confirmPasswordLabel": "Потвърдете паролата",
+        "submit": "Нулирай парола",
+        "resetting": "Нулиране...",
+        "redirecting": "Пренасочване към вход...",
+        "minLength": "Паролата трябва да е поне 8 символа",
+        "mismatch": "Паролите не съвпадат",
+        "failed": "Неуспешно нулиране на паролата. Моля, опитайте отново."
+      },
+      "backToSignIn": "Обратно към вход",
+      "google": "Google",
+      "orContinueWith": "Или продължете с"
+    }
   },
   "common": {
     "save": "Запази",
@@ -614,5 +763,39 @@
     "noteUpdate": "Ще обновя бележката ви.",
     "noteDelete": "Ще премахна тази бележка.",
     "noNoteChanges": "Не са нужни промени по вашата заявка."
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "Добре дошли в Kairos",
+      "subtitle": "Изберете как искате да започнете"
+    },
+    "createOrg": {
+      "label": "Създай организация",
+      "description": "Настройте работно пространство и поканете екипа си",
+      "formTitle": "Създайте своята организация",
+      "formSubtitle": "Дайте име на работното си пространство",
+      "nameLabel": "Име на организацията",
+      "namePlaceholder": "напр. Acme Corporation",
+      "submit": "Създай организация",
+      "loading": "Създаване...",
+      "successTitle": "Организацията е създадена!",
+      "sharePrompt": "Споделете този код с екипа си",
+      "codeLabel": "Код за достъп",
+      "copyButton": "Копирай кода"
+    },
+    "personalMode": {
+      "label": "По-късно",
+      "description": "Продължете с личен профил"
+    },
+    "common": {
+      "backButton": "Назад",
+      "continueButton": "Продължи към таблото"
+    },
+    "validation": {
+      "nameRequired": "Моля, въведете име на организация"
+    },
+    "notification": {
+      "codeCopied": "Кодът за достъп е копиран"
+    }
   }
 }

@@ -3,6 +3,7 @@
 import { type ReactNode, useMemo, useState } from "react";
 import { GoogleMap, LoadScript, MarkerF } from "@react-google-maps/api";
 import { MapPin, Search } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export type RegionOption = {
   value: string;
@@ -19,6 +20,7 @@ type Props = {
   allLabel?: string;
   className?: string;
   fallback?: ReactNode;
+  searchPlaceholder?: string;
 };
 
 const DEFAULT_CENTER_BG = { lat: 42.7339, lng: 25.4858 }; // Bulgaria
@@ -29,10 +31,12 @@ export function RegionMapPicker({
   onChange,
   regions,
   allowAll = false,
-  allLabel = "All Regions",
+  allLabel,
   className,
   fallback,
+  searchPlaceholder,
 }: Props) {
+  const t = useTranslations("publish");
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   const [query, setQuery] = useState("");
   const [mapsLoadFailed, setMapsLoadFailed] = useState(false);
@@ -61,7 +65,7 @@ export function RegionMapPicker({
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search a city in Bulgaria…"
+              placeholder={searchPlaceholder ?? t("searchCity")}
               className="w-full bg-transparent outline-none text-sm sm:text-base text-fg-primary placeholder:text-fg-tertiary"
             />
           </div>
@@ -75,7 +79,7 @@ export function RegionMapPicker({
                   : "bg-bg-secondary text-fg-secondary hover:bg-bg-tertiary"
               }`}
             >
-              {allLabel}
+              {allLabel ?? t("allRegions")}
             </button>
           )}
         </div>

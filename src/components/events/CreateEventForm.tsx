@@ -7,6 +7,7 @@ import { useUploadThing } from '~/lib/uploadthing';
 import Image from 'next/image';
 import { X, ImagePlus, Loader2, MapPin, Calendar, Clock, Plus, ChevronDown } from 'lucide-react';
 import { useToast } from "~/components/providers/ToastProvider";
+import { useTranslations } from "next-intl";
 
 const MAX_EVENT_IMAGE_BYTES = 4 * 1024 * 1024;
 
@@ -32,6 +33,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess, onC
   const { data: session } = useSession();
   const utils = api.useUtils();
   const toast = useToast();
+  const t = useTranslations("publish");
   
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -119,12 +121,12 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess, onC
     e.target.value = "";
 
     if (!file.type.startsWith("image/")) {
-      toast.error("Please upload an image file");
+      toast.error(t("validation.imageType"));
       return;
     }
 
     if (file.size > MAX_EVENT_IMAGE_BYTES) {
-      toast.error("Image must be 4MB or less");
+      toast.error(t("validation.imageSize"));
       return;
     }
 
@@ -147,14 +149,14 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess, onC
     e.preventDefault();
     
     if (!session) {
-      toast.error('You must be logged in to create an event');
+      toast.error(t("validation.notLoggedIn"));
       return;
     }
 
     const combinedDateTime = eventDate && eventTime ? `${eventDate}T${eventTime}` : eventDate;
 
     if (!title.trim() || !description.trim() || !combinedDateTime || !region) {
-      toast.info('Please fill in all required fields');
+      toast.info(t("validation.requiredFields"));
       return;
     }
 
@@ -167,7 +169,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess, onC
         imageUrl = uploadResult?.[0]?.url;
 
         if (!imageUrl) {
-          toast.error("Image upload failed");
+          toast.error(t("validation.uploadFailed"));
           return;
         }
       }
@@ -182,7 +184,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess, onC
         sendReminders: enableRsvp ? sendReminders : false,
       });
     } catch (error) {
-      toast.error('Failed to upload image');
+      toast.error(t("validation.uploadError"));
       console.error(error);
     } finally {
       setIsUploading(false);
@@ -192,7 +194,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess, onC
   if (!session) {
     return (
       <div className="p-6 text-center">
-        <p className="text-sm text-fg-secondary">Sign in to create events</p>
+        <p className="text-sm text-fg-secondary">{t("signInToCreate")}</p>
       </div>
     );
   }
@@ -201,7 +203,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess, onC
     <form onSubmit={handleSubmit} className="flex flex-col max-h-[90vh]">
       {/* Modal Header — matches create-event.html */}
       <div className="px-6 py-4 border-b dark:border-white/5 border-slate-200 flex items-center justify-between shrink-0">
-        <h2 className="text-lg font-display font-bold dark:text-white text-slate-900 tracking-tight">Create Event</h2>
+        <h2 className="text-lg font-display font-bold dark:text-white text-slate-900 tracking-tight">{t("createEvent")}</h2>
         {onClose && (
           <button
             type="button"
@@ -220,7 +222,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess, onC
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Event Title"
+          placeholder={t("eventTitle")}
           maxLength={256}
           className="w-full text-xl sm:text-2xl font-bold font-display dark:text-white text-slate-900 dark:placeholder-gray-600 placeholder-slate-300 border-none focus:ring-0 px-0 bg-transparent"
           disabled={createEvent.isPending || isUploading}
@@ -233,7 +235,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess, onC
           <div>
             <label className="block text-[10px] font-bold dark:text-gray-500 text-slate-500 uppercase tracking-[0.15em] mb-1.5">
               <MapPin className="inline mr-1 text-accent-primary" size={10} />
-              Region
+              {t("region")}
             </label>
             <div className="relative">
               <MapPin
@@ -267,7 +269,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess, onC
               type="text"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="Add Location"
+              placeholder={t("addLocation")}
               className="w-full bg-transparent border-none focus:ring-0 text-sm dark:placeholder-gray-500 placeholder-slate-400 dark:text-gray-200 text-slate-800"
               disabled={createEvent.isPending || isUploading}
             />
@@ -303,7 +305,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess, onC
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Tell everyone about your event..."
+              placeholder={t("eventDescription")}
               rows={3}
               className="w-full bg-transparent border-none focus:ring-0 text-sm resize-none dark:placeholder-gray-500 placeholder-slate-400 dark:text-gray-200 text-slate-800 leading-relaxed"
               disabled={createEvent.isPending || isUploading}
@@ -318,7 +320,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess, onC
           <div className="relative rounded-xl overflow-hidden">
             <Image
               src={imagePreview}
-              alt="Preview"
+              alt={t("preview")}
               width={800}
               height={400}
               className="w-full aspect-video object-cover"
@@ -336,7 +338,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess, onC
         {/* Tag Collaborators */}
         <div>
           <label className="block text-[10px] font-bold dark:text-gray-500 text-slate-500 uppercase tracking-[0.15em] mb-2">
-            Tag Collaborators
+            {t("tagCollaborators")}
           </label>
           <div className="flex items-center gap-2.5">
             <button
@@ -346,7 +348,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess, onC
               <Plus size={18} />
             </button>
             <span className="text-xs dark:text-gray-500 text-slate-400 font-medium">
-              Add guest hosts
+              {t("addGuestHosts")}
             </span>
           </div>
         </div>
@@ -360,7 +362,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess, onC
               onChange={(e) => setEnableRsvp(e.target.checked)}
               className="w-3.5 h-3.5 rounded dark:bg-white/5 bg-slate-100 text-accent-primary focus:ring-accent-primary/30 cursor-pointer border-accent-primary/20"
             />
-            <span className="text-xs dark:text-gray-400 text-slate-600">Enable RSVP</span>
+            <span className="text-xs dark:text-gray-400 text-slate-600">{t("enableRsvp")}</span>
           </label>
           {enableRsvp && (
             <label className="flex items-center gap-2 cursor-pointer">
@@ -370,7 +372,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess, onC
                 onChange={(e) => setSendReminders(e.target.checked)}
                 className="w-3.5 h-3.5 rounded dark:bg-white/5 bg-slate-100 text-accent-primary focus:ring-accent-primary/30 cursor-pointer border-accent-primary/20"
               />
-              <span className="text-xs dark:text-gray-400 text-slate-600">Send reminders</span>
+              <span className="text-xs dark:text-gray-400 text-slate-600">{t("sendReminders")}</span>
             </label>
           )}
         </div>
@@ -382,7 +384,7 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess, onC
           {!imagePreview && (
             <label className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-accent-primary dark:hover:bg-white/5 hover:bg-accent-primary/5 transition-all cursor-pointer group">
               <ImagePlus size={16} className="text-accent-primary" />
-              <span className="text-xs font-semibold">Media</span>
+              <span className="text-xs font-semibold">{t("media")}</span>
               <input
                 type="file"
                 accept="image/*"
@@ -401,10 +403,10 @@ export const CreateEventForm: React.FC<CreateEventFormProps> = ({ onSuccess, onC
           {isUploading || createEvent.isPending ? (
             <>
               <Loader2 className="animate-spin" size={14} />
-              {isUploading ? 'Uploading...' : 'Publishing...'}
+              {isUploading ? t("uploading") : t("publishing")}
             </>
           ) : (
-            'Publish Event'
+            t("publishEvent")
           )}
         </button>
       </div>
