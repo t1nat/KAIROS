@@ -3,7 +3,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { organizations, organizationMembers, organizationRoles, organizationInvites, users, notifications } from "~/server/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, or, isNull, gt, lte } from "drizzle-orm";
 import { emitNotification } from "~/server/socket/emit";
 
 
@@ -29,6 +29,8 @@ function generateAccessCode(): string {
 
   return code;
 }
+
+const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 export const organizationRouter = createTRPCRouter({
   listMine: protectedProcedure.query(async ({ ctx }) => {
@@ -1003,6 +1005,10 @@ export const organizationRouter = createTRPCRouter({
             eq(organizationInvites.organizationId, input.organizationId),
             eq(organizationInvites.email, input.email),
             eq(organizationInvites.status, "pending"),
+            or(
+              isNull(organizationInvites.expiresAt),
+              gt(organizationInvites.expiresAt, new Date()),
+            ),
           ),
         )
         .limit(1);
@@ -1030,6 +1036,7 @@ export const organizationRouter = createTRPCRouter({
           displayRole: input.role !== dbRole ? input.role : null,
           invitedById: ctx.session.user.id,
           status: "pending",
+          expiresAt: new Date(Date.now() + INVITE_TTL_MS),
         })
         .returning();
 
@@ -1097,6 +1104,10 @@ export const organizationRouter = createTRPCRouter({
         and(
           eq(organizationInvites.email, currentUser.email),
           eq(organizationInvites.status, "pending"),
+          or(
+            isNull(organizationInvites.expiresAt),
+            gt(organizationInvites.expiresAt, new Date()),
+          ),
         ),
       );
 
@@ -1124,11 +1135,36 @@ export const organizationRouter = createTRPCRouter({
             eq(organizationInvites.id, input.inviteId),
             eq(organizationInvites.email, currentUser.email),
             eq(organizationInvites.status, "pending"),
+            or(
+              isNull(organizationInvites.expiresAt),
+              gt(organizationInvites.expiresAt, new Date()),
+            ),
           ),
         )
         .limit(1);
 
       if (!invite) {
+        const [expiredInvite] = await ctx.db
+          .select({ id: organizationInvites.id })
+          .from(organizationInvites)
+          .where(
+            and(
+              eq(organizationInvites.id, input.inviteId),
+              eq(organizationInvites.email, currentUser.email),
+              eq(organizationInvites.status, "pending"),
+              lte(organizationInvites.expiresAt, new Date()),
+            ),
+          )
+          .limit(1);
+
+        if (expiredInvite) {
+          await ctx.db
+            .update(organizationInvites)
+            .set({ status: "expired" })
+            .where(eq(organizationInvites.id, expiredInvite.id));
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Invite has expired" });
+        }
+
         throw new TRPCError({ code: "NOT_FOUND", message: "Invite not found or already processed" });
       }
 
@@ -1236,11 +1272,36 @@ export const organizationRouter = createTRPCRouter({
             eq(organizationInvites.id, input.inviteId),
             eq(organizationInvites.email, currentUser.email),
             eq(organizationInvites.status, "pending"),
+            or(
+              isNull(organizationInvites.expiresAt),
+              gt(organizationInvites.expiresAt, new Date()),
+            ),
           ),
         )
         .limit(1);
 
       if (!invite) {
+        const [expiredInvite] = await ctx.db
+          .select({ id: organizationInvites.id })
+          .from(organizationInvites)
+          .where(
+            and(
+              eq(organizationInvites.id, input.inviteId),
+              eq(organizationInvites.email, currentUser.email),
+              eq(organizationInvites.status, "pending"),
+              lte(organizationInvites.expiresAt, new Date()),
+            ),
+          )
+          .limit(1);
+
+        if (expiredInvite) {
+          await ctx.db
+            .update(organizationInvites)
+            .set({ status: "expired" })
+            .where(eq(organizationInvites.id, expiredInvite.id));
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Invite has expired" });
+        }
+
         throw new TRPCError({ code: "NOT_FOUND", message: "Invite not found or already processed" });
       }
 
@@ -1317,6 +1378,10 @@ export const organizationRouter = createTRPCRouter({
           and(
             eq(organizationInvites.organizationId, input.organizationId),
             eq(organizationInvites.status, "pending"),
+            or(
+              isNull(organizationInvites.expiresAt),
+              gt(organizationInvites.expiresAt, new Date()),
+            ),
           ),
         );
 
@@ -1359,11 +1424,36 @@ export const organizationRouter = createTRPCRouter({
             eq(organizationInvites.id, input.inviteId),
             eq(organizationInvites.organizationId, input.organizationId),
             eq(organizationInvites.status, "pending"),
+            or(
+              isNull(organizationInvites.expiresAt),
+              gt(organizationInvites.expiresAt, new Date()),
+            ),
           ),
         )
         .limit(1);
 
       if (!invite) {
+        const [expiredInvite] = await ctx.db
+          .select({ id: organizationInvites.id })
+          .from(organizationInvites)
+          .where(
+            and(
+              eq(organizationInvites.id, input.inviteId),
+              eq(organizationInvites.organizationId, input.organizationId),
+              eq(organizationInvites.status, "pending"),
+              lte(organizationInvites.expiresAt, new Date()),
+            ),
+          )
+          .limit(1);
+
+        if (expiredInvite) {
+          await ctx.db
+            .update(organizationInvites)
+            .set({ status: "expired" })
+            .where(eq(organizationInvites.id, expiredInvite.id));
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Invite has expired" });
+        }
+
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Invite not found or already processed",
