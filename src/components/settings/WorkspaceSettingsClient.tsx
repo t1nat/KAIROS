@@ -20,6 +20,7 @@ import {
 import { api } from "~/trpc/react";
 import { useToast } from "~/components/providers/ToastProvider";
 import { useSocketEvent } from "~/lib/useSocketEvent";
+import { useTranslations } from "next-intl";
 
 // ---------------------------------------------------------------------------
 // Permission labels
@@ -37,15 +38,15 @@ const PERMISSION_KEYS = [
 
 type PermissionKey = (typeof PERMISSION_KEYS)[number];
 
-const PERMISSION_LABELS: Record<PermissionKey, string> = {
-  canCreateProjects: "Create projects",
-  canEditProjects: "Edit projects",
-  canAssignTasks: "Assign tasks",
-  canDeleteTasks: "Delete tasks",
-  canAddMembers: "Invite members",
-  canKickMembers: "Remove members",
-  canManageRoles: "Manage roles",
-  canViewAnalytics: "View analytics",
+const PERMISSION_LABEL_KEYS: Record<PermissionKey, string> = {
+  canCreateProjects: "createProjects",
+  canEditProjects: "editProjects",
+  canAssignTasks: "assignTasks",
+  canDeleteTasks: "deleteTasks",
+  canAddMembers: "inviteMembers",
+  canKickMembers: "removeMembers",
+  canManageRoles: "manageRoles",
+  canViewAnalytics: "viewAnalytics",
 };
 
 // ---------------------------------------------------------------------------
@@ -90,6 +91,7 @@ const TEMPLATE_ROLES: Record<string, Record<PermissionKey, boolean>> = {
 export function WorkspaceSettingsClient() {
   const toast = useToast();
   const utils = api.useUtils();
+  const t = useTranslations("settings.workspace");
 
   // ---- Organization state ----
   const [showCreateOrg, setShowCreateOrg] = useState(false);
@@ -187,7 +189,7 @@ export function WorkspaceSettingsClient() {
   // ---- Mutations ----
   const createOrg = api.organization.create.useMutation({
     onSuccess: () => {
-      toast.success("Organization created");
+      toast.success(t("messages.organizationCreated"));
       setOrgName("");
       setShowCreateOrg(false);
       void utils.organization.listMine.invalidate();
@@ -199,7 +201,7 @@ export function WorkspaceSettingsClient() {
 
   const joinOrg = api.organization.join.useMutation({
     onSuccess: (data) => {
-      toast.success(`Joined ${data.organizationName}`);
+      toast.success(t("messages.organizationJoined", { name: data.organizationName }));
       setJoinCode("");
       setShowJoinOrg(false);
       void utils.organization.listMine.invalidate();
@@ -218,14 +220,14 @@ export function WorkspaceSettingsClient() {
         utils.organization.getInvites.invalidate(),
         utils.user.getProfile.invalidate(),
       ]);
-      toast.success("Switched organization");
+      toast.success(t("messages.organizationSwitched"));
     },
     onError: (e) => toast.error(e.message),
   });
 
   const leaveOrg = api.organization.leave.useMutation({
     onSuccess: () => {
-      toast.success("Left organization");
+      toast.success(t("messages.organizationLeft"));
       void utils.organization.listMine.invalidate();
       void utils.organization.getActive.invalidate();
       void utils.user.getProfile.invalidate();
@@ -235,7 +237,7 @@ export function WorkspaceSettingsClient() {
 
   const updateMemberRole = api.organization.updateMemberRole.useMutation({
     onSuccess: () => {
-      toast.success("Role updated");
+      toast.success(t("messages.roleUpdated"));
       void utils.organization.getMembers.invalidate();
     },
     onError: (e) => toast.error(e.message),
@@ -243,7 +245,7 @@ export function WorkspaceSettingsClient() {
 
   const removeMember = api.organization.removeMember.useMutation({
     onSuccess: () => {
-      toast.success("Member removed");
+      toast.success(t("messages.memberRemoved"));
       void utils.organization.getMembers.invalidate();
     },
     onError: (e) => toast.error(e.message),
@@ -251,7 +253,7 @@ export function WorkspaceSettingsClient() {
 
   const inviteMember = api.organization.inviteMember.useMutation({
     onSuccess: () => {
-      toast.success("Invite sent");
+      toast.success(t("messages.inviteSent"));
       setInviteEmail("");
       void utils.organization.getInvites.invalidate();
     },
@@ -260,7 +262,7 @@ export function WorkspaceSettingsClient() {
 
   const cancelInvite = api.organization.cancelInvite.useMutation({
     onSuccess: () => {
-      toast.success("Invite cancelled");
+      toast.success(t("messages.inviteCancelled"));
       void utils.organization.getInvites.invalidate();
     },
     onError: (e) => toast.error(e.message),
@@ -270,7 +272,7 @@ export function WorkspaceSettingsClient() {
 
   const deleteRole = api.organization.deleteRole.useMutation({
     onSuccess: () => {
-      toast.success("Role deleted");
+      toast.success(t("messages.roleDeleted"));
       void utils.organization.getRoles.invalidate();
     },
     onError: (e) => toast.error(e.message),
@@ -279,13 +281,21 @@ export function WorkspaceSettingsClient() {
   // ---- Helpers ----
   const isAdmin = activeOrg?.role === "admin";
   const isPersonal = profile?.usageMode === "personal";
+  const translateRoleLabel = (role: string | null | undefined) => {
+    if (!role) return "";
+    const normalized = role.toLowerCase();
+    if (normalized === "admin" || normalized === "member" || normalized === "guest") {
+      return t(`roles.${normalized}`);
+    }
+    return role;
+  };
 
   const handleCopyCode = async (code: string) => {
     try {
       await navigator.clipboard.writeText(code);
-      toast.success("Access code copied");
+      toast.success(t("messages.accessCodeCopied"));
     } catch {
-      toast.error("Failed to copy");
+      toast.error(t("messages.copyFailed"));
     }
   };
 
@@ -311,8 +321,8 @@ export function WorkspaceSettingsClient() {
               <Building2 size={18} className="text-accent-primary" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-fg-primary">Organizations</h2>
-              <p className="text-xs text-fg-tertiary">Manage your organizations and teams</p>
+              <h2 className="text-base font-semibold text-fg-primary">{t("organizations.title")}</h2>
+              <p className="text-xs text-fg-tertiary">{t("organizations.subtitle")}</p>
             </div>
           </div>
           {expandedSection === "org" ? (
@@ -344,10 +354,10 @@ export function WorkspaceSettingsClient() {
                         <div>
                           <p className="text-sm font-medium text-fg-primary">{org.name}</p>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-xs text-fg-tertiary capitalize">{org.role}</span>
+                            <span className="text-xs text-fg-tertiary capitalize">{translateRoleLabel(org.role)}</span>
                             {activeOrgId === org.id && (
                               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-accent-primary/15 text-accent-primary font-medium">
-                                Active
+                                {t("organizations.active")}
                               </span>
                             )}
                           </div>
@@ -357,7 +367,7 @@ export function WorkspaceSettingsClient() {
                         <button
                           onClick={() => handleCopyCode(org.accessCode)}
                           className="p-2 rounded-lg hover:bg-bg-tertiary text-fg-tertiary hover:text-fg-secondary transition"
-                          title="Copy access code"
+                          title={t("organizations.copyAccessCode")}
                         >
                           <Copy size={14} />
                         </button>
@@ -367,18 +377,18 @@ export function WorkspaceSettingsClient() {
                             disabled={setActiveOrg.isPending}
                             className="px-3 py-1.5 text-xs rounded-lg bg-accent-primary/15 text-accent-primary hover:bg-accent-primary/25 transition font-medium"
                           >
-                            Switch
+                            {t("organizations.switch")}
                           </button>
                         )}
                         <button
                           onClick={() => {
-                            if (confirm("Are you sure you want to leave this organization?")) {
+                            if (confirm(t("organizations.leaveConfirm"))) {
                               leaveOrg.mutate({ organizationId: org.id });
                             }
                           }}
                           disabled={leaveOrg.isPending}
                           className="p-2 rounded-lg hover:bg-red-500/10 text-fg-tertiary hover:text-red-400 transition"
-                          title="Leave organization"
+                          title={t("organizations.leave")}
                         >
                           <LogOut size={14} />
                         </button>
@@ -393,8 +403,8 @@ export function WorkspaceSettingsClient() {
             {(!myOrgs || myOrgs.length === 0) && isPersonal && (
               <div className="p-6 rounded-xl border border-white/[0.1] bg-white/[0.03] dark:bg-white/[0.04] text-center">
                 <Building2 size={32} className="text-fg-tertiary mx-auto mb-3" />
-                <p className="text-sm text-fg-secondary mb-1">No organizations yet</p>
-                <p className="text-xs text-fg-tertiary">Create or join an organization to collaborate with your team</p>
+                <p className="text-sm text-fg-secondary mb-1">{t("organizations.emptyTitle")}</p>
+                <p className="text-xs text-fg-tertiary">{t("organizations.emptyDesc")}</p>
               </div>
             )}
 
@@ -408,7 +418,7 @@ export function WorkspaceSettingsClient() {
                 className="flex-1 px-4 py-2.5 rounded-xl kairos-neon-btn text-white text-sm font-medium flex items-center justify-center gap-2"
               >
                 <Plus size={16} />
-                Create Organization
+                {t("organizations.create")}
               </button>
               <button
                 onClick={() => {
@@ -418,7 +428,7 @@ export function WorkspaceSettingsClient() {
                 className="flex-1 px-4 py-2.5 rounded-xl border border-white/[0.1] bg-white/[0.03] dark:bg-white/[0.04] hover:bg-bg-elevated text-fg-primary text-sm font-medium flex items-center justify-center gap-2 transition"
               >
                 <UserPlus size={16} />
-                Join Organization
+                {t("organizations.join")}
               </button>
             </div>
 
@@ -429,7 +439,7 @@ export function WorkspaceSettingsClient() {
                   type="text"
                   value={orgName}
                   onChange={(e) => setOrgName(e.target.value)}
-                  placeholder="Organization name"
+                  placeholder={t("organizations.namePlaceholder")}
                   className="w-full px-4 py-2.5 bg-bg-primary rounded-lg text-sm text-fg-primary placeholder:text-fg-tertiary border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && orgName.trim()) createOrg.mutate({ name: orgName });
@@ -443,13 +453,13 @@ export function WorkspaceSettingsClient() {
                     className="flex-1 px-4 py-2 rounded-lg kairos-neon-btn text-white text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {createOrg.isPending ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                    Create
+                    {t("common.create")}
                   </button>
                   <button
                     onClick={() => setShowCreateOrg(false)}
                     className="px-4 py-2 rounded-lg border border-white/[0.06] text-fg-secondary text-sm hover:bg-bg-elevated transition"
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </button>
                 </div>
               </div>
@@ -462,7 +472,7 @@ export function WorkspaceSettingsClient() {
                   type="text"
                   value={joinCode}
                   onChange={(e) => setJoinCode(e.target.value)}
-                  placeholder="Enter access code (e.g. XXXX-XXXX-XXXX)"
+                  placeholder={t("organizations.accessCodePlaceholder")}
                   className="w-full px-4 py-2.5 bg-bg-primary rounded-lg text-sm text-fg-primary placeholder:text-fg-tertiary border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-accent-primary/30 font-mono tracking-wider"
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && joinCode.trim()) joinOrg.mutate({ code: joinCode });
@@ -476,13 +486,13 @@ export function WorkspaceSettingsClient() {
                     className="flex-1 px-4 py-2 rounded-lg kairos-neon-btn text-white text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {joinOrg.isPending ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                    Join
+                    {t("common.join")}
                   </button>
                   <button
                     onClick={() => setShowJoinOrg(false)}
                     className="px-4 py-2 rounded-lg border border-white/[0.06] text-fg-secondary text-sm hover:bg-bg-elevated transition"
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </button>
                 </div>
               </div>
@@ -505,9 +515,9 @@ export function WorkspaceSettingsClient() {
                 <Users size={18} className="text-blue-400" />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-fg-primary">Members</h2>
+                <h2 className="text-base font-semibold text-fg-primary">{t("members.title")}</h2>
                 <p className="text-xs text-fg-tertiary">
-                  {members?.length ?? 0} member{(members?.length ?? 0) !== 1 ? "s" : ""}
+                  {t("members.count", { count: members?.length ?? 0 })}
                 </p>
               </div>
             </div>
@@ -525,7 +535,7 @@ export function WorkspaceSettingsClient() {
                 <div className="p-4 rounded-xl border border-white/[0.1] bg-white/[0.03] dark:bg-white/[0.04]">
                   <h3 className="text-sm font-medium text-fg-primary mb-3 flex items-center gap-2">
                     <Mail size={14} className="text-accent-primary" />
-                    Invite Member
+                    {t("members.inviteMember")}
                   </h3>
                   <div className="flex gap-2">
                     <div className="flex-1 relative">
@@ -533,7 +543,7 @@ export function WorkspaceSettingsClient() {
                         type="email"
                         value={inviteEmail}
                         onChange={(e) => setInviteEmail(e.target.value)}
-                        placeholder="Email address"
+                        placeholder={t("members.emailPlaceholder")}
                         className="w-full px-3 py-2 bg-bg-primary rounded-lg text-sm text-fg-primary placeholder:text-fg-tertiary border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && inviteEmail.trim() && activeOrgId) {
@@ -557,20 +567,20 @@ export function WorkspaceSettingsClient() {
                             </div>
                           )}
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-fg-primary truncate">{inviteEmailLookup.name ?? "No name"}</p>
+                            <p className="text-sm font-medium text-fg-primary truncate">{inviteEmailLookup.name ?? t("members.noName")}</p>
                             <p className="text-[10px] text-fg-tertiary truncate">{inviteEmailLookup.email}</p>
                           </div>
                         </div>
                       )}
                       {emailLookupDebouncedEmail && !isLookingUpEmail && !inviteEmailLookup && (
                         <div className="absolute left-0 right-0 top-full mt-1 z-10 p-2.5 rounded-lg border border-amber-500/20 bg-bg-elevated shadow-lg">
-                          <p className="text-xs text-amber-400">No existing account — invite will be sent anyway</p>
+                          <p className="text-xs text-amber-400">{t("members.noExistingAccount")}</p>
                         </div>
                       )}
                       {emailLookupDebouncedEmail && isLookingUpEmail && (
                         <div className="absolute left-0 right-0 top-full mt-1 z-10 p-2.5 rounded-lg border border-white/[0.06] bg-bg-elevated shadow-lg flex items-center gap-2">
                           <Loader2 size={12} className="animate-spin text-fg-tertiary" />
-                          <p className="text-xs text-fg-tertiary">Looking up email...</p>
+                          <p className="text-xs text-fg-tertiary">{t("members.lookingUpEmail")}</p>
                         </div>
                       )}
                     </div>
@@ -579,9 +589,9 @@ export function WorkspaceSettingsClient() {
                       onChange={(e) => setInviteRole(e.target.value)}
                       className="px-3 py-2 bg-bg-primary rounded-lg text-sm text-fg-primary border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
                     >
-                      <option value="member">Member</option>
-                      <option value="admin">Admin</option>
-                      <option value="guest">Guest</option>
+                      <option value="member">{t("roles.member")}</option>
+                      <option value="admin">{t("roles.admin")}</option>
+                      <option value="guest">{t("roles.guest")}</option>
                       {roles && roles.length > 0 && (
                         <option disabled>──────────</option>
                       )}
@@ -602,7 +612,7 @@ export function WorkspaceSettingsClient() {
                       disabled={!inviteEmail.trim() || inviteMember.isPending}
                       className="px-4 py-2 rounded-lg kairos-neon-btn text-white text-sm font-medium disabled:opacity-50"
                     >
-                      {inviteMember.isPending ? <Loader2 size={14} className="animate-spin" /> : "Invite"}
+                      {inviteMember.isPending ? <Loader2 size={14} className="animate-spin" /> : t("members.invite")}
                     </button>
                   </div>
                 </div>
@@ -611,7 +621,7 @@ export function WorkspaceSettingsClient() {
               {/* Pending invites */}
               {isAdmin && invites && invites.length > 0 && (
                 <div className="p-4 rounded-xl border border-white/[0.1] bg-white/[0.03] dark:bg-white/[0.04]">
-                  <h3 className="text-sm font-medium text-fg-primary mb-3">Pending Invites</h3>
+                  <h3 className="text-sm font-medium text-fg-primary mb-3">{t("members.pendingInvites")}</h3>
                   <div className="space-y-2">
                     {invites.map((inv) => (
                       <div
@@ -622,7 +632,7 @@ export function WorkspaceSettingsClient() {
                           <Mail size={14} className="text-fg-tertiary" />
                           <span className="text-sm text-fg-secondary">{inv.email}</span>
                           <span className="text-xs text-fg-tertiary capitalize px-1.5 py-0.5 rounded bg-bg-tertiary">
-                            {inv.displayRole ?? inv.role}
+                            {translateRoleLabel(inv.displayRole ?? inv.role)}
                           </span>
                         </div>
                         <button
@@ -682,9 +692,9 @@ export function WorkspaceSettingsClient() {
                           disabled={updateMemberRole.isPending}
                           className="px-2 py-1 bg-bg-primary rounded-lg text-xs text-fg-secondary border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
                         >
-                          <option value="admin">Admin</option>
-                          <option value="member">Member</option>
-                          <option value="guest">Guest</option>
+                          <option value="admin">{t("roles.admin")}</option>
+                          <option value="member">{t("roles.member")}</option>
+                          <option value="guest">{t("roles.guest")}</option>
                           {roles && roles.length > 0 && (
                             <option disabled>──────────</option>
                           )}
@@ -694,13 +704,13 @@ export function WorkspaceSettingsClient() {
                         </select>
                       ) : (
                         <span className="text-xs text-fg-tertiary capitalize px-2 py-1 rounded-lg bg-bg-tertiary">
-                          {member.role}
+                          {translateRoleLabel(member.role)}
                         </span>
                       )}
                       {isAdmin && (
                         <button
                           onClick={() => {
-                            if (confirm(`Remove ${member.name ?? member.email} from the organization?`)) {
+                            if (confirm(t("members.removeConfirm", { name: member.name ?? member.email }))) {
                               removeMember.mutate({
                                 organizationId: activeOrgId!,
                                 userId: member.id,
@@ -709,7 +719,7 @@ export function WorkspaceSettingsClient() {
                           }}
                           disabled={removeMember.isPending}
                           className="p-1.5 rounded-lg hover:bg-red-500/10 text-fg-tertiary hover:text-red-400 transition"
-                          title="Remove member"
+                          title={t("members.remove")}
                         >
                           <Trash2 size={14} />
                         </button>
@@ -737,9 +747,9 @@ export function WorkspaceSettingsClient() {
                 <Shield size={18} className="text-purple-400" />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-fg-primary">Roles & Permissions</h2>
+                <h2 className="text-base font-semibold text-fg-primary">{t("roles.title")}</h2>
                 <p className="text-xs text-fg-tertiary">
-                  Manage template and custom roles
+                  {t("roles.subtitle")}
                 </p>
               </div>
             </div>
@@ -755,7 +765,7 @@ export function WorkspaceSettingsClient() {
               {/* New Role button */}
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-medium text-fg-tertiary uppercase tracking-wider">
-                  All Roles
+                  {t("roles.allRoles")}
                 </h3>
                 {isAdmin && (
                   <button
@@ -763,7 +773,7 @@ export function WorkspaceSettingsClient() {
                     className="text-xs text-accent-primary hover:text-accent-secondary transition flex items-center gap-1"
                   >
                     <Plus size={12} />
-                    New Role
+                    {t("roles.newRole")}
                   </button>
                 )}
               </div>
@@ -775,7 +785,7 @@ export function WorkspaceSettingsClient() {
                     type="text"
                     value={newRoleName}
                     onChange={(e) => setNewRoleName(e.target.value)}
-                    placeholder="Role name"
+                    placeholder={t("roles.namePlaceholder")}
                     className="w-full px-3 py-2 bg-bg-primary rounded-lg text-sm text-fg-primary placeholder:text-fg-tertiary border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-accent-primary/30 mb-3"
                     autoFocus
                   />
@@ -802,7 +812,7 @@ export function WorkspaceSettingsClient() {
                         >
                           {newRolePerms[key] && <Check size={10} className="text-accent-primary" />}
                         </div>
-                        {PERMISSION_LABELS[key]}
+                         {t(`permissions.${PERMISSION_LABEL_KEYS[key]}`)}
                       </label>
                     ))}
                   </div>
@@ -820,26 +830,26 @@ export function WorkspaceSettingsClient() {
                             setPendingRoles((prev) => [...prev, created as { id: number; name: string } & Record<PermissionKey, boolean>]);
                           }
                           await utils.organization.getRoles.invalidate();
-                          toast.success("Role created");
+                          toast.success(t("messages.roleCreated"));
                           setNewRoleName("");
                           setNewRolePerms(
                             Object.fromEntries(PERMISSION_KEYS.map((k) => [k, false])) as Record<PermissionKey, boolean>,
                           );
                           setShowCreateRole(false);
                         } catch (e) {
-                          toast.error(e instanceof Error ? e.message : "Failed to create role");
+                          toast.error(e instanceof Error ? e.message : t("messages.roleCreateFailed"));
                         }
                       }}
                       disabled={!newRoleName.trim() || createRole.isPending}
                       className="flex-1 px-4 py-2 rounded-lg kairos-neon-btn text-white text-sm font-medium disabled:opacity-50"
                     >
-                      {createRole.isPending ? <Loader2 size={14} className="animate-spin" /> : "Create Role"}
+                      {createRole.isPending ? <Loader2 size={14} className="animate-spin" /> : t("roles.createRole")}
                     </button>
                     <button
                       onClick={() => setShowCreateRole(false)}
                       className="px-4 py-2 rounded-lg border border-white/[0.06] text-fg-secondary text-sm hover:bg-bg-elevated transition"
                     >
-                      Cancel
+                      {t("common.cancel")}
                     </button>
                   </div>
                 </div>
@@ -853,9 +863,9 @@ export function WorkspaceSettingsClient() {
                     className="p-4 rounded-xl border border-white/[0.1] bg-white/[0.03] dark:bg-white/[0.04]"
                   >
                     <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-sm font-semibold text-fg-primary">{name}</h4>
+                      <h4 className="text-sm font-semibold text-fg-primary">{t(`roles.${name.toLowerCase()}`)}</h4>
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-bg-tertiary text-fg-tertiary font-medium">
-                        Template
+                         {t("roles.template")}
                       </span>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
@@ -873,7 +883,7 @@ export function WorkspaceSettingsClient() {
                           >
                             {perms[key] && <Check size={10} className="text-accent-primary" />}
                           </div>
-                          {PERMISSION_LABELS[key]}
+                          {t(`permissions.${PERMISSION_LABEL_KEYS[key]}`)}
                         </label>
                       ))}
                     </div>
@@ -888,12 +898,12 @@ export function WorkspaceSettingsClient() {
                       <h4 className="text-sm font-semibold text-fg-primary">{role.name}</h4>
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent-primary/10 text-accent-primary font-medium">
-                          Custom
+                           {t("roles.custom")}
                         </span>
                         {isAdmin && (
                           <button
                             onClick={() => {
-                              if (confirm(`Delete the role "${role.name}"?`)) {
+                               if (confirm(t("roles.deleteConfirm", { name: role.name }))) {
                                 deleteRole.mutate({
                                   organizationId: activeOrgId!,
                                   roleId: role.id,
@@ -923,7 +933,7 @@ export function WorkspaceSettingsClient() {
                           >
                             {role[key] && <Check size={10} className="text-accent-primary" />}
                           </div>
-                          {PERMISSION_LABELS[key]}
+                          {t(`permissions.${PERMISSION_LABEL_KEYS[key]}`)}
                         </label>
                       ))}
                     </div>

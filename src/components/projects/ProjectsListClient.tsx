@@ -4,12 +4,13 @@ import { useState, useEffect } from "react";
 import { api } from "~/trpc/react";
 import { Folder, AlertCircle, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Doughnut } from "react-chartjs-2";
 import { ensureChartJsRegistered } from "~/components/charts/chartjs";
 import { useResolvedThemeColors } from "~/components/charts/themeColors";
 import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
+import { bg, enUS } from "date-fns/locale";
 
 interface Collaborator {
  id: string;
@@ -71,10 +72,12 @@ export function ProjectsListWorkspace({ userId }: { userId: string }) {
  const [deleteArmedId, setDeleteArmedId] = useState<number | null>(null);
  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
  const router = useRouter();
-
+ const locale = useLocale();
+ 
  ensureChartJsRegistered();
  const colors = useResolvedThemeColors();
  const t = useTranslations("create");
+ const dateFnsLocale = locale.startsWith("bg") ? bg : enUS;
 
  useEffect(() => {
  setMounted(true);
@@ -142,14 +145,14 @@ export function ProjectsListWorkspace({ userId }: { userId: string }) {
  <div className="w-20 h-20 rounded-2xl bg-accent-primary/10 flex items-center justify-center mb-6">
  <Folder size={36} className="text-accent-primary" />
  </div>
- <h2 className="text-2xl font-bold text-fg-primary mb-2">No projects yet</h2>
- <p className="text-fg-secondary mb-6">Create your first project to get started.</p>
+  <h2 className="text-2xl font-bold text-fg-primary mb-2">{t("projectsList.emptyTitle")}</h2>
+  <p className="text-fg-secondary mb-6">{t("projectsList.emptyDesc")}</p>
  <a
  href="/create?action=new_project"
  className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl transition-colors shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)]"
  >
  <Plus size={18} />
- New Project
+  {t("projectsList.newProject")}
  </a>
  </div>
  </div>
@@ -245,10 +248,10 @@ export function ProjectsListWorkspace({ userId }: { userId: string }) {
 
  // Status badge based on completion percentage
  const getStatusBadge = (percentage: number) => {
-  if (percentage === 100) return { label: "Complete", bg: "bg-emerald-500/10", text: "text-emerald-500", border: "border-emerald-500/20" };
-  if (percentage >= 60) return { label: "On Track", bg: "bg-emerald-500/10", text: "text-emerald-500", border: "border-emerald-500/20" };
-  if (percentage >= 30) return { label: "In Progress", bg: "bg-amber-500/10", text: "text-amber-500", border: "border-amber-500/20" };
-  return { label: "At Risk", bg: "bg-rose-500/10", text: "text-rose-500", border: "border-rose-500/20" };
+  if (percentage === 100) return { label: t("projectsList.statusComplete"), bg: "bg-emerald-500/10", text: "text-emerald-500", border: "border-emerald-500/20" };
+  if (percentage >= 60) return { label: t("projectsList.statusOnTrack"), bg: "bg-emerald-500/10", text: "text-emerald-500", border: "border-emerald-500/20" };
+  if (percentage >= 30) return { label: t("projectsList.statusInProgress"), bg: "bg-amber-500/10", text: "text-amber-500", border: "border-amber-500/20" };
+  return { label: t("projectsList.statusAtRisk"), bg: "bg-rose-500/10", text: "text-rose-500", border: "border-rose-500/20" };
  };
 
  const getGradientFrom = (percentage: number) => {
@@ -270,11 +273,11 @@ export function ProjectsListWorkspace({ userId }: { userId: string }) {
   {confirmDeleteId !== null && (
    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setConfirmDeleteId(null)}>
    <div className="bg-bg-secondary border border-white/[0.08] rounded-2xl p-6 max-w-sm mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-    <h3 className="text-lg font-bold text-fg-primary mb-2">Delete Project</h3>
-    <p className="text-sm text-fg-secondary mb-6">Are you sure you want to delete this project? This action cannot be undone.</p>
+    <h3 className="text-lg font-bold text-fg-primary mb-2">{t("projectsList.deleteProjectTitle")}</h3>
+    <p className="text-sm text-fg-secondary mb-6">{t("projectsList.deleteProjectConfirm")}</p>
     <div className="flex items-center justify-end gap-3">
-    <button onClick={() => setConfirmDeleteId(null)} className="px-4 py-2 text-sm font-medium text-fg-secondary hover:text-fg-primary rounded-lg hover:bg-bg-tertiary transition-colors">Cancel</button>
-    <button onClick={confirmDelete} disabled={deleteProject.isPending} className="px-4 py-2 text-sm font-medium text-white bg-rose-600 hover:bg-rose-500 rounded-lg transition-colors disabled:opacity-50">Delete</button>
+    <button onClick={() => setConfirmDeleteId(null)} className="px-4 py-2 text-sm font-medium text-fg-secondary hover:text-fg-primary rounded-lg hover:bg-bg-tertiary transition-colors">{t("common.cancel")}</button>
+    <button onClick={confirmDelete} disabled={deleteProject.isPending} className="px-4 py-2 text-sm font-medium text-white bg-rose-600 hover:bg-rose-500 rounded-lg transition-colors disabled:opacity-50">{t("projectsList.delete")}</button>
     </div>
    </div>
    </div>
@@ -283,15 +286,15 @@ export function ProjectsListWorkspace({ userId }: { userId: string }) {
   {/* ── Header ── */}
   <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
    <div className="space-y-1">
-   <h1 className="text-2xl font-bold tracking-tight text-fg-primary">Project Analytics</h1>
-   <p className="text-fg-tertiary text-sm">Real-time progress across all your active initiatives.</p>
+   <h1 className="text-2xl font-bold tracking-tight text-fg-primary">{t("projectsList.title")}</h1>
+   <p className="text-fg-tertiary text-sm">{t("projectsList.subtitle")}</p>
    </div>
    <a
    href="/create?action=new_project"
    className="bg-accent-primary hover:bg-accent-hover transition-colors text-white px-4 py-2 rounded-lg font-medium flex items-center gap-1.5 text-sm w-fit"
    >
    <Plus size={16} />
-   New Project
+   {t("projectsList.newProject")}
    </a>
   </header>
 
@@ -299,7 +302,7 @@ export function ProjectsListWorkspace({ userId }: { userId: string }) {
   <section className="space-y-3">
    <div className="flex items-center justify-between">
    <h2 className="text-base font-semibold text-fg-secondary">
-    Active Projects
+    {t("projectsList.activeProjects")}
     <span className="ml-2 px-1.5 py-0.5 text-xs bg-bg-tertiary rounded-full text-fg-tertiary">{totalProjects}</span>
    </h2>
    </div>
@@ -364,7 +367,7 @@ export function ProjectsListWorkspace({ userId }: { userId: string }) {
       onClick={(e) => handleDeleteProject(e, project.id)}
       disabled={deleteProject.isPending}
       className="text-fg-quaternary hover:text-rose-500 transition-colors p-1.5"
-      title="Delete Project"
+      title={t("projectsList.deleteProjectTitle")}
       >
       <Trash2 size={18} strokeWidth={1.5} />
       </button>
@@ -375,15 +378,15 @@ export function ProjectsListWorkspace({ userId }: { userId: string }) {
      {project.totalTasks > 0 ? (
      <div className="grid grid-cols-3 gap-3 mb-4">
       <div className="bg-bg-primary/50 rounded-lg p-2 border border-white/[0.05]">
-      <span className="block text-fg-tertiary text-[9px] uppercase font-bold tracking-widest mb-0.5">To Do</span>
+      <span className="block text-fg-tertiary text-[9px] uppercase font-bold tracking-widest mb-0.5">{t("projectsList.taskTodo")}</span>
       <span className="text-base font-bold text-fg-primary">{project.pendingTasks}</span>
       </div>
       <div className="bg-bg-primary/50 rounded-lg p-2 border border-white/[0.05]">
-      <span className="block text-fg-tertiary text-[9px] uppercase font-bold tracking-widest mb-0.5">In Progress</span>
+      <span className="block text-fg-tertiary text-[9px] uppercase font-bold tracking-widest mb-0.5">{t("projectsList.taskInProgress")}</span>
       <span className="text-base font-bold text-amber-500">{project.inProgressTasks}</span>
       </div>
       <div className="bg-bg-primary/50 rounded-lg p-2 border border-white/[0.05]">
-      <span className="block text-fg-tertiary text-[9px] uppercase font-bold tracking-widest mb-0.5">Done</span>
+      <span className="block text-fg-tertiary text-[9px] uppercase font-bold tracking-widest mb-0.5">{t("projectsList.taskDone")}</span>
       <span className="text-base font-bold text-emerald-500">{project.completedTasks}</span>
       </div>
      </div>
@@ -402,7 +405,7 @@ export function ProjectsListWorkspace({ userId }: { userId: string }) {
        <Image
        key={collab.id}
        src={collab.image}
-       alt={collab.name ?? "User"}
+       alt={collab.name ?? t("team.unknownUser")}
        width={24}
        height={24}
        className="w-6 h-6 rounded-full border-2 border-bg-secondary object-cover"
@@ -426,7 +429,7 @@ export function ProjectsListWorkspace({ userId }: { userId: string }) {
      </div>
      {project.updatedAt && (
       <div className="text-[10px] text-fg-tertiary italic">
-      Updated {formatDistanceToNow(new Date(project.updatedAt), { addSuffix: false })} ago
+       {t("projectsList.updatedAgo", { distance: formatDistanceToNow(new Date(project.updatedAt), { addSuffix: false, locale: dateFnsLocale }) })}
       </div>
      )}
      </div>

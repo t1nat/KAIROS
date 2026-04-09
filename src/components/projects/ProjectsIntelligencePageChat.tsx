@@ -3,9 +3,11 @@
 import { useMemo, useState } from"react";
 import { api } from"~/trpc/react";
 import { ProjectIntelligenceChat } from"./ProjectIntelligenceChat";
+import { useTranslations } from "next-intl";
 
 export function ProjectsIntelligencePageChat() {
- const { data: projects, isLoading } = api.project.getMyProjects.useQuery(undefined, {
+ const t = useTranslations("create.projectsList");
+  const { data: projects, isLoading } = api.project.getMyProjects.useQuery(undefined, {
  staleTime: 1000 * 60 * 5,
  });
 
@@ -21,14 +23,14 @@ export function ProjectsIntelligencePageChat() {
  <div className="bg-bg-secondary rounded-[10px] overflow-hidden border border-white/[0.06]">
  <div className="px-5 py-4 flex items-center justify-between border-b border-border-light/20">
  <div>
- <h2 className="text-[15px] font-semibold text-fg-primary leading-tight">KAIROS AI Chat</h2>
- <p className="text-[12px] text-fg-secondary leading-tight">
- Pick a project or use Workspace to ask across all your projects.
- </p>
+  <h2 className="text-[15px] font-semibold text-fg-primary leading-tight">{t("aiChatTitle")}</h2>
+  <p className="text-[12px] text-fg-secondary leading-tight">
+  {t("aiChatDesc")}
+  </p>
  </div>
 
  <div className="flex items-center gap-2">
- <label className="text-[12px] text-fg-secondary">Scope</label>
+  <label className="text-[12px] text-fg-secondary">{t("scope")}</label>
  <select
  className="text-sm bg-bg-surface border border-border-light/30 rounded-lg px-3 py-2 text-fg-primary focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
  value={selected}
@@ -39,7 +41,7 @@ export function ProjectsIntelligencePageChat() {
  }}
  disabled={isLoading}
  >
- <option value="workspace">Workspace</option>
+  <option value="workspace">{t("workspace")}</option>
  {options.map((p) => (
  <option key={p.id} value={p.id}>
  {p.title}

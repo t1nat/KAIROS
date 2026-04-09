@@ -688,19 +688,19 @@ export function ProgressFeedClient() {
         <div className="grid grid-cols-12 gap-4">
           {/* Task Status Distribution */}
           <div className="col-span-12 lg:col-span-4 bg-bg-elevated/70 backdrop-blur-xl border border-white/5 p-4 rounded-2xl">
-            <h3 className="text-xs font-semibold text-fg-primary mb-3">Task Status Distribution</h3>
+            <h3 className="text-xs font-semibold text-fg-primary mb-3">{t("dueDates.taskStatusDistribution")}</h3>
             <div className="space-y-2">
               <div className="flex items-center justify-between p-2 rounded-lg bg-green-500/5 border border-green-500/10">
                 <div className="flex items-center gap-2">
                   <CheckCircle size={14} className="text-green-500" />
-                  <span className="text-xs font-medium text-fg-primary">Completed</span>
+                  <span className="text-xs font-medium text-fg-primary">{t("dueDates.completed")}</span>
                 </div>
                 <span className="text-xs font-bold text-fg-primary">{statusCounts.completed}</span>
               </div>
               <div className="flex items-center justify-between p-2 rounded-lg bg-orange-500/5 border border-orange-500/10">
                 <div className="flex items-center gap-2">
                   <Clock size={14} className="text-orange-500" />
-                  <span className="text-xs font-medium text-fg-primary">Pending</span>
+                  <span className="text-xs font-medium text-fg-primary">{t("dueDates.pending")}</span>
                 </div>
                 <span className="text-xs font-bold text-fg-primary">{statusCounts.pending}</span>
               </div>
@@ -708,7 +708,7 @@ export function ProgressFeedClient() {
                 <div className="flex items-center justify-between p-2 rounded-lg bg-blue-500/5 border border-blue-500/10">
                   <div className="flex items-center gap-2">
                     <Clock size={14} className="text-blue-500" />
-                    <span className="text-xs font-medium text-fg-primary">In Progress</span>
+                    <span className="text-xs font-medium text-fg-primary">{t("dueDates.inProgress")}</span>
                   </div>
                   <span className="text-xs font-bold text-fg-primary">{statusCounts.in_progress}</span>
                 </div>
@@ -717,7 +717,7 @@ export function ProgressFeedClient() {
                 <div className="flex items-center justify-between p-2 rounded-lg bg-red-500/5 border border-red-500/10">
                   <div className="flex items-center gap-2">
                     <AlertTriangle size={14} className="text-red-500" />
-                    <span className="text-xs font-medium text-fg-primary">Cancelled</span>
+                    <span className="text-xs font-medium text-fg-primary">{t("dueDates.cancelled")}</span>
                   </div>
                   <span className="text-xs font-bold text-fg-primary">{statusCounts.blocked}</span>
                 </div>
@@ -727,31 +727,31 @@ export function ProgressFeedClient() {
 
           {/* Upcoming Due Dates */}
           <div className="col-span-12 lg:col-span-8 space-y-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-fg-tertiary">Upcoming Due Dates</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-fg-tertiary">{t("dueDates.upcomingDueDates")}</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 group hover:bg-red-500/15 transition-all">
                 <div className="flex items-center gap-1.5 text-red-500 mb-1">
                   <AlertTriangle size={14} />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">Overdue</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider">{t("dueDates.overdue")}</span>
                 </div>
                 <p className="text-2xl font-bold text-red-500">{overdueTasks}</p>
-                <p className="text-[10px] text-fg-tertiary">Tasks past due date</p>
+                <p className="text-[10px] text-fg-tertiary">{t("dueDates.tasksPastDueDate")}</p>
               </div>
               <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 group hover:bg-orange-500/15 transition-all">
                 <div className="flex items-center gap-1.5 text-orange-500 mb-1">
                   <CalendarDays size={14} />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">Due Today</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider">{t("dueDates.dueToday")}</span>
                 </div>
                 <p className="text-2xl font-bold text-orange-500">{dueTodayTasks}</p>
-                <p className="text-[10px] text-fg-tertiary">Tasks due today</p>
+                <p className="text-[10px] text-fg-tertiary">{t("dueDates.tasksDueToday")}</p>
               </div>
               <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 group hover:bg-blue-500/15 transition-all">
                 <div className="flex items-center gap-1.5 text-blue-400 mb-1">
                   <Calendar size={14} />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">This Week</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider">{t("dueDates.thisWeek")}</span>
                 </div>
                 <p className="text-2xl font-bold text-blue-400">{dueThisWeekTasks}</p>
-                <p className="text-[10px] text-fg-tertiary">Tasks due within 7 days</p>
+                <p className="text-[10px] text-fg-tertiary">{t("dueDates.tasksDueWithin7Days")}</p>
               </div>
             </div>
           </div>

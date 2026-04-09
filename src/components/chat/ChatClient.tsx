@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { api } from "~/trpc/react";
 import type { RouterOutputs } from "~/trpc/react";
 import Image from "next/image";
@@ -15,6 +16,9 @@ type ChatMessage = RouterOutputs["chat"]["listMessages"]["messages"][number];
 type WorkspaceMember = RouterOutputs["organization"]["getMembers"][number];
 
 export function ChatClient({ userId }: { userId: string }) {
+  const t = useTranslations("chat.direct");
+  const locale = useLocale();
+  const timeLocale = locale === "bg" ? "bg-BG" : "en-US";
   const toast = useToast();
   const [selectedConversationId, setSelectedConversationId] = useState<number | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -128,7 +132,7 @@ export function ChatClient({ userId }: { userId: string }) {
         { conversationId: selectedConversationId, limit: 50 },
         context.previous,
       );
-      toast.error("Failed to send message");
+      toast.error(t("failedToSendMessage"));
     },
     onSuccess: async (msg) => {
       if (selectedConversationId === null) return;
@@ -187,7 +191,7 @@ export function ChatClient({ userId }: { userId: string }) {
       await utils.chat.listAllConversations.invalidate();
       setShowNewChatModal(false);
       setNewChatEmail("");
-      toast.success("Chat started!");
+      toast.success(t("chatStarted"));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -208,7 +212,7 @@ export function ChatClient({ userId }: { userId: string }) {
       setShowChatMenu(false);
       setConfirmDeleteChat(false);
       await utils.chat.listAllConversations.invalidate();
-      toast.success("Chat deleted");
+      toast.success(t("chatDeleted"));
     },
     onError: (error) => {
       toast.error(error.message);
@@ -370,7 +374,7 @@ export function ChatClient({ userId }: { userId: string }) {
         }
       } catch (err) {
         console.error("Upload failed:", err);
-        toast.error("Failed to upload attachments");
+        toast.error(t("failedToUploadAttachments"));
         setIsUploading(false);
       }
       return;
@@ -385,21 +389,21 @@ export function ChatClient({ userId }: { userId: string }) {
       {confirmDeleteChat && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-bg-secondary rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-in fade-in slide-in-from-bottom-4">
-            <h3 className="text-lg font-bold text-fg-primary mb-2">Delete Chat</h3>
-            <p className="text-sm text-fg-secondary mb-6">Are you sure you want to delete this chat? All messages will be permanently removed.</p>
+            <h3 className="text-lg font-bold text-fg-primary mb-2">{t("deleteChatTitle")}</h3>
+            <p className="text-sm text-fg-secondary mb-6">{t("deleteChatConfirmMessage")}</p>
             <div className="flex items-center justify-end gap-3">
               <button
                 onClick={() => setConfirmDeleteChat(false)}
                 className="px-4 py-2 text-sm font-medium text-fg-secondary hover:bg-bg-surface rounded-lg transition-colors"
               >
-                Cancel
+                {t("cancel")}
               </button>
               <button
                 onClick={handleDeleteChat}
                 disabled={deleteConversation.isPending}
                 className="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors disabled:opacity-50"
               >
-                {deleteConversation.isPending ? "Deleting..." : "Delete"}
+                {deleteConversation.isPending ? t("deleting") : t("delete")}
               </button>
             </div>
           </div>
@@ -410,7 +414,7 @@ export function ChatClient({ userId }: { userId: string }) {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-bg-secondary rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in fade-in slide-in-from-bottom-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4 sticky top-0 bg-bg-secondary pb-2">
-              <h3 className="text-lg font-bold text-fg-primary">Start New Chat</h3>
+               <h3 className="text-lg font-bold text-fg-primary">{t("startNewChat")}</h3>
               <button
                 onClick={() => { setShowNewChatModal(false); setNewChatEmail(""); }}
                 className="p-2 hover:bg-bg-surface rounded-lg transition-colors"
@@ -420,12 +424,12 @@ export function ChatClient({ userId }: { userId: string }) {
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-fg-secondary mb-2">Search or enter email</label>
+                <label className="block text-sm font-medium text-fg-secondary mb-2">{t("searchOrEnterEmail")}</label>
                 <input
                   type="text"
                   value={newChatEmail}
                   onChange={(e) => setNewChatEmail(e.target.value)}
-                  placeholder="Search by name or email..."
+                  placeholder={t("searchByNameOrEmail")}
                   className="w-full px-4 py-3 bg-bg-surface rounded-xl text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
                 />
               </div>
@@ -435,7 +439,7 @@ export function ChatClient({ userId }: { userId: string }) {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 px-3 py-2">
                     <Users size={16} className="text-fg-tertiary" />
-                    <p className="text-xs font-semibold text-fg-tertiary uppercase">Workspace Members</p>
+                    <p className="text-xs font-semibold text-fg-tertiary uppercase">{t("workspaceMembers")}</p>
                   </div>
                   <div className="space-y-1 max-h-48 overflow-y-auto">
                     {filteredMemberSuggestions.map((member) => (
@@ -448,7 +452,7 @@ export function ChatClient({ userId }: { userId: string }) {
                         {member.image ? (
                           <Image
                             src={member.image}
-                            alt={member.name ?? "User"}
+                            alt={member.name ?? t("userFallback")}
                             width={40}
                             height={40}
                             className="w-10 h-10 rounded-full object-cover flex-shrink-0"
@@ -459,7 +463,7 @@ export function ChatClient({ userId }: { userId: string }) {
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-fg-primary truncate">{member.name ?? "User"}</p>
+                           <p className="text-sm font-semibold text-fg-primary truncate">{member.name ?? t("userFallback")}</p>
                           <p className="text-xs text-fg-tertiary truncate">{member.email}</p>
                         </div>
                       </button>
@@ -471,7 +475,7 @@ export function ChatClient({ userId }: { userId: string }) {
               {/* Email Search Section */}
               {newChatEmail.trim().includes("@") && (
                 <div className="border-t border-bg-elevated pt-4 space-y-2">
-                  <p className="text-xs font-semibold text-fg-tertiary uppercase px-3">Search Results</p>
+                  <p className="text-xs font-semibold text-fg-tertiary uppercase px-3">{t("searchResults")}</p>
                   {searchUserQuery.data && (
                     <button
                       onClick={handleStartNewChat}
@@ -481,7 +485,7 @@ export function ChatClient({ userId }: { userId: string }) {
                       {searchUserQuery.data.image ? (
                         <Image
                           src={searchUserQuery.data.image}
-                          alt={searchUserQuery.data.name ?? "User"}
+                           alt={searchUserQuery.data.name ?? t("userFallback")}
                           width={40}
                           height={40}
                           className="w-10 h-10 rounded-full object-cover flex-shrink-0"
@@ -492,28 +496,28 @@ export function ChatClient({ userId }: { userId: string }) {
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-fg-primary truncate">{searchUserQuery.data.name ?? "User"}</p>
+                         <p className="text-sm font-semibold text-fg-primary truncate">{searchUserQuery.data.name ?? t("userFallback")}</p>
                         <p className="text-xs text-fg-tertiary truncate">{searchUserQuery.data.email}</p>
                       </div>
                     </button>
                   )}
                   {searchUserQuery.isLoading && (
-                    <p className="text-sm text-fg-tertiary text-center py-2">Searching...</p>
+                    <p className="text-sm text-fg-tertiary text-center py-2">{t("searching")}</p>
                   )}
                   {searchUserQuery.isError && (
-                    <p className="text-sm text-error text-center py-2">User not found</p>
+                    <p className="text-sm text-error text-center py-2">{t("userNotFound")}</p>
                   )}
                 </div>
               )}
 
               {/* No Results Message */}
               {newChatEmail.trim() && filteredMemberSuggestions.length === 0 && !newChatEmail.includes("@") && (
-                <p className="text-sm text-fg-tertiary text-center py-4">No workspace members match your search</p>
+                <p className="text-sm text-fg-tertiary text-center py-4">{t("noWorkspaceMembersMatch")}</p>
               )}
 
               {/* Empty State */}
               {!newChatEmail.trim() && filteredMemberSuggestions.length === 0 && activeOrgId && (
-                <p className="text-sm text-fg-tertiary text-center py-4">No workspace members available</p>
+                <p className="text-sm text-fg-tertiary text-center py-4">{t("noWorkspaceMembersAvailable")}</p>
               )}
             </div>
           </div>
@@ -528,7 +532,7 @@ export function ChatClient({ userId }: { userId: string }) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-tertiary" size={16} />
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder={t("searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 text-sm bg-bg-surface shadow-sm rounded-full text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
@@ -537,7 +541,7 @@ export function ChatClient({ userId }: { userId: string }) {
             <button
               onClick={() => setShowNewChatModal(true)}
               className="p-2.5 bg-gradient-to-r from-accent-primary to-accent-secondary text-white rounded-full hover:shadow-lg transition-all flex-shrink-0"
-              title="New chat"
+              title={t("newChat")}
             >
               <Plus size={18} />
             </button>
@@ -550,13 +554,13 @@ export function ChatClient({ userId }: { userId: string }) {
               <div className="w-16 h-16 rounded-full bg-accent-primary/10 flex items-center justify-center mb-4">
                 <MessageCircle size={28} className="text-accent-primary" />
               </div>
-              <p className="text-sm font-medium text-fg-primary mb-1">No conversations yet</p>
-              <p className="text-xs text-fg-tertiary text-center mb-4">Start a new chat to get started</p>
+              <p className="text-sm font-medium text-fg-primary mb-1">{t("noConversationsYet")}</p>
+              <p className="text-xs text-fg-tertiary text-center mb-4">{t("startNewChatToGetStarted")}</p>
               <button
                 onClick={() => setShowNewChatModal(true)}
                 className="px-4 py-2 bg-accent-primary/10 text-accent-primary text-sm font-medium rounded-lg hover:bg-accent-primary/20 transition-colors"
               >
-                Start New Chat
+                {t("startNewChat")}
               </button>
             </div>
           ) : (
@@ -564,7 +568,7 @@ export function ChatClient({ userId }: { userId: string }) {
               {filteredConversations.map((conv) => {
                 const otherUser = conv.userOne.id === userId ? conv.userTwo : conv.userOne;
                 const lastMessageTime = conv.lastMessageAt
-                  ? new Date(conv.lastMessageAt).toLocaleTimeString([], {
+                  ? new Date(conv.lastMessageAt).toLocaleTimeString(timeLocale, {
                       hour: "2-digit",
                       minute: "2-digit",
                     })
@@ -586,7 +590,7 @@ export function ChatClient({ userId }: { userId: string }) {
                     {otherUser.image ? (
                       <Image
                         src={otherUser.image}
-                        alt={otherUser.name ?? "User"}
+                         alt={otherUser.name ?? t("userFallback")}
                         width={44}
                         height={44}
                         className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover ring-2 ring-white/10 flex-shrink-0"
@@ -606,7 +610,7 @@ export function ChatClient({ userId }: { userId: string }) {
                         )}
                       </div>
                       <p className="text-xs text-fg-tertiary truncate">
-                        {otherUser.email ?? "User"}
+                        {otherUser.email ?? t("userFallback")}
                       </p>
                     </div>
                   </button>
@@ -662,13 +666,13 @@ export function ChatClient({ userId }: { userId: string }) {
                 </button>
                 {showChatMenu && (
                   <div className="absolute right-0 top-full mt-1 bg-bg-elevated border border-white/10 rounded-xl shadow-xl z-50 py-1 min-w-[160px]">
-                    <button
-                      onClick={() => { setShowChatMenu(false); setConfirmDeleteChat(true); }}
-                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
-                    >
-                      <Trash2 size={15} />
-                      Delete Chat
-                    </button>
+                     <button
+                       onClick={() => { setShowChatMenu(false); setConfirmDeleteChat(true); }}
+                       className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                     >
+                       <Trash2 size={15} />
+                       {t("deleteChatTitle")}
+                     </button>
                   </div>
                 )}
               </div>
@@ -684,8 +688,8 @@ export function ChatClient({ userId }: { userId: string }) {
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                       </svg>
                     </div>
-                    <p className="text-sm font-medium text-fg-secondary">No messages yet</p>
-                    <p className="text-xs text-fg-tertiary mt-1">Start the conversation!</p>
+                    <p className="text-sm font-medium text-fg-secondary">{t("noMessagesYet")}</p>
+                    <p className="text-xs text-fg-tertiary mt-1">{t("startConversation")}</p>
                   </div>
                 </div>
               ) : (
@@ -699,7 +703,7 @@ export function ChatClient({ userId }: { userId: string }) {
                         message.senderImage ? (
                           <Image
                             src={message.senderImage}
-                            alt={message.senderName ?? "User"}
+                             alt={message.senderName ?? t("userFallback")}
                             width={28}
                             height={28}
                             className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover ring-2 ring-white/10 flex-shrink-0"
@@ -715,7 +719,7 @@ export function ChatClient({ userId }: { userId: string }) {
                       <div className={`max-w-[75%] sm:max-w-[70%] ${isOwn ? "items-end" : "items-start"} flex flex-col gap-0.5 sm:gap-1`}>
                         {showAvatar && !isOwn && (
                           <span className="text-xs font-medium text-fg-secondary px-2.5 sm:px-3">
-                            {message.senderName ?? "User"}
+                            {message.senderName ?? t("userFallback")}
                           </span>
                         )}
                         <div
@@ -758,7 +762,7 @@ export function ChatClient({ userId }: { userId: string }) {
                           })()}
                         </div>
                         <span className="text-xs text-fg-tertiary px-2.5 sm:px-3">
-                          {new Date(message.createdAt).toLocaleTimeString([], {
+                          {new Date(message.createdAt).toLocaleTimeString(timeLocale, {
                             hour: "2-digit",
                             minute: "2-digit",
                           })}
@@ -807,7 +811,7 @@ export function ChatClient({ userId }: { userId: string }) {
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploading}
                   className="p-2 sm:p-2.5 rounded-full hover:bg-bg-surface transition-colors text-accent-primary disabled:opacity-50"
-                  title="Attach files"
+                  title={t("attachFiles")}
                 >
                   <Paperclip size={18} className="sm:w-5 sm:h-5" />
                 </button>
@@ -821,7 +825,7 @@ export function ChatClient({ userId }: { userId: string }) {
                       doSend();
                     }
                   }}
-                  placeholder="Type a message..."
+                  placeholder={t("typeMessagePlaceholder")}
                   disabled={isUploading}
                   className="flex-1 text-sm bg-bg-surface shadow-sm rounded-full px-4 sm:px-5 py-2.5 sm:py-3 text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/30 disabled:opacity-50"
                 />
@@ -847,8 +851,8 @@ export function ChatClient({ userId }: { userId: string }) {
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-fg-primary mb-2">Your Messages</h3>
-              <p className="text-fg-secondary">Select a conversation to start chatting</p>
+              <h3 className="text-xl font-bold text-fg-primary mb-2">{t("yourMessages")}</h3>
+              <p className="text-fg-secondary">{t("selectConversationToStart")}</p>
             </div>
           </div>
         )}

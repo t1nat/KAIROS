@@ -52,7 +52,7 @@ export function SecuritySettingsClient() {
  setPinError(null);
  },
  onError: (e) => {
- const message = e instanceof Error ? e.message : "Failed to update reset PIN";
+  const message = e instanceof Error ? e.message : t("errors.updateResetPin");
  setPinError(message);
  },
  });
@@ -126,10 +126,10 @@ export function SecuritySettingsClient() {
  </div>
  <div className="flex-1">
  <div className="text-[17px] leading-[1.235] tracking-[-0.016em] text-fg-primary font-[590] mb-[1px]">
- Two-Factor Authentication
+  {t("twoFactor")}
  </div>
  <div className="text-[13px] leading-[1.3846] tracking-[-0.006em] text-fg-tertiary">
- Add an extra layer of security to your account
+  {t("twoFactorDesc")}
  </div>
  </div>
  </div>
@@ -180,10 +180,10 @@ export function SecuritySettingsClient() {
  </div>
  <div className="flex-1">
  <div className="text-[17px] leading-[1.235] tracking-[-0.016em] text-fg-primary font-[590] mb-[1px]">
- Keep Notes Unlocked
+  {t("notesKeepUnlocked")}
  </div>
  <div className="text-[13px] leading-[1.3846] tracking-[-0.006em] text-fg-tertiary">
- Encrypted notes stay unlocked until app is closed
+  {t("notesKeepUnlockedDesc")}
  </div>
  </div>
  </div>
@@ -227,14 +227,14 @@ export function SecuritySettingsClient() {
  </div>
  <div className="flex-1">
  <div className="text-[17px] leading-[1.235] tracking-[-0.016em] text-fg-primary font-[590] mb-[1px]">
- Reset PIN
+  {t("resetPin")}
  </div>
  <div className="text-[13px] leading-[1.3846] tracking-[-0.006em] text-fg-tertiary">
- Configure a secret PIN to reset locked note passwords
+  {t("resetPinDesc")}
  </div>
  <div className="text-[12px] leading-[1.3846] tracking-[-0.006em] text-fg-tertiary mt-1">
- Status: <span className={hasResetPin ? "text-green-600 dark:text-green-400" : "text-fg-tertiary"}>
- {hasResetPin ? "PIN configured" : "No PIN configured"}
+  {t("status")}: <span className={hasResetPin ? "text-green-600 dark:text-green-400" : "text-fg-tertiary"}>
+  {hasResetPin ? t("pinConfigured") : t("noPinConfigured")}
  </span>
  </div>
  </div>
@@ -243,7 +243,7 @@ export function SecuritySettingsClient() {
  <div className="space-y-3 pl-[43px]">
  <div>
  <label className="block text-[13px] leading-[1.3846] tracking-[-0.006em] text-fg-tertiary mb-2">
- New PIN (min 4 digits)
+  {t("newPin")}
  </label>
  <input
  type="password"
@@ -260,7 +260,7 @@ export function SecuritySettingsClient() {
 
  <div>
  <label className="block text-[13px] leading-[1.3846] tracking-[-0.006em] text-fg-tertiary mb-2">
- Confirm PIN
+  {t("confirmPin")}
  </label>
  <input
  type="password"
@@ -277,7 +277,7 @@ export function SecuritySettingsClient() {
 
  <div>
  <label className="block text-[13px] leading-[1.3846] tracking-[-0.006em] text-fg-tertiary mb-2">
- Hint (optional)
+  {t("hint")}
  </label>
  <input
  type="text"
@@ -285,7 +285,7 @@ export function SecuritySettingsClient() {
  value={hint}
  onChange={(e) => setHint(e.target.value)}
  className="w-full bg-bg-tertiary text-[15px] leading-[1.4667] tracking-[-0.012em] text-fg-primary rounded-[8px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent-primary/30 border border-white/[0.06]"
- placeholder="Shown when resetting note passwords"
+  placeholder={t("hintPlaceholder")}
  />
  </div>
 
@@ -299,7 +299,7 @@ export function SecuritySettingsClient() {
  type="button"
  onClick={() => {
  if (!pin || !confirmPin) {
- setPinError("Please enter and confirm your PIN");
+  setPinError(t("errors.pinRequired"));
  return;
  }
  void updateResetPin.mutate({ pin, confirmPin, hint });
@@ -312,7 +312,7 @@ export function SecuritySettingsClient() {
  }`}
  style={!(isBusy || updateResetPin.isPending) ? { backgroundColor: `rgb(var(--accent-primary))` } : undefined}
  >
- {updateResetPin.isPending ? "Saving..." : "Save Reset PIN"}
+  {updateResetPin.isPending ? t("saving") : t("saveResetPin")}
  </button>
  </div>
  </div>
@@ -333,10 +333,10 @@ export function SecuritySettingsClient() {
  </div>
  <div className="flex-1">
  <div className="text-[17px] leading-[1.235] tracking-[-0.016em] text-fg-primary font-[590] mb-[1px]">
- Sign Out
+  {t("signOut")}
  </div>
  <div className="text-[13px] leading-[1.3846] tracking-[-0.006em] text-fg-tertiary">
- End your current session
+  {t("sessionDesc")}
  </div>
  </div>
  </div>
@@ -350,7 +350,7 @@ export function SecuritySettingsClient() {
  : "bg-bg-tertiary text-fg-primary hover:bg-bg-tertiary/80 active:opacity-90"
  }`}
  >
- Sign Out
+  {t("signOut")}
  </button>
  </div>
  </div>
@@ -371,10 +371,10 @@ export function SecuritySettingsClient() {
  </div>
  <div className="flex-1">
  <div className="text-[17px] leading-[1.235] tracking-[-0.016em] text-red-700 dark:text-red-400 font-[590] mb-[1px]">
- Delete Account
+  {t("deleteAccount")}
  </div>
  <div className="text-[13px] leading-[1.3846] tracking-[-0.006em] text-red-600/80 dark:text-red-400/80">
- Permanently delete your account and all data
+  {t("deleteAccountDesc")}
  </div>
  </div>
  </div>
@@ -390,7 +390,7 @@ export function SecuritySettingsClient() {
  : "bg-red-500 dark:bg-red-600 text-white dark:text-white hover:bg-red-600 dark:hover:bg-red-700 active:opacity-90"
  }`}
  >
- Delete
+  {t("deleteAccount")}
  </button>
  ) : (
  <div className="flex w-full flex-col sm:w-auto sm:flex-row items-stretch sm:items-center gap-2">
@@ -404,7 +404,7 @@ export function SecuritySettingsClient() {
  : "bg-red-500 dark:bg-red-600 text-white dark:text-white hover:bg-red-600 dark:hover:bg-red-700 active:opacity-90"
  }`}
  >
- Confirm
+  {t("confirm")}
  </button>
  <button
  type="button"
@@ -416,7 +416,7 @@ export function SecuritySettingsClient() {
  : "bg-bg-tertiary text-fg-primary hover:bg-bg-tertiary/80 active:opacity-90"
  }`}
  >
- Cancel
+  {t("cancel")}
  </button>
  </div>
  )}

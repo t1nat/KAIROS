@@ -37,7 +37,7 @@ export function AppearanceSettings() {
  }, []);
 
  if (!mounted) {
- return (
+  return (
  <div className="w-full h-full overflow-y-auto bg-bg-primary">
  <div className="w-full">
  <div className="animate-pulse">
@@ -251,13 +251,15 @@ export function AppearanceSettings() {
  </div>
  <div>
  <div className="text-[13px] leading-[1.3846] tracking-[-0.006em] text-fg-secondary mb-[1px]">
- Current Theme
- </div>
- <div className="text-[15px] leading-[1.4667] tracking-[-0.012em] text-fg-primary font-[590]">
- {theme === 'system' 
- ? `System (${currentTheme === 'dark' ? 'Dark' : 'Light'})` 
- : theme === 'dark' ? 'Dark' : 'Light'}
- </div>
+ {t("appearance.currentTheme")}
+  </div>
+  <div className="text-[15px] leading-[1.4667] tracking-[-0.012em] text-fg-primary font-[590]">
+ {theme === "system"
+   ? t("appearance.systemWithTheme", { mode: currentTheme === "dark" ? t("appearance.dark") : t("appearance.light") })
+   : theme === "dark"
+     ? t("appearance.dark")
+     : t("appearance.light")}
+  </div>
  </div>
  </div>
  </div>

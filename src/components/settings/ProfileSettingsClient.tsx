@@ -23,7 +23,7 @@ interface ProfileSettingsClientProps {
 
 export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
  const useT = useTranslations as unknown as (namespace: string) => Translator;
- const t = useT("settings");
+  const t = useT("settings");
  const { formatDate: formatDatePref } = useDateFormat();
  const utils = api.useUtils();
  const { update: updateSession, status } = useSession();
@@ -157,7 +157,8 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
  return formatDatePref(new Date(createdAt), "withYear");
  };
 
- const joinedDate = getJoinedDate();
+  const joinedDate = getJoinedDate();
+  const imageFormatsText = `${t("profile.imageFormats")} ${t("profile.imageMaxSize", { size: "4MB" })}`;
 
  return (
  <div className="w-full h-full overflow-y-auto bg-bg-primary">
@@ -205,7 +206,7 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
  })()}
  </div>
  <div className="text-[15px] leading-[1.4667] tracking-[-0.012em] text-fg-primary font-[590]">
- JPG, PNG or GIF. Max size 4MB.
+  {imageFormatsText}
  </div>
  </div>
  </div>
@@ -434,8 +435,8 @@ export function ProfileSettingsClient({ user }: ProfileSettingsClientProps) {
  disabled={isSaving}
  className="ml-auto px-4 py-2 rounded-[8px] text-[14px] leading-[1.4286] tracking-[-0.012em] font-[590] transition-all duration-200 bg-bg-tertiary text-fg-primary hover:bg-bg-tertiary/80 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
  >
- Abort Changes
- </button>
+  {t("security.cancel")}
+  </button>
  </div>
  </div>
  </div>

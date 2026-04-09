@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { Camera, Upload } from "lucide-react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 interface ImageUploadProps {
   imagePreview: string;
@@ -23,6 +24,7 @@ export function ImageUpload({
   description,
   size = "md"
 }: ImageUploadProps) {
+  const t = useTranslations("settings.profile");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,7 +91,7 @@ export function ImageUpload({
             className="flex items-center gap-2 px-6 py-2 font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-fg-primary text-bg-primary hover:bg-fg-primary/90 dark:bg-bg-surface dark:text-fg-primary dark:hover:bg-bg-elevated shadow-sm"
           >
             <Upload size={18} />
-            {isUploading ? "Uploading..." : "Upload New Picture"}
+            {isUploading ? t("uploading") : t("uploadImage")}
           </button>
           <p className="text-xs text-fg-secondary mt-2">
             {description}

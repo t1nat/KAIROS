@@ -29,6 +29,7 @@ import { api } from "~/trpc/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { CreateEventForm } from "~/components/events/CreateEventForm";
 import { EditEventForm } from "~/components/events/EditEventForm";
 import { useSocketEvent } from "~/lib/useSocketEvent";
@@ -238,6 +239,7 @@ const InfoMessageToast: React.FC<{
 };
 
 const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> = ({ event, onClose }) => {
+  const t = useTranslations("publish");
   const { formatDate: formatDatePref } = useDateFormat();
   const totalRsvps = event.rsvpCounts.going + event.rsvpCounts.maybe + event.rsvpCounts.notGoing;
   const goingPercentage = totalRsvps > 0 ? (event.rsvpCounts.going / totalRsvps) * 100 : 0;
@@ -256,7 +258,7 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-accent-primary/20 rounded-lg flex items-center justify-center">
               <BarChart3 size={18} className="sm:w-5 sm:h-5 text-accent-primary" />
             </div>
-            <h2 className="text-lg sm:text-xl font-bold text-fg-primary">Responses Dashboard</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-fg-primary">{t("responsesDashboard")}</h2>
           </div>
           <button
             onClick={onClose}
@@ -269,7 +271,7 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
           <div className="dark:bg-bg-secondary bg-slate-50 rounded-xl p-4 sm:p-5 border dark:border-white/[0.06] border-slate-200">
             <div className="flex items-center gap-3 mb-2">
               <Users className="text-accent-primary" size={20} />
-              <h3 className="text-base sm:text-lg font-semibold text-fg-primary">Total Responses</h3>
+              <h3 className="text-base sm:text-lg font-semibold text-fg-primary">{t("totalResponses")}</h3>
             </div>
             <p className="text-3xl sm:text-4xl font-bold text-accent-primary mt-2">{totalRsvps}</p>
           </div>
@@ -277,14 +279,14 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-accent-primary flex items-center gap-2">
               <TrendingUp size={16} className="text-accent-primary" />
-              Response Breakdown
+              {t("responseBreakdown")}
             </h3>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 size={16} className="text-accent-primary" />
-                  <span className="text-fg-secondary font-medium">Going</span>
+                  <span className="text-fg-secondary font-medium">{t("going")}</span>
                 </div>
                 <span className="text-fg-primary font-semibold">{event.rsvpCounts.going}</span>
               </div>
@@ -301,7 +303,7 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
                   <HelpCircle size={16} className="text-accent-primary/70" />
-                  <span className="text-fg-secondary font-medium">Maybe</span>
+                  <span className="text-fg-secondary font-medium">{t("maybe")}</span>
                 </div>
                 <span className="text-fg-primary font-semibold">{event.rsvpCounts.maybe}</span>
               </div>
@@ -318,7 +320,7 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
                   <XCircle size={16} className="text-accent-primary/50" />
-                  <span className="text-fg-secondary font-medium">Can&apos;t Go</span>
+                  <span className="text-fg-secondary font-medium">{t("cantGo")}</span>
                 </div>
                 <span className="text-fg-primary font-semibold">{event.rsvpCounts.notGoing}</span>
               </div>
@@ -333,7 +335,7 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
           </div>
 
           <div className="dark:bg-bg-secondary bg-slate-50 rounded-xl p-4 border dark:border-white/[0.06] border-slate-200">
-            <h4 className="text-sm font-semibold text-accent-primary mb-2">Event Details</h4>
+            <h4 className="text-sm font-semibold text-accent-primary mb-2">{t("eventDetails")}</h4>
             <p className="text-fg-primary font-medium mb-1">{event.title}</p>
             <div className="flex items-center gap-2 text-xs text-accent-primary/60">
               <Calendar size={14} className="text-accent-primary" />
@@ -347,6 +349,7 @@ const RsvpDashboard: React.FC<{ event: EventWithDetails; onClose: () => void }> 
 };
 
 const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
+  const t = useTranslations("publish");
   const router = useRouter();
   const { data: session } = useSession();
   const { formatDate: formatDatePref } = useDateFormat();
@@ -414,7 +417,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
     onSuccess: () => {
       setShowDashboard(false);
       setDeleteEventArmed(false);
-      setInfoMessage({ message: "Event deleted", type: "info" });
+      setInfoMessage({ message: t("eventDeleted"), type: "info" });
     },
     onSettled: () => {
       void utils.event.getPublicEvents.invalidate();
@@ -429,7 +432,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
 
   const handleLike = () => {
     if (!session) {
-      setInfoMessage({ message: "Please sign in to like events", type: "error" });
+      setInfoMessage({ message: t("signInToLike"), type: "error" });
       return;
     }
     toggleLike.mutate({ eventId: event.id });
@@ -437,13 +440,13 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
 
   const handleBellClick = () => {
     if (!session) {
-      setInfoMessage({ message: "Please sign in to manage event notifications", type: "error" });
+      setInfoMessage({ message: t("signInToManageNotifications"), type: "error" });
       return;
     }
 
     if (!event.enableRsvp) {
       setInfoMessage({
-        message: "Like and comment notifications are sent to the event author automatically.",
+        message: t("likeCommentNotificationsAuto"),
         type: "info",
       });
       return;
@@ -454,7 +457,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
 
   const handleRsvpClick = (status: "going" | "maybe" | "not_going") => {
     if (!session) {
-      setInfoMessage({ message: "Please sign in to RSVP", type: "error" });
+      setInfoMessage({ message: t("signInToRsvp"), type: "error" });
       return;
     }
     updateRsvp.mutate({ eventId: event.id, status });
@@ -476,14 +479,20 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
     });
     setShowReminderPicker(false);
     if (minutes !== null) {
-      setInfoMessage({ message: `Reminder set for ${minutes >= 1440 ? `${minutes / 1440} day(s)` : minutes >= 60 ? `${minutes / 60} hour(s)` : `${minutes} min`} before`, type: "info" });
+      const timeLabel =
+        minutes >= 1440
+          ? t("reminderDays", { count: minutes / 1440 })
+          : minutes >= 60
+            ? t("reminderHours", { count: minutes / 60 })
+            : t("reminderMinutes", { count: minutes });
+      setInfoMessage({ message: t("reminderSet", { time: timeLabel }), type: "info" });
     }
   };
 
   const handleAddComment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!session) {
-      setInfoMessage({ message: "Please sign in to comment", type: "error" });
+      setInfoMessage({ message: t("signInToComment"), type: "error" });
       return;
     }
     if (!commentText.trim()) return;
@@ -496,7 +505,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
 
   const handleDeleteEvent = () => {
     if (!session) {
-      setInfoMessage({ message: "Please sign in to delete events", type: "error" });
+      setInfoMessage({ message: t("signInToDelete"), type: "error" });
       return;
     }
 
@@ -504,7 +513,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
 
     if (!deleteEventArmed) {
       setDeleteEventArmed(true);
-      setInfoMessage({ message: "Click again to delete event", type: "info" });
+      setInfoMessage({ message: t("deleteConfirm"), type: "info" });
       return;
     }
 
@@ -515,9 +524,9 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
     const eventUrl = `${window.location.origin}/publish?event=${event.id}`;
     try {
       await navigator.clipboard.writeText(eventUrl);
-      setInfoMessage({ message: "Link copied to clipboard!", type: "info" });
+      setInfoMessage({ message: t("linkCopied"), type: "info" });
     } catch {
-      setInfoMessage({ message: "Failed to copy link", type: "error" });
+      setInfoMessage({ message: t("failedToCopyLink"), type: "error" });
     }
   };
 
@@ -585,7 +594,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium dark:text-gray-300 text-slate-600 dark:hover:bg-white/5 hover:bg-slate-50 transition-colors"
                       >
                         <Pencil size={15} />
-                        Edit Event
+                        {t("edit.title")}
                       </button>
                       <button
                         onClick={() => {
@@ -601,12 +610,12 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                         }`}
                       >
                         <Trash2 size={15} />
-                        {deleteEventArmed ? "Confirm Delete" : "Delete Event"}
+                        {deleteEventArmed ? t("confirmDeleteEvent") : t("deleteEvent")}
                       </button>
                     </>
                   )}
                   {!event.isOwner && (
-                    <p className="px-3 py-2.5 text-xs text-fg-tertiary">No actions available</p>
+                    <p className="px-3 py-2.5 text-xs text-fg-tertiary">{t("noActionsAvailable")}</p>
                   )}
                 </div>
               </>
@@ -640,7 +649,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
             <span>{getRegionLabel(event.region)}</span>
           </div>
           {isPastEvent && (
-            <span className="px-1.5 py-0.5 bg-fg-tertiary/10 rounded text-[10px] text-fg-tertiary">Past</span>
+            <span className="px-1.5 py-0.5 bg-fg-tertiary/10 rounded text-[10px] text-fg-tertiary">{t("past")}</span>
           )}
         </div>
 
@@ -671,19 +680,19 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
             <button
               onClick={() => {
                 if (!session) {
-                  setInfoMessage({ message: "Please sign in to message event creators", type: "error" });
+                  setInfoMessage({ message: t("signInToMessageCreators"), type: "error" });
                   return;
                 }
                 startDirectChat.mutate({ otherUserId: event.createdById });
               }}
               disabled={startDirectChat.isPending}
               className="flex items-center gap-1.5 text-accent-primary/50 hover:text-accent-primary transition-colors"
-              aria-label="Message creator"
-              title="Message creator"
+              aria-label={t("messageCreator")}
+              title={t("messageCreator")}
             >
               <MessageCircle size={20} />
               <span className="text-xs font-semibold">
-                {startDirectChat.isPending ? "Opening..." : "Message"}
+                {startDirectChat.isPending ? t("opening") : t("message")}
               </span>
             </button>
           )}
@@ -702,8 +711,8 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                 ? "text-accent-primary"
                 : "text-accent-primary/50 hover:text-accent-primary"
             }`}
-            aria-label="Event notifications"
-            title="Event notifications"
+            aria-label={t("eventNotifications")}
+            title={t("eventNotifications")}
           >
             <Bell size={20} className={showReminderPicker ? "fill-current" : ""} />
           </button>
@@ -713,13 +722,13 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
         {event.enableRsvp && (
           <div className="px-4 pb-2">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-accent-primary uppercase tracking-wider">RSVP</span>
+              <span className="text-xs font-medium text-accent-primary uppercase tracking-wider">{t("rsvp")}</span>
               {event.isOwner && (
                 <button
                   onClick={() => setShowDashboard(true)}
                   className="flex items-center gap-1 text-xs text-accent-primary font-medium">
                   <BarChart3 size={12} />
-                  Stats
+                  {t("stats")}
                 </button>
               )}
             </div>
@@ -734,7 +743,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                 }`}
               >
                 <CheckCircle2 size={12} />
-                Going ({event.rsvpCounts.going})
+                {t("going")} ({event.rsvpCounts.going})
               </button>
               <button
                 onClick={() => handleRsvpClick("maybe")}
@@ -746,7 +755,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                 }`}
               >
                 <HelpCircle size={12} />
-                Maybe ({event.rsvpCounts.maybe})
+                {t("maybe")} ({event.rsvpCounts.maybe})
               </button>
               <button
                 onClick={() => handleRsvpClick("not_going")}
@@ -758,7 +767,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                 }`}
               >
                 <XCircle size={12} />
-                Can&apos;t ({event.rsvpCounts.notGoing})
+                {t("cantGo")} ({event.rsvpCounts.notGoing})
               </button>
             </div>
 
@@ -768,7 +777,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-medium text-accent-primary flex items-center gap-1">
                     <Bell size={12} className="text-accent-primary" />
-                    Get notified before event?
+                    {t("getNotified")}
                   </span>
                   <button
                     onClick={() => setShowReminderPicker(false)}
@@ -797,7 +806,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                     onClick={() => handleSetReminder(null)}
                     className="px-2.5 py-1 rounded-md text-xs font-medium bg-accent-primary/5 text-accent-primary/60 hover:bg-accent-primary/10 hover:text-accent-primary transition-colors"
                   >
-                    No thanks
+                    {t("noThanks")}
                   </button>
                 </div>
               </div>
@@ -811,7 +820,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
             <button
               onClick={() => setShowAllComments(true)}
               className="text-xs text-accent-primary mb-2 block">
-              View all {sortedComments.length} comments
+              {t("viewAllComments", { count: sortedComments.length })}
             </button>
           )}
 
@@ -827,7 +836,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                 <button
                   onClick={() => setShowAllComments(false)}
                   className="text-xs text-accent-primary">
-                  Show less
+                  {t("showLess")}
                 </button>
               )}
             </div>
@@ -846,7 +855,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                     handleAddComment(e);
                   }
                 }}
-                placeholder="Add a comment..."
+                placeholder={t("addComment")}
                 className="flex-1 bg-transparent text-sm dark:text-white text-slate-800 dark:placeholder:text-fg-tertiary placeholder:text-slate-400 focus:outline-none py-1"
                 disabled={addComment.isPending}
               />
@@ -857,7 +866,7 @@ const EventCard: React.FC<{ event: EventWithDetails }> = ({ event }) => {
                 {addComment.isPending ? (
                   <Loader2 className="animate-spin" size={14} />
                 ) : (
-                  "Post"
+                  t("post")
                 )}
               </button>
             </div>
@@ -907,6 +916,7 @@ interface EventFeedProps {
 }
 
 export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false, externalRegion, hideRegionFilter = false }) => {
+  const t = useTranslations("publish");
   const { data: session } = useSession();
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [showForm, setShowForm] = useState(false);
@@ -988,7 +998,7 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false, ex
     return (
       <div className="text-center py-20">
         <Loader2 className="animate-spin w-12 h-12 text-accent-primary mx-auto mb-4" />
-        <p className="text-fg-secondary">Loading events...</p>
+        <p className="text-fg-secondary">{t("loadingEvents")}</p>
       </div>
     );
   }
@@ -1000,7 +1010,7 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false, ex
           <AlertCircle size={32} className="text-accent-primary" />
         </div>
         <h3 className="text-xl font-semibold text-fg-primary mb-2">
-          Error Loading Events
+          {t("errorLoadingEvents")}
         </h3>
         <p className="text-fg-secondary">{error.message}</p>
       </div>
@@ -1036,7 +1046,7 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false, ex
               <div className="flex-1">
                 <textarea
                   className="w-full bg-transparent border-none focus:ring-0 text-base resize-none placeholder:text-fg-tertiary text-fg-primary"
-                  placeholder="What are you planning today?"
+                  placeholder={t("composerPlaceholder")}
                   rows={2}
                   onFocus={() => setShowForm(true)}
                 />
@@ -1048,7 +1058,7 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false, ex
                 type="button"
                 className="text-accent-primary font-semibold text-sm hover:text-accent-hover transition-colors underline underline-offset-2 decoration-accent-primary/40 hover:decoration-accent-primary"
               >
-                Post Event
+                {t("postEvent")}
               </button>
             </div>
           </div>
@@ -1078,7 +1088,7 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false, ex
                 : 'bg-bg-secondary text-fg-secondary hover:bg-accent-primary/10 hover:text-accent-primary dark:border-white/5 border border-slate-200'
             }`}
           >
-            All
+            {t("allRegions")}
           </button>
           {REGIONS.filter(r => r.value !== '').map((region) => (
             <button
@@ -1103,11 +1113,11 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false, ex
           <div className="w-16 h-16 bg-accent-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <Calendar size={32} className="text-accent-primary" />
           </div>
-          <h3 className="text-xl font-semibold text-fg-primary mb-2">No Events Found</h3>
+          <h3 className="text-xl font-semibold text-fg-primary mb-2">{t("noEventsTitle")}</h3>
           <p className="text-fg-secondary text-sm">
             {selectedRegion
-              ? `No events currently listed for ${REGIONS.find((r) => r.value === selectedRegion)?.label}.`
-              : `Create your first event to get started!`}
+              ? t("noEventsRegion", { region: REGIONS.find((r) => r.value === selectedRegion)?.label ?? selectedRegion })
+              : t("noEventsDefault")}
           </p>
         </div>
       ) : (
@@ -1129,13 +1139,13 @@ export const EventFeed: React.FC<EventFeedProps> = ({ showCreateForm = false, ex
           {isFetchingNextPage && (
             <div className="text-center py-8">
               <Loader2 className="animate-spin w-8 h-8 text-accent-primary mx-auto mb-2" />
-              <p className="text-fg-secondary text-sm">Loading more events...</p>
+              <p className="text-fg-secondary text-sm">{t("loadingMoreEvents")}</p>
             </div>
           )}
 
           {!hasNextPage && filteredEvents.length > 0 && (
             <div className="text-center py-6">
-              <p className="text-fg-tertiary text-sm">You're all caught up.</p>
+              <p className="text-fg-tertiary text-sm">{t("allCaughtUp")}</p>
             </div>
           )}
         </div>

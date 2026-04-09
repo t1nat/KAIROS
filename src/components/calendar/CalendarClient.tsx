@@ -16,6 +16,7 @@ import {
   Filter,
 } from "lucide-react";
 import { cn } from "~/lib/utils";
+import { useLocale, useTranslations } from "next-intl";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                             */
@@ -101,13 +102,19 @@ function endOfWeekMondayLocal(d: Date) {
   return x;
 }
 
-// Use a fixed locale to prevent SSR/client hydration mismatch
-const LOCALE = "en-US";
-function fmtDate(d: Date, opts: Intl.DateTimeFormatOptions) {
-  return d.toLocaleDateString(LOCALE, opts);
-}
-
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEKDAYS = ["weekdaySun", "weekdayMon", "weekdayTue", "weekdayWed", "weekdayThu", "weekdayFri", "weekdaySat"] as const;
+const STATUS_LABEL_KEYS: Record<string, string> = {
+  pending: "statusPending",
+  in_progress: "statusInProgress",
+  blocked: "statusBlocked",
+  completed: "statusCompleted",
+};
+const PRIORITY_LABEL_KEYS: Record<string, string> = {
+  urgent: "priorityUrgent",
+  high: "priorityHigh",
+  medium: "priorityMedium",
+  low: "priorityLow",
+};
 
 const priorityConfig: Record<string, { dot: string; bg: string; border: string; text: string; label: string }> = {
   urgent: { dot: "bg-error", bg: "bg-error/8", border: "border-l-error", text: "text-error", label: "Urgent" },
@@ -159,6 +166,10 @@ const DEFAULT_FILTERS: Filters = {
 };
 
 export function CalendarClient() {
+  const t = useTranslations("calendar.filters");
+  const locale = useLocale();
+  const dateLocale = locale === "bg" ? "bg-BG" : "en-US";
+  const fmtDate = useCallback((d: Date, opts: Intl.DateTimeFormatOptions) => d.toLocaleDateString(dateLocale, opts), [dateLocale]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [expandedItem, setExpandedItem] = useState<{ kind: string; id: number } | null>(null);
@@ -282,7 +293,7 @@ export function CalendarClient() {
       const d = new Date(n.calendarDate);
       const k = key(d);
       if (!map.has(k)) map.set(k, []);
-      map.get(k)!.push({ kind: "note", id: n.id, title: n.title ?? "Untitled note", locked: !!n.passwordHash, date: d });
+      map.get(k)!.push({ kind: "note", id: n.id, title: n.title ?? t("untitledNote"), locked: !!n.passwordHash, date: d });
     }
 
     return map;
@@ -306,11 +317,11 @@ export function CalendarClient() {
     }
     for (const n of data?.notes ?? []) {
       if (!n.calendarDate) continue;
-      items.push({ kind: "note", id: n.id, title: n.title ?? "Untitled note", locked: !!n.passwordHash, date: new Date(n.calendarDate) });
+      items.push({ kind: "note", id: n.id, title: n.title ?? t("untitledNote"), locked: !!n.passwordHash, date: new Date(n.calendarDate) });
     }
     items.sort((a, b) => a.date.getTime() - b.date.getTime());
     return items;
-  }, [data]);
+  }, [data, t]);
 
   const filteredAllMonthItems = useMemo(() => {
     const q = filters.q.trim().toLowerCase();
@@ -431,14 +442,14 @@ export function CalendarClient() {
               onClick={() => { setSelectedDate(null); setExpandedItem(null); }}
               className="px-3 py-2 rounded-xl text-sm font-medium text-fg-secondary hover:text-fg-primary hover:bg-bg-secondary transition-colors"
             >
-              Show all
+                {t("showAll")}
             </button>
           )}
           <button
             onClick={goToToday}
             className="px-4 py-2 rounded-xl text-sm font-medium bg-accent-primary/10 text-accent-primary border border-accent-primary/20 hover:bg-accent-primary/20 transition-colors"
           >
-            Today
+            {t("today")}
           </button>
         </div>
       </div>
@@ -452,7 +463,7 @@ export function CalendarClient() {
                 <input
                   value={filters.q}
                   onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
-                  placeholder="Search"
+                  placeholder={t("searchPlaceholder")}
                   className="w-[260px] max-w-[70vw] px-3 py-2 rounded-xl bg-bg-primary border border-white/[0.06] text-sm text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
                 />
               </div>
@@ -466,7 +477,7 @@ export function CalendarClient() {
                 )}
               >
                 <Filter size={16} />
-                Filters
+                {t("filters")}
               </button>
             </div>
 
@@ -494,7 +505,7 @@ export function CalendarClient() {
                 )}
                 aria-pressed={filters.types.has(k)}
               >
-                {k === "task" ? "Tasks" : k === "event" ? "Events" : "Notes"}
+                {k === "task" ? t("tasks") : k === "event" ? t("events") : t("notes")}
               </button>
             ))}
 
@@ -513,7 +524,7 @@ export function CalendarClient() {
                 )}
                 aria-pressed={filters.view === v}
               >
-                {v === "day" ? "Day" : v === "week" ? "Week" : "Month"}
+                {v === "day" ? t("day") : v === "week" ? t("week") : t("month")}
               </button>
             ))}
             </div>
@@ -523,11 +534,11 @@ export function CalendarClient() {
           <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-2">
               {([
-                ["today", "Today"],
-                ["yesterday", "Yesterday"],
-                ["tomorrow", "Tomorrow"],
-                ["this_week", "This week"],
-                ["last_week", "Last week"],
+                ["today", t("today")],
+                ["yesterday", t("yesterday")],
+                ["tomorrow", t("tomorrow")],
+                ["this_week", t("thisWeek")],
+                ["last_week", t("lastWeek")],
               ] as const).map(([preset, label]) => (
                 <button
                   key={preset}
@@ -563,14 +574,14 @@ export function CalendarClient() {
                 )}
                 aria-pressed={filters.datePreset === "custom"}
               >
-                Custom
+                {t("custom")}
               </button>
             </div>
 
             {filters.datePreset === "custom" && (
               <div className="flex flex-wrap items-center gap-2">
                 <div className="flex items-center gap-2">
-                  <label className="text-[11px] font-bold text-fg-secondary">From</label>
+                  <label className="text-[11px] font-bold text-fg-secondary">{t("from")}</label>
                   <input
                     type="date"
                     value={filters.customFrom}
@@ -579,7 +590,7 @@ export function CalendarClient() {
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                  <label className="text-[11px] font-bold text-fg-secondary">To</label>
+                  <label className="text-[11px] font-bold text-fg-secondary">{t("to")}</label>
                   <input
                     type="date"
                     value={filters.customTo}
@@ -591,8 +602,10 @@ export function CalendarClient() {
             )}
 
             <div className="text-[11px] text-fg-tertiary">
-              Showing items from <span className="text-fg-secondary font-medium">{fmtDate(from, { month: "short", day: "numeric", year: "numeric" })}</span> to{" "}
-              <span className="text-fg-secondary font-medium">{fmtDate(to, { month: "short", day: "numeric", year: "numeric" })}</span> (local timezone)
+              {t("showingRange", {
+                from: fmtDate(from, { month: "short", day: "numeric", year: "numeric" }),
+                to: fmtDate(to, { month: "short", day: "numeric", year: "numeric" }),
+              })}
             </div>
           </div>
         </div>
@@ -600,7 +613,7 @@ export function CalendarClient() {
         {showFilters && (
           <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="rounded-xl border border-white/[0.06] bg-bg-primary p-3">
-              <div className="text-[11px] font-bold text-fg-secondary mb-2">Task status</div>
+              <div className="text-[11px] font-bold text-fg-secondary mb-2">{t("taskStatus")}</div>
               <div className="flex flex-wrap gap-2">
                 {(["pending", "in_progress", "blocked", "completed"] as const).map((s) => (
                   <button
@@ -621,14 +634,14 @@ export function CalendarClient() {
                     )}
                     aria-pressed={filters.taskStatuses.has(s)}
                   >
-                    {s.replace("_", " ")}
+                    {t(STATUS_LABEL_KEYS[s] ?? "statusPending")}
                   </button>
                 ))}
               </div>
             </div>
 
             <div className="rounded-xl border border-white/[0.06] bg-bg-primary p-3">
-              <div className="text-[11px] font-bold text-fg-secondary mb-2">Priority</div>
+              <div className="text-[11px] font-bold text-fg-secondary mb-2">{t("priority")}</div>
               <div className="flex flex-wrap gap-2">
                 {(["urgent", "high", "medium", "low"] as const).map((p) => (
                   <button
@@ -649,7 +662,7 @@ export function CalendarClient() {
                     )}
                     aria-pressed={filters.priorities.has(p)}
                   >
-                    {p}
+                    {t(PRIORITY_LABEL_KEYS[p] ?? "priorityMedium")}
                   </button>
                 ))}
               </div>
@@ -670,7 +683,7 @@ export function CalendarClient() {
                   key={day}
                   className="py-2.5 text-center text-[10px] font-bold uppercase tracking-wider text-fg-tertiary"
                 >
-                  {day}
+                  {t(day)}
                 </div>
               ))}
             </div>
@@ -743,7 +756,7 @@ export function CalendarClient() {
                         ))}
                         {dayItems.length > 2 && (
                           <span className="text-[9px] text-fg-tertiary pl-1">
-                            +{dayItems.length - 2} more
+                            {t("moreCount", { count: dayItems.length - 2 })}
                           </span>
                         )}
                       </div>
@@ -762,18 +775,18 @@ export function CalendarClient() {
               <h3 className="text-[14px] font-bold text-fg-primary">
                 {selectedDate
                   ? fmtDate(selectedDate, { weekday: "short", month: "short", day: "numeric" })
-                  : "All items"}
+                  : t("allItems")}
               </h3>
               <span className="text-[11px] text-fg-tertiary font-medium">
-                {rightPanelItems.length} item{rightPanelItems.length !== 1 ? "s" : ""}
+                {t("itemsCount", { count: rightPanelItems.length })}
               </span>
             </div>
 
             {isLoading ? (
-              <div className="py-10 text-center text-fg-tertiary text-sm">Loading...</div>
+               <div className="py-10 text-center text-fg-tertiary text-sm">{t("loading")}</div>
             ) : rightPanelItems.length === 0 ? (
               <div className="py-10 text-center text-fg-tertiary text-sm">
-                {selectedDate ? "Nothing scheduled for this day." : "No items this month."}
+                 {selectedDate ? t("noItemsDay") : t("noItemsMonth")}
               </div>
             ) : (
               <div className="space-y-2">
@@ -826,7 +839,7 @@ export function CalendarClient() {
                               <div className="flex items-center gap-2 mt-0.5">
                                 <span className="flex items-center gap-1 text-[10px]">
                                   <span className={cn("w-1.5 h-1.5 rounded-full", prio.dot)} />
-                                  <span className={prio.text}>{prio.label}</span>
+                                   <span className={prio.text}>{t(PRIORITY_LABEL_KEYS[item.priority] ?? "priorityMedium")}</span>
                                 </span>
                                 {!selectedDate && (
                                   <span className="text-[10px] text-fg-tertiary">
@@ -847,7 +860,7 @@ export function CalendarClient() {
                                       : "bg-fg-quaternary/10 text-fg-secondary",
                               )}
                             >
-                              {item.status.replace("_", " ")}
+                               {t(STATUS_LABEL_KEYS[item.status] ?? "statusPending")}
                             </span>
                           </div>
                         </button>
@@ -869,23 +882,23 @@ export function CalendarClient() {
                               {item.projectTitle && (
                                 <div className="flex items-center gap-2 text-[12px]">
                                   <FolderOpen size={13} className="text-accent-primary shrink-0" />
-                                  <span className="text-fg-secondary">Project:</span>
+                                   <span className="text-fg-secondary">{t("projectLabel")}</span>
                                   <span className="text-fg-primary font-medium">{item.projectTitle}</span>
                                 </div>
                               )}
                               <div className="flex items-center gap-2 text-[12px]">
                                 <StatusIcon size={13} className="text-fg-tertiary shrink-0" />
-                                <span className="text-fg-secondary">Status:</span>
-                                <span className="text-fg-primary font-medium capitalize">{item.status.replace("_", " ")}</span>
+                                 <span className="text-fg-secondary">{t("statusLabel")}</span>
+                                 <span className="text-fg-primary font-medium capitalize">{t(STATUS_LABEL_KEYS[item.status] ?? "statusPending")}</span>
                               </div>
                               <div className="flex items-center gap-2 text-[12px]">
                                 <span className={cn("w-2 h-2 rounded-full shrink-0", prio.dot)} />
-                                <span className="text-fg-secondary">Priority:</span>
-                                <span className={cn("font-medium", prio.text)}>{prio.label}</span>
+                                 <span className="text-fg-secondary">{t("priorityLabel")}</span>
+                                 <span className={cn("font-medium", prio.text)}>{t(PRIORITY_LABEL_KEYS[item.priority] ?? "priorityMedium")}</span>
                               </div>
                               <div className="flex items-center gap-2 text-[12px]">
                                 <CalendarDays size={13} className="text-fg-tertiary shrink-0" />
-                                <span className="text-fg-secondary">Due:</span>
+                                 <span className="text-fg-secondary">{t("dueLabel")}</span>
                                 <span className="text-fg-primary font-medium">
                                   {fmtDate(item.date, { weekday: "short", month: "long", day: "numeric", year: "numeric" })}
                                 </span>
@@ -919,8 +932,8 @@ export function CalendarClient() {
                                 {item.title}
                               </p>
                               <span className="text-[10px] text-info font-medium">
-                                Note
-                                {item.locked && <span className="text-fg-tertiary ml-2">Locked</span>}
+                                {t("noteType")}
+                                {item.locked && <span className="text-fg-tertiary ml-2">{t("locked")}</span>}
                                 {!selectedDate && (
                                   <span className="text-fg-tertiary ml-2">
                                     {fmtDate(item.date, { month: "short", day: "numeric" })}
@@ -946,18 +959,18 @@ export function CalendarClient() {
                             <div className="space-y-2">
                               <div className="flex items-center gap-2 text-[12px]">
                                 <StickyNote size={13} className="text-info shrink-0" />
-                                <span className="text-fg-secondary">Type:</span>
-                                <span className="text-fg-primary font-medium">Note</span>
+                                <span className="text-fg-secondary">{t("typeLabel")}</span>
+                                <span className="text-fg-primary font-medium">{t("noteType")}</span>
                               </div>
                               <div className="flex items-center gap-2 text-[12px]">
                                 <CalendarDays size={13} className="text-fg-tertiary shrink-0" />
-                                <span className="text-fg-secondary">Date:</span>
+                                <span className="text-fg-secondary">{t("dateLabel")}</span>
                                 <span className="text-fg-primary font-medium">
                                   {fmtDate(item.date, { weekday: "short", month: "long", day: "numeric", year: "numeric" })}
                                 </span>
                               </div>
                               {item.locked && (
-                                <div className="text-[12px] text-fg-tertiary">This note is password protected.</div>
+                                <div className="text-[12px] text-fg-tertiary">{t("notePasswordProtected")}</div>
                               )}
                             </div>
                           </div>
@@ -988,7 +1001,7 @@ export function CalendarClient() {
                               {item.title}
                             </p>
                             <span className="text-[10px] text-warning font-medium">
-                              Event
+                              {t("eventType")}
                               {!selectedDate && (
                                 <span className="text-fg-tertiary ml-2">
                                   {fmtDate(item.date, { month: "short", day: "numeric" })}
@@ -1014,7 +1027,7 @@ export function CalendarClient() {
                           <div className="space-y-2">
                             <div className="flex items-center gap-2 text-[12px]">
                               <CalendarDays size={13} className="text-warning shrink-0" />
-                              <span className="text-fg-secondary">Date:</span>
+                               <span className="text-fg-secondary">{t("dateLabel")}</span>
                               <span className="text-fg-primary font-medium">
                                 {fmtDate(item.date, { weekday: "short", month: "long", day: "numeric", year: "numeric" })}
                               </span>

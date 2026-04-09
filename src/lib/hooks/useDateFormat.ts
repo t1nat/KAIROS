@@ -2,6 +2,8 @@
 
 import { useCallback } from "react";
 import { format as fnsFormat } from "date-fns";
+import { bg, enUS } from "date-fns/locale";
+import { useLocale } from "next-intl";
 import { api } from "~/trpc/react";
 
 type DateFormatPreference = "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD";
@@ -19,8 +21,8 @@ const SHORT_FORMAT_MAP: Record<DateFormatPreference, string> = {
 };
 
 const LONG_FORMAT_MAP: Record<DateFormatPreference, string> = {
-  "MM/DD/YYYY": "MMMM d, yyyy 'at' hh:mm a",
-  "DD/MM/YYYY": "d MMMM yyyy 'at' HH:mm",
+  "MM/DD/YYYY": "MMMM d, yyyy HH:mm",
+  "DD/MM/YYYY": "d MMMM yyyy HH:mm",
   "YYYY-MM-DD": "yyyy-MM-dd HH:mm",
 };
 
@@ -31,6 +33,7 @@ const WITH_YEAR_MAP: Record<DateFormatPreference, string> = {
 };
 
 export function useDateFormat() {
+  const localeCode = useLocale();
   const { data: settings } = api.settings.get.useQuery(undefined, {
     retry: false,
     refetchOnWindowFocus: false,
@@ -38,6 +41,7 @@ export function useDateFormat() {
   });
 
   const pref: DateFormatPreference = (settings?.dateFormat as DateFormatPreference) ?? "MM/DD/YYYY";
+  const locale = localeCode.startsWith("bg") ? bg : enUS;
 
   const formatDate = useCallback(
     (date: Date | string | number, style: "short" | "long" | "full" | "withYear" = "short") => {
@@ -45,18 +49,18 @@ export function useDateFormat() {
       if (isNaN(d.getTime())) return "";
       switch (style) {
         case "short":
-          return fnsFormat(d, SHORT_FORMAT_MAP[pref]);
+          return fnsFormat(d, SHORT_FORMAT_MAP[pref], { locale });
         case "long":
-          return fnsFormat(d, LONG_FORMAT_MAP[pref]);
+          return fnsFormat(d, LONG_FORMAT_MAP[pref], { locale });
         case "full":
-          return fnsFormat(d, FORMAT_MAP[pref]);
+          return fnsFormat(d, FORMAT_MAP[pref], { locale });
         case "withYear":
-          return fnsFormat(d, WITH_YEAR_MAP[pref]);
+          return fnsFormat(d, WITH_YEAR_MAP[pref], { locale });
         default:
-          return fnsFormat(d, FORMAT_MAP[pref]);
+          return fnsFormat(d, FORMAT_MAP[pref], { locale });
       }
     },
-    [pref],
+    [pref, locale],
   );
 
   return { formatDate, dateFormat: pref };

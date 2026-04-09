@@ -17,7 +17,7 @@ export function SettingsNav({ activeSection, variant = "card" }: SettingsNavProp
   
   const sections = [
     { id: "profile", label: t("profile"), icon: User },
-    { id: "workspace", label: "Workspace", icon: Building2 },
+    { id: "workspace", label: t("workspace"), icon: Building2 },
     { id: "notifications", label: t("notifications"), icon: Bell },
     { id: "security", label: t("security"), icon: Shield },
     { id: "language", label: t("language"), icon: Globe },

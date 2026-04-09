@@ -243,7 +243,7 @@ export function InteractiveTimeline({
  <div className="flex items-center justify-between mb-4">
  <div>
  <div className="text-[17px] leading-[1.235] tracking-[-0.016em] text-fg-primary font-[590] mb-1">
- Project Progress
+ {t("timeline.projectProgress")}
  </div>
  <div className="text-[13px] leading-[1.3846] tracking-[-0.006em] text-fg-secondary">
  {t("timeline.completedLine", { completed: completedCount, total: sortedTasks.length })}
@@ -273,7 +273,7 @@ export function InteractiveTimeline({
  {/* Tasks List */}
  <div className="space-y-2">
  <h2 className="text-[13px] leading-[1.3846] tracking-[-0.006em] text-fg-secondary mb-3 px-1 uppercase tracking-wide">
- Tasks ({sortedTasks.length})
+ {t("timeline.tasksCount", { count: sortedTasks.length })}
  </h2>
  
  <div className="space-y-2">
@@ -360,7 +360,7 @@ export function InteractiveTimeline({
  <Clock size={12} className={isOverdue ?"text-error" :"text-accent-primary"} strokeWidth={2.2} />
  <span>{formatShortDate(new Date(task.dueDate))}</span>
  {isOverdue && (
- <span className="text-error font-semibold">• Overdue</span>
+ <span className="text-error font-semibold">• {t("timeline.overdue")}</span>
  )}
  </div>
  )}
@@ -389,7 +389,7 @@ export function InteractiveTimeline({
  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium bg-accent-primary/10 text-accent-primary hover:bg-accent-primary/20 transition-all"
  >
  <User size={12} strokeWidth={2.5} />
- <span>{task.assignedTo?.name?.split(" ")[0] ?? "Assign"}</span>
+  <span>{task.assignedTo?.name?.split(" ")[0] ?? t("timeline.assign")}</span>
  </button>
 
  {hoverAssignTaskId === task.id && (
@@ -409,7 +409,7 @@ export function InteractiveTimeline({
  <div className="w-6 h-6 rounded-full bg-bg-tertiary/50 flex items-center justify-center flex-shrink-0">
  <User size={11} className="text-fg-quaternary" />
  </div>
- <span className="text-[12px] text-fg-secondary">Unassigned</span>
+  <span className="text-[12px] text-fg-secondary">{t("taskForm.unassigned")}</span>
  </button>
  {availableUsers.map((u) => (
  <button
@@ -431,7 +431,7 @@ export function InteractiveTimeline({
  )}
  </div>
  <div className="flex-1 min-w-0">
- <p className="text-[12px] text-fg-primary font-medium truncate">{u.name ?? "Unknown"}</p>
+  <p className="text-[12px] text-fg-primary font-medium truncate">{u.name ?? t("team.unknownUser")}</p>
  </div>
  {task.assignedTo?.id === u.id && (
  <CheckCircle2 size={12} className="text-accent-primary flex-shrink-0" />
@@ -464,7 +464,7 @@ export function InteractiveTimeline({
  {!isReadOnly && task.id >= 0 && onTaskUpdate && (
  <div className="p-3 rounded-lg bg-bg-primary border border-border-light/20">
  <div className="flex items-center justify-between gap-3">
- <div className="text-[12px] uppercase tracking-wide text-fg-secondary">Admin edit</div>
+  <div className="text-[12px] uppercase tracking-wide text-fg-secondary">{t("timeline.adminEdit")}</div>
  <div className="flex items-center gap-2">
  {onTaskDiscard && (canDiscardTask?.(task) ?? false) && (
  <button
@@ -475,7 +475,7 @@ export function InteractiveTimeline({
  onTaskDiscard(task.id);
  }}
  >
- Discard
+  {t("timeline.discard")}
  </button>
  )}
  <button
@@ -493,7 +493,7 @@ export function InteractiveTimeline({
  }
  }}
  >
- {editingTaskId === task.id ?"Close" :"Edit"}
+  {editingTaskId === task.id ? t("timeline.close") : t("timeline.edit")}
  </button>
  </div>
  </div>
@@ -501,7 +501,7 @@ export function InteractiveTimeline({
  {editingTaskId === task.id && (
  <div className="mt-3 space-y-2">
  <div className="space-y-1">
- <label className="text-[12px] text-fg-secondary">Title</label>
+  <label className="text-[12px] text-fg-secondary">{t("timeline.editTitle")}</label>
  <input
  value={editTitle}
  onChange={(e) => setEditTitle(e.target.value)}
@@ -510,7 +510,7 @@ export function InteractiveTimeline({
  </div>
 
  <div className="space-y-1">
- <label className="text-[12px] text-fg-secondary">Description</label>
+  <label className="text-[12px] text-fg-secondary">{t("common.description")}</label>
  <textarea
  value={editDescription}
  onChange={(e) => setEditDescription(e.target.value)}
@@ -521,13 +521,13 @@ export function InteractiveTimeline({
 
  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
  <div className="space-y-1">
- <label className="text-[12px] text-fg-secondary">Assign to</label>
+  <label className="text-[12px] text-fg-secondary">{t("taskForm.assignTo")}</label>
  <select
  value={editAssignedToId}
  onChange={(e) => setEditAssignedToId(e.target.value)}
  className="w-full rounded-lg px-3 py-2 text-[13px] outline-none bg-bg-secondary text-fg-primary border border-border-light/20 focus:border-accent-primary/40"
  >
- <option value="unassigned">Unassigned</option>
+  <option value="unassigned">{t("taskForm.unassigned")}</option>
  {availableUsers.map((u) => (
  <option key={u.id} value={u.id}>
  {u.name ?? u.id}
@@ -537,7 +537,7 @@ export function InteractiveTimeline({
  </div>
 
  <div className="space-y-1">
- <label className="text-[12px] text-fg-secondary">Due date</label>
+  <label className="text-[12px] text-fg-secondary">{t("taskForm.dueDate")}</label>
  <input
  type="date"
  value={editDueDate}
@@ -562,7 +562,7 @@ export function InteractiveTimeline({
  setEditingTaskId(null);
  }}
  >
- Save
+  {t("timeline.save")}
  </button>
  <button
  type="button"
@@ -572,7 +572,7 @@ export function InteractiveTimeline({
  setEditingTaskId(null);
  }}
  >
- Cancel
+  {t("common.cancel")}
  </button>
  </div>
  </div>
@@ -588,7 +588,7 @@ export function InteractiveTimeline({
  {task.createdBy.image ? (
  <Image 
  src={task.createdBy.image} 
- alt={task.createdBy.name ??"User"}
+  alt={task.createdBy.name ?? t("team.unknownUser")}
  width={20}
  height={20}
  className="rounded-full"
@@ -613,7 +613,7 @@ export function InteractiveTimeline({
  {task.lastEditedBy.image ? (
  <Image 
  src={task.lastEditedBy.image} 
- alt={task.lastEditedBy.name ??"User"}
+  alt={task.lastEditedBy.name ?? t("team.unknownUser")}
  width={20}
  height={20}
  className="rounded-full"
@@ -642,7 +642,7 @@ export function InteractiveTimeline({
  {task.completedBy.image ? (
  <Image
  src={task.completedBy.image}
- alt={task.completedBy.name ??"User"}
+  alt={task.completedBy.name ?? t("team.unknownUser")}
  width={20}
  height={20}
  className="rounded-full"
@@ -666,7 +666,7 @@ export function InteractiveTimeline({
  ) && (
  <div className="mt-2 p-3 rounded-lg bg-bg-primary border border-border-light/20">
  <div className="flex items-center justify-between gap-3 mb-2">
- <div className="text-[12px] uppercase tracking-wide text-fg-secondary">Completion note</div>
+  <div className="text-[12px] uppercase tracking-wide text-fg-secondary">{t("timeline.completionNote")}</div>
  {!isReadOnly && onTaskCompletionNoteSave && (canEditCompletionNote?.(task) ?? false) && (
  <button
  type="button"
@@ -680,7 +680,7 @@ export function InteractiveTimeline({
  }
  }}
  >
- {editingCompletionNoteTaskId === task.id ?"Close" :"Edit"}
+  {editingCompletionNoteTaskId === task.id ? t("timeline.close") : t("timeline.edit")}
  </button>
  )}
  </div>
@@ -691,7 +691,7 @@ export function InteractiveTimeline({
  value={editCompletionNote}
  onChange={(e) => setEditCompletionNote(e.target.value)}
  rows={3}
- placeholder="Short summary..."
+  placeholder={t("timeline.completionNotePlaceholder")}
  className="w-full rounded-lg px-3 py-2 text-[13px] outline-none bg-bg-secondary text-fg-primary border border-border-light/20 focus:border-accent-primary/40"
  />
  <div className="flex items-center gap-2">
@@ -708,7 +708,7 @@ export function InteractiveTimeline({
  setEditingCompletionNoteTaskId(null);
  }}
  >
- Save note
+  {t("timeline.saveNote")}
  </button>
  <button
  type="button"
@@ -718,7 +718,7 @@ export function InteractiveTimeline({
  setEditingCompletionNoteTaskId(null);
  }}
  >
- Cancel
+  {t("common.cancel")}
  </button>
  </div>
  </div>

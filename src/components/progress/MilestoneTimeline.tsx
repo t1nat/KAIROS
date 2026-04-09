@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { useLocale, useTranslations } from "next-intl";
 import { useDateFormat } from "~/lib/hooks/useDateFormat";
 import {
   Calendar,
@@ -82,25 +83,38 @@ function getStatusBadgeColor(status: TaskStatus) {
   }
 }
 
-function getStatusLabel(status: TaskStatus) {
+function getStatusLabel(status: TaskStatus, t: ReturnType<typeof useTranslations>) {
   switch (status) {
-    case "pending": return "Pending";
-    case "in_progress": return "In Progress";
-    case "completed": return "Completed";
-    case "blocked": return "Cancelled";
+    case "pending": return t("status.pending");
+    case "in_progress": return t("status.inProgress");
+    case "completed": return t("status.completed");
+    case "blocked": return t("status.blocked");
   }
 }
 
-function formatDate(date: Date) {
-  return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+const ACTION_LABEL_KEY: Record<string, string> = {
+  created: "actions.created",
+  updated: "actions.updated",
+  deleted: "actions.deleted",
+  status_changed: "actions.statusChanged",
+};
+
+function getActionLabel(action: string, t: ReturnType<typeof useTranslations>) {
+  const key = ACTION_LABEL_KEY[action];
+  return key ? t(key) : action.replace(/_/g, " ");
 }
 
-function formatFullDate(date: Date) {
-  return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+function getStatusValueLabel(value: string | null, t: ReturnType<typeof useTranslations>) {
+  if (!value) return "";
+  if (value === "in_progress") return t("status.inProgress");
+  if (value === "pending") return t("status.pending");
+  if (value === "completed") return t("status.completed");
+  if (value === "blocked") return t("status.blocked");
+  return value.replace(/_/g, " ");
 }
 
-function formatTime(date: Date) {
-  return new Date(date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+function formatTime(date: Date, locale: string) {
+  return new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(date));
 }
 
 /* ─── Portal Tooltip ─── */
@@ -189,6 +203,8 @@ export function MilestoneTimeline({
   togglingId,
   deletingId,
 }: MilestoneTimelineProps) {
+  const t = useTranslations("progress.tasks");
+  const locale = useLocale();
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [hoveredId, setHoveredId] = useState<number | null>(null);
   const { formatDate: formatDatePref } = useDateFormat();
@@ -233,8 +249,8 @@ export function MilestoneTimeline({
         <div className="w-14 h-14 rounded-full bg-accent-primary/10 flex items-center justify-center mb-4">
           <Calendar size={24} className="text-accent-primary" />
         </div>
-        <h3 className="text-base font-semibold text-fg-primary mb-1">No milestones yet</h3>
-        <p className="text-sm text-fg-tertiary max-w-xs">Create tasks to start building your milestone timeline.</p>
+        <h3 className="text-base font-semibold text-fg-primary mb-1">{t("noMilestonesYet")}</h3>
+        <p className="text-sm text-fg-tertiary max-w-xs">{t("createTasksToBuildTimeline")}</p>
       </div>
     );
   }
@@ -245,14 +261,14 @@ export function MilestoneTimeline({
       <button
         onClick={() => scroll("left")}
         className="absolute left-0 top-[72px] -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-bg-elevated border border-border-medium shadow-lg flex items-center justify-center hover:bg-bg-secondary transition-colors"
-        aria-label="Scroll left"
+        aria-label={t("scrollLeft")}
       >
         <ChevronLeft size={16} className="text-fg-secondary" />
       </button>
       <button
         onClick={() => scroll("right")}
         className="absolute right-0 top-[72px] -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-bg-elevated border border-border-medium shadow-lg flex items-center justify-center hover:bg-bg-secondary transition-colors"
-        aria-label="Scroll right"
+        aria-label={t("scrollRight")}
       >
         <ChevronRight size={16} className="text-fg-secondary" />
       </button>
@@ -293,7 +309,7 @@ export function MilestoneTimeline({
                   className="mb-4 text-center h-[42px] flex flex-col justify-end"
                 >
                   <p className="text-[11px] font-semibold text-fg-tertiary leading-tight">{formatDatePref(date, "short")}</p>
-                  <p className="text-[10px] text-fg-quaternary truncate max-w-[120px] leading-tight mt-0.5">{formatTime(date)}</p>
+                  <p className="text-[10px] text-fg-quaternary truncate max-w-[120px] leading-tight mt-0.5">{formatTime(date, locale)}</p>
                 </motion.div>
 
                 {/* The DOT */}
@@ -333,7 +349,7 @@ export function MilestoneTimeline({
                         </h4>
                         <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${getStatusBadgeColor(status)}`}>
                           <IconComponent size={10} />
-                          {getStatusLabel(status)}
+                          {getStatusLabel(status, t)}
                         </div>
                         <div className="space-y-1 text-[11px] text-fg-secondary border-t border-border-medium/50 dark:border-white/[0.06] pt-2">
                           <div className="flex items-center gap-1.5">
@@ -342,12 +358,12 @@ export function MilestoneTimeline({
                           </div>
                           <div className="flex items-center gap-1.5">
                             <Calendar size={10} className="text-fg-quaternary shrink-0" />
-                            <span>{formatDatePref(date, "withYear")} at {formatTime(date)}</span>
+                            <span>{t("dateTimeAt", { date: formatDatePref(date, "withYear"), time: formatTime(date, locale) })}</span>
                           </div>
                           {entry.user && (
                             <div className="flex items-center gap-1.5">
                               <User size={10} className="text-fg-quaternary shrink-0" />
-                              <span>By {entry.user.name ?? "Unknown"}</span>
+                              <span>{t("byUser", { name: entry.user.name ?? t("unknown") })}</span>
                             </div>
                           )}
                           {entry.assignee && (
@@ -361,13 +377,19 @@ export function MilestoneTimeline({
                                   </div>
                                 )}
                               </div>
-                              <span>Assigned: {entry.assignee.name}</span>
+                              <span>{t("assignedTo", { name: entry.assignee.name })}</span>
                             </div>
                           )}
                           {entry.action && (
                             <p className="text-[10px] text-fg-quaternary italic mt-0.5">
-                              Last: {entry.action.replace(/_/g, " ")}
-                              {entry.newValue ? ` → ${entry.newValue.replace(/_/g, " ")}` : ""}
+                              {getStatusValueLabel(entry.newValue, t)
+                                ? t("lastActionWithValue", {
+                                    action: getActionLabel(entry.action, t),
+                                    value: getStatusValueLabel(entry.newValue, t),
+                                  })
+                                : t("lastActionOnly", {
+                                    action: getActionLabel(entry.action, t),
+                                  })}
                             </p>
                           )}
                         </div>
@@ -433,7 +455,7 @@ export function MilestoneTimeline({
               transition={{ delay: sortedEntries.length * 0.03 + 0.1 }}
               className="mt-4 text-[10px] font-medium text-fg-quaternary"
             >
-              Now
+              {t("now")}
             </motion.p>
           </div>
         </div>
@@ -450,6 +472,8 @@ function ExpandedMilestoneCard({
   canDelete: boolean; onToggleDone: (taskId: number, currentlyDone: boolean) => void;
   onDelete: (taskId: number) => void;
 }) {
+  const t = useTranslations("progress.tasks");
+  const locale = useLocale();
   const isCompleted = status === "completed";
   const { formatDate: formatDatePref } = useDateFormat();
   const date = new Date(entry.createdAt);
@@ -467,7 +491,7 @@ function ExpandedMilestoneCard({
         </h4>
         <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase shrink-0 ${getStatusBadgeColor(status)}`}>
           <IconComponent size={10} />
-          {getStatusLabel(status)}
+          {getStatusLabel(status, t)}
         </div>
       </div>
 
@@ -478,12 +502,12 @@ function ExpandedMilestoneCard({
         </div>
         <div className="flex items-center gap-1.5">
           <Calendar size={11} className="text-fg-quaternary shrink-0" />
-          <span>{formatDatePref(date, "withYear")} at {formatTime(date)}</span>
+          <span>{t("dateTimeAt", { date: formatDatePref(date, "withYear"), time: formatTime(date, locale) })}</span>
         </div>
         {entry.user && (
           <div className="flex items-center gap-1.5">
             <User size={11} className="text-fg-quaternary shrink-0" />
-            <span>Created by {entry.user.name ?? "Unknown"}</span>
+            <span>{t("createdBy", { name: entry.user.name ?? t("unknown") })}</span>
           </div>
         )}
         {entry.assignee && (
@@ -497,12 +521,19 @@ function ExpandedMilestoneCard({
                 </div>
               )}
             </div>
-            <span>Assigned to {entry.assignee.name}</span>
+            <span>{t("assignedTo", { name: entry.assignee.name })}</span>
           </div>
         )}
         {entry.action && (
           <p className="text-[10px] text-fg-quaternary italic">
-            Last: {entry.action.replace(/_/g, " ")}{entry.newValue ? ` → ${entry.newValue.replace(/_/g, " ")}` : ""}
+            {getStatusValueLabel(entry.newValue, t)
+              ? t("lastActionWithValue", {
+                  action: getActionLabel(entry.action, t),
+                  value: getStatusValueLabel(entry.newValue, t),
+                })
+              : t("lastActionOnly", {
+                  action: getActionLabel(entry.action, t),
+                })}
           </p>
         )}
       </div>
@@ -518,25 +549,25 @@ function ExpandedMilestoneCard({
               : "bg-accent-primary/10 text-accent-primary hover:bg-accent-primary/20"
           }`}
         >
-          {isToggling ? <Loader2 size={12} className="animate-spin" /> : <><Check size={12} />{isCompleted ? "Mark Pending" : "Mark Done"}</>}
+          {isToggling ? <Loader2 size={12} className="animate-spin" /> : <><Check size={12} />{isCompleted ? t("markAsPending") : t("markAsDone")}</>}
         </button>
         {canDelete && (
           <>
             {confirmDelete && (
               <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setConfirmDelete(false)}>
                 <div className="bg-bg-secondary rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-in fade-in slide-in-from-bottom-4" onClick={(e) => e.stopPropagation()}>
-                  <h3 className="text-lg font-bold text-fg-primary mb-2">Delete Task</h3>
-                  <p className="text-sm text-fg-secondary mb-6">Are you sure you want to delete this task? This action cannot be undone.</p>
+                  <h3 className="text-lg font-bold text-fg-primary mb-2">{t("deleteTaskTitle")}</h3>
+                  <p className="text-sm text-fg-secondary mb-6">{t("deleteTaskConfirm")}</p>
                   <div className="flex items-center justify-end gap-3">
                     <button type="button" onClick={() => setConfirmDelete(false)}
                       className="px-4 py-2 text-sm font-medium text-fg-secondary hover:bg-bg-surface rounded-lg transition-colors"
                     >
-                      Cancel
+                      {t("common.cancel")}
                     </button>
                     <button type="button" onClick={() => { onDelete(entry.taskId); setConfirmDelete(false); }} disabled={isDeleting}
                       className="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors disabled:opacity-50"
                     >
-                      {isDeleting ? "Deleting..." : "Delete"}
+                      {isDeleting ? t("deleting") : t("common.delete")}
                     </button>
                   </div>
                 </div>
@@ -544,7 +575,7 @@ function ExpandedMilestoneCard({
             )}
             <button type="button" onClick={() => setConfirmDelete(true)}
               className="px-3 py-2 rounded-lg text-xs font-semibold bg-bg-tertiary/50 text-fg-tertiary hover:bg-red-50 dark:hover:bg-red-500/15 hover:text-red-500 dark:hover:text-red-400 transition-all"
-              title="Delete task"
+              title={t("deleteTask")}
             >
               <Trash2 size={12} />
             </button>

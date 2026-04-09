@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { useRolePermissions } from "~/lib/useRolePermissions";
 import { useDateFormat } from "~/lib/hooks/useDateFormat";
+import { useTranslations } from "next-intl";
 import {
   Plus,
   Sparkles,
@@ -224,20 +225,34 @@ const typedApi = api as unknown as {
 };
 
 /* ─── Priority helpers ─── */
-const PRIORITY_OPTIONS: { value: TaskPriority; label: string; color: string }[] = [
-  { value: "low", label: "Low", color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20" },
-  { value: "medium", label: "Medium", color: "bg-amber-500/15 text-amber-400 border-amber-500/20" },
-  { value: "high", label: "High", color: "bg-orange-500/15 text-orange-400 border-orange-500/20" },
-  { value: "urgent", label: "Urgent", color: "bg-red-500/15 text-red-400 border-red-500/20" },
+const PRIORITY_OPTIONS: { value: TaskPriority; color: string }[] = [
+  { value: "low", color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20" },
+  { value: "medium", color: "bg-amber-500/15 text-amber-400 border-amber-500/20" },
+  { value: "high", color: "bg-orange-500/15 text-orange-400 border-orange-500/20" },
+  { value: "urgent", color: "bg-red-500/15 text-red-400 border-red-500/20" },
 ];
 
 /* ─── Status helpers ─── */
-const STATUS_OPTIONS: { value: TaskStatus; label: string; color: string }[] = [
-  { value: "pending", label: "Pending", color: "bg-slate-500/15 text-slate-400 border-slate-500/20" },
-  { value: "in_progress", label: "In Progress", color: "bg-blue-500/15 text-blue-400 border-blue-500/20" },
-  { value: "completed", label: "Completed", color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20" },
-  { value: "blocked", label: "Blocked", color: "bg-red-500/15 text-red-400 border-red-500/20" },
+const STATUS_OPTIONS: { value: TaskStatus; color: string }[] = [
+  { value: "pending", color: "bg-slate-500/15 text-slate-400 border-slate-500/20" },
+  { value: "in_progress", color: "bg-blue-500/15 text-blue-400 border-blue-500/20" },
+  { value: "completed", color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20" },
+  { value: "blocked", color: "bg-red-500/15 text-red-400 border-red-500/20" },
 ];
+
+const PRIORITY_LABEL_KEY: Record<TaskPriority, string> = {
+  low: "priority.low",
+  medium: "priority.medium",
+  high: "priority.high",
+  urgent: "priority.urgent",
+};
+
+const STATUS_LABEL_KEY: Record<TaskStatus, string> = {
+  pending: "status.pending",
+  in_progress: "status.inProgress",
+  completed: "status.completed",
+  blocked: "status.blocked",
+};
 
 /* ─── Timeline Entry ─── */
 function TimelineEntry({
@@ -259,6 +274,7 @@ function TimelineEntry({
   canDelete: boolean;
   taskCurrentStatus: TaskStatus | undefined;
 }) {
+  const t = useTranslations("progress.tasks");
   const entryRef = useRef<HTMLDivElement>(null);
   const { formatDate: formatDatePref } = useDateFormat();
 
@@ -285,7 +301,7 @@ function TimelineEntry({
               ? "bg-emerald-500 border-emerald-500 text-white"
               : "bg-white dark:bg-[#1a1625] border-slate-300 dark:border-slate-600 hover:border-emerald-400 dark:hover:border-emerald-400"
           }`}
-          title={isCompleted ? "Mark as pending" : "Mark as done"}
+          title={isCompleted ? t("markAsPending") : t("markAsDone")}
         >
           {isToggling ? (
             <Loader2 size={13} className="animate-spin" />
@@ -319,14 +335,14 @@ function TimelineEntry({
                         disabled={isDeleting}
                         className="px-2 py-0.5 rounded bg-red-500/15 text-red-400 text-[10px] font-bold hover:bg-red-500/25 transition-colors"
                       >
-                        {isDeleting ? <Loader2 size={10} className="animate-spin" /> : "Delete"}
+                        {isDeleting ? <Loader2 size={10} className="animate-spin" /> : t("common.delete")}
                       </button>
                       <button
                         type="button"
                         onClick={() => setConfirmDelete(false)}
                         className="px-2 py-0.5 rounded bg-bg-tertiary/50 text-fg-tertiary text-[10px] font-bold hover:text-fg-secondary transition-colors"
                       >
-                        Cancel
+                        {t("common.cancel")}
                       </button>
                     </div>
                   ) : (
@@ -334,7 +350,7 @@ function TimelineEntry({
                       type="button"
                       onClick={() => setConfirmDelete(true)}
                       className="p-1 rounded text-fg-quaternary hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                      title="Delete task"
+                      title={t("deleteTask")}
                     >
                       <Trash2 size={12} />
                     </button>
@@ -353,10 +369,10 @@ function TimelineEntry({
           <div className="flex items-center justify-between">
             <p className="text-xs text-fg-tertiary">
               {entry.projectTitle}
-              {entry.user ? ` · ${entry.user.name ?? "Unknown"}` : ""}
+              {entry.user ? ` · ${entry.user.name ?? t("unknown")}` : ""}
             </p>
             {entry.assignee && (
-              <div className="flex items-center gap-1.5 ml-2 flex-shrink-0" title={entry.assignee.name ?? "Assigned"}>
+              <div className="flex items-center gap-1.5 ml-2 flex-shrink-0" title={entry.assignee.name ?? t("assigned")}>
                 <div className="w-5 h-5 rounded-full overflow-hidden bg-accent-primary/20 flex-shrink-0">
                   {entry.assignee.image ? (
                     <Image src={entry.assignee.image} alt={entry.assignee.name ?? ""} width={20} height={20} className="w-full h-full object-cover" />
@@ -389,6 +405,7 @@ function AiDraftPreview({
   onDismiss: () => void;
   isApplying: boolean;
 }) {
+  const t = useTranslations("progress.tasks");
   const [selected, setSelected] = useState<Set<number>>(() => new Set(tasks.map((_, i) => i)));
 
   const toggleTask = (idx: number) => {
@@ -412,7 +429,7 @@ function AiDraftPreview({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sparkles size={16} className="text-accent-primary" />
-          <h4 className="text-sm font-bold text-fg-primary">AI Generated Tasks</h4>
+          <h4 className="text-sm font-bold text-fg-primary">{t("aiGeneratedTasks")}</h4>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -420,14 +437,14 @@ function AiDraftPreview({
             onClick={toggleAll}
             className="text-[11px] text-accent-primary hover:text-accent-primary/80 font-medium transition-colors"
           >
-            {selected.size === tasks.length ? "Deselect All" : "Select All"}
+            {selected.size === tasks.length ? t("deselectAll") : t("selectAll")}
           </button>
           <button
             type="button"
             onClick={onDismiss}
             className="text-xs text-fg-tertiary hover:text-fg-secondary transition-colors"
           >
-            Dismiss
+            {t("dismiss")}
           </button>
         </div>
       </div>
@@ -486,12 +503,12 @@ function AiDraftPreview({
         {isApplying ? (
           <>
             <Loader2 size={14} className="animate-spin" />
-            Creating tasks...
+            {t("creatingTasks")}
           </>
         ) : (
           <>
             <CheckCircle2 size={14} />
-            Create {selectedTasks.length} of {tasks.length} Tasks
+            {t("createSelectedTasks", { selected: selectedTasks.length, total: tasks.length })}
           </>
         )}
       </button>
@@ -515,6 +532,7 @@ function CreateNewEntryForm({
   onProjectChange: (id: number | null) => void;
   organizationId: number | null;
 }) {
+  const t = useTranslations("progress.tasks");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<TaskPriority>("medium");
@@ -690,7 +708,7 @@ function CreateNewEntryForm({
       <div className="absolute top-0 right-0 w-64 h-64 bg-accent-primary/5 blur-[60px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/4" />
       <h3 className="text-fg-primary text-lg font-bold border-b border-border-medium/40 dark:border-white/[0.06] pb-4 flex items-center gap-2 relative z-10">
         <Plus size={18} className="text-accent-primary" />
-        New Task
+        {t("newTask")}
       </h3>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5 relative z-10">
@@ -705,7 +723,7 @@ function CreateNewEntryForm({
         {projects.length > 0 && (
           <div>
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-2">
-              Project
+              {t("project")}
             </label>
             <div className="relative">
               <select
@@ -730,13 +748,13 @@ function CreateNewEntryForm({
         {/* Task Title */}
         <div>
           <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-2">
-            Task Title
+            {t("taskTitle")}
           </label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Database Migration Review"
+            placeholder={t("taskTitlePlaceholder")}
             className="w-full rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-accent-primary/30 text-slate-900 dark:text-slate-100 focus:border-accent-primary focus:ring-1 focus:ring-accent-primary h-12 px-4 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all hover:border-accent-primary/50"
           />
         </div>
@@ -747,7 +765,7 @@ function CreateNewEntryForm({
             {/* Priority selector — dropdown */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-2">
-                Priority
+                {t("priorityLabel")}
               </label>
               <div className="relative">
                 <select
@@ -757,7 +775,7 @@ function CreateNewEntryForm({
                 >
                   {PRIORITY_OPTIONS.map((p) => (
                     <option key={p.value} value={p.value} className="bg-bg-primary text-fg-primary">
-                      {p.label}
+                      {t(PRIORITY_LABEL_KEY[p.value])}
                     </option>
                   ))}
                 </select>
@@ -774,7 +792,7 @@ function CreateNewEntryForm({
             {/* Status selector — dropdown */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-2">
-                Status
+                {t("statusLabel")}
               </label>
               <div className="relative">
                 <select
@@ -784,7 +802,7 @@ function CreateNewEntryForm({
                 >
                   {STATUS_OPTIONS.map((s) => (
                     <option key={s.value} value={s.value} className="bg-bg-primary text-fg-primary">
-                      {s.label}
+                      {t(STATUS_LABEL_KEY[s.value])}
                     </option>
                   ))}
                 </select>
@@ -800,7 +818,7 @@ function CreateNewEntryForm({
             </div>
             <div ref={assignDropdownRef} className="relative">
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-2">
-                Assign To
+                {t("assignTo")}
               </label>
               <button
                 type="button"
@@ -818,14 +836,14 @@ function CreateNewEntryForm({
                         </div>
                       )}
                     </div>
-                    <span className="text-xs text-fg-primary font-medium truncate flex-1">{selectedMember.name?.split(" ")[0] ?? "Member"}</span>
+                    <span className="text-xs text-fg-primary font-medium truncate flex-1">{selectedMember.name?.split(" ")[0] ?? t("member")}</span>
                   </>
                 ) : (
                   <>
                     <div className="w-5 h-5 rounded-full bg-accent-primary/20 flex items-center justify-center flex-shrink-0">
                       <User size={10} className="text-accent-primary" />
                     </div>
-                    <span className="text-xs text-fg-quaternary font-medium truncate flex-1">Select...</span>
+                    <span className="text-xs text-fg-quaternary font-medium truncate flex-1">{t("select")}</span>
                   </>
                 )}
                 <ChevronDown size={12} className={`text-fg-tertiary transition-transform ${showAssignDropdown ? "rotate-180" : ""}`} />
@@ -844,7 +862,7 @@ function CreateNewEntryForm({
                       <div className="w-5 h-5 rounded-full bg-bg-tertiary/50 flex items-center justify-center flex-shrink-0">
                         <User size={10} className="text-fg-quaternary" />
                       </div>
-                      <span className="text-xs text-fg-secondary">Unassigned</span>
+                      <span className="text-xs text-fg-secondary">{t("unassigned")}</span>
                     </button>
 
                     {members.map((m) => (
@@ -864,7 +882,7 @@ function CreateNewEntryForm({
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs text-fg-primary font-medium truncate">{m.name ?? "Unknown"}</p>
+                          <p className="text-xs text-fg-primary font-medium truncate">{m.name ?? t("unknown")}</p>
                           <p className="text-[10px] text-fg-quaternary truncate">{m.role}</p>
                         </div>
                         {assignedToId === m.id && (
@@ -885,7 +903,7 @@ function CreateNewEntryForm({
                       }}
                     >
                       <UserPlus size={13} />
-                      <span>Invite people</span>
+                       <span>{t("invitePeople")}</span>
                     </button>
                   </div>
                 </div>
@@ -893,7 +911,7 @@ function CreateNewEntryForm({
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-2">
-                Date
+                {t("date")}
               </label>
               <input
                 type="date"
@@ -908,7 +926,7 @@ function CreateNewEntryForm({
         {/* Attachments */}
         <div>
           <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-2">
-            Attachments
+            {t("attachments")}
           </label>
           <div
             onClick={() => fileInputRef.current?.click()}
@@ -919,17 +937,16 @@ function CreateNewEntryForm({
               setIsDragging(false);
               const files = Array.from(e.dataTransfer.files);
               const valid = files.filter((f) => f.size <= 10 * 1024 * 1024);
-              if (valid.length < files.length) setError("Some files exceed 10MB limit");
+              if (valid.length < files.length) setError(t("errors.filesTooLarge"));
               setAttachedFiles((prev) => [...prev, ...valid.map((f) => ({ name: f.name, size: f.size, type: f.type }))]);
             }}
             className={`w-full rounded-lg border-2 border-dashed ${isDragging ? "border-accent-primary bg-accent-primary/10" : "border-slate-300 dark:border-accent-primary/40 bg-slate-50/50 dark:bg-black/10"} hover:bg-slate-50 dark:hover:bg-accent-primary/5 transition-colors flex flex-col items-center justify-center py-6 cursor-pointer hover:border-accent-primary/60`}
           >
             <Upload size={20} className="text-accent-primary" />
             <p className="text-xs text-fg-secondary">
-              <span className="text-accent-primary font-semibold">Click to upload</span> or drag
-              and drop
+              <span className="text-accent-primary font-semibold">{t("clickToUpload")}</span> {t("orDragDrop")}
             </p>
-            <p className="text-[10px] text-fg-quaternary">PDF, DOCX, PNG, JPG (max. 10MB)</p>
+            <p className="text-[10px] text-fg-quaternary">{t("uploadFormats")}</p>
           </div>
           <input
             ref={fileInputRef}
@@ -940,7 +957,7 @@ function CreateNewEntryForm({
             onChange={(e) => {
               const files = Array.from(e.target.files ?? []);
               const valid = files.filter((f) => f.size <= 10 * 1024 * 1024);
-              if (valid.length < files.length) setError("Some files exceed 10MB limit");
+              if (valid.length < files.length) setError(t("errors.filesTooLarge"));
               setAttachedFiles((prev) => [...prev, ...valid.map((f) => ({ name: f.name, size: f.size, type: f.type }))]);
               e.target.value = "";
             }}
@@ -971,12 +988,12 @@ function CreateNewEntryForm({
         <div className="space-y-3">
           <div>
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-2">
-              Project Description / AI Instructions
+              {t("aiInstructionsLabel")}
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe the project or paste instructions for the AI task planner..."
+              placeholder={t("aiInstructionsPlaceholder")}
               rows={3}
               className="w-full rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-accent-primary/30 text-slate-900 dark:text-slate-100 focus:border-accent-primary focus:ring-1 focus:ring-accent-primary min-h-[80px] p-4 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all resize-y hover:border-accent-primary/50"
             />
@@ -996,10 +1013,10 @@ function CreateNewEntryForm({
             </div>
             <div className="flex flex-col">
               <h4 className="text-slate-900 dark:text-slate-100 font-semibold mb-1">
-                {generateDrafts.isPending ? "Generating..." : "AI Task Planner"}
+                {generateDrafts.isPending ? t("generating") : t("aiTaskPlanner")}
               </h4>
               <p className="text-slate-600 dark:text-slate-400 text-sm">
-                Generate tasks from the description above or the project&apos;s context.
+                {t("aiPlannerDescription")}
               </p>
             </div>
           </button>
@@ -1025,12 +1042,12 @@ function CreateNewEntryForm({
           {createTask.isPending ? (
             <>
               <Loader2 size={16} className="animate-spin" />
-              Creating...
+              {t("creating")}
             </>
           ) : (
             <>
               <Plus size={16} />
-              Create Task
+              {t("createTask")}
             </>
           )}
         </button>
@@ -1043,7 +1060,7 @@ function CreateNewEntryForm({
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-fg-primary flex items-center gap-2">
                 <UserPlus size={18} className="text-accent-primary" />
-                Invite People
+                {t("invitePeople")}
               </h3>
               <button
                 type="button"
@@ -1068,13 +1085,13 @@ function CreateNewEntryForm({
               
               <div>
                 <label className="block text-sm font-medium text-fg-secondary mb-2">
-                  Email Address
+                  {t("emailAddress")}
                 </label>
                 <input
                   type="email"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
-                  placeholder="colleague@example.com"
+                  placeholder={t("emailPlaceholder")}
                   className="w-full rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-300 dark:border-accent-primary/30 text-slate-900 dark:text-slate-100 focus:border-accent-primary focus:ring-1 focus:ring-accent-primary h-12 px-4 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all"
                   autoFocus
                 />
@@ -1090,7 +1107,7 @@ function CreateNewEntryForm({
                   }}
                   className="flex-1 px-4 py-3 rounded-lg border border-slate-200 dark:border-white/[0.08] text-fg-secondary font-medium hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button
                   type="submit"
@@ -1100,12 +1117,12 @@ function CreateNewEntryForm({
                   {inviteMember.isPending ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
-                      Sending...
+                      {t("sending")}
                     </>
                   ) : (
                     <>
                       <UserPlus size={16} />
-                      Send Invite
+                      {t("sendInvite")}
                     </>
                   )}
                 </button>
@@ -1124,11 +1141,12 @@ function MasterProgressBar({
 }: {
   percentage: number;
 }) {
+  const t = useTranslations("progress.tasks");
   return (
     <div className="mb-8">
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-          Master Progress
+          {t("masterProgress")}
         </span>
         <span className="text-accent-primary font-bold">
           {Math.round(percentage)}%
@@ -1149,13 +1167,6 @@ function MasterProgressBar({
 
 /* ─── Status Filter ─── */
 type StatusFilter = "all" | "completed" | "pending" | "in_progress" | "blocked";
-const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "completed", label: "Done" },
-  { value: "pending", label: "Pending" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "blocked", label: "Blocked" },
-];
 
 /* ─── Task Status Visualization Card ─── */
 function TaskStatusCard({
@@ -1198,11 +1209,11 @@ type BoardTask = {
   assignee: { id: string | null; name: string | null; image: string | null } | null;
 };
 
-const BOARD_COLUMNS: { status: TaskStatus; label: string; dotColor: string; headerBg: string }[] = [
-  { status: "pending", label: "Pending", dotColor: "bg-slate-400", headerBg: "bg-slate-100 dark:bg-slate-500/10" },
-  { status: "in_progress", label: "In Progress", dotColor: "bg-blue-400", headerBg: "bg-blue-50 dark:bg-blue-500/10" },
-  { status: "completed", label: "Completed", dotColor: "bg-emerald-400", headerBg: "bg-emerald-50 dark:bg-emerald-500/10" },
-  { status: "blocked", label: "Blocked", dotColor: "bg-red-400", headerBg: "bg-red-50 dark:bg-red-500/10" },
+const BOARD_COLUMNS: { status: TaskStatus; dotColor: string; headerBg: string }[] = [
+  { status: "pending", dotColor: "bg-slate-400", headerBg: "bg-slate-100 dark:bg-slate-500/10" },
+  { status: "in_progress", dotColor: "bg-blue-400", headerBg: "bg-blue-50 dark:bg-blue-500/10" },
+  { status: "completed", dotColor: "bg-emerald-400", headerBg: "bg-emerald-50 dark:bg-emerald-500/10" },
+  { status: "blocked", dotColor: "bg-red-400", headerBg: "bg-red-50 dark:bg-red-500/10" },
 ];
 
 function TaskBoard({
@@ -1218,6 +1229,7 @@ function TaskBoard({
   isUpdating: boolean;
   deletingId: number | null;
 }) {
+  const t = useTranslations("progress.tasks");
   const grouped = useMemo(() => {
     const map: Record<TaskStatus, BoardTask[]> = {
       pending: [],
@@ -1241,7 +1253,7 @@ function TaskBoard({
           <div className={`px-4 py-3 ${col.headerBg} border-b border-border-medium/30 dark:border-white/[0.06] flex items-center justify-between`}>
             <div className="flex items-center gap-2">
               <span className={`w-2.5 h-2.5 rounded-full ${col.dotColor}`} />
-              <span className="text-sm font-bold text-fg-primary">{col.label}</span>
+              <span className="text-sm font-bold text-fg-primary">{t(STATUS_LABEL_KEY[col.status])}</span>
             </div>
             <span className="text-xs font-semibold text-fg-quaternary bg-bg-tertiary/50 dark:bg-white/[0.06] px-2 py-0.5 rounded-full">
               {(grouped[col.status] ?? []).length}
@@ -1252,7 +1264,7 @@ function TaskBoard({
           <div className="flex flex-col gap-2 p-2 min-h-[120px]">
             {(grouped[col.status] ?? []).length === 0 ? (
               <div className="flex items-center justify-center py-8 text-xs text-fg-quaternary">
-                No tasks
+                {t("noTasks")}
               </div>
             ) : (
               (grouped[col.status] ?? []).map((task) => (
@@ -1286,6 +1298,7 @@ function BoardTaskCard({
   isUpdating: boolean;
   isDeleting: boolean;
 }) {
+  const t = useTranslations("progress.tasks");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const { formatDate: formatDatePref } = useDateFormat();
   const priorityOption = PRIORITY_OPTIONS.find((p) => p.value === task.priority);
@@ -1327,7 +1340,7 @@ function BoardTaskCard({
         >
           {STATUS_OPTIONS.map((s) => (
             <option key={s.value} value={s.value} className="bg-bg-primary text-fg-primary">
-              {s.label}
+              {t(STATUS_LABEL_KEY[s.value])}
             </option>
           ))}
         </select>
@@ -1337,7 +1350,7 @@ function BoardTaskCard({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           {task.assignee?.id && (
-            <div className="flex items-center gap-1" title={task.assignee.name ?? "Assigned"}>
+            <div className="flex items-center gap-1" title={task.assignee.name ?? t("assigned")}>
               <div className="w-5 h-5 rounded-full overflow-hidden bg-accent-primary/20 flex-shrink-0">
                 {task.assignee.image ? (
                   <Image src={task.assignee.image} alt={task.assignee.name ?? ""} width={20} height={20} className="w-full h-full object-cover" />
@@ -1361,14 +1374,14 @@ function BoardTaskCard({
               disabled={isDeleting}
               className="px-2 py-0.5 rounded bg-red-500/15 text-red-400 text-[10px] font-bold hover:bg-red-500/25 transition-colors"
             >
-              {isDeleting ? <Loader2 size={10} className="animate-spin" /> : "Yes"}
+              {isDeleting ? <Loader2 size={10} className="animate-spin" /> : t("common.yes")}
             </button>
             <button
               type="button"
               onClick={() => setConfirmDelete(false)}
               className="px-2 py-0.5 rounded bg-bg-tertiary/50 text-fg-tertiary text-[10px] font-bold hover:text-fg-secondary transition-colors"
             >
-              No
+              {t("common.no")}
             </button>
           </div>
         ) : (
@@ -1376,7 +1389,7 @@ function BoardTaskCard({
             type="button"
             onClick={() => setConfirmDelete(true)}
             className="p-1 rounded text-fg-quaternary opacity-0 group-hover:opacity-100 hover:text-red-400 hover:bg-red-500/10 transition-all"
-            title="Delete task"
+            title={t("deleteTask")}
           >
             <Trash2 size={12} />
           </button>
@@ -1388,6 +1401,7 @@ function BoardTaskCard({
 
 /* ─── Main Export ─── */
 export function TaskTimelineClient() {
+  const t = useTranslations("progress.tasks");
   const { data: session } = useSession();
   const { permissions } = useRolePermissions();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -1560,7 +1574,7 @@ export function TaskTimelineClient() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <Loader2 className="animate-spin w-8 h-8 text-accent-primary mx-auto mb-3" />
-          <p className="text-sm text-fg-secondary">Loading timeline...</p>
+          <p className="text-sm text-fg-secondary">{t("loadingTimeline")}</p>
         </div>
       </div>
     );
@@ -1585,14 +1599,14 @@ export function TaskTimelineClient() {
           <div className="w-20 h-20 rounded-2xl bg-accent-primary/10 flex items-center justify-center mb-6">
             <Calendar size={36} className="text-accent-primary" />
           </div>
-          <h2 className="text-2xl font-bold text-fg-primary mb-2">You have no active projects.</h2>
-          <p className="text-fg-secondary mb-6">Task creation and timeline become active after you create a project.</p>
+          <h2 className="text-2xl font-bold text-fg-primary mb-2">{t("noProjectsTitle")}</h2>
+          <p className="text-fg-secondary mb-6">{t("noProjectsDesc")}</p>
           <a
             href="/projects"
             className="inline-flex items-center gap-2 px-6 py-3 bg-accent-primary text-white font-semibold rounded-xl hover:bg-accent-hover hover:shadow-lg hover:shadow-accent-primary/25 transition-all hover:scale-[1.02]"
           >
             <Plus size={18} />
-            Create one now
+            {t("createOneNow")}
           </a>
         </div>
       </div>
@@ -1606,10 +1620,10 @@ export function TaskTimelineClient() {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-fg-primary leading-tight tracking-tight">
-              Tasks
+              {t("title")}
             </h1>
             <p className="text-sm text-fg-tertiary mt-0.5">
-              Create and track your team&apos;s workflow
+              {t("subtitle")}
             </p>
           </div>
 
@@ -1627,7 +1641,7 @@ export function TaskTimelineClient() {
                   : "text-fg-secondary hover:text-fg-primary"
               }`}
             >
-              Task Creation
+              {t("taskCreation")}
             </button>
             <button
               onClick={() => setActiveView("timeline")}
@@ -1637,7 +1651,7 @@ export function TaskTimelineClient() {
                   : "text-fg-secondary hover:text-fg-primary"
               }`}
             >
-              Timeline
+              {t("timeline")}
             </button>
             <button
               onClick={() => setActiveView("board")}
@@ -1647,7 +1661,7 @@ export function TaskTimelineClient() {
                   : "text-fg-secondary hover:text-fg-primary"
               }`}
             >
-              Board
+              {t("board")}
             </button>
           </motion.div>
         </div>
@@ -1689,29 +1703,29 @@ export function TaskTimelineClient() {
                   <div className="pt-8">
                     <h2 className="text-lg font-bold text-fg-primary mb-4 flex items-center gap-2">
                       <span className="w-1 h-5 bg-accent-primary rounded-full" />
-                      Tasks by Status
+                      {t("tasksByStatus")}
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       <TaskStatusCard
-                        title="Pending"
+                        title={t("status.pending")}
                         count={allTasksByStatus.pending.length}
                         icon={Clock}
                         color="bg-slate-50 dark:bg-slate-500/10 border-slate-200 dark:border-slate-500/30 text-slate-600 dark:text-slate-300"
                       />
                       <TaskStatusCard
-                        title="In Progress"
+                        title={t("status.inProgress")}
                         count={allTasksByStatus.in_progress.length}
                         icon={Zap}
                         color="bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-300"
                       />
                       <TaskStatusCard
-                        title="Completed"
+                        title={t("status.completed")}
                         count={allTasksByStatus.completed.length}
                         icon={CheckSquare}
                         color="bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-300"
                       />
                       <TaskStatusCard
-                        title="Cancelled"
+                        title={t("status.blocked")}
                         count={allTasksByStatus.blocked.length}
                         icon={AlertCircle}
                         color="bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-300"
@@ -1745,21 +1759,21 @@ export function TaskTimelineClient() {
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-bold text-fg-primary flex items-center gap-2">
                       <span className="w-1 h-5 bg-accent-primary rounded-full" />
-                      Activity Timeline
+                      {t("activityTimeline")}
                     </h2>
                     <span className="text-xs font-medium text-fg-quaternary">
-                      {filteredEntries.length} {filteredEntries.length === 1 ? "event" : "events"}
+                      {t("eventsCount", { count: filteredEntries.length })}
                     </span>
                   </div>
 
                   {/* Status filters */}
                   <div className="flex items-center gap-2 flex-wrap">
                     {[
-                      { value: "all", label: "All Tasks" },
-                      { value: "completed", label: "Completed" },
-                      { value: "in_progress", label: "In Progress" },
-                      { value: "pending", label: "Pending" },
-                      { value: "cancelled", label: "Cancelled" },
+                      { value: "all", label: t("allTasks") },
+                      { value: "completed", label: t("status.completed") },
+                      { value: "in_progress", label: t("status.inProgress") },
+                      { value: "pending", label: t("status.pending") },
+                      { value: "blocked", label: t("status.blocked") },
                     ].map((filter) => (
                       <motion.button
                         key={filter.value}
@@ -1813,7 +1827,7 @@ export function TaskTimelineClient() {
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-lg font-bold text-fg-primary flex items-center gap-2">
                     <span className="w-1 h-5 bg-accent-primary rounded-full" />
-                    Task Board
+                    {t("taskBoard")}
                   </h2>
                   {projects && projects.length > 1 && (
                     <div className="relative">
