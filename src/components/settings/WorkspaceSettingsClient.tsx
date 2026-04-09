@@ -102,6 +102,7 @@ export function WorkspaceSettingsClient() {
   // ---- Invite state ----
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("member");
+  const [bulkInviteInput, setBulkInviteInput] = useState("");
   const [emailLookupDebouncedEmail, setEmailLookupDebouncedEmail] = useState("");
 
   // ---- Custom role creation state ----
@@ -127,6 +128,16 @@ export function WorkspaceSettingsClient() {
     }
     return () => { if (inviteEmailTimerRef.current) clearTimeout(inviteEmailTimerRef.current); };
   }, [inviteEmail]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("joinCode");
+    if (!code) return;
+    setShowJoinOrg(true);
+    setShowCreateOrg(false);
+    setJoinCode(code);
+  }, []);
 
   // ---- Queries ----
   const { data: profile } = api.user.getProfile.useQuery(undefined, {
@@ -260,6 +271,16 @@ export function WorkspaceSettingsClient() {
     onError: (e) => toast.error(e.message),
   });
 
+  const parseBulkEmails = (input: string): string[] => {
+    const parts = input
+      .split(/[\n,;]/)
+      .map((v) => v.trim().toLowerCase())
+      .filter(Boolean);
+    const unique = Array.from(new Set(parts));
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return unique.filter((v) => emailRegex.test(v));
+  };
+
   const cancelInvite = api.organization.cancelInvite.useMutation({
     onSuccess: () => {
       toast.success(t("messages.inviteCancelled"));
@@ -294,6 +315,17 @@ export function WorkspaceSettingsClient() {
     try {
       await navigator.clipboard.writeText(code);
       toast.success(t("messages.accessCodeCopied"));
+    } catch {
+      toast.error(t("messages.copyFailed"));
+    }
+  };
+
+  const handleCopyJoinLink = async (code: string) => {
+    try {
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const joinLink = `${origin}/settings?section=workspace&joinCode=${encodeURIComponent(code)}`;
+      await navigator.clipboard.writeText(joinLink);
+      toast.success(t("messages.joinLinkCopied"));
     } catch {
       toast.error(t("messages.copyFailed"));
     }
@@ -370,6 +402,13 @@ export function WorkspaceSettingsClient() {
                           title={t("organizations.copyAccessCode")}
                         >
                           <Copy size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleCopyJoinLink(org.accessCode)}
+                          className="px-2.5 py-1.5 rounded-lg hover:bg-bg-tertiary text-xs text-fg-tertiary hover:text-fg-secondary transition"
+                          title={t("organizations.copyJoinLink")}
+                        >
+                          {t("organizations.copyJoinLink")}
                         </button>
                         {activeOrgId !== org.id && (
                           <button
@@ -614,6 +653,61 @@ export function WorkspaceSettingsClient() {
                     >
                       {inviteMember.isPending ? <Loader2 size={14} className="animate-spin" /> : t("members.invite")}
                     </button>
+                  </div>
+
+                  <div className="mt-3 border-t border-white/[0.08] pt-3">
+                    <p className="mb-2 text-xs font-medium text-fg-tertiary">{t("members.bulkInviteLabel")}</p>
+                    <textarea
+                      value={bulkInviteInput}
+                      onChange={(e) => setBulkInviteInput(e.target.value)}
+                      placeholder={t("members.bulkInvitePlaceholder")}
+                      className="min-h-[84px] w-full rounded-lg border border-white/[0.06] bg-bg-primary px-3 py-2 text-sm text-fg-primary placeholder:text-fg-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
+                    />
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <p className="text-[11px] text-fg-tertiary">
+                        {t("members.bulkInviteHint")}
+                      </p>
+                      <button
+                        onClick={async () => {
+                          if (!activeOrgId || inviteMember.isPending) return;
+                          const emails = parseBulkEmails(bulkInviteInput);
+                          if (emails.length === 0) {
+                            toast.error(t("members.bulkInviteNoValidEmails"));
+                            return;
+                          }
+
+                          let sent = 0;
+                          let failed = 0;
+                          for (const email of emails) {
+                            try {
+                              await inviteMember.mutateAsync({
+                                organizationId: activeOrgId,
+                                email,
+                                role: inviteRole,
+                              });
+                              sent += 1;
+                            } catch {
+                              failed += 1;
+                            }
+                          }
+
+                          if (sent > 0) {
+                            setBulkInviteInput("");
+                            void utils.organization.getInvites.invalidate();
+                            toast.success(t("members.bulkInviteSent", { count: sent }));
+                            if (failed > 0) {
+                              toast.error(t("members.bulkInvitePartial", { count: failed }));
+                            }
+                          } else {
+                            toast.error(t("members.bulkInviteFailed"));
+                          }
+                        }}
+                        disabled={inviteMember.isPending || !bulkInviteInput.trim()}
+                        className="rounded-lg bg-accent-primary/15 px-3 py-2 text-xs font-medium text-accent-primary transition hover:bg-accent-primary/25 disabled:opacity-50"
+                      >
+                        {inviteMember.isPending ? <Loader2 size={14} className="animate-spin" /> : t("members.bulkInviteAction")}
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
