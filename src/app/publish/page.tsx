@@ -12,10 +12,6 @@ import {
     TrendingUp,
     CheckSquare,
     ChevronRight,
-    Search,
-    Plus,
-    User,
-    Home,
     Heart,
     MessageCircle,
     Activity,
@@ -275,24 +271,6 @@ export default function PublishPage() {
                     <FeedRightSidebar />
                 </main>
 
-                {/* Mobile Bottom Nav */}
-                <div className="lg:hidden fixed bottom-0 left-0 right-0 dark:bg-[#16151A] bg-white border-t dark:border-white/5 border-slate-200 px-6 py-3 flex justify-between items-center z-50">
-                    <Link href="/publish" className="text-accent-primary">
-                        <Home size={24} />
-                    </Link>
-                    <button className="text-accent-primary/50">
-                        <Search size={24} />
-                    </button>
-                    <button className="bg-accent-primary text-white p-3 rounded-full -mt-12 border-4 border-bg-primary shadow-xl shadow-accent-primary/30">
-                        <Plus size={24} />
-                    </button>
-                    <Link href="/calendar" className="text-accent-primary/50">
-                        <Calendar size={24} />
-                    </Link>
-                    <Link href="/settings" className="text-accent-primary/50">
-                        <User size={24} />
-                    </Link>
-                </div>
             </div>
         </div>
     );

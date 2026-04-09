@@ -256,7 +256,60 @@ export function MilestoneTimeline({
   }
 
   return (
-    <div className="relative w-full">
+    <div className="w-full">
+      <div className="md:hidden space-y-4">
+        {sortedEntries.map((entry) => {
+          const status = taskStatusMap.get(entry.taskId) ?? "pending";
+          const isCompleted = status === "completed";
+          const date = new Date(entry.createdAt);
+          const IconComponent = getStatusIcon(status);
+          const canDelete = canDeleteTask(entry);
+
+          return (
+            <div key={entry.id} className="relative pl-8">
+              <div className="absolute left-3 top-0 h-full w-px bg-border-medium/60 dark:bg-white/[0.08]" />
+              <div className={`absolute left-[7px] top-1.5 h-3.5 w-3.5 rounded-full ${getStatusDotClasses(status).bg} ring-2 ${getStatusDotClasses(status).ring}`} />
+              <div className="rounded-xl border border-border-medium bg-bg-elevated p-3 dark:border-white/[0.1] dark:bg-[rgb(22,22,28)]">
+                <div className="mb-1.5 flex items-start justify-between gap-2">
+                  <h4 className={`text-sm font-semibold ${isCompleted ? "line-through text-fg-tertiary" : "text-fg-primary"}`}>{entry.taskTitle}</h4>
+                  <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase ${getStatusBadgeColor(status)}`}>
+                    <IconComponent size={10} />
+                    {getStatusLabel(status, t)}
+                  </span>
+                </div>
+                <p className="text-xs text-fg-secondary">{entry.projectTitle}</p>
+                <p className="mt-0.5 text-xs text-fg-tertiary">{t("dateTimeAt", { date: formatDatePref(date, "withYear"), time: formatTime(date, locale) })}</p>
+                <div className="mt-3 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onToggleDone(entry.taskId, isCompleted)}
+                    disabled={togglingId === entry.taskId}
+                    className={`inline-flex h-11 items-center justify-center gap-1 rounded-lg px-3 text-xs font-semibold transition-all ${
+                      isCompleted
+                        ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-500/15 dark:text-emerald-400 dark:hover:bg-emerald-500/25"
+                        : "bg-accent-primary/10 text-accent-primary hover:bg-accent-primary/20"
+                    }`}
+                  >
+                    {togglingId === entry.taskId ? <Loader2 size={12} className="animate-spin" /> : <><Check size={12} />{isCompleted ? t("markAsPending") : t("markAsDone")}</>}
+                  </button>
+                  {canDelete && (
+                    <button
+                      type="button"
+                      onClick={() => onDelete(entry.taskId)}
+                      disabled={deletingId === entry.taskId}
+                      className="inline-flex h-11 items-center justify-center gap-1 rounded-lg bg-red-500 px-3 text-xs font-semibold text-white transition-colors hover:bg-red-600 disabled:opacity-50"
+                    >
+                      {deletingId === entry.taskId ? <Loader2 size={12} className="animate-spin" /> : <><Trash2 size={12} />{t("common.delete")}</>}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="relative hidden w-full md:block">
       {/* Scroll buttons */}
       <button
         onClick={() => scroll("left")}
@@ -459,6 +512,7 @@ export function MilestoneTimeline({
             </motion.p>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

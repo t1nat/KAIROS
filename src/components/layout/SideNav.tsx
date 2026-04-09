@@ -57,6 +57,13 @@ export function SideNav() {
   const profileItem = { href: "/orgs", icon: Building2, label: tOrg("yourOrgs") };
 
   const settingsItem = { href: "/settings?section=profile", icon: Settings, label: t("settings") };
+  const mobileBottomItems = [
+    { href: "/publish", icon: CalendarDays, label: t("events") },
+    { href: "/progress", icon: TrendingUp, label: t("progress") },
+    { href: "/create?action=new_project", icon: Plus, label: t("newProject"), primary: true },
+    { href: "/calendar", icon: CalendarCheck, label: t("calendar") },
+    { href: settingsItem.href, icon: Settings, label: settingsItem.label },
+  ] as const;
 
   const isItemActive = (href: string): boolean => {
     if (href === "/create") {
@@ -203,6 +210,31 @@ export function SideNav() {
           </div>
         </>
       )}
+
+      <nav className={`lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-bg-primary/95 px-3 py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] backdrop-blur-md dark:border-white/[0.06] ${isMobileMenuOpen ? "hidden" : ""}`} aria-label="Primary">
+        <div className="flex items-center justify-around gap-1">
+          {mobileBottomItems.map((item) => {
+            const isActive = isItemActive(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-label={item.label}
+                className={`flex h-11 min-w-11 items-center justify-center rounded-xl transition-colors ${
+                  item.primary
+                    ? "bg-accent-primary text-white shadow-md shadow-accent-primary/30"
+                    : isActive
+                      ? "bg-accent-primary/12 text-accent-primary"
+                      : "text-fg-secondary hover:bg-bg-secondary hover:text-fg-primary"
+                }`}
+                title={item.label}
+              >
+                <item.icon size={20} />
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
 
       <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-16 bg-bg-primary/95 backdrop-blur-md shadow-lg flex-col items-center py-8 gap-6 z-40" aria-label="Primary">
         <div className="flex flex-col items-center gap-6">

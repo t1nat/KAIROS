@@ -35,21 +35,12 @@ export default async function SettingsPage({
  const activeSection = typeof sectionParam === 'string' ? sectionParam : "profile";
 
  return (
- <div className="w-full min-h-screen bg-bg-primary">
+  <div className="w-full min-h-screen bg-bg-primary pb-24 lg:pb-0">
  <SideNav />
 
- <Link
- href="/settings?section=profile"
- aria-label={t("title")}
- title={t("title")}
- className="fixed bottom-4 left-4 z-40 w-11 h-11 rounded-xl bg-bg-secondary backdrop-blur-sm shadow-lg flex items-center justify-center text-fg-secondary hover:text-accent-primary lg:hidden border border-slate-200 dark:border-white/[0.06]"
- >
- <Settings size={20} />
- </Link>
-
- <div className="lg:ml-16 min-h-screen flex flex-col">
+  <div className="lg:ml-16 min-h-screen flex flex-col pt-16 lg:pt-0">
  {/* Header */}
- <header className="sticky top-0 z-30 bg-bg-primary/95 backdrop-blur-md border-b border-slate-200 dark:border-white/[0.06]">
+  <header className="sticky top-16 lg:top-0 z-30 bg-bg-primary/95 backdrop-blur-md border-b border-slate-200 dark:border-white/[0.06]">
  <div className="px-4 sm:px-6 py-4 flex justify-between items-center">
  <div className="flex items-center gap-3">
  <div className="hidden sm:flex w-10 h-10 flex-shrink-0 items-center justify-center rounded-xl bg-bg-secondary border border-slate-200 dark:border-white/[0.06]">
@@ -70,19 +61,46 @@ export default async function SettingsPage({
  </div>
  </header>
 
- <main className="flex-1 flex overflow-hidden">
- {/* Settings Navigation */}
- <aside className="w-64 bg-transparent border-r border-slate-200 dark:border-white/[0.06]">
- <div className="h-full py-2">
- <SettingsNav activeSection={activeSection} variant="embedded" />
- </div>
- </aside>
+  <div className="lg:hidden border-b border-slate-200 dark:border-white/[0.06]">
+  <div className="px-4 py-3 overflow-x-auto">
+  <div className="flex items-center gap-2 min-w-max">
+  {[
+  { id: "profile", label: t("nav.profile") },
+  { id: "workspace", label: t("nav.workspace") },
+  { id: "notifications", label: t("nav.notifications") },
+  { id: "security", label: t("nav.security") },
+  { id: "language", label: t("nav.language") },
+  { id: "appearance", label: t("nav.appearance") },
+  ].map((item) => (
+  <Link
+  key={item.id}
+  href={`/settings?section=${item.id}`}
+  className={`px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${
+  activeSection === item.id
+  ? "bg-accent-primary/15 text-accent-primary"
+  : "bg-bg-secondary text-fg-secondary"
+  }`}
+  >
+  {item.label}
+  </Link>
+  ))}
+  </div>
+  </div>
+  </div>
 
- {/* Content Area */}
- <section className="flex-1 overflow-hidden bg-bg-primary">
- <div className="w-full h-full">
- {/* Settings Content */}
- <div className="pb-8">
+  <main className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
+  {/* Settings Navigation */}
+  <aside className="hidden lg:block w-64 bg-transparent border-r border-slate-200 dark:border-white/[0.06]">
+  <div className="h-full py-2">
+  <SettingsNav activeSection={activeSection} variant="embedded" />
+  </div>
+  </aside>
+
+  {/* Content Area */}
+  <section className="flex-1 overflow-y-auto bg-bg-primary">
+  <div className="w-full h-full">
+  {/* Settings Content */}
+  <div className="pb-24 lg:pb-8">
  {activeSection === "profile" && <ProfileSettingsClient user={session.user} />}
  {activeSection === "workspace" && <WorkspaceSettingsClient />}
  {activeSection === "notifications" && <NotificationSettingsClient />}
