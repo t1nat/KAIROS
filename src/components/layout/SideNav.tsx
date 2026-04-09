@@ -57,13 +57,18 @@ export function SideNav() {
   const profileItem = { href: "/orgs", icon: Building2, label: tOrg("yourOrgs") };
 
   const settingsItem = { href: "/settings?section=profile", icon: Settings, label: t("settings") };
-  const mobileBottomItems = [
+  const mobileBottomItems: Array<{
+    href: string;
+    icon: typeof CalendarDays;
+    label: string;
+    primary?: boolean;
+  }> = [
     { href: "/publish", icon: CalendarDays, label: t("events") },
     { href: "/progress", icon: TrendingUp, label: t("progress") },
     { href: "/create?action=new_project", icon: Plus, label: t("newProject"), primary: true },
     { href: "/calendar", icon: CalendarCheck, label: t("calendar") },
     { href: settingsItem.href, icon: Settings, label: settingsItem.label },
-  ] as const;
+  ];
 
   const isItemActive = (href: string): boolean => {
     if (href === "/create") {

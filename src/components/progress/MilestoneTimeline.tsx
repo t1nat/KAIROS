@@ -430,7 +430,7 @@ export function MilestoneTimeline({
                                   </div>
                                 )}
                               </div>
-                              <span>{t("assignedTo", { name: entry.assignee.name })}</span>
+                              <span>{t("assignedTo", { name: entry.assignee.name ?? t("unknown") })}</span>
                             </div>
                           )}
                           {entry.action && (
@@ -575,7 +575,7 @@ function ExpandedMilestoneCard({
                 </div>
               )}
             </div>
-            <span>{t("assignedTo", { name: entry.assignee.name })}</span>
+            <span>{t("assignedTo", { name: entry.assignee.name ?? t("unknown") })}</span>
           </div>
         )}
         {entry.action && (
