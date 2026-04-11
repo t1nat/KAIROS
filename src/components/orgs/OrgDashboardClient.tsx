@@ -47,7 +47,7 @@ export function OrgDashboardClient() {
 
   const acceptInvite = api.organization.acceptInvite.useMutation({
     onSuccess: async (data) => {
-      toast.success(tOrg("joinedOrg", { name: data.organizationName }));
+      toast.success(tOrg("joinedOrg", { name: data.organizationName ?? "" }));
       await utils.organization.getMyInvites.invalidate();
       await utils.organization.listMine.invalidate();
       await utils.organization.getActive.invalidate();
