@@ -173,16 +173,55 @@ export function ChatClient({ userId }: { userId: string }) {
     { enabled: newChatEmail.trim().length > 3 && newChatEmail.includes("@"), retry: false }
   );
 
+  const recentContacts = useMemo(() => {
+    const latestByUser = new Map<
+      string,
+      { id: string; name: string | null; email: string | null; image: string | null; lastMessageAt: Date | null }
+    >();
+    for (const conv of conversations) {
+      const otherUser = conv.userOne.id === userId ? conv.userTwo : conv.userOne;
+      const existing = latestByUser.get(otherUser.id);
+      const convLastMessageAt = conv.lastMessageAt ? new Date(conv.lastMessageAt) : null;
+      if (!existing) {
+        latestByUser.set(otherUser.id, { ...otherUser, lastMessageAt: convLastMessageAt });
+        continue;
+      }
+      const existingTime = existing.lastMessageAt?.getTime() ?? 0;
+      const nextTime = convLastMessageAt?.getTime() ?? 0;
+      if (nextTime > existingTime) {
+        latestByUser.set(otherUser.id, { ...otherUser, lastMessageAt: convLastMessageAt });
+      }
+    }
+    return Array.from(latestByUser.values())
+      .sort((a, b) => (b.lastMessageAt?.getTime() ?? 0) - (a.lastMessageAt?.getTime() ?? 0))
+      .map(({ lastMessageAt: _lastMessageAt, ...user }) => user);
+  }, [conversations, userId]);
+
   // Filter workspace members based on search input
   const filteredMemberSuggestions = useMemo(() => {
-    if (!newChatEmail.trim()) return workspaceMembers;
-
+    const allMembers = workspaceMembers
+      .filter((member) => member.id !== userId)
+      .sort((a, b) =>
+        (a.name ?? a.email ?? "").localeCompare(b.name ?? b.email ?? "", timeLocale, { sensitivity: "base" }),
+      );
+    if (!newChatEmail.trim()) return allMembers;
     const query = newChatEmail.toLowerCase().trim();
-    return workspaceMembers.filter(member =>
+    return allMembers.filter((member) =>
       (member.name?.toLowerCase() ?? "").includes(query) ||
-      (member.email?.toLowerCase() ?? "").includes(query)
-    ).filter(member => member.id !== userId); // Exclude self
-  }, [workspaceMembers, newChatEmail, userId]);
+      (member.email?.toLowerCase() ?? "").includes(query),
+    );
+  }, [workspaceMembers, newChatEmail, userId, timeLocale]);
+
+  const filteredRecentContacts = useMemo(() => {
+    if (!newChatEmail.trim()) return recentContacts.slice(0, 8);
+    const query = newChatEmail.toLowerCase().trim();
+    return recentContacts
+      .filter((member) =>
+        (member.name?.toLowerCase() ?? "").includes(query) ||
+        (member.email?.toLowerCase() ?? "").includes(query),
+      )
+      .slice(0, 8);
+  }, [recentContacts, newChatEmail]);
 
   // Create new conversation
   const createConversation = api.chat.getOrCreateDirectConversation.useMutation({
@@ -434,6 +473,44 @@ export function ChatClient({ userId }: { userId: string }) {
                 />
               </div>
 
+              {/* Recent contacts section */}
+              {filteredRecentContacts.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 px-3 py-2">
+                    <MessageCircle size={16} className="text-fg-tertiary" />
+                    <p className="text-xs font-semibold text-fg-tertiary uppercase">{t("recentContacts")}</p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    {filteredRecentContacts.map((member) => (
+                      <button
+                        key={`recent-${member.id}`}
+                        onClick={() => handleSelectMember(member as WorkspaceMember)}
+                        disabled={createConversation.isPending}
+                        className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-bg-elevated transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-left min-h-11"
+                      >
+                        {member.image ? (
+                          <Image
+                            src={member.image}
+                            alt={member.name ?? t("userFallback")}
+                            width={36}
+                            height={36}
+                            className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                            {member.name?.[0]?.toUpperCase() ?? "?"}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-fg-primary truncate">{member.name ?? t("userFallback")}</p>
+                          <p className="text-xs text-fg-tertiary truncate">{member.email}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Workspace Members Section */}
               {activeOrgId && filteredMemberSuggestions.length > 0 && (
                 <div className="space-y-2">
@@ -447,7 +524,7 @@ export function ChatClient({ userId }: { userId: string }) {
                         key={member.id}
                         onClick={() => handleSelectMember(member)}
                         disabled={createConversation.isPending}
-                        className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-bg-elevated transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-left"
+                        className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-bg-elevated transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-left min-h-11"
                       >
                         {member.image ? (
                           <Image
@@ -480,8 +557,8 @@ export function ChatClient({ userId }: { userId: string }) {
                     <button
                       onClick={handleStartNewChat}
                       disabled={createConversation.isPending}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-bg-elevated transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-left"
-                    >
+                       className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-bg-elevated transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-left min-h-11"
+                     >
                       {searchUserQuery.data.image ? (
                         <Image
                           src={searchUserQuery.data.image}
@@ -639,7 +716,7 @@ export function ChatClient({ userId }: { userId: string }) {
                 {selectedUser.image ? (
                   <Image
                     src={selectedUser.image}
-                    alt={selectedUser.name ?? "User"}
+                    alt={selectedUser.name ?? t("userFallback")}
                     width={40}
                     height={40}
                     className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover ring-2 ring-accent-primary/20 flex-shrink-0"

@@ -385,30 +385,28 @@ export function NotesList() {
       {showResetPromptModal !== null && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="dark:bg-[#16151A] bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-error/10 shadow-sm rounded-lg flex items-center justify-center">
-                <AlertCircle className="text-error" size={20} />
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-error/10 shadow-sm rounded-lg flex items-center justify-center">
+                  <AlertCircle className="text-error" size={20} />
+                </div>
+                <div>
+                  <h3 className="text-[17px] font-[590] text-fg-primary">
+                    {t("notes.password.incorrect")}
+                  </h3>
+                  <p className="text-[13px] text-fg-secondary mt-0.5">
+                    {t("notes.password.multipleFailedAttempts")}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-[17px] font-[590] text-fg-primary">
-                  Incorrect password
-                </h3>
-                <p className="text-[13px] text-fg-secondary mt-0.5">
-                  Multiple failed attempts detected
-                </p>
-              </div>
-            </div>
 
-            <p className="text-fg-secondary mb-6 text-[15px] leading-relaxed">
-              You entered the wrong password twice. Do you want to reset this note password?
-            </p>
+            <p className="text-fg-secondary mb-6 text-[15px] leading-relaxed">{t("notes.password.resetPrompt")}</p>
 
             <div className="flex gap-3">
               <button
                 onClick={() => setShowResetPromptModal(null)}
                 className="flex-1 px-4 py-3.5 dark:border-white/[0.06] border border-slate-200 text-fg-primary hover:bg-bg-tertiary transition-colors rounded-xl text-[17px] font-[590]"
               >
-                Try again
+                {t("notes.password.tryAgain")}
               </button>
               <button
                 onClick={() =>
@@ -417,7 +415,7 @@ export function NotesList() {
                 }
                 className="flex-1 px-4 py-3.5 bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-[590] rounded-xl hover:shadow-lg transition-all text-[17px]"
               >
-                Reset password
+                {t("notes.password.resetPassword")}
               </button>
             </div>
           </div>
@@ -437,7 +435,7 @@ export function NotesList() {
                   {t("notes.reset.title")}
                 </h3>
                 <p className="text-[13px] text-fg-secondary mt-0.5">
-                  Reset your note password
+                  {t("notes.reset.subtitle")}
                 </p>
               </div>
             </div>
@@ -494,7 +492,7 @@ export function NotesList() {
                     type="button"
                     onClick={() => setShowNewPasswords((v) => !v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-tertiary hover:text-fg-primary"
-                    aria-label={showNewPasswords ? "Hide password" : "Show password"}
+                    aria-label={showNewPasswords ? t("notes.reset.hidePasswords") : t("notes.reset.showPasswords")}
                   >
                     {showNewPasswords ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
@@ -601,7 +599,7 @@ function LockedNoteContent(props: LockedNoteContentProps) {
             type="button"
             onClick={onTogglePasswordVisibility}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-tertiary hover:text-fg-primary transition-colors"
-            aria-label={showPassword ? "Hide password" : "Show password"}
+            aria-label={showPassword ? t("notes.reset.hidePasswords") : t("notes.reset.showPasswords")}
           >
             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
@@ -667,19 +665,31 @@ function UnlockedNoteContent(props: UnlockedNoteContentProps) {
     isPendingDelete,
   } = props;
   const t = useTranslations("create");
+  const tCalendar = useTranslations("notes.calendar");
+  const [calendarTime, setCalendarTime] = useState("12:00");
+
+  useEffect(() => {
+    if (!calendarDate) {
+      setCalendarTime("12:00");
+      return;
+    }
+    const hh = String(calendarDate.getHours()).padStart(2, "0");
+    const mm = String(calendarDate.getMinutes()).padStart(2, "0");
+    setCalendarTime(`${hh}:${mm}`);
+  }, [calendarDate]);
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/[0.06]">
         <div>
-          <span className="text-[17px] font-[590] text-fg-primary">Note Content</span>
-          <p className="text-[13px] text-fg-secondary mt-0.5">Edit and save your note</p>
+          <span className="text-[17px] font-[590] text-fg-primary">{t("notes.fields.content")}</span>
+          <p className="text-[13px] text-fg-secondary mt-0.5">{t("notes.edit.subtitle")}</p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={onRefresh}
             className="p-2 text-fg-tertiary hover:text-fg-primary hover:bg-bg-tertiary/30 transition-colors rounded-lg"
-            aria-label="Refresh"
+            aria-label={t("actions.refresh")}
           >
             <RefreshCw size={16} />
           </button>
@@ -691,7 +701,7 @@ function UnlockedNoteContent(props: UnlockedNoteContentProps) {
                 ? "bg-error/20 text-error"
                 : "text-fg-tertiary hover:text-error hover:bg-error/10"
             )}
-            aria-label="Delete note"
+            aria-label={t("notes.deleteAction")}
           >
             <Trash2 size={16} />
           </button>
@@ -708,8 +718,8 @@ function UnlockedNoteContent(props: UnlockedNoteContentProps) {
       <div className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
         <label className="flex items-center justify-between gap-3">
           <div>
-            <div className="text-xs font-bold text-fg-primary">Add to calendar</div>
-            <div className="text-[11px] text-fg-tertiary">Show this note on a specific date</div>
+            <div className="text-xs font-bold text-fg-primary">{tCalendar("addToCalendar")}</div>
+            <div className="text-[11px] text-fg-tertiary">{tCalendar("addToCalendarDesc")}</div>
           </div>
           <button
             type="button"
@@ -719,7 +729,7 @@ function UnlockedNoteContent(props: UnlockedNoteContentProps) {
               addToCalendar ? "bg-accent-primary/60" : "bg-white/[0.06]",
             )}
             aria-pressed={addToCalendar}
-            aria-label="Add to calendar"
+            aria-label={tCalendar("addToCalendar")}
           >
             <span
               className={cn(
@@ -732,7 +742,7 @@ function UnlockedNoteContent(props: UnlockedNoteContentProps) {
 
         {addToCalendar && (
           <div className="mt-3">
-            <label className="block text-[10px] uppercase tracking-wider text-fg-tertiary font-bold mb-1.5">Calendar date</label>
+            <label className="block text-[10px] uppercase tracking-wider text-fg-tertiary font-bold mb-1.5">{tCalendar("calendarDate")}</label>
             <input
               type="date"
               value={calendarDate ? calendarDate.toISOString().slice(0, 10) : ""}
@@ -744,6 +754,24 @@ function UnlockedNoteContent(props: UnlockedNoteContentProps) {
                 }
                 const [y, m, d] = v.split("-").map(Number);
                 onCalendarDateChange(new Date(y!, (m! - 1), d!, 12, 0, 0));
+              }}
+              className="w-full px-3 py-2 bg-bg-primary rounded-lg text-sm text-fg-primary border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
+            />
+            <label className="mt-3 block text-[10px] uppercase tracking-wider text-fg-tertiary font-bold mb-1.5">{tCalendar("calendarTime")}</label>
+            <input
+              type="time"
+              value={calendarTime}
+              onChange={(e) => {
+                setCalendarTime(e.target.value);
+                if (!calendarDate) return;
+                const parts = e.target.value.split(":");
+                const parsedHh = Number(parts[0] ?? "12");
+                const parsedMm = Number(parts[1] ?? "0");
+                const hh = Number.isFinite(parsedHh) ? parsedHh : 12;
+                const mm = Number.isFinite(parsedMm) ? parsedMm : 0;
+                const next = new Date(calendarDate);
+                next.setHours(hh, mm, 0, 0);
+                onCalendarDateChange(next);
               }}
               className="w-full px-3 py-2 bg-bg-primary rounded-lg text-sm text-fg-primary border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
             />

@@ -111,7 +111,7 @@ export default async function CreatePage({
           </div>
         </header>
 
-        <main id="main-content" className="flex-1 w-full px-4 sm:px-6 md:px-8 py-5 sm:py-6 overflow-auto relative">
+        <main id="main-content" className="flex-1 w-full px-4 sm:px-6 md:px-8 py-5 sm:py-6 overflow-auto relative pb-24 lg:pb-6">
           <div className="max-w-7xl mx-auto w-full space-y-4">
             {shouldShowProjectManagement ? (
               <div className="relative w-full h-full mt-4">

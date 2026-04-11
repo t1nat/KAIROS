@@ -33,7 +33,7 @@ export default async function ProjectsPage() {
           </div>
         </header>
 
-        <main id="main-content" className="flex-1 w-full overflow-auto">
+        <main id="main-content" className="flex-1 w-full overflow-auto pb-24 lg:pb-0">
           <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 pt-4">
             <ProjectsListWorkspace userId={session.user.id} />
           </div>

@@ -38,7 +38,7 @@ export default async function ProgressPage() {
           </div>
         </header>
 
-        <main id="main-content" className="flex-1 w-full overflow-auto">
+        <main id="main-content" className="flex-1 w-full overflow-auto pb-24 lg:pb-0">
           <ProgressFeedClient />
         </main>
       </div>

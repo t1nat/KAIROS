@@ -10,6 +10,7 @@ type Translator = (key: string, values?: Record<string, unknown>) => string;
 
 export function CreateNoteForm() {
   const t = useTranslations("create");
+  const tCalendar = useTranslations("notes.calendar");
   const toast = useToast();
   const utils = api.useUtils();
 
@@ -17,7 +18,16 @@ export function CreateNoteForm() {
   const [content, setContent] = useState("");
   const [password, setPassword] = useState("");
   const [addToCalendar, setAddToCalendar] = useState(false);
-  const [calendarDate, setCalendarDate] = useState<Date | null>(null);
+  const [calendarDate, setCalendarDate] = useState("");
+  const [calendarTime, setCalendarTime] = useState("12:00");
+
+  const buildCalendarDateTime = () => {
+    if (!calendarDate) return undefined;
+    const [y, m, d] = calendarDate.split("-").map(Number);
+    if (!y || !m || !d) return undefined;
+    const [hh, mm] = calendarTime.split(":").map(Number);
+    return new Date(y, m - 1, d, Number.isFinite(hh) ? hh : 12, Number.isFinite(mm) ? mm : 0, 0, 0);
+  };
 
   const createNote = api.note.create.useMutation({
     onSuccess: async () => {
@@ -25,7 +35,8 @@ export function CreateNoteForm() {
       setContent("");
       setPassword("");
       setAddToCalendar(false);
-      setCalendarDate(null);
+      setCalendarDate("");
+      setCalendarTime("12:00");
       setShowForm(false);
       toast.success(t("notes.success.created"));
     },
@@ -44,7 +55,7 @@ export function CreateNoteForm() {
     createNote.mutate({
       content: content.trim(),
       password: password.trim() ? password : undefined,
-      calendarDate: addToCalendar ? (calendarDate ?? undefined) : undefined,
+      calendarDate: addToCalendar ? buildCalendarDateTime() : undefined,
     });
   };
 
@@ -85,15 +96,18 @@ export function CreateNoteForm() {
           <div className="rounded-xl border border-border-light/20 bg-bg-secondary/40 p-3">
             <label className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-xs font-semibold text-fg-primary">Add to calendar</div>
-                <div className="text-[11px] text-fg-tertiary">Show this note on a specific date</div>
+                <div className="text-xs font-semibold text-fg-primary">{tCalendar("addToCalendar")}</div>
+                <div className="text-[11px] text-fg-tertiary">{tCalendar("addToCalendarDesc")}</div>
               </div>
               <button
                 type="button"
                 onClick={() => {
                   setAddToCalendar((v) => {
                     const next = !v;
-                    if (!next) setCalendarDate(null);
+                    if (!next) {
+                      setCalendarDate("");
+                      setCalendarTime("12:00");
+                    }
                     return next;
                   });
                 }}
@@ -101,7 +115,7 @@ export function CreateNoteForm() {
                   addToCalendar ? "bg-accent-primary/60" : "bg-bg-secondary"
                 }`}
                 aria-pressed={addToCalendar}
-                aria-label="Add to calendar"
+                aria-label={tCalendar("addToCalendar")}
               >
                 <span
                   className={`absolute top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-white transition ${
@@ -114,20 +128,21 @@ export function CreateNoteForm() {
             {addToCalendar && (
               <div className="mt-3">
                 <label className="block text-xs font-semibold text-fg-secondary mb-2 uppercase tracking-wide">
-                  Calendar date
+                  {tCalendar("calendarDate")}
                 </label>
                 <input
                   type="date"
-                  value={calendarDate ? calendarDate.toISOString().slice(0, 10) : ""}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    if (!v) {
-                      setCalendarDate(null);
-                      return;
-                    }
-                    const [y, m, d] = v.split("-").map(Number);
-                    setCalendarDate(new Date(y!, (m! - 1), d!, 12, 0, 0));
-                  }}
+                  value={calendarDate}
+                  onChange={(e) => setCalendarDate(e.target.value)}
+                  className="w-full px-4 py-3 bg-bg-secondary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary placeholder:text-fg-tertiary transition-all"
+                />
+                <label className="mt-3 block text-xs font-semibold text-fg-secondary mb-2 uppercase tracking-wide">
+                  {tCalendar("calendarTime")}
+                </label>
+                <input
+                  type="time"
+                  value={calendarTime}
+                  onChange={(e) => setCalendarTime(e.target.value)}
                   className="w-full px-4 py-3 bg-bg-secondary rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/30 text-fg-primary placeholder:text-fg-tertiary transition-all"
                 />
               </div>

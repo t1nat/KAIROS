@@ -3,7 +3,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { organizations, organizationMembers, organizationRoles, organizationInvites, users, notifications } from "~/server/db/schema";
-import { eq, and, or, isNull, gt, lte } from "drizzle-orm";
+import { eq, and, or, isNull, gt, lte, desc } from "drizzle-orm";
 import { emitNotification } from "~/server/socket/emit";
 
 
@@ -438,6 +438,42 @@ export const organizationRouter = createTRPCRouter({
         .where(eq(organizationMembers.organizationId, input.organizationId));
 
       return members;
+    }),
+
+  getProjectInviteCandidates: protectedProcedure
+    .input(z.object({ organizationId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const [membership] = await ctx.db
+        .select()
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.organizationId, input.organizationId),
+            eq(organizationMembers.userId, ctx.session.user.id),
+          ),
+        )
+        .limit(1);
+
+      if (!membership) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not a member of this organization",
+        });
+      }
+
+      const candidates = await ctx.db
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          image: users.image,
+        })
+        .from(organizationMembers)
+        .innerJoin(users, eq(organizationMembers.userId, users.id))
+        .where(eq(organizationMembers.organizationId, input.organizationId))
+        .orderBy(users.name);
+
+      return candidates.filter((c) => c.id !== ctx.session.user.id);
     }),
 
   
@@ -1386,6 +1422,35 @@ export const organizationRouter = createTRPCRouter({
         );
 
       return invites;
+    }),
+
+  getInviteHistory: protectedProcedure
+    .input(z.object({ organizationId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const [caller] = await ctx.db
+        .select()
+        .from(organizationMembers)
+        .where(
+          and(
+            eq(organizationMembers.organizationId, input.organizationId),
+            eq(organizationMembers.userId, ctx.session.user.id),
+          ),
+        )
+        .limit(1);
+
+      if (!caller || caller.role !== "admin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only admins can view invite history",
+        });
+      }
+
+      return await ctx.db
+        .select()
+        .from(organizationInvites)
+        .where(eq(organizationInvites.organizationId, input.organizationId))
+        .orderBy(desc(organizationInvites.createdAt))
+        .limit(50);
     }),
 
   cancelInvite: protectedProcedure

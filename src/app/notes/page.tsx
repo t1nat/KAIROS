@@ -6,9 +6,11 @@ import { NotificationSystem } from "~/components/notifications/NotificationSyste
 import { WorkspaceIndicator } from "~/components/orgs/WorkspaceIndicator";
 import { OnboardingGate } from "~/components/auth/OnboardingGate";
 import { NotesDashboard } from "~/components/notes/NotesDashboard";
+import { getTranslations } from "next-intl/server";
 
 export default async function NotesPage() {
   const session = await auth();
+  const tNav = await getTranslations("nav");
 
   if (!session?.user) {
     redirect("/");
@@ -18,17 +20,17 @@ export default async function NotesPage() {
     <OnboardingGate>
       <div className="min-h-screen bg-bg-primary">
         <SideNav />
-        <div className="lg:ml-16 min-h-screen flex flex-col">
-          <header className="sticky top-0 z-30 bg-bg-primary/80 backdrop-blur-md border-b border-slate-200 dark:border-white/[0.06]">
+        <div className="lg:ml-16 min-h-screen flex flex-col pt-16 lg:pt-0 kairos-page-enter">
+          <header className="sticky top-16 lg:top-0 z-30 topbar-solid">
             <div className="px-4 sm:px-8 py-3 flex justify-between items-center">
               <div className="flex items-center gap-4">
                 <div>
                   <div className="flex items-center gap-2 text-fg-tertiary text-xs mb-0.5">
-                    <span>Workspace</span>
+                    <span>{tNav("projects")}</span>
                     <span className="text-[10px]">›</span>
-                    <span className="text-fg-secondary font-medium">Notes</span>
+                    <span className="text-fg-secondary font-medium">{tNav("notes")}</span>
                   </div>
-                  <h1 className="text-2xl font-bold text-fg-primary tracking-tight">Notes</h1>
+                  <h1 className="text-2xl font-bold text-fg-primary tracking-tight">{tNav("notes")}</h1>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -39,7 +41,7 @@ export default async function NotesPage() {
               </div>
             </div>
           </header>
-          <main className="flex-1">
+          <main id="main-content" className="flex-1 w-full overflow-auto pb-24 lg:pb-0">
             <NotesDashboard />
           </main>
         </div>

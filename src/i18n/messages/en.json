@@ -74,7 +74,8 @@
     "calendar": {
       "addToCalendar": "Add to calendar",
       "addToCalendarDesc": "Show this note on a specific date",
-      "calendarDate": "Calendar date"
+      "calendarDate": "Calendar date",
+      "calendarTime": "Time"
     },
     "tabs": {
       "allNotes": "All Notes",
@@ -509,7 +510,10 @@
         "create": "Create Organization",
         "join": "Join Organization",
         "namePlaceholder": "Organization name",
-        "accessCodePlaceholder": "Enter access code (e.g. XXXX-XXXX-XXXX)"
+        "accessCodePlaceholder": "Enter access code (e.g. XXXX-XXXX-XXXX)",
+        "showQr": "Show QR",
+        "scanQrHint": "Scan this QR code to open the join link on mobile.",
+        "qrAlt": "Organization invite QR code"
       },
       "members": {
         "title": "Members",
@@ -529,6 +533,17 @@
         "lookingUpEmail": "Looking up email...",
         "invite": "Invite",
         "pendingInvites": "Pending Invites",
+        "inviteHistory": "Invite History",
+        "status": {
+          "pending": "Pending",
+          "accepted": "Accepted",
+          "declined": "Declined",
+          "expired": "Expired",
+          "cancelled": "Cancelled"
+        },
+        "orgMemberQuickInviteLabel": "Quick add from organization members",
+        "expiresOn": "Expires on {date}",
+        "noExpiry": "No expiry",
         "remove": "Remove member",
         "removeConfirm": "Remove {name} from the organization?"
       },
@@ -720,6 +735,7 @@
     },
     "notes": {
       "title": "Your Notes",
+      "deleteAction": "Delete note",
       "actions": {
         "createNew": "Create New Note",
         "create": "Create Note",
@@ -765,6 +781,7 @@
       },
       "edit": {
         "title": "Edit Note",
+        "subtitle": "Edit and save your note",
         "save": "Save",
         "saving": "Saving..."
       },
@@ -787,7 +804,8 @@
         "passwordMismatch": "The passwords do not match.",
         "send": "Reset password",
         "sending": "Resetting...",
-        "success": "✅ Note password reset successfully."
+        "success": "✅ Note password reset successfully.",
+        "subtitle": "Reset your note password"
       }
     }
   },
@@ -978,6 +996,8 @@
   "common": {
     "save": "Save",
     "cancel": "Cancel",
+    "accept": "Accept",
+    "decline": "Decline",
     "delete": "Delete",
     "edit": "Edit",
     "close": "Close",
@@ -1004,7 +1024,12 @@
     "roleMentor": "Mentor",
     "organization": "Organization",
     "personalWorkspace": "Personal Workspace",
-    "personalHint": "Join an organization to collaborate with a team"
+    "personalHint": "Join an organization to collaborate with a team",
+    "pendingInvitations": "Pending Invitations",
+    "invitedAs": "You've been invited as",
+    "joining": "Joining...",
+    "joinedOrg": "Joined {name}!",
+    "inviteDeclined": "Invite declined"
   },
   "ai": {
     "title": "AI Task Generator",
@@ -1116,6 +1141,7 @@
       "searchOrEnterEmail": "Search or enter email",
       "searchByNameOrEmail": "Search by name or email...",
       "workspaceMembers": "Workspace Members",
+      "recentContacts": "Recent contacts",
       "searchResults": "Search Results",
       "searching": "Searching...",
       "userNotFound": "User not found",

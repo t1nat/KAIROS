@@ -33,7 +33,7 @@ export default async function OrgsPage() {
           </div>
         </header>
 
-        <main id="main-content" className="flex-1 w-full overflow-auto">
+        <main id="main-content" className="flex-1 w-full overflow-auto pb-24 lg:pb-0">
           <div className="max-w-5xl mx-auto px-6 md:px-8 py-8">
             <OrgDashboardClient />
           </div>

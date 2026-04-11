@@ -47,7 +47,7 @@ export function OrgDashboardClient() {
 
   const acceptInvite = api.organization.acceptInvite.useMutation({
     onSuccess: async (data) => {
-      toast.success(`Joined ${data.organizationName}!`);
+      toast.success(tOrg("joinedOrg", { name: data.organizationName }));
       await utils.organization.getMyInvites.invalidate();
       await utils.organization.listMine.invalidate();
       await utils.organization.getActive.invalidate();
@@ -61,7 +61,7 @@ export function OrgDashboardClient() {
 
   const declineInvite = api.organization.declineInvite.useMutation({
     onSuccess: async () => {
-      toast.success("Invite declined");
+      toast.success(tOrg("inviteDeclined"));
       await utils.organization.getMyInvites.invalidate();
     },
     onError: (error) => {
@@ -93,7 +93,7 @@ export function OrgDashboardClient() {
       {/* Pending Invitations */}
       {(invitesQuery.data?.length ?? 0) > 0 && (
         <div className="surface-card p-6">
-          <h2 className="text-lg font-bold text-fg-primary mb-3">Pending Invitations</h2>
+          <h2 className="text-lg font-bold text-fg-primary mb-3">{tOrg("pendingInvitations")}</h2>
           <div className="space-y-3">
             {invitesQuery.data?.map((invite) => (
               <div
@@ -103,7 +103,7 @@ export function OrgDashboardClient() {
                 <div className="min-w-0">
                   <p className="font-semibold text-fg-primary">{invite.orgName}</p>
                   <p className="text-sm text-fg-secondary">
-                    You&apos;ve been invited as <span className="font-medium">{invite.displayRole ?? invite.role}</span>
+                    {tOrg("invitedAs")} <span className="font-medium">{invite.displayRole ?? invite.role}</span>
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -112,14 +112,14 @@ export function OrgDashboardClient() {
                     disabled={acceptInvite.isPending}
                     className="px-4 py-2 rounded-xl bg-accent-primary text-white text-sm font-semibold hover:bg-accent-primary/90 transition disabled:opacity-50"
                   >
-                    {acceptInvite.isPending ? "Joining..." : "Accept"}
+                    {acceptInvite.isPending ? tOrg("joining") : tCommon("accept")}
                   </button>
                   <button
                     onClick={() => declineInvite.mutate({ inviteId: invite.id })}
                     disabled={declineInvite.isPending}
                     className="px-4 py-2 rounded-xl bg-bg-surface shadow-sm text-sm text-fg-secondary hover:bg-bg-elevated transition disabled:opacity-50"
                   >
-                    Decline
+                    {tCommon("decline")}
                   </button>
                 </div>
               </div>

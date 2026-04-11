@@ -8,6 +8,7 @@ import {
   Shield,
   Mail,
   Copy,
+  QrCode,
   LogOut,
   Trash2,
   ChevronDown,
@@ -103,6 +104,7 @@ export function WorkspaceSettingsClient() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("member");
   const [bulkInviteInput, setBulkInviteInput] = useState("");
+  const [showInviteQrForCode, setShowInviteQrForCode] = useState<string | null>(null);
   const [emailLookupDebouncedEmail, setEmailLookupDebouncedEmail] = useState("");
 
   // ---- Custom role creation state ----
@@ -167,6 +169,14 @@ export function WorkspaceSettingsClient() {
     { organizationId: activeOrgId! },
     { enabled: !!activeOrgId && activeOrg?.role === "admin", retry: false, refetchOnWindowFocus: false },
   );
+  const { data: inviteHistory } = api.organization.getInviteHistory.useQuery(
+    { organizationId: activeOrgId! },
+    { enabled: !!activeOrgId && activeOrg?.role === "admin", retry: false, refetchOnWindowFocus: false },
+  );
+  const { data: inviteCandidates } = api.organization.getProjectInviteCandidates.useQuery(
+    { organizationId: activeOrgId! },
+    { enabled: !!activeOrgId && activeOrg?.role === "admin", retry: false, refetchOnWindowFocus: false },
+  );
   const { data: inviteEmailLookup, isFetching: isLookingUpEmail } = api.user.searchByEmail.useQuery(
     { email: emailLookupDebouncedEmail },
     { enabled: !!emailLookupDebouncedEmail, retry: false, refetchOnWindowFocus: false },
@@ -190,10 +200,17 @@ export function WorkspaceSettingsClient() {
       const t = data.title?.toLowerCase() ?? "";
       if (t.includes("invite") || t.includes("joined") || t.includes("member")) {
         void utils.organization.getInvites.invalidate();
+        void utils.organization.getInviteHistory.invalidate();
         void utils.organization.getMembers.invalidate();
+        void utils.organization.getProjectInviteCandidates.invalidate();
       }
     },
-    [utils.organization.getInvites, utils.organization.getMembers],
+    [
+      utils.organization.getInvites,
+      utils.organization.getInviteHistory,
+      utils.organization.getMembers,
+      utils.organization.getProjectInviteCandidates,
+    ],
   );
   useSocketEvent("notification:new", handleInviteNotification);
 
@@ -229,6 +246,8 @@ export function WorkspaceSettingsClient() {
         utils.organization.getMembers.invalidate(),
         utils.organization.getRoles.invalidate(),
         utils.organization.getInvites.invalidate(),
+        utils.organization.getInviteHistory.invalidate(),
+        utils.organization.getProjectInviteCandidates.invalidate(),
         utils.user.getProfile.invalidate(),
       ]);
       toast.success(t("messages.organizationSwitched"));
@@ -258,6 +277,7 @@ export function WorkspaceSettingsClient() {
     onSuccess: () => {
       toast.success(t("messages.memberRemoved"));
       void utils.organization.getMembers.invalidate();
+      void utils.organization.getProjectInviteCandidates.invalidate();
     },
     onError: (e) => toast.error(e.message),
   });
@@ -267,16 +287,28 @@ export function WorkspaceSettingsClient() {
       toast.success(t("messages.inviteSent"));
       setInviteEmail("");
       void utils.organization.getInvites.invalidate();
+      void utils.organization.getInviteHistory.invalidate();
     },
     onError: (e) => toast.error(e.message),
   });
 
   const parseBulkEmails = (input: string): string[] => {
+    const normalized = input.replace(/\r\n/g, "\n");
+    const csvRows = normalized
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => line.split(",").map((cell) => cell.trim()));
+    const maybeHeader = csvRows[0]?.[0]?.toLowerCase();
+    const csvEmails = csvRows
+      .slice(maybeHeader === "email" ? 1 : 0)
+      .map((row) => row[0] ?? "")
+      .filter(Boolean);
     const parts = input
       .split(/[\n,;]/)
       .map((v) => v.trim().toLowerCase())
       .filter(Boolean);
-    const unique = Array.from(new Set(parts));
+    const unique = Array.from(new Set([...parts, ...csvEmails]));
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return unique.filter((v) => emailRegex.test(v));
   };
@@ -285,6 +317,7 @@ export function WorkspaceSettingsClient() {
     onSuccess: () => {
       toast.success(t("messages.inviteCancelled"));
       void utils.organization.getInvites.invalidate();
+      void utils.organization.getInviteHistory.invalidate();
     },
     onError: (e) => toast.error(e.message),
   });
@@ -310,6 +343,20 @@ export function WorkspaceSettingsClient() {
     }
     return role;
   };
+  const translateInviteStatus = (status: string | null | undefined) => {
+    if (!status) return "";
+    const normalized = status.toLowerCase();
+    if (
+      normalized === "pending" ||
+      normalized === "accepted" ||
+      normalized === "declined" ||
+      normalized === "expired" ||
+      normalized === "cancelled"
+    ) {
+      return t(`members.status.${normalized}`);
+    }
+    return status;
+  };
 
   const handleCopyCode = async (code: string) => {
     try {
@@ -331,6 +378,11 @@ export function WorkspaceSettingsClient() {
     }
   };
 
+  const getJoinLink = (code: string) => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    return `${origin}/settings?section=workspace&joinCode=${encodeURIComponent(code)}`;
+  };
+
   const toggleSection = (id: string) => {
     setExpandedSection((prev) => (prev === id ? null : id));
   };
@@ -339,7 +391,7 @@ export function WorkspaceSettingsClient() {
   // Render
   // ---------------------------------------------------------------------------
   return (
-    <div className="p-6 space-y-6 max-w-3xl">
+    <div className="p-4 sm:p-6 space-y-6 max-w-3xl">
       {/* ------------------------------------------------------------------ */}
       {/* Organization Section                                                */}
       {/* ------------------------------------------------------------------ */}
@@ -378,8 +430,8 @@ export function WorkspaceSettingsClient() {
                         : "border-white/[0.1] bg-white/[0.03] dark:bg-white/[0.04]"
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-center gap-3 min-w-0">
                         <div className="w-10 h-10 rounded-lg bg-bg-secondary flex items-center justify-center">
                           <Building2 size={18} className="text-fg-tertiary" />
                         </div>
@@ -395,10 +447,10 @@ export function WorkspaceSettingsClient() {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <button
                           onClick={() => handleCopyCode(org.accessCode)}
-                          className="p-2 rounded-lg hover:bg-bg-tertiary text-fg-tertiary hover:text-fg-secondary transition"
+                          className="p-2 rounded-lg hover:bg-bg-tertiary text-fg-tertiary hover:text-fg-secondary transition min-h-11 min-w-11"
                           title={t("organizations.copyAccessCode")}
                         >
                           <Copy size={14} />
@@ -409,6 +461,14 @@ export function WorkspaceSettingsClient() {
                           title={t("organizations.copyJoinLink")}
                         >
                           {t("organizations.copyJoinLink")}
+                        </button>
+                        <button
+                          onClick={() => setShowInviteQrForCode((prev) => (prev === org.accessCode ? null : org.accessCode))}
+                          className="px-2.5 py-1.5 rounded-lg hover:bg-bg-tertiary text-xs text-fg-tertiary hover:text-fg-secondary transition inline-flex items-center gap-1.5"
+                          title={t("organizations.showQr")}
+                        >
+                          <QrCode size={13} />
+                          {t("organizations.showQr")}
                         </button>
                         {activeOrgId !== org.id && (
                           <button
@@ -426,13 +486,23 @@ export function WorkspaceSettingsClient() {
                             }
                           }}
                           disabled={leaveOrg.isPending}
-                          className="p-2 rounded-lg hover:bg-red-500/10 text-fg-tertiary hover:text-red-400 transition"
+                          className="p-2 rounded-lg hover:bg-red-500/10 text-fg-tertiary hover:text-red-400 transition min-h-11 min-w-11"
                           title={t("organizations.leave")}
                         >
                           <LogOut size={14} />
                         </button>
                       </div>
                     </div>
+                    {showInviteQrForCode === org.accessCode && (
+                      <div className="mt-3 rounded-xl border border-white/[0.1] bg-bg-primary/60 p-3">
+                        <p className="text-xs text-fg-tertiary mb-2">{t("organizations.scanQrHint")}</p>
+                        <img
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(getJoinLink(org.accessCode))}`}
+                          alt={t("organizations.qrAlt")}
+                          className="w-40 h-40 rounded-md border border-white/[0.08] bg-white"
+                        />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -448,7 +518,7 @@ export function WorkspaceSettingsClient() {
             )}
 
             {/* Create / Join buttons */}
-            <div className="flex gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 onClick={() => {
                   setShowCreateOrg(true);
@@ -485,7 +555,7 @@ export function WorkspaceSettingsClient() {
                   }}
                   autoFocus
                 />
-                <div className="flex gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <button
                     onClick={() => createOrg.mutate({ name: orgName })}
                     disabled={!orgName.trim() || createOrg.isPending}
@@ -518,7 +588,7 @@ export function WorkspaceSettingsClient() {
                   }}
                   autoFocus
                 />
-                <div className="flex gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <button
                     onClick={() => joinOrg.mutate({ code: joinCode })}
                     disabled={!joinCode.trim() || joinOrg.isPending}
@@ -576,7 +646,7 @@ export function WorkspaceSettingsClient() {
                     <Mail size={14} className="text-accent-primary" />
                     {t("members.inviteMember")}
                   </h3>
-                  <div className="flex gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto_auto] gap-2">
                     <div className="flex-1 relative">
                       <input
                         type="email"
@@ -626,7 +696,7 @@ export function WorkspaceSettingsClient() {
                     <select
                       value={inviteRole}
                       onChange={(e) => setInviteRole(e.target.value)}
-                      className="px-3 py-2 bg-bg-primary rounded-lg text-sm text-fg-primary border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
+                      className="px-3 py-2 bg-bg-primary rounded-lg text-sm text-fg-primary border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-accent-primary/30 min-h-11"
                     >
                       <option value="member">{t("roles.member")}</option>
                       <option value="admin">{t("roles.admin")}</option>
@@ -649,7 +719,7 @@ export function WorkspaceSettingsClient() {
                         }
                       }}
                       disabled={!inviteEmail.trim() || inviteMember.isPending}
-                      className="px-4 py-2 rounded-lg kairos-neon-btn text-white text-sm font-medium disabled:opacity-50"
+                      className="px-4 py-2 rounded-lg kairos-neon-btn text-white text-sm font-medium disabled:opacity-50 min-h-11"
                     >
                       {inviteMember.isPending ? <Loader2 size={14} className="animate-spin" /> : t("members.invite")}
                     </button>
@@ -709,6 +779,27 @@ export function WorkspaceSettingsClient() {
                       </button>
                     </div>
                   </div>
+                  <div className="mt-3 border-t border-white/[0.08] pt-3">
+                    <p className="mb-2 text-xs font-medium text-fg-tertiary">{t("members.orgMemberQuickInviteLabel")}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {inviteCandidates
+                          ?.filter((m) => m.email !== profile?.email)
+                          .slice(0, 12)
+                          .map((m) => (
+                          <button
+                            key={m.id}
+                            type="button"
+                            onClick={() => {
+                              setInviteEmail(m.email);
+                              setEmailLookupDebouncedEmail(m.email);
+                            }}
+                            className="rounded-full bg-bg-primary px-3 py-1.5 text-xs text-fg-secondary border border-white/[0.08] hover:border-accent-primary/35 hover:text-fg-primary transition"
+                          >
+                            {m.name ?? m.email}
+                          </button>
+                        ))}
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -720,13 +811,18 @@ export function WorkspaceSettingsClient() {
                     {invites.map((inv) => (
                       <div
                         key={inv.id}
-                        className="flex items-center justify-between py-2 px-3 rounded-lg bg-bg-primary/50"
+                        className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between py-2 px-3 rounded-lg bg-bg-primary/50"
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                           <Mail size={14} className="text-fg-tertiary" />
                           <span className="text-sm text-fg-secondary">{inv.email}</span>
                           <span className="text-xs text-fg-tertiary capitalize px-1.5 py-0.5 rounded bg-bg-tertiary">
                             {translateRoleLabel(inv.displayRole ?? inv.role)}
+                          </span>
+                          <span className="text-[11px] text-fg-tertiary">
+                            {inv.expiresAt
+                              ? t("members.expiresOn", { date: new Date(inv.expiresAt).toLocaleDateString() })
+                              : t("members.noExpiry")}
                           </span>
                         </div>
                         <button
@@ -734,10 +830,30 @@ export function WorkspaceSettingsClient() {
                             cancelInvite.mutate({ organizationId: activeOrgId!, inviteId: inv.id })
                           }
                           disabled={cancelInvite.isPending}
-                          className="p-1.5 rounded-lg hover:bg-red-500/10 text-fg-tertiary hover:text-red-400 transition"
+                           className="p-1.5 rounded-lg hover:bg-red-500/10 text-fg-tertiary hover:text-red-400 transition min-h-11 min-w-11"
                         >
                           <X size={14} />
                         </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {isAdmin && inviteHistory && inviteHistory.length > 0 && (
+                <div className="p-4 rounded-xl border border-white/[0.1] bg-white/[0.03] dark:bg-white/[0.04]">
+                  <h3 className="text-sm font-medium text-fg-primary mb-3">{t("members.inviteHistory")}</h3>
+                  <div className="space-y-2">
+                    {inviteHistory.slice(0, 8).map((inv) => (
+                      <div
+                        key={`history-${inv.id}`}
+                        className="flex flex-col gap-1.5 rounded-lg bg-bg-primary/50 px-3 py-2"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm text-fg-secondary">{inv.email}</span>
+                          <span className="text-xs text-fg-tertiary capitalize">{translateInviteStatus(inv.status)}</span>
+                        </div>
+                        <div className="text-[11px] text-fg-tertiary">{new Date(inv.createdAt).toLocaleString()}</div>
                       </div>
                     ))}
                   </div>
@@ -749,7 +865,7 @@ export function WorkspaceSettingsClient() {
                 {members?.map((member) => (
                   <div
                     key={member.id}
-                    className="p-3 rounded-xl border border-white/[0.1] bg-white/[0.03] dark:bg-white/[0.04] flex items-center justify-between"
+                      className="p-3 rounded-xl border border-white/[0.1] bg-white/[0.03] dark:bg-white/[0.04] flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center"
                   >
                     <div className="flex items-center gap-3">
                       {member.image ? (
@@ -784,7 +900,7 @@ export function WorkspaceSettingsClient() {
                             });
                           }}
                           disabled={updateMemberRole.isPending}
-                          className="px-2 py-1 bg-bg-primary rounded-lg text-xs text-fg-secondary border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-accent-primary/30"
+                          className="px-2.5 py-2 bg-bg-primary rounded-lg text-xs text-fg-secondary border border-white/[0.06] focus:outline-none focus:ring-2 focus:ring-accent-primary/30 min-h-11"
                         >
                           <option value="admin">{t("roles.admin")}</option>
                           <option value="member">{t("roles.member")}</option>
@@ -812,7 +928,7 @@ export function WorkspaceSettingsClient() {
                             }
                           }}
                           disabled={removeMember.isPending}
-                          className="p-1.5 rounded-lg hover:bg-red-500/10 text-fg-tertiary hover:text-red-400 transition"
+                           className="p-1.5 rounded-lg hover:bg-red-500/10 text-fg-tertiary hover:text-red-400 transition min-h-11 min-w-11"
                           title={t("members.remove")}
                         >
                           <Trash2 size={14} />
@@ -1005,7 +1121,7 @@ export function WorkspaceSettingsClient() {
                               }
                             }}
                             disabled={deleteRole.isPending}
-                            className="p-1.5 rounded-lg hover:bg-red-500/10 text-fg-tertiary hover:text-red-400 transition"
+                            className="p-1.5 rounded-lg hover:bg-red-500/10 text-fg-tertiary hover:text-red-400 transition min-h-11 min-w-11"
                           >
                             <Trash2 size={14} />
                           </button>
